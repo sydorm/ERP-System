@@ -1,0 +1,189 @@
+<template>
+  <div class="login-container">
+    <el-card class="login-card">
+      <template #header>
+        <div class="card-header">
+          <h2>ERP System</h2>
+          <p>Увійдіть до системи</p>
+        </div>
+      </template>
+
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        label-position="top"
+        size="large"
+      >
+        <el-form-item label="Email" prop="email">
+          <el-input
+            v-model="loginForm.email"
+            placeholder="your@email.com"
+            :prefix-icon="User"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="Пароль" prop="password">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="Введіть пароль"
+            :prefix-icon="Lock"
+            show-password
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <div class="form-footer">
+            <el-checkbox v-model="loginForm.remember">
+              Запам'ятати мене
+            </el-checkbox>
+            <el-link type="primary" :underline="false">
+              Забули пароль?
+            </el-link>
+          </div>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleLogin"
+            class="login-button"
+          >
+            Увійти
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-divider>або</el-divider>
+
+      <div class="signup-link">
+        <span>Ще немає облікового запису?</span>
+        <el-link type="primary" @click="goToSignup" :underline="false">
+          Зареєструвати компанію
+        </el-link>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { User, Lock } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+const loginFormRef = ref()
+const loading = ref(false)
+
+const loginForm = reactive({
+  email: '',
+  password: '',
+  remember: false
+})
+
+const loginRules = {
+  email: [
+    { required: true, message: 'Введіть email', trigger: 'blur' },
+    { type: 'email', message: 'Введіть правильний email', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'Введіть пароль', trigger: 'blur' },
+    { min: 6, message: 'Пароль має бути мінімум 6 символів', trigger: 'blur' }
+  ]
+}
+
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+  
+  await loginFormRef.value.validate((valid) => {
+    if (valid) {
+      loading.value = true
+      
+      // DEMO MODE: Mock authentication (no backend needed)
+      setTimeout(() => {
+        // Set mock user data
+        userStore.setUser({
+          id: '1',
+          email: loginForm.email,
+          firstName: 'Демо',
+          lastName: 'Користувач'
+        })
+        
+        // Set mock token
+        userStore.setToken('demo-token-12345')
+        
+        loading.value = false
+        ElMessage.success('Успішний вхід в DEMO режимі!')
+        router.push('/dashboard')
+      }, 1000)
+    }
+  })
+}
+
+const goToSignup = () => {
+  router.push('/signup')
+}
+</script>
+
+<style scoped>
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  text-align: center;
+}
+
+.card-header h2 {
+  margin: 0 0 8px 0;
+  color: #303133;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.card-header p {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.form-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.login-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.signup-link {
+  text-align: center;
+  color: #606266;
+}
+
+.signup-link span {
+  margin-right: 8px;
+}
+</style>
