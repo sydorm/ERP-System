@@ -48,6 +48,9 @@ app.include_router(user_router, tags=["Users"])
 from app.api.product_routes import router as product_router
 app.include_router(product_router, prefix="/api/v1", tags=["Products"])
 
+from app.api.dictionary_routes import router as dictionary_router
+app.include_router(dictionary_router, prefix="/api/v1", tags=["Dictionaries"])
+
 # TODO: Include other routers here after creating them
 # from app.api.v1.api import api_router
 # app.include_router(api_router, prefix="/api/v1")

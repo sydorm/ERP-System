@@ -4,6 +4,7 @@ from .company import Company, CompanyType
 from .user import User
 from .warehouse import Warehouse
 from .product import Product
+from .dictionary import DictionaryItem
 from .counterparty import Counterparty
 from .order import Order, OrderLine, OrderStatus
 

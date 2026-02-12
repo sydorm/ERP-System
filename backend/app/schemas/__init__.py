@@ -5,6 +5,7 @@ from .company import (
     CompanyCreate, CompanyResponse, CompanyRegistrationRequest, CompanyType
 )
 from .product import ProductCreate, ProductUpdate, ProductResponse
+from .dictionary import DictionaryItemCreate, DictionaryItemUpdate, DictionaryItemResponse
 
 __all__ = [
     "UserCreate",
@@ -22,4 +23,7 @@ __all__ = [
     "ProductCreate",
     "ProductUpdate",
     "ProductResponse",
+    "DictionaryItemCreate",
+    "DictionaryItemUpdate",
+    "DictionaryItemResponse",
 ]
