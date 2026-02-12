@@ -56,6 +56,26 @@ async def create_dictionary_item(
     db.refresh(item)
     return item
 
+@router.get("/dictionaries/meta/counts", response_model=dict)
+def get_dictionary_counts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get count of items for each category
+    """
+    from sqlalchemy import func
+    
+    # This query groups by category and counts items
+    results = db.query(
+        DictionaryItem.category, 
+        func.count(DictionaryItem.id)
+    ).filter(
+        DictionaryItem.company_id == current_user.company_id
+    ).group_by(DictionaryItem.category).all()
+    
+    return {category: count for category, count in results}
+
 @router.delete("/dictionaries/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_dictionary_item(
     item_id: str,
