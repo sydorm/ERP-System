@@ -45,7 +45,7 @@ const router = createRouter({
                 {
                     path: '/inventory/nomenclature',
                     name: 'nomenclature',
-                    component: () => import('@/views/HomeView.vue') // Placeholder
+                    component: () => import('@/views/Inventory/Nomenclature.vue')
                 },
                 {
                     path: '/inventory/warehouses',
