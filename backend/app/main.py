@@ -45,6 +45,9 @@ app.include_router(auth_router, tags=["Authentication"])
 from app.api.user_routes import router as user_router
 app.include_router(user_router, tags=["Users"])
 
+from app.api.product_routes import router as product_router
+app.include_router(product_router, prefix="/api/v1", tags=["Products"])
+
 # TODO: Include other routers here after creating them
 # from app.api.v1.api import api_router
 # app.include_router(api_router, prefix="/api/v1")

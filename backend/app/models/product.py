@@ -16,16 +16,18 @@ class Product(BaseModel):
     __tablename__ = "products"
     
     # Basic Information
-    code = Column(String(100), nullable=False, index=True)
+    sku = Column(String(100), nullable=False, index=True)  # Stock Keeping Unit
     name = Column(String(500), nullable=False, index=True)
     description = Column(Text, nullable=True)
+    image_url = Column(String(500), nullable=True)
     
     # Classification
-    category = Column(String(255), nullable=True)
+    category = Column(String(255), nullable=True, index=True)
     unit_of_measure = Column(String(50), nullable=False, default="шт")  # шт, кг, м, л
     
     # Pricing
     price = Column(Numeric(15, 2), nullable=False, default=Decimal("0.00"))  # Selling price
+    currency = Column(String(3), nullable=False, default="UAH")
     cost = Column(Numeric(15, 2), nullable=True)  # Purchase cost
     
     # Status
@@ -39,4 +41,4 @@ class Product(BaseModel):
     order_lines = relationship("OrderLine", back_populates="product")
     
     def __repr__(self):
-        return f"<Product {self.code}: {self.name}>"
+        return f"<Product {self.sku}: {self.name}>"

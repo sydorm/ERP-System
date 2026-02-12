@@ -4,6 +4,7 @@ from .token import Token, TokenData
 from .company import (
     CompanyCreate, CompanyResponse, CompanyRegistrationRequest, CompanyType
 )
+from .product import ProductCreate, ProductUpdate, ProductResponse
 
 __all__ = [
     "UserCreate",
@@ -18,4 +19,7 @@ __all__ = [
     "CompanyResponse",
     "CompanyRegistrationRequest",
     "CompanyType",
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductResponse",
 ]
