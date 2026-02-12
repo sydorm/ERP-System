@@ -28,46 +28,53 @@ const router = createRouter({
                 {
                     path: '',
                     name: 'dashboard',
-                    component: () => import('@/views/DashboardHome.vue')
+                    component: () => import('@/views/DashboardHome.vue'),
+                    meta: { title: 'Головна' }
                 },
                 {
                     path: '/profile',
                     name: 'profile',
-                    component: () => import('@/views/Profile.vue')
+                    component: () => import('@/views/Profile.vue'),
+                    meta: { title: 'Профіль' }
                 },
                 {
                     path: '/settings/dictionaries',
                     name: 'dictionaries',
                     component: () => import('@/views/Settings/Dictionaries.vue'),
-                    meta: { requiresAuth: true } // Should arguably be admin only, but let's keep it simple for now
+                    meta: { requiresAuth: true, title: 'Довідники' }
                 },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',
                     name: 'nomenclature',
-                    component: () => import('@/views/Inventory/Nomenclature.vue')
+                    component: () => import('@/views/Inventory/Nomenclature.vue'),
+                    meta: { title: 'Номенклатура' }
                 },
                 {
                     path: '/inventory/warehouses',
                     name: 'warehouses',
-                    component: () => import('@/views/HomeView.vue') // Placeholder
+                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    meta: { title: 'Склади' }
                 },
                 // Sales routes
                 {
                     path: '/sales/counterparties',
                     name: 'counterparties',
-                    component: () => import('@/views/HomeView.vue') // Placeholder
+                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    meta: { title: 'Контрагенти' }
                 },
                 {
                     path: '/sales/orders',
                     name: 'sales-orders',
-                    component: () => import('@/views/HomeView.vue') // Placeholder
+                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    meta: { title: 'Замовлення (Продаж)' }
                 },
                 // Settings
                 {
                     path: '/settings/users',
                     name: 'users',
-                    component: () => import('@/views/Settings/Users.vue')
+                    component: () => import('@/views/Settings/Users.vue'),
+                    meta: { title: 'Користувачі' }
                 }
             ]
         }
