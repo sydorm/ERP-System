@@ -54,9 +54,9 @@ const router = createRouter({
                 },
                 // Settings
                 {
-                    path: '/settings',
-                    name: 'settings',
-                    component: () => import('@/views/HomeView.vue') // Placeholder
+                    path: '/settings/users',
+                    name: 'users',
+                    component: () => import('@/views/Settings/Users.vue')
                 }
             ]
         }

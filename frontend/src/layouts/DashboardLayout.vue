@@ -64,10 +64,13 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
-        <el-menu-item index="/settings">
-          <el-icon><Setting /></el-icon>
-          <template #title>Налаштування</template>
-        </el-menu-item>
+        <el-sub-menu index="settings">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>Налаштування</span>
+          </template>
+          <el-menu-item index="/settings/users">Користувачі</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
 

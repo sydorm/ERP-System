@@ -75,6 +75,7 @@ import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import api from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -101,27 +102,38 @@ const loginRules = {
 const handleLogin = async () => {
   if (!loginFormRef.value) return
   
-  await loginFormRef.value.validate((valid) => {
+  await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
       
-      // DEMO MODE: Mock authentication (no backend needed)
-      setTimeout(() => {
-        // Set mock user data
-        userStore.setUser({
-          id: '1',
+      try {
+        const response = await api.post('/auth/login', {
           email: loginForm.email,
-          firstName: 'Демо',
-          lastName: 'Користувач'
+          password: loginForm.password
         })
         
-        // Set mock token
-        userStore.setToken('demo-token-12345')
+        const { access_token } = response.data
+        userStore.setToken(access_token)
         
-        loading.value = false
-        ElMessage.success('Успішний вхід в DEMO режимі!')
+        // Get user profile
+        const profileResponse = await api.get('/auth/me')
+        userStore.setUser({
+          id: profileResponse.data.id,
+          email: profileResponse.data.email,
+          firstName: profileResponse.data.first_name,
+          lastName: profileResponse.data.last_name,
+          role: profileResponse.data.role,
+          companyId: profileResponse.data.company_id
+        })
+        
+        ElMessage.success('Успішний вхід!')
         router.push('/dashboard')
-      }, 1000)
+      } catch (error) {
+        console.error('Login error:', error)
+        ElMessage.error(error.response?.data?.detail || 'Помилка входу. Перевірте дані.')
+      } finally {
+        loading.value = false
+      }
     }
   })
 }

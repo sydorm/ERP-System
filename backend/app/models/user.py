@@ -25,6 +25,7 @@ class User(BaseModel):
     # Status & Permissions
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
+    role = Column(String(50), default="worker", nullable=False)  # admin, manager, worker
     
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)

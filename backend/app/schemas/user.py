@@ -12,6 +12,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
+    role: str = Field("worker", pattern="^(admin|manager|worker)$")
 
 
 class UserCreate(UserBase):
@@ -37,6 +38,7 @@ class UserUpdate(BaseModel):
     """Schema for updating user profile"""
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    role: Optional[str] = Field(None, pattern="^(admin|manager|worker)$")
     email: Optional[EmailStr] = None
 
 
@@ -45,6 +47,7 @@ class UserResponse(UserBase):
     id: UUID
     is_active: bool
     is_superuser: bool
+    role: str
     company_id: UUID
     created_at: datetime
     
