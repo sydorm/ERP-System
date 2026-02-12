@@ -195,10 +195,11 @@ const categories = [
     { code: 'DELIVERY_METHOD', name: 'Способи доставки', icon: Box }, // Placeholder code
     { code: 'PRODUCT_CATEGORY', name: 'Категорії товарів', icon: Box },
     { code: 'UOM', name: 'Одиниці виміру', icon: ScaleToOriginal },
+    { code: 'CURRENCY', name: 'Валюти', icon: Money }, 
     { code: 'CLIENT_SOURCE', name: 'Джерела клієнтів', icon: User }, // Placeholder
 ]
 // Import User icon dynamically if strictly needed or just use Box as fallback
-import { User } from '@element-plus/icons-vue'
+import { User, Money } from '@element-plus/icons-vue'
 
 
 // Placeholders Configuration
@@ -210,6 +211,7 @@ const categoryPlaceholders = {
     'PAYMENT_METHOD_TYPE': { name: 'Наприклад: Післяплата', code: 'post_pay', desc: 'Оплата після отримання' },
     'DELIVERY_METHOD': { name: 'Наприклад: Нова Пошта', code: 'nova_poshta', desc: 'Доставка у відділення' },
     'CLIENT_SOURCE': { name: 'Наприклад: Instagram', code: 'instagram', desc: 'Соціальні мережі' },
+    'CURRENCY': { name: 'Наприклад: Гривня', code: 'UAH', desc: 'Національна валюта' },
 }
 
 // Computed

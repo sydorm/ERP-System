@@ -181,9 +181,12 @@
                  <el-col :span="8">
                     <el-form-item label="Валюта" prop="currency">
                          <el-select v-model="productForm.currency" placeholder="Валюта">
-                            <el-option label="UAH" value="UAH" />
-                            <el-option label="USD" value="USD" />
-                            <el-option label="EUR" value="EUR" />
+                            <el-option 
+                                v-for="item in currencyOptions"
+                                :key="item.code"
+                                :label="item.code"
+                                :value="item.code"
+                            />
                         </el-select>
                     </el-form-item>
                 </el-col>
@@ -232,6 +235,7 @@ const productFormRef = ref(null)
 // Dictionaries
 const uomOptions = ref([])
 const categoryOptions = ref([])
+const currencyOptions = ref([])
 
 // Form
 const productForm = reactive({
@@ -256,12 +260,14 @@ const productRules = {
 // API Actions
 const fetchDictionaries = async () => {
     try {
-        const [uomRes, catRes] = await Promise.all([
+        const [uomRes, catRes, currRes] = await Promise.all([
             api.get('/api/v1/dictionaries/UOM'),
-            api.get('/api/v1/dictionaries/PRODUCT_CATEGORY')
+            api.get('/api/v1/dictionaries/PRODUCT_CATEGORY'),
+            api.get('/api/v1/dictionaries/CURRENCY')
         ])
         uomOptions.value = uomRes.data
         categoryOptions.value = catRes.data
+        currencyOptions.value = currRes.data
     } catch (error) {
         console.error('Failed to load dictionaries', error)
     }
