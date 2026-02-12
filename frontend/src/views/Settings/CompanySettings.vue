@@ -41,7 +41,7 @@
       <el-tabs v-model="activeTab" class="settings-tabs">
         
         <!-- MAIN INFO TAB -->
-        <el-tab-pane label="Основна інформація" name="general">
+        <el-tab-pane label="Основна інформація" name="general" lazy>
           <el-form label-position="top" class="settings-form">
             <el-row :gutter="24">
               <el-col :span="12">
@@ -108,7 +108,7 @@
         </el-tab-pane>
 
         <!-- LEGAL DETAILS TAB -->
-        <el-tab-pane label="Реквізити та Адреси" name="details">
+        <el-tab-pane label="Реквізити та Адреси" name="details" lazy>
           <el-form label-position="top" class="settings-form">
             
             <el-row :gutter="24">
@@ -162,7 +162,7 @@
         </el-tab-pane>
 
         <!-- TAXATION TAB -->
-        <el-tab-pane label="Оподаткування" name="tax">
+        <el-tab-pane label="Оподаткування" name="tax" lazy>
            <el-row :gutter="24">
              <el-col :span="14">
                 <el-form label-position="top" class="settings-form">
@@ -215,7 +215,7 @@
         </el-tab-pane>
 
         <!-- BANK ACCOUNTS TAB -->
-        <el-tab-pane label="Банківські рахунки" name="banks">
+        <el-tab-pane label="Банківські рахунки" name="banks" lazy>
           <div class="tab-actions mb-4">
              <el-button type="primary" @click="openBankModal">
                 <el-icon class="mr-2"><Plus /></el-icon> Додати рахунок
@@ -369,7 +369,13 @@ const fetchInitialData = async () => {
 
 const selectCompany = (company) => {
     selectedCompany.value = company
-    Object.assign(form, JSON.parse(JSON.stringify(company))) // deep clone
+    // Avoid deep cloning the whole object if we can just copy properties
+    // This reduces the reactivity noise
+    Object.keys(form).forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(company, key)) {
+            form[key] = company[key]
+        }
+    })
     sameAddress.value = form.legal_address === form.physical_address
 }
 
