@@ -7,9 +7,9 @@
       </div>
     </div>
 
-    <div class="dict-layout">
+    <div class="view-layout">
       <!-- Left Sidebar: Categories -->
-      <div class="dict-sidebar">
+      <div class="view-sidebar">
         <div class="sidebar-title">Довідники</div>
         <div class="category-list">
             <div 
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Main Content: Items List -->
-      <div class="dict-content">
+      <div class="view-content">
         <div class="content-header">
             <div class="content-title">
                 <h3>{{ currentCategoryName }}</h3>
@@ -690,13 +690,22 @@ onMounted(() => {
     }
 }
 
+.category-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
 .category-item:hover {
-    background: #f9fafb;
+    background: var(--el-fill-color-light);
 }
 
 .category-item.active {
-    background: #e6f7ff; /* Kimi blue tint */
-    border-left-color: #1890ff;
+    background: var(--el-color-primary-light-9);
+    border-left-color: var(--el-color-primary);
 }
 
 .cat-icon {
@@ -705,14 +714,14 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f0f2f5;
+    background: var(--el-fill-color-light);
     border-radius: 8px;
-    color: #595959;
+    color: var(--el-text-color-secondary);
     margin-right: 12px;
 }
 
 .category-item.active .cat-icon {
-    background: #1890ff;
+    background: var(--el-color-primary);
     color: white;
 }
 
@@ -723,13 +732,13 @@ onMounted(() => {
 .cat-name {
     font-size: 14px;
     font-weight: 500;
-    color: #262626;
+    color: var(--el-text-color-primary);
     margin-bottom: 2px;
 }
 
 .cat-count {
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--el-text-color-placeholder);
 }
 
 .arrow-icon {
@@ -737,16 +746,6 @@ onMounted(() => {
     color: #bfbfbf;
 }
 
-/* Main Content */
-.dict-content {
-    flex: 1;
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
 
 .content-header {
     display: flex;
@@ -860,7 +859,7 @@ onMounted(() => {
 
 /* Attribute specific */
 .attribute-item {
-    border-left: 4px solid #1890ff;
+    border-left: 4px solid var(--el-color-primary);
 }
 
 .item-icon-circle {
@@ -884,10 +883,10 @@ onMounted(() => {
 }
 
 .options-container {
-    background: #f9fafb;
+    background: var(--el-fill-color-lighter);
     padding: 12px;
     border-radius: 8px;
-    border: 1px dashed #d9d9d9;
+    border: 1px dashed var(--el-border-color);
 }
 
 .option-row {
@@ -895,10 +894,10 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
-    background: white;
+    background: var(--el-bg-color);
     padding: 6px 10px;
     border-radius: 6px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--el-border-color-light);
 }
 
 .drag-handle {
