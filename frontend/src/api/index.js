@@ -3,9 +3,12 @@ import axios from 'axios'
 // Create axios instance with base URL from environment variables or dynamic location
 let baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-// If running on a remote server (not localhost) and no env var is set, use the current hostname
-if (!import.meta.env.VITE_API_URL && typeof window !== 'undefined') {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+// FORCE logic: If we are on a remote server (not localhost), we MUST NOT use localhost for API
+if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+    // If browser is NOT at localhost, but baseURL IS localhost -> Fix it to use browser's hostname
+    if (!isLocalhost && (baseURL.includes('localhost') || baseURL.includes('127.0.0.1'))) {
         baseURL = `${window.location.protocol}//${window.location.hostname}:8000`
     }
 }
