@@ -8,6 +8,8 @@ from .dictionary import DictionaryItem
 from .counterparty import Counterparty
 from .order import Order, OrderLine, OrderStatus
 
+from .bank_account import BankAccount, Currency
+
 __all__ = [
     "Base",
     "BaseModel",
@@ -20,4 +22,5 @@ __all__ = [
     "Order",
     "OrderLine",
     "OrderStatus",
+    "BankAccount",
 ]

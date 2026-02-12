@@ -43,6 +43,12 @@ const router = createRouter({
                     component: () => import('@/views/Settings/Dictionaries.vue'),
                     meta: { requiresAuth: true, title: 'Довідники' }
                 },
+                {
+                    path: '/settings/company',
+                    name: 'company-settings',
+                    component: () => import('@/views/Settings/CompanySettings.vue'),
+                    meta: { requiresAuth: true, title: 'Організація' }
+                },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',

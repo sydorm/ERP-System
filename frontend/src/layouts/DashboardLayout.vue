@@ -70,6 +70,7 @@
             <el-icon><Setting /></el-icon>
             <span>Адміністрування</span>
           </template>
+          <el-menu-item index="/settings/company">Організація</el-menu-item>
           <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
           <el-menu-item index="/settings/users">Користувачі</el-menu-item>
         </el-sub-menu>
