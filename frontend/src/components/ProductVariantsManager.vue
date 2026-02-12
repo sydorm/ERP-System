@@ -283,10 +283,10 @@ const getOptionLabel = (val) => val.value || 'Значення'
 
 <style scoped>
 .variants-manager {
-    background: white;
+    background: var(--el-bg-color);
     padding: 20px;
     border-radius: 12px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--el-border-color-light);
 }
 
 .section-header {
@@ -294,6 +294,27 @@ const getOptionLabel = (val) => val.value || 'Значення'
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+@media (max-width: 640px) {
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .section-header .actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .section-header .actions .el-button,
+    .section-header .actions .el-dropdown {
+        width: 100%;
+    }
+    .section-header .actions .el-button {
+        justify-content: center;
+    }
 }
 
 .title-with-badge {
@@ -310,13 +331,14 @@ const getOptionLabel = (val) => val.value || 'Значення'
 .variant-uploader {
     width: 50px;
     height: 50px;
-    border: 1px dashed #d9d9d9;
+    border: 1px dashed var(--el-border-color);
     border-radius: 6px;
     cursor: pointer;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--el-fill-color-light);
 }
 
 .variant-img {
@@ -338,15 +360,16 @@ const getOptionLabel = (val) => val.value || 'Значення'
 
 .attr-gen-row {
     padding: 12px;
-    background: #f8f9fa;
+    background: var(--el-fill-color-lighter);
     border-radius: 8px;
+    border: 1px solid var(--el-border-color-extra-light);
 }
 
 .preview-section {
     padding: 16px;
-    background: #e6f7ff;
+    background: var(--el-color-primary-light-9);
     border-radius: 8px;
-    border: 1px solid #91d5ff;
+    border: 1px solid var(--el-color-primary-light-5);
 }
 
 .preview-sku {

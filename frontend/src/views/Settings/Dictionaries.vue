@@ -587,65 +587,107 @@ onMounted(() => {
     padding: 24px;
     height: 100vh;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    background: #f5f6f8; /* Kimi background */
 }
 
 .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
 }
 
 .page-header h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0 0 8px 0;
-}
-
-.text-gray {
-    color: #8c8c8c;
-    font-size: 14px;
     margin: 0;
+    font-size: 24px;
+    font-weight: 700;
 }
 
-.dict-layout {
+.view-layout {
     display: flex;
     gap: 24px;
     flex: 1;
     overflow: hidden;
 }
 
-/* Sidebar */
-.dict-sidebar {
+/* Mobile Layout */
+@media (max-width: 768px) {
+    .view-layout {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .view-sidebar {
+        width: 100% !important;
+        height: auto;
+    }
+    .page-container {
+        height: auto;
+        min-height: 100vh;
+    }
+}
+
+.view-sidebar {
     width: 280px;
-    background: white;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
     border-radius: 12px;
-    padding: 20px 0;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
 }
 
 .sidebar-title {
-    padding: 0 20px 16px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--el-text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.category-list {
+.category-menu {
+    border-right: none !important;
+}
+
+.view-content {
     flex: 1;
-    overflow-y: auto;
+    background: var(--el-bg-color);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--el-border-color-light);
 }
 
-.category-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+@media (max-width: 640px) {
+    .view-content {
+        padding: 16px;
+    }
+    .content-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .content-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+    .content-actions .el-button {
+        flex: 1;
+    }
+    .list-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .item-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
 }
 
 .category-item:hover {
@@ -739,16 +781,17 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 8px;
     margin-bottom: 12px;
-    background: white;
+    background: var(--el-fill-color-blank);
     transition: all 0.2s;
 }
 
 .list-item:hover {
-    border-color: #d9d9d9;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    border-color: var(--el-color-primary-light-5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .item-left {
@@ -776,7 +819,7 @@ onMounted(() => {
 
 .item-name {
     font-weight: 600;
-    color: #262626;
+    color: var(--el-text-color-primary);
     font-size: 15px;
     display: flex;
     align-items: center;
@@ -784,17 +827,17 @@ onMounted(() => {
 }
 
 .item-code {
-    background: #f5f5f5;
+    background: var(--el-fill-color-light);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
-    color: #8c8c8c;
+    color: var(--el-text-color-secondary);
     font-weight: normal;
 }
 
 .item-desc {
     font-size: 13px;
-    color: #8c8c8c;
+    color: var(--el-text-color-placeholder);
     margin-top: 2px;
 }
 
@@ -829,7 +872,8 @@ onMounted(() => {
     justify-content: center;
     margin-right: 16px;
     font-size: 18px;
-    color: #595959;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
 }
 
 .bg-gray-light { background: #f0f2f5; }
