@@ -24,7 +24,7 @@
                 </div>
                 <div class="cat-info">
                     <div class="cat-name">{{ cat.name }}</div>
-                    <div class="cat-count">7 значень</div>
+                    <div class="cat-count">{{ counts[cat.code] || 0 }} значень</div>
                 </div>
                 <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
@@ -154,6 +154,7 @@ import api from '@/api'
 // State
 const activeCategory = ref('PRODUCT_CATEGORY')
 const localItems = ref([])
+const counts = ref({})
 const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
@@ -216,6 +217,15 @@ const filteredItems = computed(() => {
 })
 
 // Actions
+const fetchCounts = async () => {
+    try {
+        const response = await api.get('/api/v1/dictionaries/meta/counts')
+        counts.value = response.data
+    } catch (error) {
+        console.error('Failed to load counts')
+    }
+}
+
 const fetchItems = async () => {
     loading.value = true
     try {
@@ -282,6 +292,7 @@ const submitForm = async () => {
                 ElMessage.success(isEditMode.value ? 'Зміни збережено' : 'Запис додано')
                 dialogVisible.value = false
                 fetchItems()
+                fetchCounts()
             } catch (error) {
                 ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
             } finally {
@@ -301,6 +312,7 @@ const handleDelete = (row) => {
             await api.delete(`/api/v1/dictionaries/${row.id}`)
             ElMessage.success('Видалено')
             fetchItems()
+            fetchCounts()
         } catch (error) {
             ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
         }
@@ -309,6 +321,7 @@ const handleDelete = (row) => {
 
 onMounted(() => {
     fetchItems()
+    fetchCounts()
 })
 </script>
 
