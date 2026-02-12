@@ -26,9 +26,12 @@
           @input="handleSearch"
         />
         <el-select v-model="filterCategory" placeholder="Категорія" clearable class="filter-select" @change="fetchProducts">
-          <el-option label="Листові матеріали" value="sheets" />
-          <el-option label="Клей" value="glue" />
-          <el-option label="Фурнітура" value="hardware" />
+          <el-option 
+            v-for="item in categoryOptions"
+            :key="item.code"
+            :label="item.name" 
+            :value="item.code" 
+          />
         </el-select>
         <el-button :icon="Refresh" circle @click="refreshData" />
       </div>
@@ -66,7 +69,7 @@
         
         <el-table-column prop="category" label="Категорія" width="150">
             <template #default="scope">
-                <el-tag size="small" type="info">{{ scope.row.category || 'Без категорії' }}</el-tag>
+                <el-tag size="small" type="info">{{ getCategoryName(scope.row.category) }}</el-tag>
             </template>
         </el-table-column>
         
@@ -127,9 +130,12 @@
                 <el-col :span="12">
                     <el-form-item label="Категорія" prop="category">
                          <el-select v-model="productForm.category" placeholder="Оберіть категорію" style="width: 100%">
-                            <el-option label="Листові матеріали" value="sheets" />
-                            <el-option label="Клей" value="glue" />
-                            <el-option label="Фурнітура" value="hardware" />
+                            <el-option 
+                                v-for="item in categoryOptions"
+                                :key="item.code"
+                                :label="item.name" 
+                                :value="item.code" 
+                            />
                          </el-select>
                     </el-form-item>
                 </el-col>
@@ -143,12 +149,12 @@
                 <el-col :span="8">
                      <el-form-item label="Од. виміру" prop="unit_of_measure">
                         <el-select v-model="productForm.unit_of_measure" placeholder="Од.">
-                            <el-option label="шт" value="шт" />
-                            <el-option label="м2" value="м2" />
-                            <el-option label="м3" value="м3" />
-                            <el-option label="кг" value="кг" />
-                            <el-option label="л" value="л" />
-                            <el-option label="уп" value="уп" />
+                            <el-option 
+                                v-for="item in uomOptions"
+                                :key="item.code"
+                                :label="item.name" 
+                                :value="item.code" 
+                            />
                         </el-select>
                     </el-form-item>
                 </el-col>
@@ -229,7 +235,23 @@ const productRules = {
     price: [{ required: true, message: 'Введіть ціну', trigger: 'blur' }],
 }
 
+const uomOptions = ref([])
+const categoryOptions = ref([])
+
 // API Actions
+const fetchDictionaries = async () => {
+    try {
+        const [uomRes, catRes] = await Promise.all([
+            api.get('/api/v1/dictionaries/UOM'),
+            api.get('/api/v1/dictionaries/PRODUCT_CATEGORY')
+        ])
+        uomOptions.value = uomRes.data
+        categoryOptions.value = catRes.data
+    } catch (error) {
+        console.error('Failed to load dictionaries', error)
+    }
+}
+
 const fetchProducts = async () => {
     loading.value = true
     try {
@@ -241,13 +263,9 @@ const fetchProducts = async () => {
         }
         const response = await api.get('/api/v1/products', { params })
         products.value = response.data
-        // Note: API currently returns list, not {items, total}. 
-        // We might need to update API to return total for pagination.
-        // For now assume list length is total or handled simply.
-        total.value = 100 // Mock total for now as API doesn't return count yet
+        total.value = 100 // Mock total
     } catch (error) {
         ElMessage.error('Помилка завантаження товарів')
-        console.error(error)
     } finally {
         loading.value = false
     }
@@ -307,7 +325,7 @@ const openAddModal = () => {
         sku: '',
         name: '',
         category: '',
-        unit_of_measure: 'шт',
+         unit_of_measure: uomOptions.value.length > 0 ? uomOptions.value[0].code : 'шт',
         price: 0,
         currency: 'UAH',
         description: '',
@@ -326,13 +344,17 @@ const formatCurrency = (value, currency) => {
     return new Intl.NumberFormat('uk-UA', { style: 'currency', currency: currency || 'UAH' }).format(value)
 }
 
+const getCategoryName = (code) => {
+    if (!code) return 'Без категорії'
+    const category = categoryOptions.value.find(c => c.code === code)
+    return category ? category.name : code
+}
+
 const getStockClass = (stock) => {
     return stock < 10 ? 'text-danger' : 'text-success'
 }
 
 const handleSearch = () => {
-    // Debounce manual implementation since lodash might be missing
-    // Actually standard input debounce is better but simple wait is ok
     setTimeout(() => {
         fetchProducts()
     }, 500)
@@ -345,9 +367,11 @@ const handlePageChange = (page) => {
 
 const refreshData = () => {
     fetchProducts()
+    fetchDictionaries()
 }
 
 onMounted(() => {
+    fetchDictionaries()
     fetchProducts()
 })
 </script>

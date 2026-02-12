@@ -109,7 +109,11 @@ async def register_company(reg_data: CompanyRegistrationRequest, db: Session = D
         )
         db.add(new_user)
         
-        # 5. Create Default Warehouse
+        # 5. Seed default dictionaries
+        from app.services.dictionary_service import seed_company_dictionaries
+        seed_company_dictionaries(db, new_company.id)
+
+        # 6. Create Default Warehouse
         new_warehouse = Warehouse(
             name=reg_data.settings.warehouseName,
             is_default=True,
