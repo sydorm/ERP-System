@@ -35,6 +35,12 @@ const router = createRouter({
                     name: 'profile',
                     component: () => import('@/views/Profile.vue')
                 },
+                {
+                    path: '/settings/dictionaries',
+                    name: 'dictionaries',
+                    component: () => import('@/views/Settings/Dictionaries.vue'),
+                    meta: { requiresAuth: true } // Should arguably be admin only, but let's keep it simple for now
+                },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',

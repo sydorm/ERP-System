@@ -64,6 +64,16 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
+        <!-- Administration Section -->
+        <el-sub-menu index="admin" v-if="userStore.user?.role === 'admin'">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>Адміністрування</span>
+          </template>
+          <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
+          <el-menu-item index="/settings/users">Користувачі</el-menu-item>
+        </el-sub-menu>
+
         <!-- Settings submenu removed as Users moved to profile dropdown -->
       </el-menu>
     </el-aside>
