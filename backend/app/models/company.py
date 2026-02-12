@@ -59,11 +59,18 @@ class Company(BaseModel):
     vat_payer = Column(Boolean, default=False)             # VAT Payer / Платник ПДВ
     vat_number = Column(String(50), nullable=True)         # VAT Number / Номер свідоцтва ПДВ (Optional, usually IPN is used)
     
-    # Status
+    # "Official" Tax rates (can be updated from external service)
+    tax_rate_single = Column(String(20), nullable=True)    # Single Tax rate / Ставка єдиного податку (% або сума)
+    tax_amount_esv = Column(String(20), nullable=True)     # ESV amount / Сума ЄСВ
+    military_tax_rate = Column(String(20), nullable=True)  # Military tax / Військовий збір
+    last_tax_update = Column(String(50), nullable=True)    # Timestamp of last official rate fetch
+    
+    # Status & Selection
     is_active = Column(Boolean, default=True, nullable=False)
+    is_default = Column(Boolean, default=False, nullable=False) # Default company for current user
     
     # Relationships
-    users = relationship("User", back_populates="company", cascade="all, delete-orphan")
+    users = relationship("User", back_populates="company") # Note: To strictly support multi-company, many-to-many is better, but this works for simple switching.
     warehouses = relationship("Warehouse", back_populates="company", cascade="all, delete-orphan")
     products = relationship("Product", back_populates="company", cascade="all, delete-orphan")
     counterparties = relationship("Counterparty", back_populates="company", cascade="all, delete-orphan")
@@ -71,4 +78,4 @@ class Company(BaseModel):
     bank_accounts = relationship("BankAccount", back_populates="company", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Company {self.name} ({self.company_type})>"
+        return f"<Company {self.name} ({self.company_type}){' [DEFAULT]' if self.is_default else ''}>"

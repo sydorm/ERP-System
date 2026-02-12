@@ -2,17 +2,42 @@
   <div class="company-settings-page">
     <div class="page-header">
       <div class="header-content">
-        <h1>Налаштування Організації</h1>
-        <p class="subtitle">Керування реквізитами та налаштуваннями вашої компанії</p>
+        <h1>Керування організаціями</h1>
+        <p class="subtitle">Налаштування юридичних осіб (ФОП/ТОВ) та податкових ставок</p>
       </div>
       <div class="header-actions">
-        <el-button type="primary" :loading="saving" @click="saveSettings">
+        <el-button type="success" @click="createNewCompany">
+          <el-icon class="mr-2"><Plus /></el-icon> Додати організацію
+        </el-button>
+        <el-button type="primary" :loading="saving" @click="saveSettings" v-if="selectedCompany">
           <el-icon class="mr-2"><Check /></el-icon> Зберегти зміни
         </el-button>
       </div>
     </div>
 
-    <el-card class="settings-card" v-loading="loading">
+    <!-- ORGANIZATIONS LIST -->
+    <div class="companies-grid mb-6">
+       <el-card 
+         v-for="company in companies" 
+         :key="company.id" 
+         :class="['company-card', { active: selectedCompany?.id === company.id }]"
+         @click="selectCompany(company)"
+       >
+         <div class="card-status">
+            <el-tag v-if="company.is_default" type="success" effect="dark" size="small">Основна</el-tag>
+         </div>
+         <div class="card-body">
+            <h3>{{ company.name }}</h3>
+            <p class="type-tag">{{ company.company_type }} • {{ company.tax_group }}</p>
+            <p class="edrpou">ЄДРПОУ: {{ company.edrpou }}</p>
+         </div>
+         <div class="card-footer">
+            <el-button v-if="!company.is_default" size="small" link @click.stop="makeDefault(company.id)">Зробити основною</el-button>
+         </div>
+       </el-card>
+    </div>
+
+    <el-card class="settings-card" v-loading="loading" v-if="selectedCompany">
       <el-tabs v-model="activeTab" class="settings-tabs">
         
         <!-- MAIN INFO TAB -->
@@ -95,7 +120,6 @@
                         <el-icon class="mr-1"><MagicStick /></el-icon> Автозаповнення
                       </el-button>
                    </div>
-                   <div class="form-tip">Натисніть "Автозаповнення", щоб отримати дані з відкритих реєстрів</div>
                 </el-form-item>
               </el-col>
                <el-col :span="12">
@@ -139,24 +163,55 @@
 
         <!-- TAXATION TAB -->
         <el-tab-pane label="Оподаткування" name="tax">
-           <el-form label-position="top" class="settings-form">
-              <el-form-item label="Система оподаткування">
-                  <el-select v-model="form.tax_group" placeholder="Оберіть групу">
-                    <el-option label="1 група (ФОП)" value="GROUP_1" />
-                    <el-option label="2 група (ФОП)" value="GROUP_2" />
-                    <el-option label="3 група (ФОП/ТОВ) - 5%" value="GROUP_3" />
-                    <el-option label="Загальна система" value="GENERAL" />
-                  </el-select>
-              </el-form-item>
+           <el-row :gutter="24">
+             <el-col :span="14">
+                <el-form label-position="top" class="settings-form">
+                  <el-form-item label="Система оподаткування">
+                      <el-select v-model="form.tax_group" placeholder="Оберіть групу">
+                        <el-option label="1 група (ФОП)" value="GROUP_1" />
+                        <el-option label="2 група (ФОП)" value="GROUP_2" />
+                        <el-option label="3 група (ФОП/ТОВ) - 5%" value="GROUP_3" />
+                        <el-option label="Загальна система" value="GENERAL" />
+                      </el-select>
+                  </el-form-item>
 
-              <el-form-item>
-                 <el-checkbox v-model="form.vat_payer" border>Платник ПДВ</el-checkbox>
-              </el-form-item>
+                  <el-form-item>
+                    <el-checkbox v-model="form.vat_payer" border>Платник ПДВ</el-checkbox>
+                  </el-form-item>
 
-              <el-form-item label="Індивідуальний податковий номер (ІПН Платиника ПДВ)" v-if="form.vat_payer">
-                  <el-input v-model="form.ipn" placeholder="12 цифр" />
-              </el-form-item>
-           </el-form>
+                  <el-form-item label="Індивідуальний податковий номер (ІПН)" v-if="form.vat_payer">
+                      <el-input v-model="form.ipn" placeholder="12 цифр" />
+                  </el-form-item>
+                </el-form>
+             </el-col>
+
+             <el-col :span="10">
+                <div class="official-tax-widget">
+                   <h4>📊 Офіційні ставки (Дані ДПС)</h4>
+                   <div class="tax-info-card">
+                      <div class="tax-item">
+                         <span>ЄСВ (щомісячно):</span>
+                         <strong>{{ form.tax_amount_esv || '—' }} грн</strong>
+                      </div>
+                      <div class="tax-item">
+                         <span>Єдиний податок:</span>
+                         <strong>{{ form.tax_rate_single || '—' }}</strong>
+                      </div>
+                      <div class="tax-item">
+                         <span>Військовий збір:</span>
+                         <strong>{{ form.military_tax_rate || '—' }}</strong>
+                      </div>
+                      <el-divider />
+                      <div class="update-info">
+                         <span v-if="form.last_tax_update">Оновлено: {{ form.last_tax_update }}</span>
+                         <el-button type="primary" link @click="fetchOfficialRates" :loading="taxUpdateLoading">
+                            Оновити з реєстрів
+                         </el-button>
+                      </div>
+                   </div>
+                </div>
+             </el-col>
+           </el-row>
         </el-tab-pane>
 
         <!-- BANK ACCOUNTS TAB -->
@@ -188,12 +243,12 @@
       </el-tabs>
     </el-card>
 
+    <div v-else class="empty-selection">
+       <el-empty description="Оберіть організацію для налаштування або додайте нову" />
+    </div>
+
     <!-- BANK ACCOUNT MODAL -->
-    <el-dialog
-      v-model="bankModalVisible"
-      title="Банківський рахунок"
-      width="500px"
-    >
+    <el-dialog v-model="bankModalVisible" title="Банківський рахунок" width="500px">
       <el-form label-position="top">
         <el-form-item label="IBAN Рахунок">
            <el-input v-model="bankForm.iban" placeholder="UA..." @input="handleIbanInput" />
@@ -237,15 +292,26 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Check, MagicStick, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getCompanySettings, updateCompanySettings, fetchEdrpouData } from '@/api/companyMock'
+import { 
+  getCompanies, 
+  updateCompanySettings, 
+  fetchEdrpouData, 
+  createCompany, 
+  setDefaultCompany,
+  fetchOfficialTaxRates 
+} from '@/api/companyMock'
 
 // State
 const loading = ref(false)
 const saving = ref(false)
 const autofillLoading = ref(false)
+const taxUpdateLoading = ref(false)
 const activeTab = ref('general')
 const bankModalVisible = ref(false)
 const sameAddress = ref(true)
+
+const companies = ref([])
+const selectedCompany = ref(null)
 
 const form = reactive({
   id: null,
@@ -265,6 +331,10 @@ const form = reactive({
   physical_address: '',
   tax_group: '',
   vat_payer: false,
+  tax_rate_single: '',
+  tax_amount_esv: '',
+  military_tax_rate: '',
+  last_tax_update: '',
   bank_accounts: []
 })
 
@@ -279,24 +349,40 @@ const bankForm = reactive({
 
 // Lifecycle
 onMounted(async () => {
+    fetchInitialData()
+})
+
+const fetchInitialData = async () => {
   loading.value = true
   try {
-    const data = await getCompanySettings()
-    Object.assign(form, data)
-    sameAddress.value = form.legal_address === form.physical_address
+    const data = await getCompanies()
+    companies.value = data
+    if (data.length > 0) {
+        selectCompany(data.find(c => c.is_default) || data[0])
+    }
   } catch (e) {
-    ElMessage.error('Не вдалося завантажити дані компанії')
+    ElMessage.error('Не вдалося завантажити дані компаній')
   } finally {
     loading.value = false
   }
-})
+}
+
+const selectCompany = (company) => {
+    selectedCompany.value = company
+    Object.assign(form, JSON.parse(JSON.stringify(company))) // deep clone
+    sameAddress.value = form.legal_address === form.physical_address
+}
 
 // Methods
 const saveSettings = async () => {
   saving.value = true
   try {
-    await updateCompanySettings(form)
-    ElMessage.success('Налаштування збережено успішно')
+    const updated = await updateCompanySettings(form)
+    // Update local list
+    const idx = companies.value.findIndex(c => c.id === updated.id)
+    if (idx !== -1) companies.value[idx] = updated
+    
+    ElMessage.success('Налаштування збережено')
   } catch (e) {
     ElMessage.error('Помилка при збереженні')
   } finally {
@@ -304,23 +390,53 @@ const saveSettings = async () => {
   }
 }
 
-const handleTypeChange = (val) => {
-    if (val === 'FOP') {
-        form.director_position = 'ФОП'
-    } else {
-        form.director_position = 'Директор'
+const createNewCompany = async () => {
+    const fresh = { name: 'Нова організація', company_type: 'FOP', bank_accounts: [] }
+    try {
+        const created = await createCompany(fresh)
+        companies.value.push(created)
+        selectCompany(created)
+        ElMessage.success('Нову організацію створено')
+    } catch (e) {
+        ElMessage.error('Помилка створення')
     }
 }
 
-const handleSameAddress = (val) => {
-    if (val) {
-        form.physical_address = form.legal_address
+const makeDefault = async (id) => {
+    try {
+        await setDefaultCompany(id)
+        companies.value.forEach(c => c.is_default = (c.id === id))
+        ElMessage.success('Фірму встановлено за замовчуванням')
+    } catch (e) {
+        ElMessage.error('Помилка')
     }
+}
+
+const fetchOfficialRates = async () => {
+    if (!form.id) return
+    taxUpdateLoading.value = true
+    try {
+        const rates = await fetchOfficialTaxRates(form.id)
+        Object.assign(form, rates)
+        ElMessage.success('Офіційні ставки оновлено')
+    } catch (e) {
+        ElMessage.error('Помилка оновлення даних ДПС')
+    } finally {
+        taxUpdateLoading.value = false
+    }
+}
+
+const handleTypeChange = (val) => {
+    form.director_position = val === 'FOP' ? 'ФОП' : 'Директор'
+}
+
+const handleSameAddress = (val) => {
+    if (val) form.physical_address = form.legal_address
 }
 
 const autofillByEdrpou = async () => {
     if (!form.edrpou || form.edrpou.length < 8) {
-        ElMessage.warning('Введіть коректний код ЄДРПОУ (8 цифр)')
+        ElMessage.warning('Введіть коректний код ЄДРПОУ/РНОКПП')
         return
     }
     
@@ -334,12 +450,10 @@ const autofillByEdrpou = async () => {
             if (sameAddress.value) form.physical_address = data.address
             form.director_name = data.director
             form.kved = data.kved
-            ElMessage.success('Дані знайдено та заповнено!')
-        } else {
-             ElMessage.info('Дані не знайдено в відкритих джерелах (Mock)')
+            ElMessage.success('Дані заповнено!')
         }
     } catch (e) {
-        ElMessage.error('Помилка пошуку даних')
+        ElMessage.error('Помилка пошуку')
     } finally {
         autofillLoading.value = false
     }
@@ -347,9 +461,7 @@ const autofillByEdrpou = async () => {
 
 // Bank Account Logic
 const openBankModal = () => {
-    Object.assign(bankForm, {
-        iban: '', bank_name: '', mfo: '', currency: 'UAH', description: '', is_primary: false
-    })
+    Object.assign(bankForm, { iban: '', bank_name: '', mfo: '', currency: 'UAH', description: '', is_primary: false })
     bankModalVisible.value = true
 }
 
@@ -363,28 +475,22 @@ const deleteBank = (index) => {
 }
 
 const handleIbanInput = (val) => {
-    // Basic Ukraine IBAN parser (Mock logic based on MFO in IBAN)
-    // UA + 2 check + 6 MFO + 19 Account
     if (val.length >= 10 && val.toUpperCase().startsWith('UA')) {
         const mfo = val.substring(4, 10)
         bankForm.mfo = mfo
-        if (mfo === '305299') bankForm.bank_name = 'ПриватБанк'
-        else if (mfo === '322001') bankForm.bank_name = 'Універсал Банк (Monobank)'
-        else if (mfo === '300023') bankForm.bank_name = 'KredoBank'
-        else bankForm.bank_name = 'Інший Банк'
+        const banks = { '305299': 'ПриватБанк', '322001': 'Monobank', '300023': 'KredoBank' }
+        bankForm.bank_name = banks[mfo] || 'Інший Банк'
     }
 }
 
 const saveBankAccount = () => {
     if (!bankForm.iban) return
+    if (bankForm.is_primary) form.bank_accounts.forEach(b => b.is_primary = false)
     
-    // Check duplication mock
-    const newIdx = form.bank_accounts.length
-    if (bankForm.is_primary) {
-        form.bank_accounts.forEach(b => b.is_primary = false)
-    }
+    const existingIdx = form.bank_accounts.findIndex(b => b.iban === bankForm.iban)
+    if (existingIdx !== -1) form.bank_accounts[existingIdx] = { ...bankForm }
+    else form.bank_accounts.push({ ...bankForm, id: Date.now() })
     
-    form.bank_accounts.push({ ...bankForm, id: Date.now() })
     bankModalVisible.value = false
 }
 </script>
@@ -405,6 +511,78 @@ const saveBankAccount = () => {
 .subtitle {
     color: #909399;
     margin: 4px 0 0;
+}
+
+.companies-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.company-card {
+    width: 280px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.company-card:hover {
+    transform: translateY(-4px);
+}
+
+.company-card.active {
+    border-color: #409eff;
+    background-color: #f0f7ff;
+}
+
+.card-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.company-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.type-tag {
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 4px;
+}
+
+.edrpou {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.official-tax-widget {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.tax-info-card {
+    margin-top: 16px;
+}
+
+.tax-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.update-info {
+    font-size: 12px;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
 }
 
 .settings-card {

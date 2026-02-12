@@ -44,17 +44,29 @@ export const updateCompanySettings = async (data) => {
     return companyData;
 }
 
-export const fetchEdrpouData = async (code) => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    // Mock OpenDataBot response
-    if (code === '12345678') {
-        return {
-            name: 'ТОВ "Рога і Копита"',
-            full_name: 'Товариство з обмеженою відповідальністю "Рога і Копита"',
-            address: 'м. Київ, вул. Хрещатик, 1',
-            director: 'Іванов Іван Іванович',
-            kved: '62.01'
-        }
-    }
-    return null;
+export const getCompanies = async () => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return [companyData];
+}
+
+export const createCompany = async (data) => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const newCompany = { ...companyData, ...data, id: Date.now().toString(), is_default: false };
+    return newCompany;
+}
+
+export const setDefaultCompany = async (id) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    companyData.is_default = (companyData.id === id);
+    return companyData;
+}
+
+export const fetchOfficialTaxRates = async (id) => {
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    return {
+        tax_amount_esv: "1760.00",
+        tax_rate_single: "5%",
+        military_tax_rate: "5%",
+        last_tax_update: new Date().toLocaleString()
+    };
 }

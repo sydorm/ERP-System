@@ -43,11 +43,21 @@ class CompanyBase(BaseModel):
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
     
-    # Tax
+    # Tax Settings
     company_type: CompanyType = CompanyType.FOP
     tax_group: Optional[TaxGroup] = None
     vat_payer: bool = False
     vat_number: Optional[str] = None
+    
+    # "Official" Tax rates
+    tax_rate_single: Optional[str] = None
+    tax_amount_esv: Optional[str] = None
+    military_tax_rate: Optional[str] = None
+    last_tax_update: Optional[str] = None
+    
+    # Status & Selection
+    is_active: bool = True
+    is_default: bool = False
 
 class CompanyCreate(CompanyBase):
     pass
