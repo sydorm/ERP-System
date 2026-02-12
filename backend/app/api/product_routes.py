@@ -5,6 +5,7 @@ from sqlalchemy import or_
 
 from app.db.session import get_db
 from app.models import Product, User
+from app.models.variant import ProductVariant, VariantValue
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.api.dependencies import get_current_active_user
 
@@ -60,12 +61,26 @@ async def create_product(
             detail=f"Product with SKU '{product_in.sku}' already exists"
         )
         
+    product_data = product_in.dict(exclude={"variants"})
     product = Product(
-        **product_in.dict(),
+        **product_data,
         company_id=current_user.company_id
     )
     
     db.add(product)
+    db.flush() # Get product ID
+    
+    if product_in.variants:
+        for var_in in product_in.variants:
+            var_data = var_in.dict(exclude={"values"})
+            db_variant = ProductVariant(**var_data, product_id=product.id)
+            db.add(db_variant)
+            db.flush()
+            
+            for val_in in var_in.values:
+                db_val = VariantValue(**val_in.dict(), variant_id=db_variant.id)
+                db.add(db_val)
+                
     db.commit()
     db.refresh(product)
     return product
@@ -104,10 +119,26 @@ async def update_product(
                 detail=f"Product with SKU '{product_in.sku}' already exists"
             )
 
-    update_data = product_in.dict(exclude_unset=True)
+    update_data = product_in.dict(exclude_unset=True, exclude={"variants"})
     for field, value in update_data.items():
         setattr(product, field, value)
         
+    if product_in.variants is not None:
+        # Simple sync: remove old variants and add new ones
+        # In production, we'd match by ID to preserve history
+        db.query(ProductVariant).filter(ProductVariant.product_id == product.id).delete()
+        
+        for var_in in product_in.variants:
+            var_data = var_in.dict(exclude={"values"})
+            db_variant = ProductVariant(**var_data, product_id=product.id)
+            db.add(db_variant)
+            db.flush()
+            
+            for val_in in var_in.values:
+                val_data = val_in.dict()
+                db_val = VariantValue(**val_data, variant_id=db_variant.id)
+                db.add(db_val)
+
     db.commit()
     db.refresh(product)
     return product

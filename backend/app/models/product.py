@@ -38,6 +38,7 @@ class Product(BaseModel):
     
     # Relationships
     company = relationship("Company", back_populates="products")
+    variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     order_lines = relationship("OrderLine", back_populates="product")
     
     def __repr__(self):

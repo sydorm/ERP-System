@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID
+from .variant import ProductVariantCreate, ProductVariantResponse
 
 class ProductBase(BaseModel):
     """Base Product schema"""
@@ -18,7 +19,7 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     """Schema for creating a product"""
-    pass
+    variants: Optional[List[ProductVariantCreate]] = None
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product"""
@@ -32,11 +33,13 @@ class ProductUpdate(BaseModel):
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: Optional[bool] = None
+    variants: Optional[List[ProductVariantCreate]] = None
 
 class ProductResponse(ProductBase):
     """Schema for product response"""
     id: UUID
     company_id: UUID
+    variants: List[ProductVariantResponse] = []
 
     class Config:
         from_attributes = True

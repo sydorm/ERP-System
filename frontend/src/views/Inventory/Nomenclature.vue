@@ -133,72 +133,75 @@
       </el-main>
     </el-container>
 
-    <!-- Add/Edit Modal (Unchanged logic, just keeping structure) -->
-    <el-dialog v-model="dialogVisible" :title="isEditMode ? 'Редагувати товар' : 'Додати товар'" width="600px">
-        <el-form ref="productFormRef" :model="productForm" :rules="productRules" label-width="120px" label-position="top">
-            <el-row :gutter="20">
-                <el-col :span="12">
-                     <el-form-item label="Артикул (SKU)" prop="sku">
-                        <el-input v-model="productForm.sku" placeholder="Напр. WOOD-001" />
-                    </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                    <el-form-item label="Категорія" prop="category">
-                         <el-select v-model="productForm.category" placeholder="Оберіть категорію" style="width: 100%">
-                            <el-option 
-                                v-for="item in categoryOptions"
-                                :key="item.code"
-                                :label="item.name" 
-                                :value="item.code" 
-                            />
-                         </el-select>
-                    </el-form-item>
-                </el-col>
-            </el-row>
+    <!-- Add/Edit Modal (Updated with Tabs and Variants) -->
+    <el-dialog v-model="dialogVisible" :title="isEditMode ? 'Редагувати товар' : 'Додати товар'" width="800px">
+        <el-tabs v-model="activeTab">
+            <el-tab-pane label="Загальна інформація" name="general">
+                <el-form ref="productFormRef" :model="productForm" :rules="productRules" label-width="120px" label-position="top">
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                             <el-form-item label="Артикул (SKU)" prop="sku">
+                                <el-input v-model="productForm.sku" placeholder="Напр. WOOD-001" />
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-form-item label="Категорія" prop="category">
+                                 <el-select v-model="productForm.category" placeholder="Оберіть категорію" style="width: 100%" @change="handleCategoryChange">
+                                    <el-option 
+                                        v-for="item in categoryOptions"
+                                        :key="item.code"
+                                        :label="item.name" 
+                                        :value="item.code" 
+                                    />
+                                 </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
 
-            <el-form-item label="Назва товару" prop="name">
-                <el-input v-model="productForm.name" placeholder="Введіть назву товару" />
-            </el-form-item>
-            
-            <el-row :gutter="20">
-                <el-col :span="8">
-                     <el-form-item label="Од. виміру" prop="unit_of_measure">
-                        <el-select v-model="productForm.unit_of_measure" placeholder="Од.">
-                            <el-option 
-                                v-for="item in uomOptions"
-                                :key="item.code"
-                                :label="item.name" 
-                                :value="item.code" 
-                            />
-                        </el-select>
+                    <el-form-item label="Назва товару" prop="name">
+                        <el-input v-model="productForm.name" placeholder="Введіть назву товару" />
                     </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                    <el-form-item label="Ціна продажу" prop="price">
-                        <el-input-number v-model="productForm.price" :precision="2" :step="0.01" :min="0" style="width: 100%" />
-                    </el-form-item>
-                </el-col>
-                 <el-col :span="8">
-                    <el-form-item label="Валюта" prop="currency">
-                         <el-select v-model="productForm.currency" placeholder="Валюта">
-                            <el-option 
-                                v-for="item in currencyOptions"
-                                :key="item.code"
-                                :label="item.code"
-                                :value="item.code"
-                            />
-                        </el-select>
-                    </el-form-item>
-                </el-col>
-            </el-row>
+                    
+                    <el-row :gutter="20">
+                        <el-col :span="8">
+                             <el-form-item label="Од. виміру" prop="unit_of_measure">
+                                <el-select v-model="productForm.unit_of_measure" placeholder="Од.">
+                                    <el-option v-for="item in uomOptions" :key="item.code" :label="item.name" :value="item.code" />
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-form-item label="Ціна продажу" prop="price">
+                                <el-input-number v-model="productForm.price" :precision="2" :step="100" :min="0" style="width: 100%" />
+                            </el-form-item>
+                        </el-col>
+                         <el-col :span="8">
+                            <el-form-item label="Валюта" prop="currency">
+                                 <el-select v-model="productForm.currency" placeholder="Валюта">
+                                    <el-option v-for="item in currencyOptions" :key="item.code" :label="item.code" :value="item.code" />
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
 
-            <el-form-item label="Опис" prop="description">
-                <el-input v-model="productForm.description" type="textarea" rows="3" />
-            </el-form-item>
-             <el-form-item label="Посилання на фото" prop="image_url">
-                <el-input v-model="productForm.image_url" placeholder="https://example.com/image.jpg" />
-            </el-form-item>
-        </el-form>
+                    <el-form-item label="Опис" prop="description">
+                        <el-input v-model="productForm.description" type="textarea" rows="3" />
+                    </el-form-item>
+                </el-form>
+            </el-tab-pane>
+
+            <el-tab-pane label="Характеристики та Варіанти" name="variants">
+                <ProductVariantsManager 
+                    v-if="productForm.category"
+                    :category-attributes="currentCategoryAttributes"
+                    :product-code="productForm.sku"
+                    :initial-variants="productForm.variants"
+                    @update:variants="(val) => productForm.variants = val"
+                />
+                <el-alert v-else title="Спершу оберіть категорію товару" type="warning" show-icon :closable="false" />
+            </el-tab-pane>
+        </el-tabs>
+
         <template #footer>
             <span class="dialog-footer">
                 <el-button @click="dialogVisible = false">Скасувати</el-button>
@@ -212,21 +215,22 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
 import { Plus, Search, Edit, Delete, Picture, Menu, Folder, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
 
 // State
+const activeTab = ref('general')
 const loading = ref(false)
 const submitting = ref(false)
 const products = ref([])
 const total = ref(0)
 const skip = ref(0)
-const limit = ref(20) // Increased limit for desktop
+const limit = ref(20)
 
 const searchQuery = ref('')
-const filterCategory = ref('') // '' means all
+const filterCategory = ref('')
 
 const dialogVisible = ref(false)
 const isEditMode = ref(false)
@@ -236,6 +240,7 @@ const productFormRef = ref(null)
 const uomOptions = ref([])
 const categoryOptions = ref([])
 const currencyOptions = ref([])
+const currentCategoryAttributes = ref([])
 
 // Form
 const productForm = reactive({
@@ -247,7 +252,8 @@ const productForm = reactive({
     price: 0,
     currency: 'UAH',
     description: '',
-    image_url: ''
+    image_url: '',
+    variants: []
 })
 
 const productRules = {
@@ -300,11 +306,14 @@ const submitProduct = async () => {
         if (valid) {
             submitting.value = true
             try {
+                // Ensure variants data is properly formatted (it should be ref'd correctly)
+                const payload = { ...productForm }
+                
                 if (isEditMode.value) {
-                    await api.put(`/api/v1/products/${productForm.id}`, productForm)
+                    await api.put(`/api/v1/products/${productForm.id}`, payload)
                     ElMessage.success('Товар оновлено')
                 } else {
-                    await api.post('/api/v1/products', productForm)
+                    await api.post('/api/v1/products', payload)
                     ElMessage.success('Товар створено')
                 }
                 dialogVisible.value = false
@@ -358,25 +367,49 @@ const handlePageChange = (page) => {
     fetchProducts()
 }
 
+const handleCategoryChange = async (val) => {
+    if (!val) {
+        currentCategoryAttributes.value = []
+        return
+    }
+    await fetchCategoryAttributes(val)
+}
+
+const fetchCategoryAttributes = async (categoryCode) => {
+    try {
+        const response = await api.get(`/api/v1/attributes/category/${categoryCode}`)
+        // The API returns links, we need to extract attributes
+        currentCategoryAttributes.value = response.data.map(link => link.attribute)
+    } catch (e) {
+        currentCategoryAttributes.value = []
+    }
+}
+
 const openAddModal = () => {
     isEditMode.value = false
+    activeTab.value = 'general'
     Object.assign(productForm, {
         id: null,
         sku: '',
         name: '',
-        category: filterCategory.value || '', // Pre-fill category if selected
+        category: filterCategory.value || '', 
         unit_of_measure: uomOptions.value.length > 0 ? uomOptions.value[0].code : 'шт',
         price: 0,
         currency: 'UAH',
         description: '',
-        image_url: ''
+        image_url: '',
+        variants: []
     })
+    if (productForm.category) handleCategoryChange(productForm.category)
     dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
     isEditMode.value = true
+    activeTab.value = 'general'
     Object.assign(productForm, row)
+    // Fetch variants if needed (assuming they are in row or fetch separately)
+    if (productForm.category) await handleCategoryChange(productForm.category)
     dialogVisible.value = true
 }
 
