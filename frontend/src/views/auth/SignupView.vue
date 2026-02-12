@@ -193,6 +193,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import api from '@/api'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -286,37 +287,49 @@ const prevStep = () => {
 const handleSubmit = async () => {
   if (!settingsFormRef.value) return
   
-  await settingsFormRef.value.validate((valid) => {
+  await settingsFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
       
-      // DEMO MODE: Mock registration (no backend needed)
-      const registrationData = {
-        company: companyForm,
-        admin: adminForm,
-        settings: settingsForm
-      }
-      
-      console.log('Registration data:', registrationData)
-      
-      setTimeout(() => {
-        // Set mock user data
-        userStore.setUser({
-          id: '1',
+      try {
+        // 1. Register Company & Admin
+        const registrationPayload = {
+          company: companyForm,
+          admin: adminForm,
+          settings: settingsForm
+        }
+        
+        await api.post('/auth/register-company', registrationPayload)
+        
+        // 2. Auto-login
+        const loginResponse = await api.post('/auth/login', {
           email: adminForm.email,
-          firstName: adminForm.firstName,
-          lastName: adminForm.lastName
+          password: adminForm.password
         })
         
-        // Set mock token
-        userStore.setToken('demo-token-12345')
+        const { access_token } = loginResponse.data
+        userStore.setToken(access_token)
         
-        loading.value = false
-        ElMessage.success('Компанію успішно зареєстровано! Входимо в систему...')
+        // 3. Get User Profile
+        const profileResponse = await api.get('/auth/me')
+        userStore.setUser({
+          id: profileResponse.data.id,
+          email: profileResponse.data.email,
+          firstName: profileResponse.data.first_name,
+          lastName: profileResponse.data.last_name,
+          role: profileResponse.data.role,
+          companyId: profileResponse.data.company_id
+        })
         
-        // Redirect to dashboard instead of login
+        ElMessage.success('Компанію успішно зареєстровано!')
         router.push('/dashboard')
-      }, 1500)
+        
+      } catch (error) {
+        console.error('Registration error:', error)
+        ElMessage.error(error.response?.data?.detail || 'Помилка реєстрації. Перевірте дані.')
+      } finally {
+        loading.value = false
+      }
     }
   })
 }

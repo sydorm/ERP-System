@@ -9,7 +9,8 @@ from datetime import timedelta
 from app.db.session import get_db
 from app.models import User
 from app.schemas import (
-    UserCreate, UserLogin, UserResponse, UserUpdate, Token
+    UserCreate, UserLogin, UserResponse, UserUpdate, Token,
+    CompanyRegistrationRequest
 )
 from app.core.security import (
     get_password_hash, verify_password, create_access_token
@@ -59,6 +60,75 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
     
     return user
+
+
+@router.post("/auth/register-company", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register_company(reg_data: CompanyRegistrationRequest, db: Session = Depends(get_db)):
+    """
+    Register a new company and admin user
+    """
+    # 1. Check if user email already exists
+    existing_user = db.query(User).filter(User.email == reg_data.admin.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # 2. Check if company tax_id already exists
+    from app.models import Company, Warehouse
+    existing_company = db.query(Company).filter(Company.tax_id == reg_data.company.taxId).first()
+    if existing_company:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company already registered with this Tax ID"
+        )
+        
+    try:
+        # 3. Create Company
+        new_company = Company(
+            name=reg_data.company.name,
+            legal_name=reg_data.company.name, # Use name as legal name for now
+            tax_id=reg_data.company.taxId,
+            company_type=reg_data.company.legalForm,
+            is_active=True
+        )
+        db.add(new_company)
+        db.flush() # Flush to get company ID
+        
+        # 4. Create Admin User
+        new_user = User(
+            email=reg_data.admin.email,
+            hashed_password=get_password_hash(reg_data.admin.password),
+            first_name=reg_data.admin.firstName,
+            last_name=reg_data.admin.lastName,
+            company_id=new_company.id,
+            role="admin", # Explicitly set as admin
+            is_active=True,
+            is_superuser=True # First user is superuser/admin
+        )
+        db.add(new_user)
+        
+        # 5. Create Default Warehouse
+        new_warehouse = Warehouse(
+            name=reg_data.settings.warehouseName,
+            is_default=True,
+            is_active=True,
+            company_id=new_company.id
+        )
+        db.add(new_warehouse)
+        
+        db.commit()
+        db.refresh(new_user)
+        
+        return new_user
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 @router.post("/auth/login", response_model=Token)
