@@ -10,7 +10,7 @@ from app.models.user import User
 from app.schemas.attribute import AttributeCreate, AttributeResponse, CategoryAttributeBase, CategoryAttributeResponse
 from app.schemas.variant import ProductVariantCreate, ProductVariantResponse
 
-router = APIRouter(prefix="/api/v1/attributes", tags=["Product Attributes"])
+router = APIRouter(prefix="/attributes", tags=["Product Attributes"])
 
 # ATTRIBUTES
 @router.get("/", response_model=List[AttributeResponse])

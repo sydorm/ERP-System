@@ -350,7 +350,15 @@ const categories = [
 ]
 
 // Import icons
-import { User as UserIcon, Money, Setting, Collection, Brush, Edit, PriceTag } from '@element-plus/icons-vue'
+import { User as UserIcon, Money, Setting, Collection, Brush, Edit, PriceTag, Loading, QuestionFilled, Download, Upload } from '@element-plus/icons-vue'
+
+const handleExport = () => {
+    ElMessage.info('Експорт в Excel запущено...')
+}
+
+const handleImport = () => {
+    ElMessage.info('Оберіть Excel файл для імпорту')
+}
 
 
 // Placeholders Configuration

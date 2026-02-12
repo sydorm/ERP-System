@@ -134,10 +134,22 @@ watch(variants, (newVal) => {
     emit('update:variants', newVal)
 }, { deep: true })
 
-// Initialize genSelection
-props.categoryAttributes?.forEach(attr => {
-    genSelection[attr.id] = []
-})
+// Sync FROM parent (when switching products)
+watch(() => props.initialVariants, (newVal) => {
+    variants.value = [...(newVal || [])]
+    // Update primarySku based on new variants
+    const primary = variants.value.find(v => v.is_primary)
+    primarySku.value = primary ? primary.sku : ''
+}, { deep: true, immediate: true })
+
+// Initialize/Update genSelection when attributes change
+watch(() => props.categoryAttributes, (newAttrs) => {
+    newAttrs?.forEach(attr => {
+        if (!genSelection[attr.id]) {
+            genSelection[attr.id] = []
+        }
+    })
+}, { immediate: true })
 
 const handleSelectionChange = (val) => {
     selectedRows.value = val

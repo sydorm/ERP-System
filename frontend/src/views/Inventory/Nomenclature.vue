@@ -215,6 +215,7 @@
 </template>
 
 <script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, Edit, Delete, Picture, Menu, Folder, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
