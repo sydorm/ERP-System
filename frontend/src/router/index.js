@@ -30,6 +30,11 @@ const router = createRouter({
                     name: 'dashboard',
                     component: () => import('@/views/DashboardHome.vue')
                 },
+                {
+                    path: '/profile',
+                    name: 'profile',
+                    component: () => import('@/views/Profile.vue')
+                },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',

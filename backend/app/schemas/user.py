@@ -42,6 +42,19 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
 
 
+class UserPasswordUpdate(BaseModel):
+    """Schema for updating user password"""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=100)
+    
+    @validator('new_password')
+    def password_strength(cls, v):
+        """Validate password strength"""
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
+
 class UserResponse(UserBase):
     """Schema for user response"""
     id: UUID

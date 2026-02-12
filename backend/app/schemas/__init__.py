@@ -1,5 +1,5 @@
 # Schemas package
-from .user import UserCreate, UserLogin, UserUpdate, UserResponse, UserInDB
+from .user import UserCreate, UserLogin, UserUpdate, UserResponse, UserInDB, UserPasswordUpdate
 from .token import Token, TokenData
 from .company import (
     CompanyCreate, CompanyResponse, CompanyRegistrationRequest, CompanyType
@@ -11,6 +11,7 @@ __all__ = [
     "UserUpdate",
     "UserResponse",
     "UserInDB",
+    "UserPasswordUpdate",
     "Token",
     "TokenData",
     "CompanyCreate",

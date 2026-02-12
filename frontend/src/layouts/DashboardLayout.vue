@@ -64,13 +64,7 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
-        <el-sub-menu index="settings">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>Налаштування</span>
-          </template>
-          <el-menu-item index="/settings/users">Користувачі</el-menu-item>
-        </el-sub-menu>
+        <!-- Settings submenu removed as Users moved to profile dropdown -->
       </el-menu>
     </el-aside>
 
@@ -111,6 +105,10 @@
                 <el-dropdown-item divided command="profile">
                   <el-icon><User /></el-icon>
                   Профіль
+                </el-dropdown-item>
+                <el-dropdown-item v-if="userStore.user?.role === 'admin'" command="users">
+                  <el-icon><UserFilled /></el-icon>
+                  Користувачі
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
                   <el-icon><Setting /></el-icon>
@@ -154,6 +152,7 @@ import {
   Expand,
   Bell,
   User,
+  UserFilled,
   SwitchButton
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -179,6 +178,9 @@ const handleCommand = (command) => {
   switch (command) {
     case 'profile':
       router.push('/profile')
+      break
+    case 'users':
+      router.push('/settings/users')
       break
     case 'settings':
       router.push('/settings')
