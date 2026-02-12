@@ -1,8 +1,17 @@
 import axios from 'axios'
 
-// Create axios instance with base URL from environment variables
+// Create axios instance with base URL from environment variables or dynamic location
+let baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// If running on a remote server (not localhost) and no env var is set, use the current hostname
+if (!import.meta.env.VITE_API_URL && typeof window !== 'undefined') {
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        baseURL = `${window.location.protocol}//${window.location.hostname}:8000`
+    }
+}
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    baseURL,
     headers: {
         'Content-Type': 'application/json'
     }
