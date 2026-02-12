@@ -99,15 +99,15 @@
     <el-dialog v-model="dialogVisible" :title="isEditMode ? 'Редагувати значення' : 'Додати значення'" width="500px" class="custom-dialog">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
             <el-form-item label="Назва" prop="name">
-                <el-input v-model="form.name" placeholder="Наприклад: Електроніка" />
+                <el-input v-model="form.name" :placeholder="currentPlaceholders.name" />
             </el-form-item>
             
             <el-form-item label="Код (унікальний)" prop="code">
-                <el-input v-model="form.code" placeholder="electronics" :disabled="isEditMode && form.is_fixed" />
+                <el-input v-model="form.code" :placeholder="currentPlaceholders.code" :disabled="isEditMode && form.is_fixed" />
             </el-form-item>
 
             <el-form-item label="Опис (опціонально)">
-                <el-input v-model="form.description" placeholder="Короткий опис..." />
+                <el-input v-model="form.description" :placeholder="currentPlaceholders.desc" />
             </el-form-item>
             
             <el-form-item label="Колір">
@@ -201,10 +201,29 @@ const categories = [
 import { User } from '@element-plus/icons-vue'
 
 
+// Placeholders Configuration
+const categoryPlaceholders = {
+    'UOM': { name: 'Наприклад: Кілограм', code: 'kg', desc: 'Одиниця виміру маси' },
+    'PRODUCT_CATEGORY': { name: 'Наприклад: Електроніка', code: 'electronics', desc: 'Побутова техніка та гаджети' },
+    'ORDER_STATUS': { name: 'Наприклад: Новий', code: 'new', desc: 'Замовлення щойно створено' },
+    'PAYMENT_METHOD': { name: 'Наприклад: Готівка', code: 'cash', desc: 'Оплата при отриманні' },
+    'PAYMENT_METHOD_TYPE': { name: 'Наприклад: Післяплата', code: 'post_pay', desc: 'Оплата після отримання' },
+    'DELIVERY_METHOD': { name: 'Наприклад: Нова Пошта', code: 'nova_poshta', desc: 'Доставка у відділення' },
+    'CLIENT_SOURCE': { name: 'Наприклад: Instagram', code: 'instagram', desc: 'Соціальні мережі' },
+}
+
 // Computed
 const currentCategoryName = computed(() => {
     const cat = categories.find(c => c.code === activeCategory.value)
     return cat ? cat.name : ''
+})
+
+const currentPlaceholders = computed(() => {
+    return categoryPlaceholders[activeCategory.value] || { 
+        name: 'Наприклад: Значення', 
+        code: 'code', 
+        desc: 'Опис значення' 
+    }
 })
 
 const filteredItems = computed(() => {
