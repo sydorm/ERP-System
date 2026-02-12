@@ -9,6 +9,8 @@ from .counterparty import Counterparty
 from .order import Order, OrderLine, OrderStatus
 
 from .bank_account import BankAccount, Currency
+from .attribute import Attribute, AttributeOption, CategoryAttribute
+from .variant import ProductVariant, VariantValue
 
 __all__ = [
     "Base",
@@ -23,4 +25,9 @@ __all__ = [
     "OrderLine",
     "OrderStatus",
     "BankAccount",
+    "Attribute",
+    "AttributeOption",
+    "CategoryAttribute",
+    "ProductVariant",
+    "VariantValue",
 ]

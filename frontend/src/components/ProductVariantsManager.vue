@@ -129,17 +129,26 @@ const genVisible = ref(false)
 const genSelection = reactive({})
 const selectedRows = ref([])
 
-// Sync with parent
+// Sync with parent - only emit if actually changed to avoid infinite loops
 watch(variants, (newVal) => {
-    emit('update:variants', newVal)
+    const currentProps = JSON.stringify(props.initialVariants || [])
+    const currentState = JSON.stringify(newVal)
+    if (currentState !== currentProps) {
+        emit('update:variants', newVal)
+    }
 }, { deep: true })
 
 // Sync FROM parent (when switching products)
 watch(() => props.initialVariants, (newVal) => {
-    variants.value = [...(newVal || [])]
-    // Update primarySku based on new variants
-    const primary = variants.value.find(v => v.is_primary)
-    primarySku.value = primary ? primary.sku : ''
+    const currentState = JSON.stringify(variants.value)
+    const newProps = JSON.stringify(newVal || [])
+    
+    if (newProps !== currentState) {
+        variants.value = JSON.parse(newProps)
+        // Update primarySku based on new variants
+        const primary = variants.value.find(v => v.is_primary)
+        primarySku.value = primary ? primary.sku : ''
+    }
 }, { deep: true, immediate: true })
 
 // Initialize/Update genSelection when attributes change

@@ -277,7 +277,9 @@ import {
     ScaleToOriginal, Box, List, CreditCard, 
     Plus, Search, ArrowRight, MoreFilled, 
     Check, Close, Rank, QuestionFilled,
-    Download, Upload
+    Download, Upload, User as UserIcon, 
+    Money, Setting, Collection, Brush, 
+    Edit, PriceTag, Loading
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -348,9 +350,6 @@ const categories = [
     { code: 'CURRENCY', name: 'Валюти', icon: Money }, 
     { code: 'CLIENT_SOURCE', name: 'Джерела клієнтів', icon: UserIcon }, 
 ]
-
-// Import icons
-import { User as UserIcon, Money, Setting, Collection, Brush, Edit, PriceTag, Loading, QuestionFilled, Download, Upload } from '@element-plus/icons-vue'
 
 const handleExport = () => {
     ElMessage.info('Експорт в Excel запущено...')
