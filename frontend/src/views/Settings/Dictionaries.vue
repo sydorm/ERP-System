@@ -64,7 +64,7 @@
                 <div v-for="(item, index) in filteredItems" :key="item.id || index" class="list-item attribute-item">
                     <div class="item-left">
                         <div class="item-icon-circle bg-gray-light">
-                            <el-icon v-if="item.type === 'COLOR'"><Palette /></el-icon>
+                            <el-icon v-if="item.type === 'COLOR'"><Brush /></el-icon>
                             <el-icon v-else-if="item.type === 'SELECT'"><Collection /></el-icon>
                             <el-icon v-else-if="item.type === 'NUMBER'"><Edit /></el-icon>
                             <el-icon v-else><Edit /></el-icon>
@@ -350,7 +350,7 @@ const categories = [
 ]
 
 // Import icons
-import { User as UserIcon, Money, Setting, Collection, Palette, Edit, PriceTag } from '@element-plus/icons-vue'
+import { User as UserIcon, Money, Setting, Collection, Brush, Edit, PriceTag } from '@element-plus/icons-vue'
 
 
 // Placeholders Configuration
