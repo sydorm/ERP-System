@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import api from '@/api'
 
 export const useUserStore = defineStore('user', () => {
     const user = ref(null)
@@ -24,12 +25,23 @@ export const useUserStore = defineStore('user', () => {
         return !!token.value
     }
 
+    const fetchUser = async () => {
+        try {
+            const response = await api.get('/auth/me')
+            user.value = response.data
+        } catch (error) {
+            console.error('Failed to fetch user profile', error)
+            logout()
+        }
+    }
+
     return {
         user,
         token,
         setUser,
         setToken,
         logout,
-        isAuthenticated
+        isAuthenticated,
+        fetchUser
     }
 })

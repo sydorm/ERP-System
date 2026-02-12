@@ -69,14 +69,24 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const userStore = useUserStore()
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+    const isAuthenticated = userStore.isAuthenticated()
 
-    if (requiresAuth && !userStore.isAuthenticated()) {
+    if (requiresAuth && !isAuthenticated) {
         next('/login')
-    } else if (!requiresAuth && userStore.isAuthenticated() && (to.path === '/login' || to.path === '/signup')) {
-        next('/dashboard')
+    } else if (isAuthenticated) {
+        // If user is authenticated but profile is missing, fetch it
+        if (!userStore.user) {
+            await userStore.fetchUser()
+        }
+
+        if (!requiresAuth && (to.path === '/login' || to.path === '/signup')) {
+            next('/dashboard')
+        } else {
+            next()
+        }
     } else {
         next()
     }
