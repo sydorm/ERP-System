@@ -86,20 +86,20 @@ watch(
 
 <style scoped>
 .tabs-container {
-  background-color: #f5f7fa;
-  padding: 6px 10px 0 10px;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: #fff;
+  padding: 8px 16px 0 16px;
+  border-bottom: 1px solid #eef0f2;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 10;
 }
 
 .custom-tabs {
   flex: 1;
-  width: 0; /* Important for flex overflow */
+  width: 0;
 }
 
-/* Override Element Plus Tabs Styles for Compact Look */
 :deep(.el-tabs__header) {
   margin: 0;
   border-bottom: none;
@@ -110,30 +110,47 @@ watch(
 }
 
 :deep(.el-tabs__item) {
-  height: 32px;
-  line-height: 32px;
-  border: 1px solid #e4e7ed !important;
-  background: white;
+  height: 36px;
+  line-height: 36px;
+  border: none !important;
+  background: transparent;
   margin-right: 4px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
   font-size: 13px;
   color: #606266;
   padding: 0 16px !important;
+  transition: all 0.2s;
+}
+
+:deep(.el-tabs__item:hover) {
+  background-color: #f5f7fa;
+  color: #409eff;
 }
 
 :deep(.el-tabs__item.is-active) {
   color: #409eff;
-  background: #fff;
-  border-bottom: 1px solid #fff !important; /* Merge with content */
-  font-weight: 500;
+  background: #f0f7ff;
+  font-weight: 600;
+  position: relative;
+}
+
+:deep(.el-tabs__item.is-active::after) {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #409eff;
 }
 
 :deep(.el-tabs__nav-prev), :deep(.el-tabs__nav-next) {
-    line-height: 32px;
+    line-height: 36px;
 }
 
 .tabs-actions {
     margin-left: 10px;
+    padding-bottom: 8px;
     cursor: pointer;
     color: #909399;
 }

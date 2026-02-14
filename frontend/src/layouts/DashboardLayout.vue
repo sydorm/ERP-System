@@ -137,7 +137,14 @@
 
       <!-- Main Content Area -->
       <el-main class="main-content">
-        <router-view />
+        <TabsBar />
+        <div class="view-container">
+          <router-view v-slot="{ Component }">
+            <keep-alive>
+              <component :is="Component" :key="route.path" />
+            </keep-alive>
+          </router-view>
+        </div>
       </el-main>
     </el-container>
 
@@ -151,6 +158,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import AiAssistant from '@/components/AiAssistant.vue'
+import TabsBar from '@/components/layout/TabsBar.vue'
 import {
   HomeFilled,
   Box,
@@ -279,6 +287,14 @@ const handleCommand = (command) => {
 
 .main-content {
   background-color: #f0f2f5;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-container {
   padding: 20px;
+  flex: 1;
+  overflow-y: auto;
 }
 </style>
