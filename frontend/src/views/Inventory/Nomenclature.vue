@@ -415,7 +415,15 @@ const handleEdit = async (row) => {
 }
 
 const formatCurrency = (value, currency) => {
-    return new Intl.NumberFormat('uk-UA', { style: 'currency', currency: currency || 'UAH' }).format(value)
+    try {
+        return new Intl.NumberFormat('uk-UA', { 
+            style: 'currency', 
+            currency: currency && currency.length === 3 ? currency.toUpperCase() : 'UAH' 
+        }).format(value)
+    } catch (e) {
+        console.warn('Currency formatting error:', e)
+        return `${value} ${currency || ''}`
+    }
 }
 
 onMounted(() => {

@@ -29,6 +29,11 @@ DEFAULT_DICTIONARIES = {
         {"code": "cash", "name": "Готівка", "sort_order": 1},
         {"code": "card", "name": "Картка", "sort_order": 2},
         {"code": "bank_transfer", "name": "Безготівковий (Рахунок)", "sort_order": 3},
+    ],
+    "CURRENCY": [
+        {"code": "UAH", "name": "Гривня", "sort_order": 1, "is_fixed": True},
+        {"code": "USD", "name": "Долар США", "sort_order": 2},
+        {"code": "EUR", "name": "Євро", "sort_order": 3},
     ]
 }
 
