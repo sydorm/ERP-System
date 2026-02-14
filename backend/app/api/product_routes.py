@@ -4,12 +4,28 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.db.session import get_db
-from app.models import Product, User
+from app.models import Product, User, ProductSpecification, SpecificationItem
 from app.models.variant import ProductVariant, VariantValue
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.api.dependencies import get_current_active_user
 
 router = APIRouter()
+
+@router.get("/products/{product_id}/stock")
+async def get_product_stock(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get stock levels for a product across all warehouses.
+    (Simplified mockup for UI)
+    """
+    # In a real system, this would query the AccumulationRegister
+    return [
+        {"warehouse": "Основний склад", "quantity": 120, "reserved": 10, "available": 110, "minLevel": 50},
+        {"warehouse": "Магазин (Центр)", "quantity": 15, "reserved": 0, "available": 15, "minLevel": 10}
+    ]
 
 @router.get("/products", response_model=List[ProductResponse])
 async def list_products(
@@ -141,6 +157,27 @@ async def update_product(
 
     db.commit()
     db.refresh(product)
+    return product
+
+@router.get("/products/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get a single product with variants and specifications.
+    """
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.company_id == current_user.company_id
+    ).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
     return product
 
 

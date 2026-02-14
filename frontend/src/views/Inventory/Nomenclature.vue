@@ -54,7 +54,7 @@
                 />
              </div>
              <div class="toolbar-right">
-                <el-button type="primary" :icon="Plus" @click="openAddModal">
+                <el-button type="primary" :icon="Plus" @click="goToCreate">
                     Додати товар
                 </el-button>
              </div>
@@ -132,99 +132,18 @@
         </el-card>
       </el-main>
     </el-container>
-
-    <!-- Add/Edit Modal (Updated with Tabs and Variants) -->
-    <el-dialog v-model="dialogVisible" :title="isEditMode ? 'Редагувати товар' : 'Додати товар'" width="800px">
-        <el-tabs v-model="activeTab">
-            <el-tab-pane label="Загальна інформація" name="general">
-                <el-form ref="productFormRef" :model="productForm" :rules="productRules" label-width="120px" label-position="top">
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                             <el-form-item label="Артикул (SKU)" prop="sku">
-                                <el-input v-model="productForm.sku" placeholder="Напр. WOOD-001" />
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-form-item label="Категорія" prop="category">
-                                 <el-select v-model="productForm.category" placeholder="Оберіть категорію" style="width: 100%" @change="handleCategoryChange">
-                                    <el-option 
-                                        v-for="item in categoryOptions"
-                                        :key="item.code"
-                                        :label="item.name" 
-                                        :value="item.code" 
-                                    />
-                                 </el-select>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
-                    <el-form-item label="Назва товару" prop="name">
-                        <el-input v-model="productForm.name" placeholder="Введіть назву товару" />
-                    </el-form-item>
-                    
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                             <el-form-item label="Од. виміру" prop="unit_of_measure">
-                                <el-select v-model="productForm.unit_of_measure" placeholder="Од.">
-                                    <el-option v-for="item in uomOptions" :key="item.code" :label="item.name" :value="item.code" />
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="Ціна продажу" prop="price">
-                                <el-input-number v-model="productForm.price" :precision="2" :step="100" :min="0" style="width: 100%" />
-                            </el-form-item>
-                        </el-col>
-                         <el-col :span="8">
-                            <el-form-item label="Валюта" prop="currency">
-                                 <el-select v-model="productForm.currency" placeholder="Валюта">
-                                    <el-option v-for="item in currencyOptions" :key="item.code" :label="item.code" :value="item.code" />
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-
-                    <el-form-item label="Опис" prop="description">
-                        <el-input v-model="productForm.description" type="textarea" rows="3" />
-                    </el-form-item>
-                </el-form>
-            </el-tab-pane>
-
-            <el-tab-pane label="Характеристики та Варіанти" name="variants">
-                <ProductVariantsManager 
-                    v-if="productForm.category"
-                    :category-attributes="currentCategoryAttributes"
-                    :product-code="productForm.sku"
-                    :initial-variants="productForm.variants"
-                    @update:variants="(val) => productForm.variants = val"
-                />
-                <el-alert v-else title="Спершу оберіть категорію товару" type="warning" show-icon :closable="false" />
-            </el-tab-pane>
-        </el-tabs>
-
-        <template #footer>
-            <span class="dialog-footer">
-                <el-button @click="dialogVisible = false">Скасувати</el-button>
-                <el-button type="primary" @click="submitProduct" :loading="submitting">
-                    {{ isEditMode ? 'Зберегти зміни' : 'Створити' }}
-                </el-button>
-            </span>
-        </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Plus, Search, Edit, Delete, Picture, Menu, Folder, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
-import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
 
 // State
-const activeTab = ref('general')
 const loading = ref(false)
-const submitting = ref(false)
 const products = ref([])
 const total = ref(0)
 const skip = ref(0)
@@ -233,48 +152,21 @@ const limit = ref(20)
 const searchQuery = ref('')
 const filterCategory = ref('')
 
-const dialogVisible = ref(false)
-const isEditMode = ref(false)
-const productFormRef = ref(null)
-
 // Dictionaries
 const uomOptions = ref([])
 const categoryOptions = ref([])
 const currencyOptions = ref([])
-const currentCategoryAttributes = ref([])
 
-// Form
-const productForm = reactive({
-    id: null,
-    sku: '',
-    name: '',
-    category: '',
-    unit_of_measure: 'шт',
-    price: 0,
-    currency: 'UAH',
-    description: '',
-    image_url: '',
-    variants: []
-})
+const router = useRouter()
 
-const productRules = {
-    sku: [{ required: true, message: 'Введіть артикул', trigger: 'blur' }],
-    name: [{ required: true, message: 'Введіть назву', trigger: 'blur' }],
-    unit_of_measure: [{ required: true, message: 'Оберіть од. виміру', trigger: 'change' }],
-    price: [{ required: true, message: 'Введіть ціну', trigger: 'blur' }],
-}
-
-// API Actions
 const fetchDictionaries = async () => {
     try {
-        const [uomRes, catRes, currRes] = await Promise.all([
-            api.get('/api/v1/dictionaries/UOM'),
-            api.get('/api/v1/dictionaries/PRODUCT_CATEGORY'),
-            api.get('/api/v1/dictionaries/CURRENCY')
-        ])
-        uomOptions.value = uomRes.data
+        const catRes = await api.get('/api/v1/dictionaries/PRODUCT_CATEGORY')
         categoryOptions.value = catRes.data
-        currencyOptions.value = currRes.data
+        const uomRes = await api.get('/api/v1/dictionaries/UOM')
+        uomOptions.value = uomRes.data
+        const currencyRes = await api.get('/api/v1/dictionaries/CURRENCY')
+        currencyOptions.value = currencyRes.data
     } catch (error) {
         console.error('Failed to load dictionaries', error)
     }
@@ -300,35 +192,6 @@ const fetchProducts = async () => {
     }
 }
 
-const submitProduct = async () => {
-    if (!productFormRef.value) return
-    
-    await productFormRef.value.validate(async (valid) => {
-        if (valid) {
-            submitting.value = true
-            try {
-                // Ensure variants data is properly formatted (it should be ref'd correctly)
-                const payload = { ...productForm }
-                
-                if (isEditMode.value) {
-                    await api.put(`/api/v1/products/${productForm.id}`, payload)
-                    ElMessage.success('Товар оновлено')
-                } else {
-                    await api.post('/api/v1/products', payload)
-                    ElMessage.success('Товар створено')
-                }
-                dialogVisible.value = false
-                fetchProducts()
-            } catch (error) {
-                console.error(error)
-                ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
-            } finally {
-                submitting.value = false
-            }
-        }
-    })
-}
-
 const handleDelete = (row) => {
     ElMessageBox.confirm(
         `Ви впевнені, що хочете видалити ${row.name}?`,
@@ -349,6 +212,14 @@ const handleDelete = (row) => {
     })
 }
 
+const goToCreate = () => {
+    router.push('/inventory/nomenclature/new')
+}
+ 
+const handleEdit = (row) => {
+    router.push(`/inventory/nomenclature/${row.id}`)
+}
+
 // UI Handlers
 const handleCategorySelect = (index) => {
     filterCategory.value = index
@@ -366,52 +237,6 @@ const handleSearch = () => {
 const handlePageChange = (page) => {
     skip.value = (page - 1) * limit.value
     fetchProducts()
-}
-
-const handleCategoryChange = async (val) => {
-    if (!val) {
-        currentCategoryAttributes.value = []
-        return
-    }
-    await fetchCategoryAttributes(val)
-}
-
-const fetchCategoryAttributes = async (categoryCode) => {
-    try {
-        const response = await api.get(`/api/v1/attributes/category/${categoryCode}`)
-        // The API returns links, we need to extract attributes
-        currentCategoryAttributes.value = response.data.map(link => link.attribute)
-    } catch (e) {
-        currentCategoryAttributes.value = []
-    }
-}
-
-const openAddModal = () => {
-    isEditMode.value = false
-    activeTab.value = 'general'
-    Object.assign(productForm, {
-        id: null,
-        sku: '',
-        name: '',
-        category: filterCategory.value || '', 
-        unit_of_measure: uomOptions.value.length > 0 ? uomOptions.value[0].code : 'шт',
-        price: 0,
-        currency: 'UAH',
-        description: '',
-        image_url: '',
-        variants: []
-    })
-    if (productForm.category) handleCategoryChange(productForm.category)
-    dialogVisible.value = true
-}
-
-const handleEdit = async (row) => {
-    isEditMode.value = true
-    activeTab.value = 'general'
-    Object.assign(productForm, row)
-    // Fetch variants if needed (assuming they are in row or fetch separately)
-    if (productForm.category) await handleCategoryChange(productForm.category)
-    dialogVisible.value = true
 }
 
 const formatCurrency = (value, currency) => {

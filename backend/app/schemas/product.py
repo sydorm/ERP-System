@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID
 from .variant import ProductVariantCreate, ProductVariantResponse
+from .specification import ProductSpecificationResponse
 
 class ProductBase(BaseModel):
     """Base Product schema"""
@@ -40,6 +41,7 @@ class ProductResponse(ProductBase):
     id: UUID
     company_id: UUID
     variants: List[ProductVariantResponse] = []
+    specifications: List[ProductSpecificationResponse] = []
 
     class Config:
         from_attributes = True

@@ -57,6 +57,18 @@ const router = createRouter({
                     meta: { title: 'Номенклатура' }
                 },
                 {
+                    path: '/inventory/nomenclature/new',
+                    name: 'product-new',
+                    component: () => import('@/views/Inventory/ProductEditor.vue'),
+                    meta: { title: 'Новий товар' }
+                },
+                {
+                    path: '/inventory/nomenclature/:id',
+                    name: 'product-edit',
+                    component: () => import('@/views/Inventory/ProductEditor.vue'),
+                    meta: { title: 'Редагування товару' }
+                },
+                {
                     path: '/inventory/warehouses',
                     name: 'warehouses',
                     component: () => import('@/views/HomeView.vue'), // Placeholder

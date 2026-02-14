@@ -11,6 +11,8 @@ from .order import Order, OrderLine, OrderStatus
 from .bank_account import BankAccount, Currency
 from .attribute import Attribute, AttributeOption, CategoryAttribute
 from .variant import ProductVariant, VariantValue
+from .specification import ProductSpecification, SpecificationItem
+from .product_file import ProductFile
 
 __all__ = [
     "Base",
@@ -30,4 +32,7 @@ __all__ = [
     "CategoryAttribute",
     "ProductVariant",
     "VariantValue",
+    "ProductSpecification",
+    "SpecificationItem",
+    "ProductFile",
 ]
