@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from datetime import date
 from uuid import UUID
-from .purchase_receipt import PurchaseReceiptStatus
+from app.models.purchase_receipt import PurchaseReceiptStatus
 
 class PurchaseReceiptLineBase(BaseModel):
     product_id: UUID
