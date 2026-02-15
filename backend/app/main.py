@@ -42,6 +42,9 @@ from app.api.auth_routes import router as auth_router
 app.include_router(ai_router)
 app.include_router(auth_router, tags=["Authentication"])
 
+from app.api.purchase_receipt_routes import router as purchase_receipt_router
+app.include_router(purchase_receipt_router, prefix="/api/v1", tags=["Purchases"])
+
 from app.api.user_routes import router as user_router
 app.include_router(user_router, tags=["Users"])
 

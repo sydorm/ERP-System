@@ -14,6 +14,7 @@ from .variant import ProductVariant, VariantValue
 from .specification import ProductSpecification, SpecificationItem
 from .product_file import ProductFile
 from .register import AccumulationRegister, RegisterType
+from .purchase_receipt import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStatus
 
 __all__ = [
     "Base",
@@ -38,4 +39,7 @@ __all__ = [
     "ProductFile",
     "AccumulationRegister",
     "RegisterType",
+    "PurchaseReceipt",
+    "PurchaseReceiptLine",
+    "PurchaseReceiptStatus",
 ]

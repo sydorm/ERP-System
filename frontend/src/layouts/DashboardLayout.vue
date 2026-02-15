@@ -40,13 +40,13 @@
           <el-menu-item index="/sales/invoices">Рахунки</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="purchasing">
+        <el-sub-menu index="purchases">
           <template #title>
             <el-icon><Briefcase /></el-icon>
             <span>Закупівлі</span>
           </template>
-          <el-menu-item index="/purchasing/orders">Замовлення</el-menu-item>
-          <el-menu-item index="/purchasing/receipts">Прибуткові накладні</el-menu-item>
+          <el-menu-item index="/purchases/orders">Замовлення</el-menu-item>
+          <el-menu-item index="/purchases/receipts">Прибуткові накладні</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="finance">

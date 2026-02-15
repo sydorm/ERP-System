@@ -87,6 +87,25 @@ const router = createRouter({
                     component: () => import('@/views/HomeView.vue'), // Placeholder
                     meta: { title: 'Замовлення (Продаж)' }
                 },
+                // Purchase routes
+                {
+                    path: '/purchases/receipts',
+                    name: 'purchase-receipts',
+                    component: () => import('@/views/Purchases/PurchaseReceiptsList.vue'),
+                    meta: { title: 'Прибуткові накладні' }
+                },
+                {
+                    path: '/purchases/receipts/new',
+                    name: 'purchase-receipt-new',
+                    component: () => import('@/views/Purchases/PurchaseReceiptEditor.vue'),
+                    meta: { title: 'Нова накладна' }
+                },
+                {
+                    path: '/purchases/receipts/:id',
+                    name: 'purchase-receipt-edit',
+                    component: () => import('@/views/Purchases/PurchaseReceiptEditor.vue'),
+                    meta: { title: 'Редагування накладної' }
+                },
                 // Settings
                 {
                     path: '/settings/users',
