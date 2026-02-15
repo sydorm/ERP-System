@@ -13,6 +13,7 @@ from .attribute import Attribute, AttributeOption, CategoryAttribute
 from .variant import ProductVariant, VariantValue
 from .specification import ProductSpecification, SpecificationItem
 from .product_file import ProductFile
+from .register import AccumulationRegister, RegisterType
 
 __all__ = [
     "Base",
@@ -35,4 +36,6 @@ __all__ = [
     "ProductSpecification",
     "SpecificationItem",
     "ProductFile",
+    "AccumulationRegister",
+    "RegisterType",
 ]
