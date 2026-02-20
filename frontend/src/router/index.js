@@ -82,6 +82,18 @@ const router = createRouter({
                     meta: { title: 'Контрагенти' }
                 },
                 {
+                    path: '/sales/counterparties/new',
+                    name: 'counterparty-new',
+                    component: () => import('@/views/Sales/CounterpartyEditor.vue'),
+                    meta: { title: 'Новий контрагент' }
+                },
+                {
+                    path: '/sales/counterparties/:id',
+                    name: 'counterparty-edit',
+                    component: () => import('@/views/Sales/CounterpartyEditor.vue'),
+                    meta: { title: 'Контрагент' }
+                },
+                {
                     path: '/sales/orders',
                     name: 'sales-orders',
                     component: () => import('@/views/Sales/OrdersList.vue'),

@@ -11,9 +11,7 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-primary">
-            Додати товар
-          </el-button>
+          <!-- Buttons removed per user request: nomenclature will be added via documents -->
         </div>
       </div>
 
@@ -158,9 +156,7 @@
                 />
               </div>
 
-              <div class="quick-stock-actions">
-                <el-button size="large" type="primary" :icon="Plus" plain @click="handleQuickAdjust(product, 1)" style="width: 100%">Додати</el-button>
-              </div>
+              <!-- Quick actions removed per user request: stock movements will be document-based -->
             </div>
           </el-card>
         </el-col>

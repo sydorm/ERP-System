@@ -45,6 +45,7 @@
         stripe 
         style="width: 100%"
         class="custom-table"
+        @row-click="handleRowClick"
       >
         <el-table-column prop="name" label="Назва" min-width="200">
           <template #default="scope">
@@ -67,10 +68,9 @@
         <el-table-column prop="phone" label="Телефон" width="150" />
         <el-table-column prop="email" label="Email" min-width="150" />
         
-        <el-table-column label="Дії" width="120" align="right">
+        <el-table-column label="Дії" width="80" align="right">
           <template #default="scope">
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(scope.row)" />
-            <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row)" />
+            <el-button link type="primary" :icon="Edit" @click.stop="handleEdit(scope.row)" />
           </template>
         </el-table-column>
       </el-table>
@@ -87,62 +87,20 @@
       </div>
     </el-card>
 
-    <!-- Post-MVP: Drawer/Dialog for Create/Edit -->
-    <el-drawer
-      v-model="drawerVisible"
-      :title="editForm.id ? 'Редагування контрагента' : 'Новий контрагент'"
-      size="500px"
-    >
-      <el-form :model="editForm" label-position="top" class="edit-form">
-        <el-form-item label="Назва (коротка)" required>
-          <el-input v-model="editForm.name" placeholder="Наприклад: ТОВ 'Атлант'" />
-        </el-form-item>
-        <el-form-item label="Юридична назва">
-          <el-input v-model="editForm.legal_name" placeholder="Повна юридична назва" />
-        </el-form-item>
-        <el-form-item label="ЄДРПОУ / ІПН">
-          <el-input v-model="editForm.tax_id" placeholder="8 або 10 цифр" />
-        </el-form-item>
-        
-        <div class="form-row">
-          <el-form-item label="Це клієнт?">
-            <el-switch v-model="editForm.is_customer" />
-          </el-form-item>
-          <el-form-item label="Це постачальник?">
-            <el-switch v-model="editForm.is_supplier" />
-          </el-form-item>
-        </div>
-
-        <el-divider>Контакти</el-divider>
-        
-        <el-form-item label="Телефон">
-          <el-input v-model="editForm.phone" placeholder="+380..." />
-        </el-form-item>
-        <el-form-item label="Email">
-          <el-input v-model="editForm.email" placeholder="example@mail.com" />
-        </el-form-item>
-        <el-form-item label="Адреса">
-          <el-input v-model="editForm.address" type="textarea" placeholder="Юридична або фактична адреса" />
-        </el-form-item>
-
-        <div class="drawer-actions">
-          <el-button @click="drawerVisible = false">Скасувати</el-button>
-          <el-button type="primary" :loading="saving" @click="saveCounterparty">Зберегти</el-button>
-        </div>
-      </el-form>
-    </el-drawer>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
-import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { Plus, Search, Edit } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
+
+const router = useRouter()
 
 // State
 const loading = ref(false)
-const saving = ref(false)
 const counterparties = ref([])
 const total = ref(0)
 const currentPage = ref(1)
@@ -150,20 +108,6 @@ const limit = ref(15)
 
 const searchQuery = ref('')
 const filterType = ref('all')
-
-const drawerVisible = ref(false)
-const editForm = reactive({
-  id: null,
-  name: '',
-  legal_name: '',
-  tax_id: '',
-  is_customer: true,
-  is_supplier: false,
-  phone: '',
-  email: '',
-  address: '',
-  is_active: true
-})
 
 const fetchCounterparties = async () => {
   loading.value = true
@@ -201,68 +145,15 @@ const handleSearch = () => {
 }
 
 const handleCreate = () => {
-  Object.assign(editForm, {
-    id: null,
-    name: '',
-    legal_name: '',
-    tax_id: '',
-    is_customer: true,
-    is_supplier: false,
-    phone: '',
-    email: '',
-    address: '',
-    is_active: true
-  })
-  drawerVisible.value = true
+  router.push('/sales/counterparties/new')
 }
 
 const handleEdit = (row) => {
-  Object.assign(editForm, row)
-  drawerVisible.value = true
+  router.push(`/sales/counterparties/${row.id}`)
 }
 
-const saveCounterparty = async () => {
-  if (!editForm.name) {
-    ElMessage.warning('Вкажіть назву контрагента')
-    return
-  }
-  
-  saving.value = true
-  try {
-    if (editForm.id) {
-      await api.put(`/api/v1/counterparties/${editForm.id}`, editForm)
-      ElMessage.success('Дані оновлено')
-    } else {
-      await api.post('/api/v1/counterparties', editForm)
-      ElMessage.success('Контрагента додано')
-    }
-    drawerVisible.value = false
-    fetchCounterparties()
-  } catch (error) {
-    ElMessage.error('Помилка збереження')
-  } finally {
-    saving.value = false
-  }
-}
-
-const handleDelete = (row) => {
-  ElMessageBox.confirm(
-    `Ви впевнені, що хочете видалити контрагента ${row.name}?`,
-    'Увага',
-    {
-      confirmButtonText: 'Видалити',
-      cancelButtonText: 'Скасувати',
-      type: 'warning'
-    }
-  ).then(async () => {
-    try {
-      await api.delete(`/api/v1/counterparties/${row.id}`)
-      ElMessage.success('Видалено')
-      fetchCounterparties()
-    } catch (error) {
-      ElMessage.error('Помилка видалення')
-    }
-  })
+const handleRowClick = (row) => {
+  router.push(`/sales/counterparties/${row.id}`)
 }
 
 onMounted(fetchCounterparties)
@@ -333,19 +224,11 @@ onMounted(fetchCounterparties)
   justify-content: flex-end;
 }
 
-.drawer-actions {
-  margin-top: 40px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.form-row {
-  display: flex;
-  gap: 24px;
-}
-
 .m-1 {
   margin: 2px;
+}
+
+.custom-table {
+  cursor: pointer;
 }
 </style>
