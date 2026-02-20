@@ -21,4 +21,4 @@ COPY . .
 RUN chmod +x entrypoint.sh
 
 # Run migrations and start server
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
