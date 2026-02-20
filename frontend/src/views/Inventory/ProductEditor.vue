@@ -15,12 +15,19 @@
 
     <div class="editor-content" v-loading="loading">
       <el-tabs v-model="activeTab" class="product-tabs">
-        <!-- 1. General Info -->
         <el-tab-pane label="Загальна інформація" name="general">
           <GeneralTab 
             v-model="form" 
             :category-options="categoryOptions" 
             :uom-options="uomOptions"
+          />
+        </el-tab-pane>
+
+        <!-- 2. Characteristics -->
+        <el-tab-pane label="Характеристики" name="characteristics">
+          <CharacteristicsTab 
+            :product-id="form.id"
+            :category-code="form.category"
           />
         </el-tab-pane>
 
@@ -64,6 +71,7 @@ import api from '@/api'
 
 // Sub-components
 import GeneralTab from './ProductTabs/GeneralTab.vue'
+import CharacteristicsTab from './ProductTabs/CharacteristicsTab.vue'
 import PricingTab from './ProductTabs/PricingTab.vue'
 import SpecificationTab from './ProductTabs/SpecificationTab.vue'
 import InventoryTab from './ProductTabs/InventoryTab.vue'
