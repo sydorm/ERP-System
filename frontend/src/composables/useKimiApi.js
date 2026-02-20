@@ -6,7 +6,15 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
 // Backend API base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+let API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Dynamic IP detection for remote deployments
+if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    if (!isLocalhost && (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
+        API_BASE = `${window.location.protocol}//${window.location.hostname}:8000`
+    }
+}
 
 export function useKimiApi() {
     const loading = ref(false)
