@@ -26,11 +26,16 @@ class OrderBase(BaseModel):
     """Base Order schema"""
     order_number: str = Field(..., min_length=1, max_length=50)
     order_date: date = Field(default_factory=date.today)
+    shipping_date: Optional[date] = None
     
     counterparty_id: UUID
     warehouse_id: UUID
     
+    contract: Optional[str] = Field(None, max_length=255)
+    comment: Optional[str] = None
+    
     total_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
+    discount_percent: Optional[Decimal] = Field(default=Decimal("0.00"), ge=0, le=100)
 
 class OrderCreate(OrderBase):
     """Schema for creating an order"""
@@ -40,10 +45,15 @@ class OrderUpdate(BaseModel):
     """Schema for updating an order"""
     order_number: Optional[str] = Field(None, min_length=1, max_length=50)
     order_date: Optional[date] = None
+    shipping_date: Optional[date] = None
     status: Optional[OrderStatus] = None
     
     counterparty_id: Optional[UUID] = None
     warehouse_id: Optional[UUID] = None
+    
+    contract: Optional[str] = Field(None, max_length=255)
+    comment: Optional[str] = None
+    discount_percent: Optional[Decimal] = Field(None, ge=0, le=100)
     
     lines: Optional[List[OrderLineCreate]] = None
 

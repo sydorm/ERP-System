@@ -1,7 +1,7 @@
 """
 Order models - represents customer orders and their line items
 """
-from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum
+from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from decimal import Decimal
@@ -29,12 +29,18 @@ class Order(BaseModel):
     # Order Information
     order_number = Column(String(50), nullable=False, unique=True, index=True)
     order_date = Column(Date, nullable=False, default=date.today)
+    shipping_date = Column(Date, nullable=True)  # Planned shipping date
     
     # Status
     status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.DRAFT)
     
+    # Contract & notes
+    contract = Column(String(255), nullable=True)  # Contract reference
+    comment = Column(Text, nullable=True)
+    
     # Financial
     total_amount = Column(Numeric(15, 2), nullable=False, default=Decimal("0.00"))
+    discount_percent = Column(Numeric(5, 2), nullable=True, default=Decimal("0.00"))
     
     # Foreign Keys
     counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="RESTRICT"), nullable=False)
