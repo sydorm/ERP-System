@@ -17,6 +17,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def add_cors_header_on_error(request, call_next):
+    """
+    Ensure CORS headers are present even on internal server errors.
+    This helps in debugging remote servers.
+    """
+    response = await call_next(request)
+    if "Access-Control-Allow-Origin" not in response.headers:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """
+    Global exception handler to ensure JSON response and CORS headers
+    """
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
+
 
 @app.get("/")
 async def root():
