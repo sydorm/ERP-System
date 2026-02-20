@@ -42,6 +42,7 @@ class ProductResponse(ProductBase):
     company_id: UUID
     variants: List[ProductVariantResponse] = []
     specifications: List[ProductSpecificationResponse] = []
+    stock_balance: float = 0.0
 
     class Config:
         from_attributes = True

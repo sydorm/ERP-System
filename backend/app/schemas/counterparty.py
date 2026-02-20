@@ -1,0 +1,45 @@
+from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from uuid import UUID
+
+class CounterpartyBase(BaseModel):
+    """Base Counterparty schema"""
+    name: str = Field(..., min_length=1, max_length=255)
+    legal_name: Optional[str] = Field(None, max_length=500)
+    tax_id: Optional[str] = Field(None, max_length=50)
+    
+    is_customer: bool = True
+    is_supplier: bool = False
+    
+    phone: Optional[str] = Field(None, max_length=50)
+    email: Optional[EmailStr] = None
+    address: Optional[str] = Field(None, max_length=500)
+    
+    is_active: bool = True
+
+class CounterpartyCreate(CounterpartyBase):
+    """Schema for creating a counterparty"""
+    pass
+
+class CounterpartyUpdate(BaseModel):
+    """Schema for updating a counterparty"""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    legal_name: Optional[str] = Field(None, max_length=500)
+    tax_id: Optional[str] = Field(None, max_length=50)
+    
+    is_customer: Optional[bool] = None
+    is_supplier: Optional[bool] = None
+    
+    phone: Optional[str] = Field(None, max_length=50)
+    email: Optional[EmailStr] = None
+    address: Optional[str] = Field(None, max_length=500)
+    
+    is_active: Optional[bool] = None
+
+class CounterpartyResponse(CounterpartyBase):
+    """Schema for counterparty response"""
+    id: UUID
+    company_id: UUID
+
+    class Config:
+        from_attributes = True

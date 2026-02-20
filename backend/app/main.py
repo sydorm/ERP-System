@@ -59,5 +59,14 @@ app.include_router(attribute_router, prefix="/api/v1")
 
 from app.api.company_routes import router as company_router
 app.include_router(company_router, prefix="/api/v1")
+
+from app.api.counterparty_routes import router as counterparty_router
+app.include_router(counterparty_router, prefix="/api/v1", tags=["Sales"])
+
+from app.api.order_routes import router as order_router
+app.include_router(order_router, prefix="/api/v1", tags=["Sales"])
+
+from app.api.sales_invoice_routes import router as sales_invoice_router
+app.include_router(sales_invoice_router, prefix="/api/v1", tags=["Sales"])
 # from app.api.v1.api import api_router
 # app.include_router(api_router, prefix="/api/v1")

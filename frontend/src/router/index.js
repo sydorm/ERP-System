@@ -78,14 +78,44 @@ const router = createRouter({
                 {
                     path: '/sales/counterparties',
                     name: 'counterparties',
-                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    component: () => import('@/views/Sales/CounterpartiesList.vue'),
                     meta: { title: 'Контрагенти' }
                 },
                 {
                     path: '/sales/orders',
                     name: 'sales-orders',
-                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    component: () => import('@/views/Sales/OrdersList.vue'),
                     meta: { title: 'Замовлення (Продаж)' }
+                },
+                {
+                    path: '/sales/orders/new',
+                    name: 'sales-order-new',
+                    component: () => import('@/views/Sales/OrderEditor.vue'),
+                    meta: { title: 'Нове замовлення' }
+                },
+                {
+                    path: '/sales/orders/:id',
+                    name: 'sales-order-edit',
+                    component: () => import('@/views/Sales/OrderEditor.vue'),
+                    meta: { title: 'Редагування замовлення' }
+                },
+                {
+                    path: '/sales/invoices',
+                    name: 'sales-invoices',
+                    component: () => import('@/views/Sales/InvoicesList.vue'),
+                    meta: { title: 'Видаткові накладні' }
+                },
+                {
+                    path: '/sales/invoices/new',
+                    name: 'sales-invoice-new',
+                    component: () => import('@/views/Sales/InvoiceEditor.vue'),
+                    meta: { title: 'Нова накладна' }
+                },
+                {
+                    path: '/sales/invoices/:id',
+                    name: 'sales-invoice-edit',
+                    component: () => import('@/views/Sales/InvoiceEditor.vue'),
+                    meta: { title: 'Редагування накладної' }
                 },
                 // Purchase routes
                 {

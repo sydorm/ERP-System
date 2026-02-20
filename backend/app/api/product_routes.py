@@ -5,12 +5,23 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.db.session import get_db
-from app.models import Product, User, ProductSpecification, SpecificationItem
+from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType
 from app.models.variant import ProductVariant, VariantValue
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.api.dependencies import get_current_active_user
+from app.services.posting_service import PostingService
 
 router = APIRouter()
+
+@router.get("/products/statistics")
+async def get_products_statistics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get summary statistics for products (Total, In Stock, Low Stock, Out of Stock).
+    """
+    return PostingService.get_overall_statistics(db, current_user.company_id)
 
 @router.get("/products/{product_id}/stock")
 async def get_product_stock(
@@ -20,12 +31,29 @@ async def get_product_stock(
 ):
     """
     Get stock levels for a product across all warehouses.
-    (Simplified mockup for UI)
     """
-    # In a real system, this would query the AccumulationRegister
+    from app.models import AccumulationRegister, Warehouse
+    from sqlalchemy import func
+    
+    results = db.query(
+        Warehouse.name.label("warehouse"),
+        func.sum(AccumulationRegister.quantity).label("quantity")
+    ).join(
+        Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
+    ).filter(
+        AccumulationRegister.company_id == current_user.company_id,
+        AccumulationRegister.product_id == product_id,
+        AccumulationRegister.register_type == RegisterType.STOCK
+    ).group_by(Warehouse.name).all()
+    
     return [
-        {"warehouse": "Основний склад", "quantity": 120, "reserved": 10, "available": 110, "minLevel": 50},
-        {"warehouse": "Магазин (Центр)", "quantity": 15, "reserved": 0, "available": 15, "minLevel": 10}
+        {
+            "warehouse": r.warehouse, 
+            "quantity": float(r.quantity), 
+            "reserved": 0, 
+            "available": float(r.quantity), 
+            "minLevel": 5
+        } for r in results
     ]
 
 @router.get("/products", response_model=List[ProductResponse])
@@ -53,7 +81,16 @@ async def list_products(
     if category:
         query = query.filter(Product.category == category)
         
-    return query.offset(skip).limit(limit).all()
+    products = query.offset(skip).limit(limit).all()
+    
+    # Enrich with stock balance
+    if products:
+        product_ids = [p.id for p in products]
+        balances = PostingService.get_stock_balances(db, current_user.company_id, product_ids)
+        for p in products:
+            p.stock_balance = balances.get(str(p.id), 0.0)
+            
+    return products
 
 
 @router.post("/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)

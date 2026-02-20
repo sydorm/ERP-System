@@ -77,3 +77,67 @@ class PostingService:
             AccumulationRegister.document_id == document_id
         ).delete()
         db.flush()
+
+    @staticmethod
+    def get_stock_balances(db: Session, company_id: UUID, product_ids: Optional[List[UUID]] = None):
+        """
+        Get current stock balances for products.
+        Returns a dictionary mapping product_id to current quantity.
+        """
+        from sqlalchemy import func
+        query = db.query(
+            AccumulationRegister.product_id,
+            func.sum(AccumulationRegister.quantity).label("balance")
+        ).filter(
+            AccumulationRegister.company_id == company_id,
+            AccumulationRegister.register_type == RegisterType.STOCK
+        )
+
+        if product_ids:
+            query = query.filter(AccumulationRegister.product_id.in_(product_ids))
+
+        results = query.group_by(AccumulationRegister.product_id).all()
+        return {str(r.product_id): float(r.balance) for r in results if r.product_id}
+
+    @staticmethod
+    def get_overall_statistics(db: Session, company_id: UUID):
+        """
+        Get overall stock statistics for the company.
+        """
+        from app.models import Product
+        from sqlalchemy import func
+
+        # 1. Total active products
+        total_products = db.query(func.count(Product.id)).filter(
+            Product.company_id == company_id,
+            Product.is_active == True
+        ).scalar() or 0
+
+        # 2. Balances for all products
+        balances = PostingService.get_stock_balances(db, company_id)
+        
+        in_stock_count = 0
+        low_stock_count = 0
+        out_of_stock_count = 0
+        
+        # We need to consider all active products, even those without register entries (0 balance)
+        all_active_product_ids = [str(id[0]) for id in db.query(Product.id).filter(
+            Product.company_id == company_id,
+            Product.is_active == True
+        ).all()]
+
+        for p_id in all_active_product_ids:
+            qty = balances.get(p_id, 0)
+            if qty > 5: # Threshold for "in stock"
+                in_stock_count += 1
+            elif 0 < qty <= 5: # Threshold for "low stock"
+                low_stock_count += 1
+            else:
+                out_of_stock_count += 1
+
+        return {
+            "total_products": total_products,
+            "in_stock": in_stock_count,
+            "low_stock": low_stock_count,
+            "out_of_stock": out_of_stock_count
+        }

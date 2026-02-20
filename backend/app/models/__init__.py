@@ -15,6 +15,7 @@ from .specification import ProductSpecification, SpecificationItem
 from .product_file import ProductFile
 from .register import AccumulationRegister, RegisterType
 from .purchase_receipt import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStatus
+from .sales_invoice import SalesInvoice, SalesInvoiceLine, SalesInvoiceStatus
 
 __all__ = [
     "Base",
@@ -42,4 +43,7 @@ __all__ = [
     "PurchaseReceipt",
     "PurchaseReceiptLine",
     "PurchaseReceiptStatus",
+    "SalesInvoice",
+    "SalesInvoiceLine",
+    "SalesInvoiceStatus",
 ]
