@@ -145,7 +145,7 @@
         <el-tab-pane label="Фінанси" name="finances" :disabled="!isEditMode">
           <div class="tab-content">
             <el-row :gutter="20">
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="never" class="stat-card-finance">
                   <div class="finance-stat">
                     <span class="finance-label">Загальна сума продажів</span>
@@ -153,7 +153,7 @@
                   </div>
                 </el-card>
               </el-col>
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="never" class="stat-card-finance">
                   <div class="finance-stat">
                     <span class="finance-label">Загальна сума закупівель</span>
@@ -161,7 +161,7 @@
                   </div>
                 </el-card>
               </el-col>
-              <el-col :span="8">
+              <el-col :xs="24" :sm="8">
                 <el-card shadow="never" class="stat-card-finance">
                   <div class="finance-stat">
                     <span class="finance-label">Баланс</span>
@@ -329,6 +329,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .page-header {
@@ -336,31 +337,41 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   background: white;
-  padding: 16px 24px;
+  padding: 12px 20px;
   border-bottom: 1px solid #eef0f2;
+  flex-shrink: 0;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-tags {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .editor-content {
@@ -375,18 +386,22 @@ onMounted(() => {
 
 :deep(.el-tabs__header) {
   background: white;
-  padding: 0 24px;
+  padding: 0 20px;
   margin-bottom: 0;
 }
 
+:deep(.el-tabs__nav-wrap) {
+  overflow-x: auto;
+}
+
 .tab-content {
-  padding: 24px;
+  padding: 20px;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 .form-card {
@@ -396,14 +411,15 @@ onMounted(() => {
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #1a1d1f;
 }
 
 .form-row {
   display: flex;
-  gap: 32px;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 /* Finance stats */
@@ -425,10 +441,11 @@ onMounted(() => {
   color: #6f767e;
   font-weight: 500;
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .finance-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -436,13 +453,30 @@ onMounted(() => {
 .text-warning { color: #ffbc33; }
 .text-danger { color: #ff6b6b; }
 
-@media (max-width: 768px) {
+/* Responsive: sidebar takes ~220px, so content area is smaller */
+@media (max-width: 1200px) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    padding: 10px 16px;
+  }
+  .tab-content {
+    padding: 16px;
   }
   .form-row {
     flex-direction: column;
     gap: 0;
   }
+  .header-left h2 {
+    font-size: 16px;
+  }
+  .finance-value {
+    font-size: 18px;
+  }
 }
 </style>
+
