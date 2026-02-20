@@ -97,7 +97,7 @@ class PostingService:
             query = query.filter(AccumulationRegister.product_id.in_(product_ids))
 
         results = query.group_by(AccumulationRegister.product_id).all()
-        return {str(r.product_id): float(r.balance) for r in results if r.product_id}
+        return {str(r.product_id): float(r.balance or 0) for r in results if r.product_id}
 
     @staticmethod
     def get_overall_statistics(db: Session, company_id: UUID):
