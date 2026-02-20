@@ -1,103 +1,115 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-left">
-        <h2>Номенклатура</h2>
-        <el-breadcrumb separator="/">
-          <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-          <el-breadcrumb-item>Склад</el-breadcrumb-item>
-          <el-breadcrumb-item>Номенклатура</el-breadcrumb-item>
-        </el-breadcrumb>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-primary">
-          Додати товар
-        </el-button>
-        <el-button :icon="Printer" class="btn-secondary">Друк</el-button>
-      </div>
-    </div>
-
-    <!-- Stats Bar -->
-    <div class="stats-container">
-      <el-row :gutter="20">
-        <el-col :xs="12" :sm="6">
-          <div class="stat-card total">
-            <div class="stat-icon"><Box /></div>
-            <div class="stat-info">
-              <span class="stat-label">Всього товарів</span>
-              <span class="stat-value">{{ stats.total_products }}</span>
-            </div>
-          </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="stat-card in-stock">
-            <div class="stat-icon"><Coordinate /></div>
-            <div class="stat-info">
-              <span class="stat-label">В наявності</span>
-              <span class="stat-value">{{ stats.in_stock }}</span>
-            </div>
-          </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="stat-card low-stock">
-            <div class="stat-icon"><Warning /></div>
-            <div class="stat-info">
-              <span class="stat-label">Закінчуються</span>
-              <span class="stat-value text-warning">{{ stats.low_stock }}</span>
-            </div>
-          </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="stat-card out-of-stock">
-            <div class="stat-icon"><CircleClose /></div>
-            <div class="stat-info">
-              <span class="stat-label">Немає</span>
-              <span class="stat-value text-danger">{{ stats.out_of_stock }}</span>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- Filters & Search -->
-    <div class="filters-toolbar">
-      <div class="search-box">
-        <el-input
-          v-model="searchQuery"
-          placeholder="Пошук товарів..."
-          :prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          class="search-input"
-        />
-      </div>
-      <div class="category-chips">
-        <div 
-          class="chip" 
-          :class="{ active: filterCategory === '' }" 
-          @click="handleCategorySelect('')"
-        >
-          Всі
+    <div class="sticky-header-wrapper">
+      <div class="page-header">
+        <div class="header-left">
+          <h2>Номенклатура</h2>
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
+            <el-breadcrumb-item>Склад</el-breadcrumb-item>
+            <el-breadcrumb-item>Номенклатура</el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
-        <div 
-          v-for="cat in categoryOptions" 
-          :key="cat.code" 
-          class="chip" 
-          :class="{ active: filterCategory === cat.code }"
-          @click="handleCategorySelect(cat.code)"
-        >
-          {{ cat.name }}
+        <div class="header-right">
+          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-primary">
+            Додати товар
+          </el-button>
         </div>
       </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-container">
+        <el-row :gutter="20">
+          <el-col :xs="12" :sm="6">
+            <div class="stat-card total">
+              <div class="stat-icon"><Box /></div>
+              <div class="stat-info">
+                <span class="stat-label">Всього товарів</span>
+                <span class="stat-value">{{ stats.total_products }}</span>
+              </div>
+            </div>
+          </el-col>
+          <el-col :xs="12" :sm="6">
+            <div class="stat-card in-stock">
+              <div class="stat-icon"><Coordinate /></div>
+              <div class="stat-info">
+                <span class="stat-label">В наявності</span>
+                <span class="stat-value">{{ stats.in_stock }}</span>
+              </div>
+            </div>
+          </el-col>
+          <el-col :xs="12" :sm="6">
+            <div class="stat-card low-stock">
+              <div class="stat-icon"><Warning /></div>
+              <div class="stat-info">
+                <span class="stat-label">Закінчуються</span>
+                <span class="stat-value text-warning">{{ stats.low_stock }}</span>
+              </div>
+            </div>
+          </el-col>
+          <el-col :xs="12" :sm="6">
+            <div class="stat-card out-of-stock">
+              <div class="stat-icon"><CircleClose /></div>
+              <div class="stat-info">
+                <span class="stat-label">Немає</span>
+                <span class="stat-value text-danger">{{ stats.out_of_stock }}</span>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- Filters & Search -->
+      <div class="filters-toolbar">
+        <div class="search-box">
+          <el-input
+            v-model="searchQuery"
+            placeholder="Пошук товарів..."
+            :prefix-icon="Search"
+            clearable
+            @input="handleSearch"
+            class="search-input"
+          />
+        </div>
+        <div class="category-chips">
+          <div 
+            class="chip" 
+            :class="{ active: filterCategory === '' }" 
+            @click="handleCategorySelect('')"
+          >
+            Всі
+          </div>
+          <div 
+            v-for="cat in categoryOptions" 
+            :key="cat.code" 
+            class="chip" 
+            :class="{ active: filterCategory === cat.code }"
+            @click="handleCategorySelect(cat.code)"
+          >
+            {{ cat.name }}
+          </div>
+        </div>
+        <div class="view-toggle">
+          <el-radio-group v-model="viewMode" size="large">
+            <el-radio-button label="grid">
+              <el-icon><Grid /></el-icon>
+            </el-radio-button>
+            <el-radio-button label="list">
+              <el-icon><Fold /></el-icon>
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+      </div>
     </div>
 
-    <!-- Product Grid -->
-    <div class="grid-container" v-loading="loading">
+    <!-- Product Grid/List -->
+    <div class="content-container" v-loading="loading">
       <div v-if="products.length === 0 && !loading" class="empty-state">
         <el-empty description="Товарів не знайдено" />
       </div>
       
-      <el-row :gutter="20">
+      <!-- Grid View -->
+      <el-row v-if="viewMode === 'grid'" :gutter="20">
         <el-col 
           v-for="product in products" 
           :key="product.id" 
@@ -119,7 +131,6 @@
               <div class="product-sku">{{ product.sku }}</div>
               <div class="product-actions-overlay">
                 <el-button circle :icon="Edit" @click="handleEdit(product)" />
-                <el-button circle type="danger" :icon="Delete" @click="handleDelete(product)" />
               </div>
             </div>
             
@@ -148,13 +159,51 @@
               </div>
 
               <div class="quick-stock-actions">
-                <el-button size="small" :icon="Minus" @click="handleQuickAdjust(product, -1)">Списати</el-button>
-                <el-button size="small" type="primary" :icon="Plus" plain @click="handleQuickAdjust(product, 1)">Додати</el-button>
+                <el-button size="large" type="primary" :icon="Plus" plain @click="handleQuickAdjust(product, 1)" style="width: 100%">Додати</el-button>
               </div>
             </div>
           </el-card>
         </el-col>
       </el-row>
+
+      <!-- List View -->
+      <div v-else class="list-view-container">
+        <el-table :data="products" style="width: 100%" @row-click="handleEdit">
+          <el-table-column width="80">
+            <template #default="scope">
+              <el-image :src="scope.row.image_url" class="list-image">
+                <template #error>
+                  <div class="list-image-placeholder"><Picture /></div>
+                </template>
+              </el-image>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sku" label="Артикул" width="120" />
+          <el-table-column prop="name" label="Назва" min-width="200" />
+          <el-table-column label="Категорія" width="180">
+            <template #default="scope">
+              {{ getCategoryName(scope.row.category) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Запас" width="150" align="right">
+            <template #default="scope">
+              <span :class="getStockClass(scope.row.stock_balance)" style="font-weight: bold">
+                {{ scope.row.stock_balance }} {{ scope.row.unit_of_measure }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="Ціна" width="150" align="right">
+            <template #default="scope">
+              {{ formatCurrency(scope.row.price, scope.row.currency) }}
+            </template>
+          </el-table-column>
+          <el-table-column width="100" align="center">
+            <template #default="scope">
+              <el-button :icon="Edit" circle @click.stop="handleEdit(scope.row)" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -177,7 +226,7 @@ import { useRouter } from 'vue-router'
 import { 
   Plus, Search, Edit, Delete, Picture, 
   Box, Coordinate, Warning, CircleClose,
-  Printer, Minus
+  Printer, Minus, Grid, Fold
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -200,6 +249,7 @@ const currentPage = ref(1)
 
 const searchQuery = ref('')
 const filterCategory = ref('')
+const viewMode = ref('grid') // 'grid' or 'list'
 
 // Dictionaries
 const categoryOptions = ref([])
@@ -346,16 +396,24 @@ watch(filterCategory, () => {
 
 <style scoped>
 .page-container {
-  padding: 24px;
+  padding: 0;
   background-color: #f8f9fa;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
+}
+
+.sticky-header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #f8f9fa;
+  padding: 24px 24px 0 24px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .page-header h2 {
@@ -377,40 +435,29 @@ watch(filterCategory, () => {
   padding: 10px 20px;
 }
 
-.btn-secondary {
-  border: 2px solid #efefef;
-  font-weight: 600;
-  color: #1a1d1f;
-}
-
 /* Stats */
 .stats-container {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .total .stat-icon { background: rgba(42, 133, 255, 0.1); color: #2a85ff; }
@@ -424,13 +471,13 @@ watch(filterCategory, () => {
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #6f767e;
   font-weight: 500;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a1d1f;
 }
@@ -443,32 +490,27 @@ watch(filterCategory, () => {
 .filters-toolbar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #efefef;
+  background: #f8f9fa;
 }
 
 .search-input {
-  width: 300px;
+  width: 260px;
 }
 
 .search-input :deep(.el-input__wrapper) {
   border-radius: 10px;
-  background: #f4f4f4;
-  box-shadow: none !important;
-  border: 2px solid transparent;
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #2a85ff;
   background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
 }
 
 .category-chips {
+  flex: 1;
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 4px;
 }
 
 .chip {
@@ -481,21 +523,19 @@ watch(filterCategory, () => {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
-  border: 2px solid transparent;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.chip:hover {
-  background: #efefef;
+.chip:hover { background: #efefef; }
+.chip.active { background: #1a1d1f; color: #fff; }
+
+.view-toggle {
+  margin-left: auto;
 }
 
-.chip.active {
-  background: #1a1d1f;
-  color: #fff;
-}
-
-/* Grid */
-.grid-container {
-  margin-bottom: 30px;
+/* Content Area */
+.content-container {
+  padding: 24px;
 }
 
 .product-card {
@@ -513,28 +553,21 @@ watch(filterCategory, () => {
 
 .product-image-container {
   position: relative;
-  height: 200px;
+  height: 180px;
   background: #f4f4f4;
 }
 
-.product-image {
-  width: 100%;
-  height: 100%;
-}
+.product-image { width: 100%; height: 100%; }
 
 .image-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
   color: #d1d1d1;
 }
 
 .product-sku {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 12px; left: 12px;
   background: rgba(255, 255, 255, 0.9);
   padding: 4px 8px;
   border-radius: 6px;
@@ -545,117 +578,55 @@ watch(filterCategory, () => {
 
 .product-actions-overlay {
   position: absolute;
-  top: 12px;
-  right: -50px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: right 0.3s;
+  top: 12px; right: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.product-card:hover .product-actions-overlay {
-  right: 12px;
-}
+.product-card:hover .product-actions-overlay { opacity: 1; }
 
-.product-details {
-  padding: 16px;
-}
+.product-details { padding: 16px; }
 
 .category-tag {
-  font-size: 11px;
-  font-weight: 700;
-  color: #2a85ff;
-  text-transform: uppercase;
+  font-size: 11px; font-weight: 700;
+  color: #2a85ff; text-transform: uppercase;
   margin-bottom: 6px;
 }
 
 .product-title {
   margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1d1f;
-  cursor: pointer;
-  line-height: 1.4;
-  height: 44px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 16px; font-weight: 700;
+  color: #1a1d1f; cursor: pointer;
+  line-height: 1.4; height: 44px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.product-price {
-  margin-bottom: 16px;
-}
+.price-value { font-size: 18px; font-weight: 700; color: #1a1d1f; }
+.price-unit { font-size: 14px; color: #6f767e; margin-left: 4px; }
 
-.price-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1d1f;
-}
+.stock-status { margin-bottom: 16px; }
+.stock-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.stock-label { color: #6f767e; font-weight: 500; }
+.stock-value { font-weight: 700; }
 
-.price-unit {
-  font-size: 14px;
-  color: #6f767e;
-  margin-left: 4px;
-}
-
-.stock-status {
-  margin-bottom: 16px;
-}
-
-.stock-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-.stock-label {
-  color: #6f767e;
-  font-weight: 500;
-}
-
-.stock-value {
-  font-weight: 700;
-}
-
-.stock-progress {
-  margin-bottom: 0;
-}
-
-.quick-stock-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.quick-stock-actions .el-button {
-  flex: 1;
-  font-weight: 600;
+/* List View Styles */
+.list-image { width: 48px; height: 48px; border-radius: 8px; }
+.list-image-placeholder {
+  width: 48px; height: 48px;
+  background: #f4f4f4; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #d1d1d1;
 }
 
 .pagination-footer {
-  display: flex;
-  justify-content: center;
+  display: flex; justify-content: center;
   padding: 20px 0;
 }
 
 @media (max-width: 640px) {
-  .page-container {
-    padding: 16px;
-  }
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .header-right {
-    width: 100%;
-  }
-  .header-right .el-button {
-    flex: 1;
-  }
-  .search-input {
-    width: 100%;
-  }
+  .sticky-header-wrapper { padding: 16px 16px 0 16px; }
+  .filters-toolbar { gap: 12px; }
+  .search-input { width: 100%; }
 }
 </style>
