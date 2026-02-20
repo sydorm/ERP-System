@@ -31,12 +31,20 @@ async def add_cors_header_on_error(request, call_next):
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """
-    Global exception handler to ensure JSON response and CORS headers
+    Global exception handler to ensure JSON response and CORS headers.
+    Includes traceback for debugging.
     """
+    import traceback
     from fastapi.responses import JSONResponse
+    
+    error_detail = {
+        "detail": str(exc),
+        "traceback": traceback.format_exc()
+    }
+    
     return JSONResponse(
         status_code=500,
-        content={"detail": str(exc)},
+        content=error_detail,
         headers={"Access-Control-Allow-Origin": "*"}
     )
 
