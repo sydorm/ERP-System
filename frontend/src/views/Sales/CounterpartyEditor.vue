@@ -271,13 +271,20 @@ const saveCounterparty = async () => {
     return
   }
   
+  // Clean empty strings → null for optional fields (Pydantic EmailStr rejects "")
+  const payload = { ...form }
+  const optionalFields = ['legal_name', 'tax_id', 'phone', 'email', 'address']
+  optionalFields.forEach(field => {
+    if (payload[field] === '') payload[field] = null
+  })
+
   submitting.value = true
   try {
     if (isEditMode.value) {
-      await api.put(`/api/v1/counterparties/${form.id}`, form)
+      await api.put(`/api/v1/counterparties/${form.id}`, payload)
       ElMessage.success('Дані оновлено')
     } else {
-      const res = await api.post('/api/v1/counterparties', form)
+      const res = await api.post('/api/v1/counterparties', payload)
       ElMessage.success('Контрагента додано')
       router.push(`/sales/counterparties/${res.data.id}`)
     }
