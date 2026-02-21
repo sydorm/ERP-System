@@ -334,9 +334,9 @@ const handleProductChange = (productId, line) => {
     // Reset variant
     line.variant_id = null
     
-    // Auto-select primary variant if it has values (characteristics)
-    const primaryVar = product.variants?.find(v => v.is_primary)
-    if (primaryVar) {
+    // Auto-select primary variant or first variant if it has values
+    const primaryVar = product.variants?.find(v => v.is_primary) || product.variants?.[0]
+    if (primaryVar && primaryVar.values?.length > 0) {
       line.variant_id = primaryVar.id
       line.price = primaryVar.price_override || product.price
     } else {

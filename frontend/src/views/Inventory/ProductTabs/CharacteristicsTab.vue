@@ -51,7 +51,7 @@
 
           <!-- COLOR type -->
           <div v-else-if="getAttrType(char) === 'COLOR'" class="color-picker-row">
-            <el-select v-model="char.option_id" placeholder="Оберіть колір" style="flex: 1">
+            <el-select v-model="char.option_id" placeholder="Оберіть значення" style="flex: 1">
               <el-option v-for="opt in getAttrOptions(char)" :key="opt.id" :label="opt.value" :value="opt.id">
                 <span class="color-swatch" :style="{ background: opt.color_code || '#ccc' }"></span>
                 <span>{{ opt.value }}</span>
