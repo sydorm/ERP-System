@@ -22,11 +22,7 @@ async def list_document_sequences(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
         
-    try:
-        sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}\n{traceback.format_exc()}")
+    sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
     
     # Auto-initialize if empty (convenience)
     if not sequences:

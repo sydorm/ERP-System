@@ -9,7 +9,7 @@ from app.models.user import User
 from app.schemas.company import CompanyCreate, CompanyResponse, CompanyUpdate
 from app.services.tax_service import tax_service
 
-router = APIRouter(redirect_slashes=True, prefix="/api/v1/companies", tags=["Companies"])
+router = APIRouter(redirect_slashes=True, prefix="/companies", tags=["Companies"])
 
 @router.get("/", response_model=List[CompanyResponse])
 async def get_companies(
@@ -17,11 +17,9 @@ async def get_companies(
     current_user: User = Depends(get_current_user)
 ):
     """Get all companies accessible to the user."""
-    try:
-        return db.query(Company).all()
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}\n{traceback.format_exc()}")
+    # For now, return all companies since multi-tenant logic is being implemented
+    # Ideally, filter by user access
+    return db.query(Company).all()
 
 @router.get("/my", response_model=List[CompanyResponse])
 async def get_my_companies(
@@ -29,11 +27,9 @@ async def get_my_companies(
     current_user: User = Depends(get_current_user)
 ):
     """Get companies owned/assigned to current user."""
-    try:
-        return db.query(Company).filter(Company.id == current_user.company_id).all()
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}\n{traceback.format_exc()}")
+    # Current implementation links user to one company, 
+    # but we search for all companies where user is assigned
+    return db.query(Company).filter(Company.id == current_user.company_id).all()
 
 @router.post("/", response_model=CompanyResponse, status_code=status.HTTP_201_CREATED)
 async def create_company(

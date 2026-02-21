@@ -25,15 +25,11 @@ async def list_specifications(
     current_user: User = Depends(get_current_user)
 ):
     """Get all specifications for a product."""
-    try:
-        specs = db.query(ProductSpecification).options(
-            joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
-        ).filter(
-            ProductSpecification.product_id == product_id
-        ).order_by(ProductSpecification.created_at.desc()).all()
-    except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}\n{traceback.format_exc()}")
+    specs = db.query(ProductSpecification).options(
+        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+    ).filter(
+        ProductSpecification.product_id == product_id
+    ).order_by(ProductSpecification.created_at.desc()).all()
     return specs
 
 
