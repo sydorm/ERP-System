@@ -18,46 +18,48 @@
     <!-- === STICKY: Order details panel === -->
     <div class="order-details-panel">
       <el-form :model="form" label-position="top" size="default" class="details-form">
-        <el-row :gutter="16">
-          <el-col :xs="24" :sm="12" :md="3">
+        <el-row :gutter="12">
+          <el-col :xs="24" :sm="12" :md="3" :lg="3">
             <el-form-item label="Номер">
               <el-input v-model="form.order_number" placeholder="ORD-0001" />
             </el-form-item>
           </el-col>
-          <el-col :xs="12" :sm="12" :md="4">
+          <el-col :xs="12" :sm="12" :md="4" :lg="4">
             <el-form-item label="Дата створення">
               <el-date-picker v-model="form.order_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" />
             </el-form-item>
           </el-col>
-          <el-col :xs="12" :sm="12" :md="4">
+          <el-col :xs="12" :sm="12" :md="4" :lg="4">
             <el-form-item label="Дата відвантаження">
               <el-date-picker v-model="form.shipping_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" placeholder="Планова" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="5">
+          <el-col :xs="24" :sm="24" :md="5" :lg="5">
             <el-form-item label="Клієнт" required>
               <template #label>
-                <span>Клієнт <span style="color: #f56c6c">*</span></span>
+                <span class="required-label">Клієнт <span>*</span></span>
               </template>
               <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" style="width: 100%" @change="onClientChange">
                 <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="4">
+          <el-col :xs="24" :sm="12" :md="4" :lg="4">
             <el-form-item label="Договір">
               <el-input v-model="form.contract" placeholder="№ договору" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="4">
+          <el-col :xs="24" :sm="12" :md="4" :lg="4">
             <el-form-item label="Склад" required>
               <template #label>
-                <span>Склад <span style="color: #f56c6c">*</span></span>
+                <span class="required-label">Склад <span>*</span></span>
               </template>
               <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" style="width: 100%">
                 <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
-                   <span>{{ w.name }}</span>
-                   <el-tag v-if="w.is_default" size="small" type="success" style="margin-left: 8px">Основний</el-tag>
+                   <div style="display: flex; justify-content: space-between; align-items: center;">
+                     <span>{{ w.name }}</span>
+                     <el-tag v-if="w.is_default" size="small" type="success" effect="plain">Основний</el-tag>
+                   </div>
                 </el-option>
               </el-select>
             </el-form-item>
@@ -375,6 +377,12 @@ onMounted(fetchData)
   font-weight: 500 !important; /* font-medium */
   font-size: 0.875rem !important; /* text-sm */
   padding-bottom: 6px !important;
+  line-height: 1.25 !important;
+}
+
+.required-label span {
+  color: #f56c6c;
+  margin-left: 2px;
 }
 
 /* Input Styling (Slate background and border) */
@@ -504,12 +512,42 @@ onMounted(fetchData)
 
 /* Responsive */
 @media (max-width: 768px) {
-  .order-footer {
-    flex-direction: column;
-    margin: 0 12px 12px;
+  .page-header {
+    padding: 12px 16px;
   }
   .order-details-panel {
-    margin: 12px;
+    margin: 8px;
+    padding: 16px;
+  }
+  .details-form :deep(.el-form-item__label) {
+    font-size: 0.8125rem !important;
+    padding-bottom: 4px !important;
+  }
+  .lines-section {
+    padding: 0 8px 8px;
+  }
+  .order-footer {
+    flex-direction: column;
+    margin: 0 8px 8px;
+    padding: 16px;
+    gap: 16px;
+  }
+  .footer-right {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* Extra small mobile fixes for very narrow screens */
+@media (max-width: 480px) {
+  .header-left h2 {
+    font-size: 16px;
+  }
+  .summary-row {
+     gap: 8px;
+  }
+  .total-value {
+    font-size: 20px;
   }
 }
 </style>

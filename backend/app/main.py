@@ -99,5 +99,8 @@ app.include_router(order_router, prefix="/api/v1", tags=["Sales"])
 
 from app.api.sales_invoice_routes import router as sales_invoice_router
 app.include_router(sales_invoice_router, prefix="/api/v1", tags=["Sales"])
+
+from app.api.warehouse_routes import router as warehouse_router
+app.include_router(warehouse_router, prefix="/api/v1", tags=["Inventory"])
 # from app.api.v1.api import api_router
 # app.include_router(api_router, prefix="/api/v1")
