@@ -1,74 +1,72 @@
 <template>
   <div class="page-container">
+    <!-- === TOP BAR === -->
     <div class="page-header">
       <div class="header-left">
-         <el-button :icon="ArrowLeft" circle @click="goBack" />
-         <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+        <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" />
+        <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
       </div>
       <div class="header-actions">
         <el-button @click="goBack">Скасувати</el-button>
-        <el-button type="primary" :loading="submitting" @click="saveProduct">
-            Зберегти
+        <el-button type="primary" :loading="submitting" @click="saveProduct" class="btn-save">
+          Зберегти
         </el-button>
       </div>
     </div>
 
+    <!-- === CONTENT CARD === -->
     <div class="editor-content" v-loading="loading">
-      <el-tabs v-model="activeTab" class="product-tabs">
-        <el-tab-pane label="Загальна інформація" name="general">
-          <GeneralTab 
-            v-model="form" 
-            :category-options="categoryOptions" 
-            :uom-options="uomOptions"
-          />
-        </el-tab-pane>
+      <div class="content-card">
+        <el-tabs v-model="activeTab" class="product-tabs">
+          <el-tab-pane label="Загальна інформація" name="general">
+            <GeneralTab
+              v-model="form"
+              :category-options="categoryOptions"
+              :uom-options="uomOptions"
+            />
+          </el-tab-pane>
 
-        <!-- 2. Characteristics -->
-        <el-tab-pane label="Характеристики" name="characteristics">
-          <CharacteristicsTab 
-            v-model="productCharacteristics"
-            :product-id="form.id"
-            :category-code="form.category"
-          />
-        </el-tab-pane>
+          <el-tab-pane label="Характеристики" name="characteristics">
+            <CharacteristicsTab
+              v-model="productCharacteristics"
+              :product-id="form.id"
+              :category-code="form.category"
+            />
+          </el-tab-pane>
 
-        <!-- 2. Commercial -->
-        <el-tab-pane label="Ціни та Комерція" name="pricing">
-          <PricingTab 
-            v-model="form" 
-            :currency-options="currencyOptions"
-            :has-specification="hasSpecification"
-          />
-        </el-tab-pane>
+          <el-tab-pane label="Ціни та Комерція" name="pricing">
+            <PricingTab
+              v-model="form"
+              :currency-options="currencyOptions"
+              :has-specification="hasSpecification"
+            />
+          </el-tab-pane>
 
-        <!-- 3. Specification (BOM) -->
-        <el-tab-pane label="Специфікація (BOM)" name="specification">
-          <SpecificationTab 
-            :items="specificationItems"
-            :total-cost="totalBomCost"
-          />
-        </el-tab-pane>
+          <el-tab-pane label="Специфікація (BOM)" name="specification">
+            <SpecificationTab
+              :items="specificationItems"
+              :total-cost="totalBomCost"
+            />
+          </el-tab-pane>
 
-        <!-- 4. Warehouse -->
-        <el-tab-pane label="Складські запаси" name="inventory">
-          <InventoryTab :stock-levels="stockLevels" />
-        </el-tab-pane>
+          <el-tab-pane label="Складські запаси" name="inventory">
+            <InventoryTab :stock-levels="stockLevels" />
+          </el-tab-pane>
 
-        <!-- 5. Files -->
-        <el-tab-pane label="Файли та техдокументація" name="files">
-          <FilesTab />
-        </el-tab-pane>
+          <el-tab-pane label="Файли" name="files">
+            <FilesTab />
+          </el-tab-pane>
 
-        <!-- 6. Variants -->
-        <el-tab-pane label="Варіанти" name="variants">
-          <ProductVariantsManager 
-            :category-attributes="categoryAttributes"
-            :product-code="form.sku"
-            :initial-variants="form.variants"
-            @update:variants="(val) => form.variants = val"
-          />
-        </el-tab-pane>
-      </el-tabs>
+          <el-tab-pane label="Варіанти" name="variants">
+            <ProductVariantsManager
+              :category-attributes="categoryAttributes"
+              :product-code="form.sku"
+              :initial-variants="form.variants"
+              @update:variants="(val) => form.variants = val"
+            />
+          </el-tab-pane>
+        </el-tabs>
+      </div>
     </div>
   </div>
 </template>
@@ -256,44 +254,103 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f6f8;
 }
 
+/* === TOP BAR === */
 .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 16px 24px;
-    border-bottom: 1px solid #eef0f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 12px 24px;
+  border-bottom: 1px solid #f0f3f6;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .header-left h2 {
-    margin: 0;
-    font-size: 20px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save {
+  background: #2563eb;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+/* === EDITOR CONTENT === */
 .editor-content {
-    flex: 1;
-    overflow-y: auto;
-    background: #f8f9fa;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
 }
 
-.product-tabs {
-    height: 100%;
+/* === CONTENT CARD === */
+.content-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f3f6;
+  overflow: hidden;
 }
 
-:deep(.el-tabs__header) {
-    background: white;
-    padding: 0 24px;
-    margin-bottom: 0;
+/* === TABS === */
+.product-tabs :deep(.el-tabs__header) {
+  background: #ffffff;
+  padding: 0 20px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.product-tabs :deep(.el-tabs__nav-wrap::after) {
+  display: none; /* remove default bottom line */
+}
+
+.product-tabs :deep(.el-tabs__item) {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  padding: 0 16px;
+  height: 44px;
+  line-height: 44px;
+  transition: color 0.2s;
+}
+
+.product-tabs :deep(.el-tabs__item:hover) {
+  color: #2563eb;
+}
+
+.product-tabs :deep(.el-tabs__item.is-active) {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.product-tabs :deep(.el-tabs__active-bar) {
+  background-color: #2563eb;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.product-tabs :deep(.el-tabs__content) {
+  padding: 0;
 }
 </style>
