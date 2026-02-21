@@ -97,26 +97,36 @@
         </el-table-column>
         <el-table-column label="Характеристика" min-width="180">
           <template #default="scope">
-            <el-select
-              v-model="scope.row.variant_id"
-              placeholder="Оберіть..."
-              style="width: 100%"
-              clearable
-              :disabled="!scope.row.product_id || getProductVariants(scope.row.product_id).length === 0"
-              @change="(val) => handleVariantChange(val, scope.row)"
-            >
-              <el-option
-                v-for="v in getProductVariants(scope.row.product_id)"
-                :key="v.id"
-                :label="getVariantLabel(v)"
-                :value="v.id"
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <el-select
+                v-model="scope.row.variant_id"
+                placeholder="Оберіть..."
+                style="flex: 1"
+                clearable
+                :disabled="!scope.row.product_id || getProductVariants(scope.row.product_id).length === 0"
+                @change="(val) => handleVariantChange(val, scope.row)"
               >
-                <span>{{ getVariantLabel(v) }}</span>
-                <el-tag v-if="v.price_override" size="small" type="warning" style="margin-left: 8px">
-                  {{ formatShort(v.price_override) }}
-                </el-tag>
-              </el-option>
-            </el-select>
+                <el-option
+                  v-for="v in getProductVariants(scope.row.product_id)"
+                  :key="v.id"
+                  :label="getVariantLabel(v)"
+                  :value="v.id"
+                >
+                  <span>{{ getVariantLabel(v) }}</span>
+                  <el-tag v-if="v.price_override" size="small" type="warning" style="margin-left: 8px">
+                    {{ formatShort(v.price_override) }}
+                  </el-tag>
+                </el-option>
+              </el-select>
+              <el-button 
+                v-if="scope.row.product_id && getProductVariants(scope.row.product_id).length > 0"
+                :icon="Setting" 
+                circle 
+                size="small" 
+                @click="openVariantSelector(scope.row)" 
+                title="Конфігуратор характеристик"
+              />
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="Кількість" width="130">
@@ -227,15 +237,24 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- === DIALOG: Interactive Variant Selector === -->
+    <VariantSelectorDialog
+      v-model="variantSelectorVisible"
+      :product="selectedProductForSelector"
+      :initial-variant-id="activeLineForSelector?.variant_id"
+      @select="onVariantSelected"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import VariantSelectorDialog from './VariantSelectorDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -268,6 +287,11 @@ const nomenclatureDialogVisible = ref(false)
 const nomenclatureSearch = ref('')
 const activeLineIndex = ref(-1)
 const selectedDialogProduct = ref(null)
+
+// Variant Selector State
+const variantSelectorVisible = ref(false)
+const selectedProductForSelector = ref(null)
+const activeLineForSelector = ref(null)
 
 // Computed
 const subtotal = computed(() => {
@@ -365,6 +389,23 @@ const confirmDialogSelection = () => {
     line.product_id = selectedDialogProduct.value.id
     handleProductChange(line.product_id, line)
     nomenclatureDialogVisible.value = false
+  }
+}
+
+// Variant Selector Methods
+const openVariantSelector = (line) => {
+  const product = products.value.find(p => p.id === line.product_id)
+  if (!product) return
+  
+  activeLineForSelector.value = line
+  selectedProductForSelector.value = product
+  variantSelectorVisible.value = true
+}
+
+const onVariantSelected = (variant) => {
+  if (activeLineForSelector.value) {
+    activeLineForSelector.value.variant_id = variant.id
+    handleVariantChange(variant.id, activeLineForSelector.value)
   }
 }
 
