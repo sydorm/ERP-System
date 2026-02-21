@@ -91,7 +91,7 @@
         </el-table>
 
         <div class="form-footer">
-          <el-button v-if="form.status === 'draft'" type="dashed" :icon="Plus" @click="addLine" class="add-line-btn">
+          <el-button v-if="form.status === 'draft'" :icon="Plus" @click="addLine" class="add-line-btn" plain>
             Додати товар
           </el-button>
           <div v-else></div> <!-- spacer when button is hidden -->

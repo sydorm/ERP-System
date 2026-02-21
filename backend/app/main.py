@@ -62,7 +62,24 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check for monitoring"""
-    return {"status": "healthy"}
+    from app.db.session import SessionLocal
+    from sqlalchemy import text
+    db_status = "ok"
+    alembic_version = "unknown"
+    try:
+        db = SessionLocal()
+        res = db.execute(text("SELECT version_num FROM alembic_version")).first()
+        if res:
+            alembic_version = res[0]
+        db.close()
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {
+        "status": "healthy" if db_status == "ok" else "unhealthy",
+        "database": db_status,
+        "alembic_version": alembic_version
+    }
 
 
 # Include AI router
