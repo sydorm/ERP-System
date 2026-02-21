@@ -19,7 +19,7 @@
     <div class="order-details-panel">
       <el-form :model="form" label-position="top" size="default" class="details-form">
         <el-row :gutter="16">
-          <el-col :xs="24" :sm="12" :md="4">
+          <el-col :xs="24" :sm="12" :md="3">
             <el-form-item label="Номер">
               <el-input v-model="form.order_number" placeholder="ORD-0001" />
             </el-form-item>
@@ -34,8 +34,11 @@
               <el-date-picker v-model="form.shipping_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" placeholder="Планова" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="12" :md="4">
+          <el-col :xs="24" :sm="12" :md="5">
             <el-form-item label="Клієнт" required>
+              <template #label>
+                <span>Клієнт <span style="color: #f56c6c">*</span></span>
+              </template>
               <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" style="width: 100%" @change="onClientChange">
                 <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
@@ -48,8 +51,14 @@
           </el-col>
           <el-col :xs="24" :sm="12" :md="4">
             <el-form-item label="Склад" required>
+              <template #label>
+                <span>Склад <span style="color: #f56c6c">*</span></span>
+              </template>
               <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" style="width: 100%">
-                <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+                <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
+                   <span>{{ w.name }}</span>
+                   <el-tag v-if="w.is_default" size="small" type="success" style="margin-left: 8px">Основний</el-tag>
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -214,8 +223,10 @@ const statusLabel = computed(() => {
 const goBack = () => router.push('/sales/orders')
 
 const onClientChange = (clientId) => {
-  // Auto-fill contract from client if available (future enhancement)
-  console.log('Client changed:', clientId)
+  const client = customers.value.find(c => c.id === clientId)
+  if (client && client.default_contract) {
+    form.contract = client.default_contract
+  }
 }
 
 const addLine = () => {
@@ -259,9 +270,15 @@ const fetchData = async () => {
       const res = await api.get(`/api/v1/orders/${route.params.id}`)
       Object.assign(form, res.data)
     } else {
+      // Auto-select default warehouse for new orders
+      const defaultWH = warehouses.value.find(w => w.is_default)
+      if (defaultWH) {
+        form.warehouse_id = defaultWH.id
+      }
       addLine()
     }
   } catch (e) {
+    console.error('Data loading error:', e)
     ElMessage.error('Помилка завантаження даних')
   } finally {
     loading.value = false

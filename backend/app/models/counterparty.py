@@ -27,6 +27,7 @@ class Counterparty(BaseModel):
     phone = Column(String(50), nullable=True)
     email = Column(String(255), nullable=True)
     address = Column(String(500), nullable=True)
+    default_contract = Column(String(255), nullable=True)
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)

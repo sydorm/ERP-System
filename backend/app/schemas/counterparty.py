@@ -14,6 +14,7 @@ class CounterpartyBase(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     email: Optional[EmailStr] = None
     address: Optional[str] = Field(None, max_length=500)
+    default_contract: Optional[str] = Field(None, max_length=255)
     
     is_active: bool = True
 
@@ -33,6 +34,7 @@ class CounterpartyUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     email: Optional[EmailStr] = None
     address: Optional[str] = Field(None, max_length=500)
+    default_contract: Optional[str] = Field(None, max_length=255)
     
     is_active: Optional[bool] = None
 

@@ -73,6 +73,13 @@
                   <el-form-item label="Адреса">
                     <el-input v-model="form.address" type="textarea" :rows="3" placeholder="Юридична або фактична адреса" />
                   </el-form-item>
+                  <el-form-item label="Договір за замовчуванням">
+                    <el-input v-model="form.default_contract" placeholder="№ договору для автопідстановки" size="large">
+                      <template #prefix>
+                        <el-icon><Document /></el-icon>
+                      </template>
+                    </el-input>
+                  </el-form-item>
                 </el-form>
               </el-card>
             </div>
@@ -188,7 +195,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Phone, Message } from '@element-plus/icons-vue'
+import { ArrowLeft, Phone, Message, Document } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 
@@ -211,6 +218,7 @@ const form = reactive({
   phone: '',
   email: '',
   address: '',
+  default_contract: '',
   is_active: true
 })
 
@@ -273,7 +281,7 @@ const saveCounterparty = async () => {
   
   // Clean empty strings → null for optional fields (Pydantic EmailStr rejects "")
   const payload = { ...form }
-  const optionalFields = ['legal_name', 'tax_id', 'phone', 'email', 'address']
+  const optionalFields = ['legal_name', 'tax_id', 'phone', 'email', 'address', 'default_contract']
   optionalFields.forEach(field => {
     if (payload[field] === '') payload[field] = null
   })
