@@ -27,7 +27,7 @@ class ProductVariantBase(BaseModel):
     is_active: bool = True
 
 class ProductVariantCreate(ProductVariantBase):
-    product_id: UUID4
+    product_id: Optional[UUID4] = None
     values: List[VariantValueCreate]
 
 class ProductVariantResponse(ProductVariantBase):

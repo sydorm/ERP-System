@@ -26,6 +26,7 @@
         <!-- 2. Characteristics -->
         <el-tab-pane label="Характеристики" name="characteristics">
           <CharacteristicsTab 
+            v-model="productCharacteristics"
             :product-id="form.id"
             :category-code="form.category"
           />
@@ -97,8 +98,11 @@ const form = reactive({
     cost: 0,
     currency: 'UAH',
     image_url: '',
-    is_active: true
+    is_active: true,
+    variants: []
 })
+
+const productCharacteristics = ref([])
 
 // Options
 const uomOptions = ref([])
@@ -139,6 +143,19 @@ const fetchProduct = async () => {
     try {
         const res = await api.get(`/api/v1/products/${route.params.id}`)
         Object.assign(form, res.data)
+        
+        // Extract characteristics from primary variant
+        const primaryVar = form.variants?.find(v => v.is_primary) || form.variants?.[0]
+        if (primaryVar && primaryVar.values) {
+            productCharacteristics.value = primaryVar.values.map(v => ({
+                attribute_id: v.attribute_id,
+                option_id: v.option_id,
+                text_value: v.text_value,
+                bool_value: v.bool_value || false,
+                is_fixed: false // We can't know from data alone without sync, but sync will fix it
+            }))
+        }
+        
         fetchStockLevels()
     } catch (e) {
         ElMessage.error('Помилка завантаження товару')
@@ -157,6 +174,30 @@ const fetchStockLevels = async () => {
 }
 
 const saveProduct = async () => {
+    // Prepare variants/characteristics before saving
+    if (productCharacteristics.value.length > 0) {
+        // Find existing primary variant or create a placeholder
+        let primaryVar = form.variants?.find(v => v.is_primary) || form.variants?.[0]
+        
+        if (!primaryVar) {
+            primaryVar = {
+                sku: form.sku, // Default to product SKU
+                is_primary: true,
+                is_active: true,
+                values: []
+            }
+            form.variants = [primaryVar]
+        }
+        
+        // Update variant values
+        primaryVar.values = productCharacteristics.value.map(c => ({
+            attribute_id: c.attribute_id,
+            option_id: c.option_id,
+            text_value: String(c.text_value || ''),
+            bool_value: !!c.bool_value
+        }))
+    }
+
     submitting.value = true
     try {
         if (isEditMode.value) {

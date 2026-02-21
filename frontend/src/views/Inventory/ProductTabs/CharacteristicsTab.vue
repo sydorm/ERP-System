@@ -3,28 +3,29 @@
     <template #header>
       <div class="card-header">
         <span class="card-title">Характеристики товару</span>
-        <el-button type="primary" :icon="Plus" size="small" @click="addCharacteristic" :disabled="availableAttributes.length === 0">
+        <el-button type="primary" :icon="Plus" size="small" @click="addCharacteristic" :disabled="availableAttributesForAdd.length === 0">
           Додати
         </el-button>
       </div>
     </template>
 
-    <div v-if="characteristics.length === 0" class="empty-state">
+    <div v-if="localCharacteristics.length === 0" class="empty-state">
       <el-empty description="Характеристики не задані" :image-size="80">
-        <el-button type="primary" @click="addCharacteristic" :disabled="availableAttributes.length === 0">
+        <el-button type="primary" @click="addCharacteristic" :disabled="availableAttributesForAdd.length === 0">
           Додати характеристику
         </el-button>
       </el-empty>
     </div>
 
     <div v-else class="char-list">
-      <div v-for="(char, index) in characteristics" :key="index" class="char-row">
+      <div v-for="(char, index) in localCharacteristics" :key="index" class="char-row">
         <div class="char-attribute">
           <el-select
             v-model="char.attribute_id"
             placeholder="Оберіть характеристику"
             style="width: 100%"
             @change="onAttributeChange(char)"
+            :disabled="char.is_fixed"
           >
             <el-option
               v-for="attr in getAvailableForRow(char)"
@@ -79,7 +80,14 @@
             placeholder="Введіть значення"
           />
         </div>
-        <el-button :icon="Delete" link type="danger" @click="removeCharacteristic(index)" />
+        <el-button 
+          v-if="!char.is_fixed" 
+          :icon="Delete" 
+          link 
+          type="danger" 
+          @click="removeCharacteristic(index)" 
+        />
+        <div v-else style="width: 32px"></div> <!-- Spacer for alignment -->
       </div>
     </div>
   </el-card>
@@ -92,23 +100,32 @@ import api from '@/api'
 
 const props = defineProps({
   productId: { type: String, default: null },
-  categoryCode: { type: String, default: '' }
+  categoryCode: { type: String, default: '' },
+  modelValue: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['update:characteristics'])
+const emit = defineEmits(['update:characteristics', 'update:modelValue'])
 
 // All attributes from backend (loaded once, shared)
 const allAttributes = ref([])
+const categoryAttributes = ref([]) // Attributes linked to currently selected category
 const loading = ref(false)
 
 // Local characteristics (attribute_id -> value mapping)
-const characteristics = ref([])
+const localCharacteristics = ref([])
+
+// Sync props.modelValue to local state
+watch(() => props.modelValue, (newVal) => {
+  if (JSON.stringify(newVal) !== JSON.stringify(localCharacteristics.value)) {
+    localCharacteristics.value = [...newVal]
+  }
+}, { immediate: true, deep: true })
 
 // Computed: attributes already used in the current list
-const usedAttributeIds = computed(() => characteristics.value.map(c => c.attribute_id).filter(Boolean))
+const usedAttributeIds = computed(() => localCharacteristics.value.map(c => c.attribute_id).filter(Boolean))
 
 // Attributes available for a new row (not already used)
-const availableAttributes = computed(() => {
+const availableAttributesForAdd = computed(() => {
   return allAttributes.value.filter(a => !usedAttributeIds.value.includes(a.id))
 })
 
@@ -137,29 +154,77 @@ const onAttributeChange = (char) => {
   char.option_id = null
   char.text_value = ''
   char.bool_value = false
+  
+  // Auto-fill if only one option
+  const attr = allAttributes.value.find(a => a.id === char.attribute_id)
+  if (attr && attr.options && attr.options.length === 1) {
+    char.option_id = attr.options[0].id
+  }
+  
   emitUpdate()
 }
 
-const addCharacteristic = () => {
-  characteristics.value.push({
-    attribute_id: null,
+const addCharacteristic = (attributeId = null, isFixed = false) => {
+  const newChar = {
+    attribute_id: attributeId,
     option_id: null,
     text_value: '',
-    bool_value: false
-  })
+    bool_value: false,
+    is_fixed: isFixed
+  }
+  
+  if (attributeId) {
+    const attr = allAttributes.value.find(a => a.id === attributeId)
+    if (attr && attr.options && attr.options.length === 1) {
+      newChar.option_id = attr.options[0].id
+    }
+  }
+  
+  localCharacteristics.value.push(newChar)
+  emitUpdate()
 }
 
 const removeCharacteristic = (index) => {
-  characteristics.value.splice(index, 1)
+  localCharacteristics.value.splice(index, 1)
   emitUpdate()
 }
 
 const emitUpdate = () => {
-  emit('update:characteristics', characteristics.value)
+  emit('update:characteristics', localCharacteristics.value)
+  emit('update:modelValue', localCharacteristics.value)
 }
 
 // Watch for changes and emit
-watch(characteristics, emitUpdate, { deep: true })
+watch(localCharacteristics, emitUpdate, { deep: true })
+
+// Category Sync logic
+const syncCategoryAttributes = async () => {
+  if (!props.categoryCode) {
+    categoryAttributes.value = []
+    return
+  }
+  
+  try {
+    const res = await api.get(`/api/v1/attributes/category/${props.categoryCode}`)
+    categoryAttributes.value = res.data || []
+    
+    // Auto-add missing attributes from category
+    categoryAttributes.value.forEach(ca => {
+      const alreadyPresent = localCharacteristics.value.some(c => c.attribute_id === ca.attribute_id)
+      if (!alreadyPresent) {
+        addCharacteristic(ca.attribute_id, ca.is_required || ca.attribute.name.toLowerCase() === 'каркас')
+      } else if (ca.is_required || ca.attribute.name.toLowerCase() === 'каркас') {
+         // Mark existing as fixed if needed
+         const char = localCharacteristics.value.find(c => c.attribute_id === ca.attribute_id)
+         if (char) char.is_fixed = true
+      }
+    })
+  } catch (e) {
+    console.error('Failed to sync category attributes', e)
+  }
+}
+
+watch(() => props.categoryCode, syncCategoryAttributes)
 
 const fetchAttributes = async () => {
   loading.value = true
@@ -173,8 +238,11 @@ const fetchAttributes = async () => {
   }
 }
 
-onMounted(() => {
-  fetchAttributes()
+onMounted(async () => {
+  await fetchAttributes()
+  if (props.categoryCode) {
+    await syncCategoryAttributes()
+  }
 })
 </script>
 
