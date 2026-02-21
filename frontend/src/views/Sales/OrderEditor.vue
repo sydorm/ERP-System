@@ -79,25 +79,27 @@
         <el-table-column type="index" label="№" width="50" align="center" />
         <el-table-column label="Товар" min-width="200">
           <template #default="scope">
-            <el-select 
-              v-model="scope.row.product_id" 
-              filterable 
-              placeholder="Пошук товару..." 
-              style="width: 100%"
-              @change="(val) => handleProductChange(val, scope.row)"
-            >
-              <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id">
-                <span style="float: left">{{ p.name }}</span>
-                <span style="float: right; color: #8492a6; font-size: 13px">{{ formatShort(p.price) }}</span>
-              </el-option>
-            </el-select>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <el-select 
+                v-model="scope.row.product_id" 
+                filterable 
+                placeholder="Пошук товару..." 
+                style="flex: 1"
+                @change="(val) => handleProductChange(val, scope.row)"
+              >
+                <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id">
+                  <span>{{ p.name }}</span>
+                </el-option>
+              </el-select>
+              <el-button :icon="Search" circle size="small" @click="openNomenclatureDialog(scope.$index)" title="Відкрити номенклатуру" />
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="Характеристика" min-width="180">
           <template #default="scope">
             <el-select
               v-model="scope.row.variant_id"
-              placeholder="Стандарт"
+              placeholder="Оберіть..."
               style="width: 100%"
               clearable
               :disabled="!scope.row.product_id || getProductVariants(scope.row.product_id).length === 0"
@@ -187,13 +189,51 @@
         </div>
       </div>
     </div>
+
+    <!-- === DIALOG: Nomenclature Selection === -->
+    <el-dialog
+      v-model="nomenclatureDialogVisible"
+      title="Вибір номенклатури"
+      width="800px"
+      destroy-on-close
+    >
+      <el-input
+        v-model="nomenclatureSearch"
+        placeholder="Пошук за назвою або SKU..."
+        :prefix-icon="Search"
+        clearable
+        style="margin-bottom: 16px"
+      />
+      <el-table 
+        :data="filteredProducts" 
+        border 
+        height="400px" 
+        highlight-current-row
+        @current-change="onDialogProductSelect"
+      >
+        <el-table-column property="sku" label="SKU" width="120" />
+        <el-table-column property="name" label="Назва" min-width="250" />
+        <el-table-column property="category" label="Категорія" width="150" />
+        <el-table-column label="Ціна" width="120" align="right">
+          <template #default="scope">
+            {{ formatShort(scope.row.price) }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="nomenclatureDialogVisible = false">Скасувати</el-button>
+        <el-button type="primary" :disabled="!selectedDialogProduct" @click="confirmDialogSelection">
+          Вибрати
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 
@@ -223,6 +263,12 @@ const customers = ref([])
 const warehouses = ref([])
 const products = ref([])
 
+// Nomenclature Dialog State
+const nomenclatureDialogVisible = ref(false)
+const nomenclatureSearch = ref('')
+const activeLineIndex = ref(-1)
+const selectedDialogProduct = ref(null)
+
 // Computed
 const subtotal = computed(() => {
   return form.lines.reduce((acc, line) => acc + (line.total || 0), 0)
@@ -234,6 +280,15 @@ const discountAmount = computed(() => {
 
 const totalAmount = computed(() => {
   return subtotal.value - discountAmount.value
+})
+
+const filteredProducts = computed(() => {
+  if (!nomenclatureSearch.value) return products.value
+  const s = nomenclatureSearch.value.toLowerCase()
+  return products.value.filter(p => 
+    p.name.toLowerCase().includes(s) || 
+    p.sku.toLowerCase().includes(s)
+  )
 })
 
 const statusType = computed(() => {
@@ -292,6 +347,27 @@ const handleProductChange = (productId, line) => {
   }
 }
 
+// Nomenclature Dialog Methods
+const openNomenclatureDialog = (index) => {
+  activeLineIndex.value = index
+  nomenclatureSearch.value = ''
+  selectedDialogProduct.value = null
+  nomenclatureDialogVisible.value = true
+}
+
+const onDialogProductSelect = (val) => {
+  selectedDialogProduct.value = val
+}
+
+const confirmDialogSelection = () => {
+  if (selectedDialogProduct.value && activeLineIndex.value > -1) {
+    const line = form.lines[activeLineIndex.value]
+    line.product_id = selectedDialogProduct.value.id
+    handleProductChange(line.product_id, line)
+    nomenclatureDialogVisible.value = false
+  }
+}
+
 const handleVariantChange = (variantId, line) => {
   const product = products.value.find(p => p.id === line.product_id)
   if (!product) return
@@ -314,7 +390,12 @@ const getProductVariants = (productId) => {
 
 const getVariantLabel = (variant) => {
   if (!variant.values || variant.values.length === 0) return variant.sku
-  return variant.values.map(v => v.option?.value || v.text_value).join(', ')
+  // Return comma-separated attribute: value pairs
+  return variant.values.map(v => {
+    const attrName = v.attribute?.name ? `${v.attribute.name}: ` : ''
+    const val = v.option?.value || v.text_value
+    return attrName + val
+  }).filter(Boolean).join(', ')
 }
 
 const fetchData = async () => {
