@@ -121,7 +121,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="Характеристика" min-width="200">
+        <el-table-column label="Характеристика" min-width="140">
           <template #default="scope">
             <div class="characteristic-cell-wrapper">
               <div 
@@ -599,30 +599,29 @@ onMounted(fetchData)
 
 /* === MODERN HEADER: Card layout === */
 .order-details-card {
-  margin: 0 24px 24px 24px;
+  margin: 0 16px 12px 16px;
   background: #ffffff;
-  padding: 24px 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #f0f2f5;
   flex-shrink: 0;
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
-  color: #1a1d1f;
-  margin-bottom: 20px;
+  color: #94a3b8;
+  margin-bottom: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
+  letter-spacing: 0.6px;
 }
 
 .custom-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #94a3b8;
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   display: block;
 }
 
@@ -648,7 +647,7 @@ onMounted(fetchData)
 }
 
 .details-form :deep(.el-form-item) {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .details-form :deep(.el-input__wrapper),
@@ -656,10 +655,11 @@ onMounted(fetchData)
 .details-form :deep(.el-date-editor.el-input__wrapper) {
   box-shadow: none !important;
   border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   background-color: #ffffff !important;
   transition: all 0.2s ease;
-  padding: 4px 12px;
+  padding: 2px 10px;
+  min-height: 34px;
 }
 
 .details-form :deep(.el-input__wrapper:hover),
@@ -673,11 +673,39 @@ onMounted(fetchData)
   line-height: normal !important;
 }
 
+/* === TABLE GHOST INPUTS === */
+.lines-table :deep(.el-input__wrapper),
+.lines-table :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lines-table :deep(.el-input__wrapper:hover),
+.lines-table :deep(.el-select__wrapper:hover) {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
+.lines-table :deep(.el-input__wrapper.is-focus),
+.lines-table :deep(.el-select__wrapper.is-focus) {
+  border-color: #6366f1 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.15) !important;
+}
+
+/* Compact table rows */
+.lines-table :deep(.el-table__cell) {
+  padding: 5px 8px !important;
+}
+
 /* === SCROLLABLE LINES === */
 .lines-section {
   flex: 1;
   overflow-y: auto;
-  padding: 0 20px 20px;
+  padding: 0 16px 12px;
 }
 
 .lines-header {
@@ -714,25 +742,28 @@ onMounted(fetchData)
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 24px;
-  margin: 0 20px 20px;
+  padding: 12px 16px;
+  margin: 0 16px 12px;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   flex-shrink: 0;
-  gap: 24px;
+  gap: 16px;
 }
 
 .footer-left {
   flex: 1;
-  max-width: 500px;
+  max-width: 400px;
 }
 
 .comment-input :deep(.el-textarea__inner) {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
+  min-height: 56px !important;
+  max-height: 72px;
+  resize: none;
 }
 
 .footer-right {
