@@ -23,22 +23,6 @@ async def list_document_sequences(
         raise HTTPException(status_code=403, detail="Not enough permissions")
         
     sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
-    
-    # Auto-initialize if empty (convenience)
-    if not sequences:
-        defaults = [
-            ("order", "ORD-"),
-            ("purchase_receipt", "PREC-"),
-            ("sales_invoice", "INV-"),
-            ("transfer", "TR-"),
-            ("inventory", "ST-")
-        ]
-        for dtype, prefix in defaults:
-            seq = DocumentSequence(document_type=dtype, prefix=prefix, next_number=1, padding=5)
-            db.add(seq)
-        db.commit()
-        sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
-
     return sequences
 
 @router.put("/document-sequences/{id}", response_model=DocumentSequenceResponse)

@@ -34,16 +34,6 @@ export const fetchOfficialTaxRates = async (id) => {
 }
 
 export const fetchEdrpouData = async (code) => {
-    // Simulated implementation for auto-fill demo
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    if (code === '12345678') {
-        return {
-            name: 'ТОВ "Рога і Копита"',
-            full_name: 'Товариство з обмеженою відповідальністю "Рога і Копита"',
-            address: 'м. Київ, вул. Хрещатик, 1',
-            director: 'Іванов Іван Іванович',
-            kved: '62.01'
-        }
-    }
+    // This is a stub for real EDRPOU lookup service
     return null;
 }
