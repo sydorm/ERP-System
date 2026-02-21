@@ -1,7 +1,7 @@
 """
 Bank Account Schemas
 """
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional
 from uuid import UUID
 from enum import Enum
@@ -38,5 +38,4 @@ class BankAccountResponse(BankAccountBase):
     id: UUID
     company_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

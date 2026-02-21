@@ -1,7 +1,7 @@
 """
 Company schemas
 """
-from pydantic import BaseModel, Field, HttpUrl, EmailStr
+from pydantic import BaseModel, Field, HttpUrl, EmailStr, ConfigDict
 from typing import Optional, List
 from uuid import UUID
 from enum import Enum
@@ -70,8 +70,7 @@ class CompanyResponse(CompanyBase):
     is_active: bool
     bank_accounts: List[BankAccountResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Schemas for Registration Flow
 class CompanyRegInfo(BaseModel):

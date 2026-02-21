@@ -36,15 +36,14 @@ async def global_exception_handler(request, exc):
     """
     import traceback
     from fastapi.responses import JSONResponse
-    
-    error_detail = {
-        "detail": str(exc),
-        "traceback": traceback.format_exc()
-    }
+    from fastapi import Request
     
     return JSONResponse(
         status_code=500,
-        content=error_detail,
+        content={
+            "detail": str(exc),
+            "traceback": traceback.format_exc()
+        },
         headers={"Access-Control-Allow-Origin": "*"}
     )
 
