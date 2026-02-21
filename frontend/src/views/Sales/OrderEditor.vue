@@ -16,53 +16,79 @@
     </div>
 
     <!-- === STICKY: Order details panel === -->
-    <div class="order-details-panel">
+    <!-- === MODERN HEADER: Two-column card layout === -->
+    <div class="order-details-card">
       <el-form :model="form" label-position="top" size="default" class="details-form">
-        <el-row :gutter="12">
-          <el-col :xs="24" :sm="12" :md="3" :lg="3">
-            <el-form-item label="Номер">
-              <el-input v-model="form.order_number" placeholder="ORD-0001" />
-            </el-form-item>
+        <el-row :gutter="40">
+          <!-- Left Column: Customer Info -->
+          <el-col :xs="24" :md="12" class="column-separator">
+            <h3 class="section-title">Інформація про клієнта</h3>
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item required>
+                  <template #label>
+                    <span class="custom-label">Клієнт <span class="req">*</span></span>
+                  </template>
+                  <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" style="width: 100%" @change="onClientChange">
+                    <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="24">
+                <el-form-item>
+                  <template #label>
+                    <span class="custom-label">Договір</span>
+                  </template>
+                  <el-input v-model="form.contract" placeholder="№ договору" />
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-col>
-          <el-col :xs="12" :sm="12" :md="4" :lg="4">
-            <el-form-item label="Дата створення">
-              <el-date-picker v-model="form.order_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="12" :sm="12" :md="4" :lg="4">
-            <el-form-item label="Дата відвантаження">
-              <el-date-picker v-model="form.shipping_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" placeholder="Планова" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="24" :md="5" :lg="5">
-            <el-form-item label="Клієнт" required>
-              <template #label>
-                <span class="required-label">Клієнт <span>*</span></span>
-              </template>
-              <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" style="width: 100%" @change="onClientChange">
-                <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="4" :lg="4">
-            <el-form-item label="Договір">
-              <el-input v-model="form.contract" placeholder="№ договору" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12" :md="4" :lg="4">
-            <el-form-item label="Склад" required>
-              <template #label>
-                <span class="required-label">Склад <span>*</span></span>
-              </template>
-              <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" style="width: 100%">
-                <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
-                   <div style="display: flex; justify-content: space-between; align-items: center;">
-                     <span>{{ w.name }}</span>
-                     <el-tag v-if="w.is_default" size="small" type="success" effect="plain">Основний</el-tag>
-                   </div>
-                </el-option>
-              </el-select>
-            </el-form-item>
+
+          <!-- Right Column: System/Order Info -->
+          <el-col :xs="24" :md="12">
+            <h3 class="section-title">Дані замовлення</h3>
+            <el-row :gutter="20">
+              <el-col :sm="12">
+                <el-form-item>
+                  <template #label>
+                    <span class="custom-label">Номер</span>
+                  </template>
+                  <el-input v-model="form.order_number" placeholder="ORD-0001" />
+                </el-form-item>
+              </el-col>
+              <el-col :sm="12">
+                <el-form-item required>
+                  <template #label>
+                    <span class="custom-label">Склад <span class="req">*</span></span>
+                  </template>
+                  <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" style="width: 100%">
+                    <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
+                       <div style="display: flex; justify-content: space-between; align-items: center;">
+                         <span>{{ w.name }}</span>
+                         <el-tag v-if="w.is_default" size="small" type="success" effect="plain">Основний</el-tag>
+                       </div>
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :sm="12">
+                <el-form-item>
+                  <template #label>
+                    <span class="custom-label">Дата створення</span>
+                  </template>
+                  <el-date-picker v-model="form.order_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" />
+                </el-form-item>
+              </el-col>
+              <el-col :sm="12">
+                <el-form-item>
+                  <template #label>
+                    <span class="custom-label">Дата відвантаження</span>
+                  </template>
+                  <el-date-picker v-model="form.shipping_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" placeholder="Планова" />
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-col>
         </el-row>
       </el-form>
@@ -571,46 +597,80 @@ onMounted(fetchData)
   color: #1a1d1f;
 }
 
-/* === STICKY DETAILS PANEL === */
-.order-details-panel {
-  background: white;
-  padding: 24px;
-  margin: 20px;
-  border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); /* shadow-sm */
-  border: 1px solid #e2e8f0; /* border-slate-200 */
+/* === MODERN HEADER: Card layout === */
+.order-details-card {
+  margin: 0 24px 24px 24px;
+  background: #ffffff;
+  padding: 24px 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f2f5;
   flex-shrink: 0;
 }
 
-/* Label Styling */
-.details-form :deep(.el-form-item__label) {
-  color: #334155 !important; /* text-slate-700 */
-  font-weight: 500 !important; /* font-medium */
-  font-size: 0.875rem !important; /* text-sm */
-  padding-bottom: 6px !important;
-  line-height: 1.25 !important;
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1d1f;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
-.required-label span {
-  color: #f56c6c;
+.custom-label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.req {
+  color: #ef4444;
   margin-left: 2px;
 }
 
-/* Input Styling (Slate background and border) */
-.details-form :deep(.el-input__wrapper),
-.details-form :deep(.el-select .el-input__wrapper),
-.details-form :deep(.el-date-editor.el-input__wrapper) {
-  background-color: #f8fafc !important; /* bg-slate-50 */
-  box-shadow: 0 0 0 1px #e2e8f0 inset !important; /* border-slate-200 */
-  border-radius: 0.5rem !important;
-  transition: all 0.2s;
+.column-separator {
+  position: relative;
 }
 
-/* Focus Styling (Indigo accent) */
-.details-form :deep(.el-input__wrapper.is-focus),
-.details-form :deep(.el-select .el-input__wrapper.is-focus),
-.details-form :deep(.el-date-editor.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 0 0 1px #6366f1 inset !important; /* focus:ring-2 focus:ring-indigo-500 */
+@media (min-width: 992px) {
+  .column-separator::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #f1f5f9;
+  }
+}
+
+.details-form :deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+.details-form :deep(.el-input__wrapper),
+.details-form :deep(.el-select__wrapper),
+.details-form :deep(.el-date-editor.el-input__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease;
+  padding: 4px 12px;
+}
+
+.details-form :deep(.el-input__wrapper:hover),
+.details-form :deep(.el-select__wrapper:hover),
+.details-form :deep(.el-date-editor.el-input__wrapper:hover) {
+  border-color: #cbd5e1 !important;
+}
+
+.details-form :deep(.el-form-item__label) {
+  padding-bottom: 0 !important;
+  line-height: normal !important;
 }
 
 /* === SCROLLABLE LINES === */
