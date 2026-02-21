@@ -72,6 +72,7 @@
           </template>
           <el-menu-item index="/settings/company">Організація</el-menu-item>
           <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
+          <el-menu-item index="/settings/numbering">Нумерація</el-menu-item>
           <el-menu-item index="/settings/users">Користувачі</el-menu-item>
         </el-sub-menu>
 

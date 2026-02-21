@@ -49,6 +49,12 @@ const router = createRouter({
                     component: () => import('@/views/Settings/CompanySettings.vue'),
                     meta: { requiresAuth: true, title: 'Організація' }
                 },
+                {
+                    path: '/settings/numbering',
+                    name: 'system-numbering',
+                    component: () => import('@/views/Settings/DocumentSequences.vue'),
+                    meta: { requiresAuth: true, title: 'Нумерація документів' }
+                },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',
