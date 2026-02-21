@@ -446,8 +446,13 @@ const getProductVariants = (productId) => {
 const getVariantLabel = (variant) => {
   if (!variant) return ''
   if (!variant.values || variant.values.length === 0) return variant.sku || ''
-  // Return only values, comma-separated
-  return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+  
+  // Return "Attribute: Value", comma-separated
+  return variant.values.map(v => {
+    const attrName = v.attribute?.name || ''
+    const valText = v.option?.value || v.text_value || ''
+    return attrName ? `${attrName}: ${valText}` : valText
+  }).filter(Boolean).join(', ')
 }
 
 const getVariantLabelByLine = (line) => {
