@@ -299,7 +299,7 @@ import {
   createCompany, 
   setDefaultCompany,
   fetchOfficialTaxRates 
-} from '@/api/companyMock'
+} from '@/api/company'
 
 // State
 const loading = ref(false)

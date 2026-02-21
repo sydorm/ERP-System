@@ -59,6 +59,29 @@ async def get_company(
         raise HTTPException(status_code=404, detail="Company not found")
     return company
 
+@router.put("/{company_id}", response_model=CompanyResponse)
+async def update_company(
+    company_id: UUID,
+    company_in: CompanyUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update specific company details."""
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Only allow admins to edit OR users that belong to this company (depends on auth rules)
+    # For now, we will allow update.
+    update_data = company_in.model_dump(exclude_unset=True)
+    
+    for field, value in update_data.items():
+        setattr(company, field, value)
+        
+    db.commit()
+    db.refresh(company)
+    return company
+
 @router.patch("/{company_id}/set-default", response_model=CompanyResponse)
 async def set_default_company(
     company_id: UUID,
