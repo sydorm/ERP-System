@@ -112,12 +112,17 @@
                   :label="getVariantLabel(v)"
                   :value="v.id"
                 >
-                  <span>{{ getVariantLabel(v) }}</span>
-                  <el-tag v-if="v.price_override" size="small" type="warning" style="margin-left: 8px">
-                    {{ formatShort(v.price_override) }}
-                  </el-tag>
+                  <div class="option-item-display">
+                    <span class="label-text">{{ getVariantLabel(v) }}</span>
+                    <el-tag v-if="v.price_override" size="small" type="warning" class="price-tag">
+                      +{{ formatShort(v.price_override - getProductPrice(scope.row.product_id)) }}
+                    </el-tag>
+                  </div>
                 </el-option>
               </el-select>
+              <div v-if="!scope.row.variant_id && scope.row._virtual_label" class="virtual-selection">
+                <el-tag closable @close="clearVirtualVariant(scope.row)">{{ scope.row._virtual_label }}</el-tag>
+              </div>
               <el-button 
                 v-if="scope.row.product_id && getProductVariants(scope.row.product_id).length > 0"
                 :icon="Setting" 
@@ -404,9 +409,26 @@ const openVariantSelector = (line) => {
 
 const onVariantSelected = (variant) => {
   if (activeLineForSelector.value) {
-    activeLineForSelector.value.variant_id = variant.id
-    handleVariantChange(variant.id, activeLineForSelector.value)
+    if (variant.id) {
+      activeLineForSelector.value.variant_id = variant.id
+      activeLineForSelector.value._virtual_label = null
+      handleVariantChange(variant.id, activeLineForSelector.value)
+    } else {
+      // Virtual variant from configurator
+      activeLineForSelector.value.variant_id = null
+      activeLineForSelector.value._virtual_label = getVariantLabel(variant)
+      activeLineForSelector.value._virtual_values = variant.values
+      // Keep product price as base for virtual
+      const prod = products.value.find(p => p.id === activeLineForSelector.value.product_id)
+      activeLineForSelector.value.price = prod?.price || 0
+      updateLineTotal(activeLineForSelector.value)
+    }
   }
+}
+
+const clearVirtualVariant = (line) => {
+  line._virtual_label = null
+  line._virtual_values = null
 }
 
 const handleVariantChange = (variantId, line) => {
@@ -430,9 +452,15 @@ const getProductVariants = (productId) => {
 }
 
 const getVariantLabel = (variant) => {
-  if (!variant.values || variant.values.length === 0) return variant.sku
+  if (!variant) return ''
+  if (!variant.values || variant.values.length === 0) return variant.sku || ''
   // Return only values, comma-separated
   return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+}
+
+const getProductPrice = (productId) => {
+  const prod = products.value.find(p => p.id === productId)
+  return prod?.price || 0
 }
 
 const fetchData = async () => {
@@ -687,6 +715,39 @@ onMounted(fetchData)
   font-size: 24px;
   font-weight: 700;
   color: #4f46e5; /* indigo-600 */
+}
+
+/* Variant Selector Styles */
+.option-item-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.label-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price-tag {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.virtual-selection {
+  margin-left: 4px;
+}
+
+.virtual-selection :deep(.el-tag) {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+  font-weight: 500;
 }
 
 /* Responsive */

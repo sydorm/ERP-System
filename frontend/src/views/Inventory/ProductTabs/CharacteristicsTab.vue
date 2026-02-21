@@ -18,76 +18,30 @@
     </div>
 
     <div v-else class="char-list">
-      <div v-for="(char, index) in localCharacteristics" :key="index" class="char-row">
-        <div class="char-attribute">
-          <el-select
-            v-model="char.attribute_id"
-            placeholder="Оберіть характеристику"
-            style="width: 100%"
-            @change="onAttributeChange(char)"
-            :disabled="char.is_fixed"
-          >
-            <el-option
-              v-for="attr in getAvailableForRow(char)"
-              :key="attr.id"
-              :label="attr.name"
-              :value="attr.id"
-            >
-              <span>{{ attr.name }}</span>
-              <el-tag v-if="attr.type" size="small" type="info" style="margin-left: 8px">{{ typeLabel(attr.type) }}</el-tag>
-            </el-option>
-          </el-select>
-        </div>
-        <div class="char-value">
-          <!-- SELECT type -->
-          <el-select
-            v-if="getAttrType(char) === 'SELECT'"
-            v-model="char.option_id"
-            placeholder="Оберіть значення"
-            style="width: 100%"
-          >
-            <el-option v-for="opt in getAttrOptions(char)" :key="opt.id" :label="opt.value" :value="opt.id" />
-          </el-select>
-
-          <!-- COLOR type -->
-          <div v-else-if="getAttrType(char) === 'COLOR'" class="color-picker-row">
-            <el-select v-model="char.option_id" placeholder="Оберіть значення" style="flex: 1">
-              <el-option v-for="opt in getAttrOptions(char)" :key="opt.id" :label="opt.value" :value="opt.id">
-                <span class="color-swatch" :style="{ background: opt.color_code || '#ccc' }"></span>
-                <span>{{ opt.value }}</span>
-              </el-option>
-            </el-select>
+      <div v-for="(char, index) in localCharacteristics" :key="index" class="char-row-premium">
+        <div class="char-info">
+          <el-icon class="attr-icon"><Operation /></el-icon>
+          <div class="attr-details">
+            <span class="attr-name">{{ getAttributeName(char.attribute_id) }}</span>
+            <span class="attr-type">{{ typeLabel(getAttrType(char)) }}</span>
           </div>
-
-          <!-- NUMBER type -->
-          <el-input-number
-            v-else-if="getAttrType(char) === 'NUMBER'"
-            v-model="char.text_value"
-            controls-position="right"
-            style="width: 100%"
-          />
-
-          <!-- BOOLEAN type -->
-          <el-switch
-            v-else-if="getAttrType(char) === 'BOOLEAN'"
-            v-model="char.bool_value"
-          />
-
-          <!-- TEXT type (default) -->
-          <el-input
-            v-else
-            v-model="char.text_value"
-            placeholder="Введіть значення"
-          />
         </div>
+        
+        <div class="char-status">
+          <el-tag v-if="char.is_fixed" size="small" type="warning" effect="light">Обов'язкова</el-tag>
+          <el-tag v-else size="small" type="info" effect="plain">Опціональна</el-tag>
+        </div>
+
         <el-button 
           v-if="!char.is_fixed" 
           :icon="Delete" 
-          link 
+          circle
+          size="small"
           type="danger" 
           @click="removeCharacteristic(index)" 
+          title="Видалити"
         />
-        <div v-else style="width: 32px"></div> <!-- Spacer for alignment -->
+        <div v-else style="width: 32px"></div>
       </div>
     </div>
   </el-card>
@@ -134,6 +88,11 @@ const getAvailableForRow = (char) => {
   return allAttributes.value.filter(a => a.id === char.attribute_id || !usedAttributeIds.value.includes(a.id))
 }
 
+const getAttributeName = (attrId) => {
+  const attr = allAttributes.value.find(a => a.id === attrId)
+  return attr?.name || 'Характеристика'
+}
+
 const getAttrType = (char) => {
   const attr = allAttributes.value.find(a => a.id === char.attribute_id)
   return attr?.type || 'TEXT'
@@ -150,17 +109,6 @@ const typeLabel = (type) => {
 }
 
 const onAttributeChange = (char) => {
-  // Reset value when attribute changes
-  char.option_id = null
-  char.text_value = ''
-  char.bool_value = false
-  
-  // Auto-fill if only one option
-  const attr = allAttributes.value.find(a => a.id === char.attribute_id)
-  if (attr && attr.options && attr.options.length === 1) {
-    char.option_id = attr.options[0].id
-  }
-  
   emitUpdate()
 }
 
@@ -274,42 +222,68 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.char-row {
+.char-row-premium {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #eef2f6;
+  transition: all 0.2s ease;
+}
+
+.char-row-premium:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.char-info {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.char-attribute {
   flex: 1;
-  min-width: 0;
 }
 
-.char-value {
-  flex: 1;
-  min-width: 0;
+.attr-icon {
+  font-size: 18px;
+  color: #6366f1;
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.color-picker-row {
+.attr-details {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
 }
 
-.color-swatch {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  margin-right: 8px;
-  vertical-align: middle;
-  border: 1px solid rgba(0,0,0,0.1);
+.attr-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 15px;
 }
 
-@media (max-width: 768px) {
-  .char-row {
-    flex-direction: column;
-    align-items: stretch;
+.attr-type {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.char-status {
+  padding: 0 16px;
+}
+
+@media (max-width: 640px) {
+  .char-row-premium {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .char-status {
+    width: 100%;
+    padding: 0;
   }
 }
 </style>

@@ -71,15 +71,12 @@
       <!-- State Feedback -->
       <div class="selection-feedback">
         <transition name="el-fade-in-linear">
-          <div v-if="currentVariant" class="price-card">
-            <div class="price-header">Поточна ціна</div>
-            <div class="price-value">{{ formatCurrency(currentVariant.price_override || product.price) }}</div>
-          </div>
-          <div v-else-if="allAttributesSelected" class="not-found-card">
+          <!-- Removed price card as requested by user -->
+          <div v-if="allAttributesSelected && !currentVariant" class="not-found-card">
             <el-alert 
-              title="Комбінація відсутня" 
-              description="Наразі такої комбінації характеристик не існує для цього товару."
-              type="info" 
+              title="Нова комбінація" 
+              description="Ця комбінація характеристик ще не створена як окремий артикул, але ви можете її обрати."
+              type="success" 
               show-icon 
               :closable="false" 
             />
@@ -93,7 +90,7 @@
         <el-button @click="visible = false" class="btn-cancel">Скасувати</el-button>
         <el-button 
           type="primary" 
-          :disabled="!currentVariant"
+          :disabled="!allAttributesSelected"
           @click="handleConfirm"
           class="btn-confirm"
         >
@@ -185,6 +182,7 @@ const getAvailableOptions = (attrId) => {
 }
 
 const allAttributesSelected = computed(() => {
+  if (sortedAttributes.value.length === 0) return false
   return sortedAttributes.value.every(a => !!selections.value[a.id])
 })
 
@@ -199,8 +197,26 @@ const currentVariant = computed(() => {
 })
 
 const handleConfirm = () => {
-  if (currentVariant.value) {
-    emit('select', currentVariant.value)
+  if (allAttributesSelected.value) {
+    // If we have a matching variant, emit it. 
+    // Otherwise emit the selections so OrderEditor can handle it.
+    if (currentVariant.value) {
+        emit('select', currentVariant.value)
+    } else {
+        // Construct a "virtual" variant object
+        const virtualVariant = {
+            id: null,
+            product_id: props.product.id,
+            sku: props.product.sku, // Base SKU
+            values: sortedAttributes.value.map(attr => ({
+                attribute_id: attr.id,
+                option_id: selections.value[attr.id],
+                attribute: attr,
+                option: attr.options?.find(o => o.id === selections.value[attr.id])
+            }))
+        }
+        emit('select', virtualVariant)
+    }
     visible.value = false
   }
 }
