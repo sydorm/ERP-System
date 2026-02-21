@@ -17,8 +17,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    pass
+    op.create_table(
+        'document_sequences',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('document_type', sa.String(length=50), nullable=False),
+        sa.Column('prefix', sa.String(length=20), nullable=False),
+        sa.Column('next_number', sa.Integer(), nullable=False),
+        sa.Column('padding', sa.Integer(), nullable=False),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_document_sequences_document_type'), 'document_sequences', ['document_type'], unique=True)
+    op.create_index(op.f('ix_document_sequences_id'), 'document_sequences', ['id'], unique=False)
 
 
 def downgrade() -> None:
-    pass
+    op.drop_index(op.f('ix_document_sequences_id'), table_name='document_sequences')
+    op.drop_index(op.f('ix_document_sequences_document_type'), table_name='document_sequences')
+    op.drop_table('document_sequences')

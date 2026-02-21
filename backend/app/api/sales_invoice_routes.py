@@ -8,6 +8,7 @@ from app.models import SalesInvoice, SalesInvoiceLine, SalesInvoiceStatus, User,
 from app.schemas.sales_invoice import SalesInvoiceCreate, SalesInvoiceUpdate, SalesInvoiceResponse
 from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService, PostingEntry
+from app.services.sequence_service import SequenceService
 
 router = APIRouter()
 
@@ -30,9 +31,14 @@ async def create_sales_invoice(
     """
     Create a new sales invoice and post stock movements (negative quantity).
     """
+    # 0. Generate Number if empty or "Авто"
+    invoice_num = invoice_data.invoice_number
+    if not invoice_num or invoice_num.lower() in ["авто", "автоматично", "auto"]:
+        invoice_num = SequenceService.get_next_number(db, "sales_invoice", "INV-")
+
     # 1. Create Invoice
     invoice = SalesInvoice(
-        invoice_number=invoice_data.invoice_number,
+        invoice_number=invoice_num,
         invoice_date=invoice_data.invoice_date,
         counterparty_id=invoice_data.counterparty_id,
         warehouse_id=invoice_data.warehouse_id,
@@ -41,7 +47,7 @@ async def create_sales_invoice(
         total_amount=invoice_data.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=SalesInvoiceStatus.POSTED # Auto-post for now
+        status=SalesInvoiceStatus.POSTED.value # Auto-post for now
     )
     db.add(invoice)
     db.flush()

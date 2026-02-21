@@ -7,6 +7,7 @@ from app.models import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStat
 from app.schemas.purchase_receipt import PurchaseReceiptCreate, PurchaseReceiptUpdate, PurchaseReceiptResponse
 from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService, PostingEntry, RegisterType
+from app.services.sequence_service import SequenceService
 
 router = APIRouter()
 
@@ -23,9 +24,14 @@ async def create_purchase_receipt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    # 0. Generate Number if empty or "Авто"
+    receipt_num = receipt_data.receipt_number
+    if not receipt_num or receipt_num.lower() in ["авто", "автоматично", "auto"]:
+        receipt_num = SequenceService.get_next_number(db, "purchase_receipt", "PR-")
+
     # 1. Create Receipt
     receipt = PurchaseReceipt(
-        receipt_number=receipt_data.receipt_number,
+        receipt_number=receipt_num,
         receipt_date=receipt_data.receipt_date,
         supplier_id=receipt_data.supplier_id,
         warehouse_id=receipt_data.warehouse_id,
@@ -33,7 +39,7 @@ async def create_purchase_receipt(
         total_amount=receipt_data.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=PurchaseReceiptStatus.POSTED # Auto-post for now in simplified flow
+        status=PurchaseReceiptStatus.POSTED.value # Auto-post for now in simplified flow
     )
     db.add(receipt)
     db.flush()

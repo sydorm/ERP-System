@@ -18,7 +18,7 @@
         <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="Номер накладної">
-              <el-input v-model="form.invoice_number" placeholder="INV-0001" />
+              <el-input v-model="form.invoice_number" placeholder="Автоматично" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -126,7 +126,7 @@ const submitting = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 
 const form = reactive({
-  invoice_number: 'INV-' + Date.now().toString().slice(-6),
+  invoice_number: 'Авто',
   invoice_date: new Date(),
   counterparty_id: '',
   warehouse_id: '',

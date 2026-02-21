@@ -9,6 +9,7 @@ from app.models import Order, OrderLine, OrderStatus, User, RegisterType
 from app.schemas.order import OrderCreate, OrderUpdate, OrderResponse
 from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService, PostingEntry
+from app.services.sequence_service import SequenceService
 
 router = APIRouter()
 
@@ -43,16 +44,21 @@ async def create_order(
     """
     Create a new customer order and optionally reserve stock.
     """
+    # 0. Generate Number if empty or "Авто"
+    order_num = order_in.order_number
+    if not order_num or order_num.lower() in ["авто", "автоматично", "auto"]:
+        order_num = SequenceService.get_next_number(db, "order", "ORD-")
+
     # 1. Create Order
     order = Order(
-        order_number=order_in.order_number,
+        order_number=order_num,
         order_date=order_in.order_date,
         counterparty_id=order_in.counterparty_id,
         warehouse_id=order_in.warehouse_id,
         total_amount=order_in.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=OrderStatus.DRAFT
+        status=OrderStatus.DRAFT.value
     )
     db.add(order)
     db.flush()

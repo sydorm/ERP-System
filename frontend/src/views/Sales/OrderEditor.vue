@@ -54,7 +54,7 @@
                   <template #label>
                     <span class="custom-label">Номер</span>
                   </template>
-                  <el-input v-model="form.order_number" placeholder="ORD-0001" />
+                  <el-input v-model="form.order_number" placeholder="Автоматично" />
                 </el-form-item>
               </el-col>
               <el-col :sm="12">
@@ -288,7 +288,7 @@ const submitting = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 
 const form = reactive({
-  order_number: 'ORD-' + Date.now().toString().slice(-6),
+  order_number: 'Авто',
   order_date: new Date().toISOString().split('T')[0],
   shipping_date: null,
   counterparty_id: '',

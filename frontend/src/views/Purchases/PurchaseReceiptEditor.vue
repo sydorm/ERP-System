@@ -18,7 +18,7 @@
         <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="Номер накладної">
-              <el-input v-model="form.receipt_number" />
+              <el-input v-model="form.receipt_number" placeholder="Автоматично" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -104,7 +104,7 @@ const submitting = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 
 const form = reactive({
-  receipt_number: 'PR-' + Date.now().toString().slice(-6),
+  receipt_number: 'Авто',
   receipt_date: new Date(),
   supplier_id: '',
   warehouse_id: '',
