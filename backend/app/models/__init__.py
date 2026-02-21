@@ -15,6 +15,7 @@ from .specification import ProductSpecification, SpecificationItem
 from .product_file import ProductFile
 from .register import AccumulationRegister, RegisterType
 from .purchase_receipt import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStatus
+from .purchase_order import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from .sales_invoice import SalesInvoice, SalesInvoiceLine, SalesInvoiceStatus
 from .document_sequence import DocumentSequence
 
@@ -41,6 +42,9 @@ __all__ = [
     "ProductFile",
     "AccumulationRegister",
     "RegisterType",
+    "PurchaseOrder",
+    "PurchaseOrderLine",
+    "PurchaseOrderStatus",
     "PurchaseReceipt",
     "PurchaseReceiptLine",
     "PurchaseReceiptStatus",

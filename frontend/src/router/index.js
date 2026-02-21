@@ -137,6 +137,24 @@ const router = createRouter({
                 },
                 // Purchase routes
                 {
+                    path: '/purchases/orders',
+                    name: 'purchase-orders',
+                    component: () => import('@/views/Purchases/PurchaseOrderList.vue'),
+                    meta: { title: 'Замовлення постачальникам' }
+                },
+                {
+                    path: '/purchases/orders/new',
+                    name: 'purchase-order-new',
+                    component: () => import('@/views/Purchases/PurchaseOrderEditor.vue'),
+                    meta: { title: 'Нове замовлення' }
+                },
+                {
+                    path: '/purchases/orders/:id',
+                    name: 'purchase-order-edit',
+                    component: () => import('@/views/Purchases/PurchaseOrderEditor.vue'),
+                    meta: { title: 'Редагування замовлення' }
+                },
+                {
                     path: '/purchases/receipts',
                     name: 'purchase-receipts',
                     component: () => import('@/views/Purchases/PurchaseReceiptsList.vue'),
