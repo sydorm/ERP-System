@@ -4,7 +4,8 @@ from typing import List
 from uuid import UUID
 
 from app.api.dependencies import get_db, get_current_user
-from app.models.product import Product, ProductVariant
+from app.models.product import Product
+from app.models.variant import ProductVariant
 from app.models.specification import ProductSpecification, SpecificationItem
 from app.models.user import User
 from app.schemas.specification import (
