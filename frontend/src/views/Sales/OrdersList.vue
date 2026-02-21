@@ -1,35 +1,35 @@
 <template>
   <div class="page-container">
+    <!-- === PAGE HEADER === -->
     <div class="page-header">
       <div class="header-left">
         <h2>Замовлення клієнтів</h2>
-        <el-breadcrumb separator="/">
+        <el-breadcrumb separator="/" class="breadcrumb">
           <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
           <el-breadcrumb-item>Продажі</el-breadcrumb-item>
           <el-breadcrumb-item>Замовлення</el-breadcrumb-item>
         </el-breadcrumb>
       </div>
       <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="handleCreate" class="btn-primary">
+        <el-button type="primary" :icon="Plus" @click="handleCreate" class="btn-create">
           Створити замовлення
         </el-button>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-toolbar">
-      <div class="search-box">
+    <!-- === UNIFIED CONTENT CARD === -->
+    <div class="content-card">
+      <!-- Filters bar inside card -->
+      <div class="filters-bar">
         <el-input
           v-model="searchQuery"
-          placeholder="Номер замовлення..."
+          placeholder="Пошук замовлення..."
           :prefix-icon="Search"
           clearable
           @input="handleSearch"
           class="search-input"
         />
-      </div>
-      <div class="status-filter">
-        <el-select v-model="filterStatus" placeholder="Статус" clearable @change="fetchOrders">
+        <el-select v-model="filterStatus" placeholder="Будь-який статус" clearable @change="fetchOrders" class="status-select">
           <el-option label="Чернетка" value="draft" />
           <el-option label="Підтверджено" value="confirmed" />
           <el-option label="Відвантажено" value="shipped" />
@@ -37,59 +37,55 @@
           <el-option label="Скасовано" value="cancelled" />
         </el-select>
       </div>
-    </div>
 
-    <!-- Data Table -->
-    <el-card shadow="never" class="content-card">
-      <el-table 
-        v-loading="loading" 
-        :data="orders" 
-        stripe 
+      <!-- Table -->
+      <el-table
+        v-loading="loading"
+        :data="orders"
         style="width: 100%"
-        class="custom-table"
+        class="orders-table"
       >
-        <el-table-column prop="order_number" label="№ Замовлення" width="150" sortable />
+        <el-table-column prop="order_number" label="№ Замовлення" width="160" sortable />
         <el-table-column prop="order_date" label="Дата" width="120">
           <template #default="scope">{{ formatDate(scope.row.order_date) }}</template>
         </el-table-column>
-        
         <el-table-column label="Клієнт" min-width="200">
           <template #default="scope">
-            {{ getCounterpartyName(scope.row.counterparty_id) || 'Завантаження...' }}
+            {{ getCounterpartyName(scope.row.counterparty_id) || '—' }}
           </template>
         </el-table-column>
-        
-        <el-table-column prop="total_amount" label="Сума" width="150" align="right">
+        <el-table-column prop="total_amount" label="Сума" width="160" align="right">
           <template #default="scope">{{ formatCurrency(scope.row.total_amount) }}</template>
         </el-table-column>
-        
         <el-table-column prop="status" label="Статус" width="150">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)" size="small" effect="dark">
+            <el-tag :type="getStatusType(scope.row.status)" size="small" effect="plain" class="status-tag">
               {{ getStatusLabel(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        
-        <el-table-column label="Дії" width="120" align="right">
+        <el-table-column label="" width="90" align="right">
           <template #default="scope">
-            <el-button link type="primary" :icon="Edit" @click="handleEdit(scope.row)" />
-            <el-button link type="danger" :icon="Delete" @click="handleDelete(scope.row)" />
+            <div class="row-actions">
+              <el-button link :icon="Edit" @click="handleEdit(scope.row)" class="action-btn edit-btn" />
+              <el-button link :icon="Delete" @click="handleDelete(scope.row)" class="action-btn delete-btn" />
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
+      <!-- Pagination -->
       <div class="pagination-footer">
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="limit"
-          background
           layout="total, prev, pager, next"
           :total="total"
           @current-change="handlePageChange"
+          class="custom-pagination"
         />
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -213,49 +209,190 @@ onMounted(fetchOrders)
 <style scoped>
 .page-container {
   padding: 24px;
-  background-color: #f8f9fa;
+  background-color: #f4f6f8;
   min-height: calc(100vh - 64px);
+  box-sizing: border-box;
 }
 
+/* === PAGE HEADER === */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .header-left h2 {
-  margin: 0;
-  font-size: 24px;
+  margin: 0 0 2px;
+  font-size: 22px;
   font-weight: 700;
-  color: #1a1d1f;
+  color: #0f172a;
+  line-height: 1;
 }
 
-.btn-primary {
-  background: #2a85ff;
+.breadcrumb {
+  margin-top: 4px;
+}
+
+.btn-create {
+  background: #2563eb;
   border: none;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  border-radius: 8px;
+  padding: 8px 18px;
+  height: 38px;
 }
 
-.filters-toolbar {
+.btn-create:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* === UNIFIED CARD === */
+.content-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f3f6;
+  overflow: hidden;
+}
+
+/* === FILTERS BAR === */
+.filters-bar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
 }
 
 .search-input {
-  width: 300px;
+  width: 280px;
 }
 
-.content-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+.search-input :deep(.el-input__wrapper),
+.status-select :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.search-input :deep(.el-input__wrapper:hover),
+.status-select :deep(.el-select__wrapper:hover) {
+  border-color: #94a3b8;
+}
+
+.search-input :deep(.el-input__wrapper.is-focus),
+.status-select :deep(.el-select__wrapper.is-focused) {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  background: #fff;
+}
+
+.status-select {
+  width: 180px;
+}
+
+/* === TABLE STYLES === */
+.orders-table :deep(th.el-table__cell) {
+  background: #f8fafc !important;
+  color: #7c8db0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #eef2f7 !important;
+  padding: 10px 12px;
+}
+
+.orders-table :deep(td.el-table__cell) {
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-right: none !important;
+  padding: 10px 12px;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.orders-table :deep(.el-table__body tr:hover > td) {
+  background-color: #f8fafc !important;
+}
+
+.orders-table :deep(.el-table__inner-wrapper::before) {
+  display: none; /* remove bottom border line */
+}
+
+/* Status tag */
+.status-tag {
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* Row action buttons */
+.row-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.orders-table :deep(tr:hover) .row-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.edit-btn {
+  color: #475569;
+}
+
+.edit-btn:hover {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.delete-btn {
+  color: #475569;
+}
+
+.delete-btn:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* === PAGINATION === */
 .pagination-footer {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.custom-pagination :deep(.el-pager li) {
+  border-radius: 6px;
+  min-width: 32px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 13px;
+}
+
+.custom-pagination :deep(.btn-prev),
+.custom-pagination :deep(.btn-next) {
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .page-container { padding: 12px; }
+  .filters-bar { flex-wrap: wrap; }
+  .search-input { width: 100%; }
+  .status-select { width: 100%; }
+  .header-left h2 { font-size: 18px; }
 }
 </style>
