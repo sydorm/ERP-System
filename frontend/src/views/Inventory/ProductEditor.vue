@@ -42,11 +42,11 @@
             />
           </el-tab-pane>
 
-          <el-tab-pane label="Специфікація (BOM)" name="specification">
-            <SpecificationTab
-              :items="specificationItems"
-              :total-cost="totalBomCost"
-            />
+          <el-tab-pane label="Специфікації (BOM)" name="specification">
+            <template v-if="form.id">
+               <SpecificationTab :product-id="form.id" />
+            </template>
+            <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
           </el-tab-pane>
 
           <el-tab-pane label="Складські запаси" name="inventory">
@@ -120,13 +120,8 @@ const categoryOptions = ref([])
 const currencyOptions = ref([])
 
 // Data
-const specificationItems = ref([])
 const stockLevels = ref([])
 const hasSpecification = ref(false)
-
-const totalBomCost = computed(() => {
-    return specificationItems.value.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0)
-})
 
 const goBack = () => {
     router.push('/inventory/nomenclature')

@@ -13,8 +13,17 @@ class SpecificationItemBase(BaseModel):
 class SpecificationItemCreate(SpecificationItemBase):
     pass
 
+class ComponentBasicInfo(BaseModel):
+    id: UUID
+    name: str
+    sku: str
+    
+    class Config:
+        from_attributes = True
+
 class SpecificationItemResponse(SpecificationItemBase):
     id: UUID
+    component: Optional[ComponentBasicInfo] = None
     
     class Config:
         from_attributes = True
