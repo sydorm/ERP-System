@@ -7,7 +7,7 @@ from app.api.dependencies import get_db, get_current_user
 from app.models.attribute import Attribute, AttributeOption, CategoryAttribute
 from app.models.variant import ProductVariant, VariantValue
 from app.models.user import User
-from app.schemas.attribute import AttributeCreate, AttributeResponse, CategoryAttributeBase, CategoryAttributeResponse
+from app.schemas.attribute import AttributeCreate, AttributeResponse, CategoryAttributeBase, CategoryAttributeResponse, AttributeOptionCreate, AttributeOptionResponse
 from app.schemas.variant import ProductVariantCreate, ProductVariantResponse
 
 router = APIRouter(prefix="/attributes", tags=["Product Attributes"])
@@ -54,6 +54,23 @@ async def archive_attribute(
     db.commit()
     db.refresh(attr)
     return attr
+
+@router.post("/{attribute_id}/options", response_model=AttributeOptionResponse)
+async def add_attribute_option(
+    attribute_id: UUID,
+    option_in: AttributeOptionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    attr = db.query(Attribute).filter(Attribute.id == attribute_id, Attribute.company_id == current_user.company_id).first()
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+    
+    db_opt = AttributeOption(**option_in.dict(), attribute_id=attribute_id)
+    db.add(db_opt)
+    db.commit()
+    db.refresh(db_opt)
+    return db_opt
 
 # CATEGORY LINKS
 @router.get("/category/{category_code}", response_model=List[CategoryAttributeResponse])

@@ -27,29 +27,68 @@
           </div>
         </div>
         
-        <div class="char-status">
-          <el-tag v-if="char.is_fixed" size="small" type="warning" effect="light">Обов'язкова</el-tag>
-          <el-tag v-else size="small" type="info" effect="plain">Опціональна</el-tag>
-        </div>
+        <div class="char-actions">
+          <div class="char-status">
+            <el-tag v-if="char.is_fixed" size="small" type="warning" effect="light">Обов'язкова</el-tag>
+            <el-tag v-else size="small" type="info" effect="plain">Опціональна</el-tag>
+          </div>
 
-        <el-button 
-          v-if="!char.is_fixed" 
-          :icon="Delete" 
-          circle
-          size="small"
-          type="danger" 
-          @click="removeCharacteristic(index)" 
-          title="Видалити"
-        />
-        <div v-else style="width: 32px"></div>
+          <el-button 
+            v-if="['SELECT', 'COLOR'].includes(getAttrType(char))"
+            :icon="Plus" 
+            circle
+            size="small"
+            @click="openAddOptionDialog(char.attribute_id)"
+            title="Додати значення"
+          />
+
+          <el-button 
+            v-if="!char.is_fixed" 
+            :icon="Delete" 
+            circle
+            size="small"
+            type="danger" 
+            @click="removeCharacteristic(index)" 
+            title="Видалити"
+          />
+          <div v-else style="width: 32px"></div>
+        </div>
       </div>
     </div>
+
+    <!-- Add Option Dialog -->
+    <el-dialog
+      v-model="addOptionVisible"
+      title="Додати нове значення"
+      width="360px"
+      append-to-body
+      destroy-on-close
+    >
+      <el-form label-position="top">
+        <el-form-item label="Назва значення">
+          <el-input v-model="newOption.value" placeholder="Наприклад: Червоний, XXL..." />
+        </el-form-item>
+        <el-form-item v-if="selectedAttrType === 'COLOR'" label="Колір (HEX)">
+          <div class="color-input-group">
+            <el-color-picker v-model="newOption.color_code" />
+            <el-input v-model="newOption.color_code" placeholder="#FFFFFF" style="flex: 1" />
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addOptionVisible = false">Скасувати</el-button>
+        <el-button type="primary" :loading="savingOption" @click="saveNewOption" :disabled="!newOption.value">
+          Зберегти
+        </el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { ref, computed, watch, onMounted, reactive } from 'vue'
+import { Plus, Delete, Operation } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 
 const props = defineProps({
@@ -96,6 +135,54 @@ const getAttributeName = (attrId) => {
 const getAttrType = (char) => {
   const attr = allAttributes.value.find(a => a.id === char.attribute_id)
   return attr?.type || 'TEXT'
+}
+
+// Add Option Dialog Logic
+const addOptionVisible = ref(false)
+const savingOption = ref(false)
+const selectedAttrForOption = ref(null)
+const selectedAttrType = ref('SELECT')
+const newOption = reactive({
+  value: '',
+  color_code: ''
+})
+
+const openAddOptionDialog = (attrId) => {
+  const attr = allAttributes.value.find(a => a.id === attrId)
+  if (!attr) return
+  
+  selectedAttrForOption.value = attrId
+  selectedAttrType.value = attr.type
+  newOption.value = ''
+  newOption.color_code = attr.type === 'COLOR' ? '#000000' : ''
+  addOptionVisible.value = true
+}
+
+const saveNewOption = async () => {
+  if (!selectedAttrForOption.value || !newOption.value) return
+  
+  savingOption.value = true
+  try {
+    const res = await api.post(`/api/v1/attributes/${selectedAttrForOption.value}/options`, {
+      value: newOption.value,
+      color_code: newOption.color_code || null
+    })
+    
+    // Refresh the specific attribute in our list
+    const attr = allAttributes.value.find(a => a.id === selectedAttrForOption.value)
+    if (attr) {
+      if (!attr.options) attr.options = []
+      attr.options.push(res.data)
+    }
+    
+    ElMessage.success('Значення додано')
+    addOptionVisible.value = false
+  } catch (e) {
+    console.error('Failed to add option', e)
+    ElMessage.error(e.response?.data?.detail || 'Помилка додавання')
+  } finally {
+    savingOption.value = false
+  }
 }
 
 const getAttrOptions = (char) => {
@@ -272,8 +359,21 @@ onMounted(async () => {
   letter-spacing: 0.5px;
 }
 
+.char-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .char-status {
-  padding: 0 16px;
+  padding: 0 4px;
+}
+
+.color-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
 }
 
 @media (max-width: 640px) {
