@@ -232,7 +232,14 @@ const generateVariants = () => {
         genSelection[attr.id].forEach(optId => {
             const opt = attr.options.find(o => o.id === optId)
             results.forEach(res => {
-                nextResults.push([...res, { attribute_id: attr.id, option_id: optId, value: opt.value, attr_name: attr.name }])
+                nextResults.push([...res, { 
+                    attribute_id: attr.id, 
+                    option_id: optId, 
+                    value: opt.value, 
+                    name: attr.name,  // Store for display
+                    option: opt,      // Store for display
+                    attribute: attr   // Store for display
+                }])
             })
         })
         results = nextResults
@@ -277,8 +284,8 @@ const addManualVariant = () => {
     })
 }
 
-const getAttributeLabel = (val) => val.attr_name || 'Хар-ка'
-const getOptionLabel = (val) => val.value || 'Значення'
+const getAttributeLabel = (val) => val.attribute?.name || val.name || 'Хар-ка'
+const getOptionLabel = (val) => val.option?.value || val.value || 'Значення'
 </script>
 
 <style scoped>

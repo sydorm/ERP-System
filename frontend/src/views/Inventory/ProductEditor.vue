@@ -58,6 +58,16 @@
         <el-tab-pane label="Файли та техдокументація" name="files">
           <FilesTab />
         </el-tab-pane>
+
+        <!-- 6. Variants -->
+        <el-tab-pane label="Варіанти" name="variants">
+          <ProductVariantsManager 
+            :category-attributes="categoryAttributes"
+            :product-code="form.sku"
+            :initial-variants="form.variants"
+            @update:variants="(val) => form.variants = val"
+          />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -77,6 +87,7 @@ import PricingTab from './ProductTabs/PricingTab.vue'
 import SpecificationTab from './ProductTabs/SpecificationTab.vue'
 import InventoryTab from './ProductTabs/InventoryTab.vue'
 import FilesTab from './ProductTabs/FilesTab.vue'
+import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -103,6 +114,7 @@ const form = reactive({
 })
 
 const productCharacteristics = ref([])
+const categoryAttributes = ref([])
 
 // Options
 const uomOptions = ref([])
@@ -132,8 +144,27 @@ const fetchDictionaries = async () => {
         uomOptions.value = uomRes.data
         categoryOptions.value = catRes.data
         currencyOptions.value = currRes.data
+        
+        // Auto-fetch attributes if category is selected
+        if (form.category) fetchCategoryAttributes()
     } catch (error) {
         console.error('Failed to load dictionaries', error)
+    }
+}
+
+const fetchCategoryAttributes = async () => {
+    if (!form.category) {
+        categoryAttributes.value = []
+        return
+    }
+    try {
+        const res = await api.get(`/api/v1/attributes/category/${form.category}`)
+        categoryAttributes.value = (res.data || []).map(ca => ({
+            ...ca.attribute,
+            is_required: ca.is_required
+        }))
+    } catch (e) {
+        console.error('Failed to load category attributes', e)
     }
 }
 
@@ -182,28 +213,20 @@ const saveProduct = async () => {
     form.price = parseFloat(form.price) || 0
     form.cost = (form.cost !== null && form.cost !== undefined) ? parseFloat(form.cost) : null
 
-    // Prepare variants/characteristics before saving
-    if (productCharacteristics.value.length > 0) {
-        // Find existing primary variant or create a placeholder
-        let primaryVar = form.variants?.find(v => v.is_primary) || form.variants?.[0]
-        
-        if (!primaryVar) {
-            primaryVar = {
-                sku: form.sku, // Default to product SKU
-                is_primary: true,
-                is_active: true,
-                values: []
-            }
-            form.variants = [primaryVar]
-        }
-        
-        // Update variant values
-        primaryVar.values = productCharacteristics.value.map(c => ({
-            attribute_id: c.attribute_id,
-            option_id: c.option_id,
-            text_value: String(c.text_value || ''),
-            bool_value: !!c.bool_value
-        }))
+    // If we only have characteristics (legacy/single mode) but no variants defined in Variants tab,
+    // ensure at least one primary variant exists.
+    if (form.variants.length === 0 && productCharacteristics.value.length > 0) {
+        form.variants = [{
+            sku: form.sku,
+            is_primary: true,
+            is_active: true,
+            values: productCharacteristics.value.map(c => ({
+                attribute_id: c.attribute_id,
+                option_id: c.option_id,
+                text_value: String(c.text_value || ''),
+                bool_value: !!c.bool_value
+            }))
+        }]
     }
 
     submitting.value = true
@@ -222,6 +245,8 @@ const saveProduct = async () => {
         submitting.value = false
     }
 }
+
+watch(() => form.category, fetchCategoryAttributes)
 
 onMounted(() => {
     fetchDictionaries()
