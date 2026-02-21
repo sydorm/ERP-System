@@ -85,28 +85,53 @@ const visible = computed({
 
 const selections = ref({})
 const sortedAttributes = ref([])
+const allCategoryAttributes = ref([])
+const attributeLoading = ref(false)
 
 // Initialize state when product changes or dialog opens
-watch(() => [props.modelValue, props.product], ([isOpen, prod]) => {
+watch(() => [props.modelValue, props.product], async ([isOpen, prod]) => {
   if (isOpen && prod) {
+    await fetchAttributes()
     initializeSelector()
   }
 }, { immediate: true })
 
-const initializeSelector = () => {
-  if (!props.product?.variants) return
+const fetchAttributes = async () => {
+    if (!props.product?.category) {
+        allCategoryAttributes.value = []
+        return
+    }
+    attributeLoading.value = true
+    try {
+        const res = await api.get(`/api/v1/attributes/category/${props.product.category}`)
+        allCategoryAttributes.value = (res.data || []).map(ca => ({
+            ...ca.attribute,
+            is_required: ca.is_required
+        }))
+    } catch (e) {
+        console.error('Failed to load attributes in dialog', e)
+    } finally {
+        attributeLoading.value = false
+    }
+}
 
-  // Extract all unique attributes across variants
-  const attrsMap = new Map()
-  props.product.variants.forEach(v => {
-    v.values?.forEach(val => {
-      if (val.attribute) {
-        attrsMap.set(val.attribute.id, val.attribute)
-      }
-    })
-  })
+const initializeSelector = () => {
+  // Use category attributes if available, otherwise fallback to variant-derived
+  if (allCategoryAttributes.value.length > 0) {
+      sortedAttributes.value = allCategoryAttributes.value
+  } else if (props.product?.variants) {
+      // Extract all unique attributes across variants (legacy/fallback fallback)
+      const attrsMap = new Map()
+      props.product.variants.forEach(v => {
+        v.values?.forEach(val => {
+          if (val.attribute) {
+            attrsMap.set(val.attribute.id, val.attribute)
+          }
+        })
+      })
+      sortedAttributes.value = Array.from(attrsMap.values())
+  }
   
-  sortedAttributes.value = Array.from(attrsMap.values())
   selections.value = {}
 
   // If initial variant is provided, pre-fill selections
@@ -121,30 +146,13 @@ const initializeSelector = () => {
 }
 
 const getAvailableOptions = (attrId) => {
-  if (!props.product?.variants) return []
+  const attr = sortedAttributes.value.find(a => a.id === attrId)
+  if (!attr || !attr.options) return []
 
-  // Filter variants by selections made in HIGHER level attributes
-  // For simplicity, let's just show options that CAN exist with CURRENT selections
-  const otherSelections = { ...selections.value }
-  delete otherSelections[attrId]
-
-  const possibleVariants = props.product.variants.filter(v => {
-    return Object.entries(otherSelections).every(([aId, oId]) => {
-      if (!oId) return true
-      return v.values?.some(vv => vv.attribute_id === aId && vv.option_id === oId)
-    })
-  })
-
-  const optionsMap = new Map()
-  possibleVariants.forEach(v => {
-    v.values?.forEach(vv => {
-      if (vv.attribute_id === attrId && vv.option) {
-        optionsMap.set(vv.option.id, vv.option)
-      }
-    })
-  })
-
-  return Array.from(optionsMap.values())
+  // If we want to strictly show ONLY what's available in variants (cascading):
+  // we could filter this list. But the user said "show all values".
+  // So we return all options for the attribute.
+  return attr.options
 }
 
 const isAttributeDisabled = (attrId) => {
