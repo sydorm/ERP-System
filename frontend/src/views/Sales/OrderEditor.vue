@@ -95,7 +95,7 @@
     </div>
 
     <!-- === MIDDLE: Scrollable product lines === -->
-    <div class="lines-section" v-loading="loading">
+    <div class="lines-section-card" v-loading="loading">
       <div class="lines-header">
         <h3>Товари та послуги</h3>
         <el-button type="primary" :icon="Plus" @click="addLine" size="small">Додати рядок</el-button>
@@ -152,19 +152,19 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="Кількість" width="130">
+        <el-table-column label="Кількість" width="120">
           <template #default="scope">
-            <el-input-number v-model="scope.row.quantity" :min="0.001" @change="updateLineTotal(scope.row)" style="width: 100%" controls-position="right" />
+            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" @change="updateLineTotal(scope.row)" style="width: 100%" controls-position="right" />
           </template>
         </el-table-column>
-        <el-table-column label="Ціна" width="140">
+        <el-table-column label="Ціна" width="130">
           <template #default="scope">
-            <el-input-number v-model="scope.row.price" :min="0" @change="updateLineTotal(scope.row)" :precision="2" style="width: 100%" controls-position="right" />
+            <el-input-number size="small" v-model="scope.row.price" :min="0" @change="updateLineTotal(scope.row)" :precision="2" style="width: 100%" controls-position="right" />
           </template>
         </el-table-column>
-        <el-table-column label="Сума" width="130" align="right">
+        <el-table-column label="Сума" width="120" align="right">
           <template #default="scope">
-            <span class="line-total">{{ formatCurrency(scope.row.total) }}</span>
+            <span class="line-total text-sm font-medium">{{ formatCurrency(scope.row.total) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="" width="50" align="center">
@@ -187,7 +187,7 @@
         <el-input
           v-model="form.comment"
           type="textarea"
-          :rows="2"
+          :autosize="{ minRows: 1, maxRows: 3 }"
           placeholder="Коментар до замовлення..."
           class="comment-input"
         />
@@ -673,39 +673,45 @@ onMounted(fetchData)
   line-height: normal !important;
 }
 
-/* === TABLE GHOST INPUTS === */
+/* === TABLE INPUTS === */
 .lines-table :deep(.el-input__wrapper),
 .lines-table :deep(.el-select__wrapper) {
   box-shadow: none !important;
-  border: 1px solid transparent !important;
-  border-radius: 4px !important;
-  background: transparent !important;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease;
+  min-height: 32px;
 }
 
 .lines-table :deep(.el-input__wrapper:hover),
 .lines-table :deep(.el-select__wrapper:hover) {
-  border-color: #e2e8f0 !important;
-  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
 }
 
 .lines-table :deep(.el-input__wrapper.is-focus),
 .lines-table :deep(.el-select__wrapper.is-focus) {
   border-color: #6366f1 !important;
-  background: #ffffff !important;
   box-shadow: 0 0 0 2px rgba(99,102,241,0.15) !important;
 }
 
 /* Compact table rows */
 .lines-table :deep(.el-table__cell) {
-  padding: 5px 8px !important;
+  padding: 8px !important;
 }
 
 /* === SCROLLABLE LINES === */
-.lines-section {
+.lines-section-card {
+  margin: 0 16px 12px 16px;
+  background: #ffffff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f2f5;
   flex: 1;
   overflow-y: auto;
-  padding: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
 }
 
 .lines-header {
@@ -713,7 +719,6 @@ onMounted(fetchData)
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding: 0 4px;
 }
 
 .lines-header h3 {
@@ -725,16 +730,17 @@ onMounted(fetchData)
 
 .lines-table {
   background: white;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
 
 .lines-table :deep(th.el-table__cell) {
   background-color: #f8fafc;
-  color: #475569;
+  color: #64748b;
   font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* === FIXED FOOTER === */
@@ -742,7 +748,7 @@ onMounted(fetchData)
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 12px 16px;
+  padding: 10px 16px;
   margin: 0 16px 12px;
   background: white;
   border: 1px solid #e2e8f0;
@@ -754,27 +760,28 @@ onMounted(fetchData)
 
 .footer-left {
   flex: 1;
-  max-width: 400px;
+  max-width: 300px;
 }
 
 .comment-input :deep(.el-textarea__inner) {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  min-height: 56px !important;
-  max-height: 72px;
+  min-height: 40px !important;
+  max-height: 80px;
   resize: none;
+  font-size: 13px;
 }
 
 .footer-right {
   flex-shrink: 0;
-  min-width: 300px;
+  min-width: 280px;
 }
 
 .summary-rows {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .summary-row {
