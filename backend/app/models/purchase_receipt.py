@@ -55,10 +55,12 @@ class PurchaseReceiptLine(BaseModel):
     # Foreign Keys
     receipt_id = Column(UUID(as_uuid=True), ForeignKey("purchase_receipts.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="RESTRICT"), nullable=True)
     
     # Relationships
     receipt = relationship("PurchaseReceipt", back_populates="lines")
     product = relationship("Product")
+    variant = relationship("ProductVariant")
     
     def __repr__(self):
         return f"<PurchaseReceiptLine qty={self.quantity} price={self.price}>"

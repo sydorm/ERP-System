@@ -57,10 +57,12 @@ class SalesInvoiceLine(BaseModel):
     # Foreign Keys
     invoice_id = Column(UUID(as_uuid=True), ForeignKey("sales_invoices.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="RESTRICT"), nullable=True)
     
     # Relationships
     invoice = relationship("SalesInvoice", back_populates="lines")
     product = relationship("Product")
+    variant = relationship("ProductVariant")
     
     def __repr__(self):
         return f"<SalesInvoiceLine qty={self.quantity} price={self.price}>"
