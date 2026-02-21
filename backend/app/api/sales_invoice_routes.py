@@ -47,7 +47,7 @@ async def create_sales_invoice(
         total_amount=invoice_data.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=SalesInvoiceStatus.POSTED.value # Auto-post for now
+        status=SalesInvoiceStatus.POSTED # Auto-post for now
     )
     db.add(invoice)
     db.flush()

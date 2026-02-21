@@ -58,7 +58,7 @@ async def create_order(
         total_amount=order_in.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=OrderStatus.DRAFT.value
+        status=OrderStatus.DRAFT
     )
     db.add(order)
     db.flush()

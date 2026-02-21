@@ -39,7 +39,7 @@ async def create_purchase_receipt(
         total_amount=receipt_data.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=PurchaseReceiptStatus.POSTED.value # Auto-post for now in simplified flow
+        status=PurchaseReceiptStatus.POSTED # Auto-post for now in simplified flow
     )
     db.add(receipt)
     db.flush()

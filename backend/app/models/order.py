@@ -32,7 +32,7 @@ class Order(BaseModel):
     shipping_date = Column(Date, nullable=True)  # Planned shipping date
     
     # Status
-    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.DRAFT)
+    status = Column(Enum(OrderStatus, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=OrderStatus.DRAFT)
     
     # Contract & notes
     contract = Column(String(255), nullable=True)  # Contract reference
