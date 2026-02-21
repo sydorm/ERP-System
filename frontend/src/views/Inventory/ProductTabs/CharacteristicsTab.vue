@@ -24,6 +24,19 @@
           <div class="attr-details">
             <span class="attr-name">{{ getAttributeName(char.attribute_id) }}</span>
             <span class="attr-type">{{ typeLabel(getAttrType(char)) }}</span>
+            
+            <div v-if="getAttrOptions(char).length > 0" class="attr-options-preview">
+              <el-tag 
+                v-for="opt in getAttrOptions(char)" 
+                :key="opt.id" 
+                size="small" 
+                effect="plain"
+                class="option-preview-tag"
+              >
+                <span v-if="opt.color_code" class="mini-swatch" :style="{ background: opt.color_code }"></span>
+                {{ opt.value }}
+              </el-tag>
+            </div>
           </div>
         </div>
         
@@ -357,6 +370,30 @@ onMounted(async () => {
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.attr-options-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.option-preview-tag {
+  background: white;
+  border-color: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+}
+
+.mini-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
 }
 
 .char-actions {

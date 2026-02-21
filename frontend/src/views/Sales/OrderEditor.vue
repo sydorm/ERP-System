@@ -95,39 +95,31 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="Характеристика" min-width="180">
+        <el-table-column label="Характеристика" min-width="200">
           <template #default="scope">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <el-select
-                v-model="scope.row.variant_id"
-                placeholder="Оберіть..."
-                style="flex: 1"
-                clearable
-                :disabled="!scope.row.product_id || getProductVariants(scope.row.product_id).length === 0"
-                @change="(val) => handleVariantChange(val, scope.row)"
+            <div class="characteristic-cell-wrapper">
+              <div 
+                class="characteristic-display-box"
+                :class="{ 'has-value': scope.row.variant_id || scope.row._virtual_label }"
+                @click="openVariantSelector(scope.row)"
               >
-                <el-option
-                  v-for="v in getProductVariants(scope.row.product_id)"
-                  :key="v.id"
-                  :label="getVariantLabel(v)"
-                  :value="v.id"
-                >
-                  <div class="option-item-display">
-                    <span class="label-text">{{ getVariantLabel(v) }}</span>
-                    <el-tag v-if="v.price_override" size="small" type="warning" class="price-tag">
-                      +{{ formatShort(v.price_override - getProductPrice(scope.row.product_id)) }}
-                    </el-tag>
-                  </div>
-                </el-option>
-              </el-select>
-              <div v-if="!scope.row.variant_id && scope.row._virtual_label" class="virtual-selection">
-                <el-tag closable @close="clearVirtualVariant(scope.row)">{{ scope.row._virtual_label }}</el-tag>
+                <div v-if="scope.row.variant_id" class="selection-content">
+                  <span class="selection-text">{{ getVariantLabelByLine(scope.row) }}</span>
+                </div>
+                <div v-else-if="scope.row._virtual_label" class="selection-content">
+                  <span class="selection-text virtual">{{ scope.row._virtual_label }}</span>
+                </div>
+                <div v-else class="selection-placeholder">
+                  Оберіть...
+                </div>
               </div>
+
               <el-button 
-                v-if="scope.row.product_id && getProductVariants(scope.row.product_id).length > 0"
+                v-if="scope.row.product_id"
                 :icon="Setting" 
                 circle 
                 size="small" 
+                class="config-btn"
                 @click="openVariantSelector(scope.row)" 
                 title="Конфігуратор характеристик"
               />
@@ -458,6 +450,13 @@ const getVariantLabel = (variant) => {
   return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
 }
 
+const getVariantLabelByLine = (line) => {
+  if (!line.variant_id) return ''
+  const variants = getProductVariants(line.product_id)
+  const variant = variants.find(v => v.id === line.variant_id)
+  return getVariantLabel(variant)
+}
+
 const getProductPrice = (productId) => {
   const prod = products.value.find(p => p.id === productId)
   return prod?.price || 0
@@ -718,6 +717,69 @@ onMounted(fetchData)
 }
 
 /* Variant Selector Styles */
+.characteristic-cell-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.characteristic-display-box {
+  flex: 1;
+  min-height: 32px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.characteristic-display-box:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.characteristic-display-box.has-value {
+  background: white;
+  border-color: #4f46e5;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.05);
+}
+
+.selection-content {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-text {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.selection-text.virtual {
+  color: #059669; /* emerald-600 */
+}
+
+.selection-placeholder {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.config-btn {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.config-btn:hover {
+  transform: rotate(30deg);
+}
+
 .option-item-display {
   display: flex;
   justify-content: space-between;
