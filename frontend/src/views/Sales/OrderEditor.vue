@@ -390,12 +390,8 @@ const getProductVariants = (productId) => {
 
 const getVariantLabel = (variant) => {
   if (!variant.values || variant.values.length === 0) return variant.sku
-  // Return comma-separated attribute: value pairs
-  return variant.values.map(v => {
-    const attrName = v.attribute?.name ? `${v.attribute.name}: ` : ''
-    const val = v.option?.value || v.text_value
-    return attrName + val
-  }).filter(Boolean).join(', ')
+  // Return only values, comma-separated
+  return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
 }
 
 const fetchData = async () => {
