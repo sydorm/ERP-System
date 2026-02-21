@@ -62,6 +62,7 @@ async def create_order(
         line = OrderLine(
             order_id=order.id,
             product_id=line_in.product_id,
+            variant_id=line_in.variant_id,
             quantity=line_in.quantity,
             price=line_in.price,
             total=line_in.total
@@ -112,8 +113,21 @@ async def update_order(
     update_data = order_in.dict(exclude_unset=True, exclude={"lines"})
     for field, value in update_data.items():
         setattr(order, field, value)
-        
-    # TODO: Implement line updates and stock reservation logic based on Status change
+
+    # Update lines if provided
+    if order_in.lines is not None:
+        # Simple sync: remove old lines and add new ones
+        db.query(OrderLine).filter(OrderLine.order_id == id).delete()
+        for line_in in order_in.lines:
+            line = OrderLine(
+                order_id=id,
+                product_id=line_in.product_id,
+                variant_id=line_in.variant_id,
+                quantity=line_in.quantity,
+                price=line_in.price,
+                total=line_in.total
+            )
+            db.add(line)
     # For now, CONFIRMED status will reserve stock
     
     if order_in.status == OrderStatus.CONFIRMED:

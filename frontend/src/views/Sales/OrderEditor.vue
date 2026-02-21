@@ -77,7 +77,7 @@
 
       <el-table :data="form.lines" border style="width: 100%" class="lines-table">
         <el-table-column type="index" label="№" width="50" align="center" />
-        <el-table-column label="Товар" min-width="280">
+        <el-table-column label="Товар" min-width="200">
           <template #default="scope">
             <el-select 
               v-model="scope.row.product_id" 
@@ -89,6 +89,30 @@
               <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id">
                 <span style="float: left">{{ p.name }}</span>
                 <span style="float: right; color: #8492a6; font-size: 13px">{{ formatShort(p.price) }}</span>
+              </el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="Характеристика" min-width="180">
+          <template #default="scope">
+            <el-select
+              v-model="scope.row.variant_id"
+              placeholder="Стандарт"
+              style="width: 100%"
+              clearable
+              :disabled="!scope.row.product_id || getProductVariants(scope.row.product_id).length === 0"
+              @change="(val) => handleVariantChange(val, scope.row)"
+            >
+              <el-option
+                v-for="v in getProductVariants(scope.row.product_id)"
+                :key="v.id"
+                :label="getVariantLabel(v)"
+                :value="v.id"
+              >
+                <span>{{ getVariantLabel(v) }}</span>
+                <el-tag v-if="v.price_override" size="small" type="warning" style="margin-left: 8px">
+                  {{ formatShort(v.price_override) }}
+                </el-tag>
               </el-option>
             </el-select>
           </template>
@@ -234,6 +258,7 @@ const onClientChange = (clientId) => {
 const addLine = () => {
   form.lines.push({
     product_id: '',
+    variant_id: null,
     quantity: 1,
     price: 0,
     total: 0
@@ -251,9 +276,45 @@ const updateLineTotal = (line) => {
 const handleProductChange = (productId, line) => {
   const product = products.value.find(p => p.id === productId)
   if (product) {
-    line.price = product.price
+    // Reset variant
+    line.variant_id = null
+    
+    // Auto-select primary variant if it has values (characteristics)
+    const primaryVar = product.variants?.find(v => v.is_primary)
+    if (primaryVar) {
+      line.variant_id = primaryVar.id
+      line.price = primaryVar.price_override || product.price
+    } else {
+      line.price = product.price
+    }
+    
     updateLineTotal(line)
   }
+}
+
+const handleVariantChange = (variantId, line) => {
+  const product = products.value.find(p => p.id === line.product_id)
+  if (!product) return
+
+  if (variantId) {
+    const variant = product.variants?.find(v => v.id === variantId)
+    if (variant) {
+      line.price = variant.price_override || product.price
+    }
+  } else {
+    line.price = product.price
+  }
+  updateLineTotal(line)
+}
+
+const getProductVariants = (productId) => {
+  const product = products.value.find(p => p.id === productId)
+  return product?.variants || []
+}
+
+const getVariantLabel = (variant) => {
+  if (!variant.values || variant.values.length === 0) return variant.sku
+  return variant.values.map(v => v.option?.value || v.text_value).join(', ')
 }
 
 const fetchData = async () => {

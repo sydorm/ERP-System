@@ -1,5 +1,6 @@
 from pydantic import BaseModel, UUID4
 from typing import List, Optional
+from .attribute import AttributeOptionResponse
 from decimal import Decimal
 
 # Variant Values
@@ -13,6 +14,7 @@ class VariantValueCreate(VariantValueBase):
 
 class VariantValueResponse(VariantValueBase):
     id: UUID4
+    option: Optional[AttributeOptionResponse] = None
     
     class Config:
         from_attributes = True

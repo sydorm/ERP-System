@@ -8,6 +8,7 @@ from app.models.order import OrderStatus
 class OrderLineBase(BaseModel):
     """Base Order Line schema"""
     product_id: UUID
+    variant_id: Optional[UUID] = None
     quantity: Decimal = Field(..., gt=0)
     price: Decimal = Field(..., ge=0)
     total: Decimal = Field(..., ge=0)
