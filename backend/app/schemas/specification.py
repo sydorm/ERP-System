@@ -37,6 +37,13 @@ class ProductSpecificationBase(BaseModel):
 class ProductSpecificationCreate(ProductSpecificationBase):
     items: List[SpecificationItemCreate] = []
 
+class ProductSpecificationUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    is_active: Optional[bool] = None
+    is_default: Optional[bool] = None
+    notes: Optional[str] = None
+    items: Optional[List[SpecificationItemCreate]] = None
+
 class ProductSpecificationResponse(ProductSpecificationBase):
     id: UUID
     product_id: UUID
