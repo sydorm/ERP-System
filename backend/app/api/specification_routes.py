@@ -14,7 +14,9 @@ from app.schemas.specification import (
     ProductSpecificationUpdate
 )
 
-router = APIRouter(prefix="/api/v1/products", tags=["Specifications"])
+from sqlalchemy.orm import Session, joinedload
+
+router = APIRouter(prefix="/products", tags=["Specifications"])
 
 @router.get("/{product_id}/specifications", response_model=List[ProductSpecificationResponse])
 async def list_specifications(
@@ -23,7 +25,11 @@ async def list_specifications(
     current_user: User = Depends(get_current_user)
 ):
     """Get all specifications for a product."""
-    specs = db.query(ProductSpecification).filter(ProductSpecification.product_id == product_id).order_by(ProductSpecification.created_at.desc()).all()
+    specs = db.query(ProductSpecification).options(
+        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+    ).filter(
+        ProductSpecification.product_id == product_id
+    ).order_by(ProductSpecification.created_at.desc()).all()
     return specs
 
 

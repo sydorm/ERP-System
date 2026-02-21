@@ -83,7 +83,9 @@ async def get_purchase_receipt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    receipt = db.query(PurchaseReceipt).filter(
+    receipt = db.query(PurchaseReceipt).options(
+        joinedload(PurchaseReceipt.lines)
+    ).filter(
         PurchaseReceipt.id == id,
         PurchaseReceipt.company_id == current_user.company_id
     ).first()

@@ -7,6 +7,8 @@ from app.models import DocumentSequence, User
 from app.schemas.document_sequence import DocumentSequenceUpdate, DocumentSequenceResponse
 from app.api.dependencies import get_current_active_user
 
+from sqlalchemy.orm import Session, joinedload
+
 router = APIRouter()
 
 @router.get("/document-sequences", response_model=List[DocumentSequenceResponse])
@@ -15,13 +17,29 @@ async def list_document_sequences(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    List all document numbering sequences.
+    List all document numbering sequences. Auto-initializes defaults if missing.
     """
-    # Requires admin in a real scenario, but assuming basic access for now
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
         
-    return db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
+    sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
+    
+    # Auto-initialize if empty (convenience)
+    if not sequences:
+        defaults = [
+            ("order", "ORD-"),
+            ("purchase_receipt", "PREC-"),
+            ("sales_invoice", "INV-"),
+            ("transfer", "TR-"),
+            ("inventory", "ST-")
+        ]
+        for dtype, prefix in defaults:
+            seq = DocumentSequence(document_type=dtype, prefix=prefix, next_number=1, padding=5)
+            db.add(seq)
+        db.commit()
+        sequences = db.query(DocumentSequence).order_by(DocumentSequence.document_type).all()
+
+    return sequences
 
 @router.put("/document-sequences/{id}", response_model=DocumentSequenceResponse)
 async def update_document_sequence(
