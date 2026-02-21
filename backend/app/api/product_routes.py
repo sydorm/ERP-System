@@ -126,7 +126,7 @@ async def create_product(
     
     if product_in.variants:
         for var_in in product_in.variants:
-            var_data = var_in.dict(exclude={"values"})
+            var_data = var_in.dict(exclude={"values", "product_id"})
             db_variant = ProductVariant(**var_data, product_id=product.id)
             db.add(db_variant)
             db.flush()
@@ -183,7 +183,7 @@ async def update_product(
         db.query(ProductVariant).filter(ProductVariant.product_id == product.id).delete()
         
         for var_in in product_in.variants:
-            var_data = var_in.dict(exclude={"values"})
+            var_data = var_in.dict(exclude={"values", "product_id"})
             db_variant = ProductVariant(**var_data, product_id=product.id)
             db.add(db_variant)
             db.flush()

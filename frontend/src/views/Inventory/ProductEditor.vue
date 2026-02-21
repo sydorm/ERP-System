@@ -144,6 +144,10 @@ const fetchProduct = async () => {
         const res = await api.get(`/api/v1/products/${route.params.id}`)
         Object.assign(form, res.data)
         
+        // Ensure price/cost are numbers for el-input-number
+        form.price = parseFloat(form.price) || 0
+        form.cost = parseFloat(form.cost) || 0
+        
         // Extract characteristics from primary variant
         const primaryVar = form.variants?.find(v => v.is_primary) || form.variants?.[0]
         if (primaryVar && primaryVar.values) {
@@ -174,6 +178,10 @@ const fetchStockLevels = async () => {
 }
 
 const saveProduct = async () => {
+    // Ensure numeric types
+    form.price = parseFloat(form.price) || 0
+    form.cost = (form.cost !== null && form.cost !== undefined) ? parseFloat(form.cost) : null
+
     // Prepare variants/characteristics before saving
     if (productCharacteristics.value.length > 0) {
         // Find existing primary variant or create a placeholder
