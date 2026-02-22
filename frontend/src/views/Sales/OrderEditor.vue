@@ -506,8 +506,17 @@ const fetchData = async () => {
     products.value = prodRes.data
     
     if (isEditMode.value) {
-      const res = await api.get(`/api/v1/orders/${route.params.id}`)
-      Object.assign(form, res.data)
+      const data = res.data
+      // Normalize numbers from API (Decimal strings -> Numbers)
+      data.discount_percent = Number(data.discount_percent || 0)
+      if (data.lines) {
+        data.lines.forEach(line => {
+          line.quantity = Number(line.quantity || 0)
+          line.price = Number(line.price || 0)
+          line.total = Number(line.total || 0)
+        })
+      }
+      Object.assign(form, data)
     } else {
       // Auto-select default warehouse for new orders
       const defaultWH = warehouses.value.find(w => w.is_default)

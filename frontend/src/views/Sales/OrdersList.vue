@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -204,6 +204,7 @@ const getStatusLabel = (status) => {
 }
 
 onMounted(fetchOrders)
+onActivated(fetchOrders)
 </script>
 
 <style scoped>
