@@ -119,13 +119,34 @@ docker-compose down
 docker-compose down -v
 ```
 
-## Troubleshooting
+## 🔐 Облікові дані за замовчуванням (Default Credentials)
+
+**Admin (після створення початкових даних):**
+- **Email**: `admin@demo.com`
+- **Password**: `admin123`
+
+---
+
+## 🌐 Локальні посилання (URLs)
+
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Backend API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Backend Health**: [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+## 🛠 Усунення несправностей (Troubleshooting)
 
 ### Порт вже зайнятий
-Якщо порти 5173 або 8000 зайняті, змініть їх у `docker-compose.yml`
+Якщо порти 5173 або 8000 зайняті, змініть їх у `docker-compose.yml`.
 
-### Backend не може підключитися до PostgreSQL
-Зачекайте 10-15 секунд після запуску docker-compose
+### Міграції не застосовуються
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+### Backend не бачить PostgreSQL
+Зачекайте 10-15 секунд після запуску docker-compose. Контейнер PostgreSQL може ініціалізуватися довше за бекенд.
 
 ### Frontend не бачить backend API
-Перевірте, що backend запущений: http://localhost:8000/health
+Перевірте `VITE_API_URL` в `frontend/.env`. Для Docker за замовчуванням це `http://localhost:8000`.
