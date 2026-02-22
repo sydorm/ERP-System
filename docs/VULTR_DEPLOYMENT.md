@@ -132,7 +132,7 @@ nano .env
 
 Додайте:
 ```env
-DATABASE_URL=postgresql://erp_user:STRONG_PASSWORD_HERE@postgres:5432/erp_db
+DATABASE_URL=postgresql://erp_user:<YOUR_STRONG_PASSWORD>@postgres:5432/erp_db
 REDIS_URL=redis://redis:6379
 SECRET_KEY=generate-random-256-bit-key-here
 ALGORITHM=HS256
@@ -458,7 +458,7 @@ nano .env
 
 Додайте:
 ```env
-POSTGRES_PASSWORD=your_strong_password
+POSTGRES_PASSWORD=<YOUR_STRONG_PASSWORD>
 SECRET_KEY=your_generated_secret_key
 ```
 

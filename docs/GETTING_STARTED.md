@@ -119,12 +119,6 @@ docker-compose down
 docker-compose down -v
 ```
 
-## 🔐 Облікові дані за замовчуванням (Default Credentials)
-
-**Admin (після створення початкових даних):**
-- **Email**: `admin@demo.com`
-- **Password**: `admin123`
-
 ---
 
 ## 🌐 Локальні посилання (URLs)

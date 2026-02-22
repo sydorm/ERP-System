@@ -109,7 +109,7 @@ docker exec -it erp_postgres psql -U erp_user -d erp_db -c "SELECT id FROM compa
 # 2. Зареєструвати користувача (замінити COMPANY_ID)
 curl -X POST http://localhost:8000/auth/register `
   -H "Content-Type: application/json" `
-  -d '{\"email\":\"test@test.com\",\"password\":\"testpass123\",\"first_name\":\"Тест\",\"last_name\":\"Юзер\",\"company_id\":\"COMPANY_ID\"}'
+  -d '{"email":"test@test.com","password":"<YOUR_PASSWORD>",...}'
 
 # 3. Login
 curl -X POST http://localhost:8000/auth/login `

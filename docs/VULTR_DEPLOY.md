@@ -329,7 +329,7 @@ tail -f /var/log/nginx/error.log
 
 **Login:**
 - Email: admin@demo.com
-- Password: admin123
+- Password: <YOUR_PASSWORD>
 
 (з sample data)
 

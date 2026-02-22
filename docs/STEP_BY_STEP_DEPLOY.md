@@ -242,7 +242,7 @@ nano docker-compose.yml
 
 ```yaml
 environment:
-  POSTGRES_PASSWORD: STRONG_PASS_123  # Той самий як в .env вище!
+  POSTGRES_PASSWORD: <YOUR_DB_PASSWORD>  # Той самий як в .env вище!
 ```
 
 **Зберегти:** Ctrl+X → Y → Enter
@@ -345,11 +345,11 @@ http://YOUR_SERVER_IP:5173
 
 **Login (DEMO режим):**
 - Email: будь-який
-- Password: будь-який
+- Password: <ANY_PASSWORD>
 
 **Або з реальним backend:**
 - Email: admin@demo.com
-- Password: admin123
+- Password: <YOUR_ADMIN_PASSWORD>
 
 ### API Documentation:
 ```
