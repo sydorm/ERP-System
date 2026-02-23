@@ -100,7 +100,7 @@
         <div class="header-right">
           <!-- Theme Toggle -->
           <el-button 
-            @click="toggleTheme" 
+            @click="toggleTheme()" 
             circle 
             class="theme-toggle-btn"
           >
