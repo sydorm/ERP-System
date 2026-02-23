@@ -288,18 +288,50 @@ html.dark .custom-sidebar-menu {
   line-height: 48px;
   font-size: 15px; /* Збільшений шрифт */
   font-weight: 500;
+  padding-right: 36px !important; /* Місце для стрілочки */
+  position: relative;
+}
+
+/* Обрізаємо довгий текст трьома крапками, якщо сайдбар вузький */
+.custom-sidebar-menu :deep(.el-menu-item span),
+.custom-sidebar-menu :deep(.el-sub-menu__title span) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 110px;
 }
 
 /* Fix submenu arrow (chevron) alignment */
 .custom-sidebar-menu :deep(.el-sub-menu__icon-arrow) {
+  position: absolute;
   right: 12px;
-  margin-top: -6px; /* Center perfectly vertically */
+  top: 50%;
+  margin-top: -7px; /* Center perfectly vertically */
   font-size: 14px;
 }
 
-/* Fix inline submenu background turning black */
+/* Fix inline submenu background turning black and add tree-lines */
 .custom-sidebar-menu :deep(.el-menu--inline) {
   background-color: transparent !important;
+  position: relative;
+}
+
+/* Tree-line left border */
+.custom-sidebar-menu :deep(.el-menu--inline::before) {
+  content: '';
+  position: absolute;
+  left: 31px; /* Align deeply with the parent icon / text padding */
+  top: 0;
+  bottom: 12px;
+  width: 1px;
+  background-color: var(--el-border-color-lighter);
+  z-index: 1;
+}
+
+html.dark .custom-sidebar-menu :deep(.el-menu--inline::before) {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .custom-sidebar-menu :deep(.el-menu-item:hover),
