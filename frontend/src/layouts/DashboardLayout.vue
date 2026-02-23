@@ -11,9 +11,6 @@
         :default-active="activeMenu"
         :collapse="isCollapse"
         :router="true"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#a78bfa"
         class="custom-sidebar-menu"
       >
         <el-menu-item index="/dashboard">
@@ -101,6 +98,16 @@
         </div>
 
         <div class="header-right">
+          <!-- Theme Toggle -->
+          <el-button 
+            @click="toggleTheme" 
+            circle 
+            class="theme-toggle-btn"
+          >
+            <span v-if="isDark">☀️</span>
+            <span v-else>🌙</span>
+          </el-button>
+
           <el-button :icon="Bell" circle />
           <el-dropdown @command="handleCommand">
             <div class="user-avatar">
@@ -160,6 +167,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useDark, useToggle } from '@vueuse/core'
 import AiAssistant from '@/components/AiAssistant.vue'
 import TabsBar from '@/components/layout/TabsBar.vue'
 import {
@@ -187,6 +195,9 @@ const userStore = useUserStore()
 const isCollapse = ref(false)
 const sidebarWidth = computed(() => isCollapse.value ? '64px' : '200px')
 const activeMenu = computed(() => route.path)
+
+const isDark = useDark()
+const toggleTheme = useToggle(isDark)
 
 const breadcrumbItems = computed(() => {
   const pathArray = route.path.split('/').filter(item => item)
@@ -223,9 +234,14 @@ const handleCommand = (command) => {
 }
 
 .sidebar {
-  background-color: #304156;
-  transition: width 0.3s;
+  background-color: var(--sidebar-bg, #ffffff);
+  border-right: 1px solid var(--el-border-color-light);
+  transition: width 0.3s, background-color 0.3s;
   overflow-x: hidden;
+}
+
+html.dark .sidebar {
+  --sidebar-bg: #0f172a; /* Deep navy for dark mode */
 }
 
 .logo {
@@ -233,9 +249,14 @@ const handleCommand = (command) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #263445;
-  color: white;
+  background-color: transparent;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color-light);
   transition: all 0.3s;
+}
+
+html.dark .logo {
+  color: #ffffff;
 }
 
 .logo h2 {
@@ -247,6 +268,29 @@ const handleCommand = (command) => {
 
 .el-menu {
   border: none;
+  background-color: transparent;
+}
+
+.custom-sidebar-menu :deep(.el-menu-item) {
+  color: var(--el-text-color-regular);
+  margin: 4px 8px;
+  border-radius: 8px;
+  height: 44px;
+  line-height: 44px;
+}
+
+.custom-sidebar-menu :deep(.el-sub-menu__title) {
+  color: var(--el-text-color-regular);
+  margin: 4px 8px;
+  border-radius: 8px;
+  height: 44px;
+  line-height: 44px;
+}
+
+.custom-sidebar-menu :deep(.el-menu-item:hover),
+.custom-sidebar-menu :deep(.el-sub-menu__title:hover) {
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
 }
 
 /* Custom modern active state for sidebar */
@@ -269,8 +313,8 @@ const handleCommand = (command) => {
 }
 
 .top-header {
-  background-color: white;
-  border-bottom: 1px solid #e6e6e6;
+  background-color: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -299,20 +343,25 @@ const handleCommand = (command) => {
 
 .user-name {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 4px;
 }
 
 .user-email {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .main-content {
-  background-color: #f0f2f5;
+  background-color: var(--el-bg-color-page);
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.theme-toggle-btn {
+  font-size: 16px;
+  border-color: var(--el-border-color-light);
 }
 
 .view-container {
