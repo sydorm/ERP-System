@@ -87,7 +87,7 @@
     <!-- ===== BULK ACTION BAR ===== -->
     <transition name="bulk-bar">
       <div class="bulk-bar" v-if="selected.length > 0">
-        <el-icon><CheckSquare /></el-icon>
+        <el-icon><Select /></el-icon>
         <span>Виділено: <strong>{{ selected.length }}</strong></span>
         <el-divider direction="vertical" />
         <el-button size="small" type="primary" @click="bulkConfirm">Підтвердити</el-button>
@@ -253,7 +253,7 @@ import { ref, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus, Search, Download, MoreFilled,
-  Document, Wallet, Check, Close, CheckSquare
+  Document, Wallet, Check, Close, Select
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
