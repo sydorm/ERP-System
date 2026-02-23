@@ -271,14 +271,15 @@ html.dark .logo {
   background-color: transparent;
 }
 
-.custom-sidebar-menu :deep(.el-menu-item) {
-  color: var(--el-text-color-regular);
-  margin: 4px 8px;
-  border-radius: 8px;
-  height: 44px;
-  line-height: 44px;
+.custom-sidebar-menu {
+  --sidebar-hover-bg: rgba(0, 0, 0, 0.04);
 }
 
+html.dark .custom-sidebar-menu {
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+.custom-sidebar-menu :deep(.el-menu-item),
 .custom-sidebar-menu :deep(.el-sub-menu__title) {
   color: var(--el-text-color-regular);
   margin: 4px 8px;
@@ -287,18 +288,56 @@ html.dark .logo {
   line-height: 44px;
 }
 
+/* Fix inline submenu background turning black */
+.custom-sidebar-menu :deep(.el-menu--inline) {
+  background-color: transparent !important;
+}
+
 .custom-sidebar-menu :deep(.el-menu-item:hover),
 .custom-sidebar-menu :deep(.el-sub-menu__title:hover) {
-  background-color: var(--el-fill-color-light);
+  background-color: var(--sidebar-hover-bg) !important;
   color: var(--el-text-color-primary);
 }
 
-/* Custom modern active state for sidebar */
-.custom-sidebar-menu :deep(.el-menu-item.is-active) {
-  background-color: rgba(99, 102, 241, 0.15) !important;
-  color: #a78bfa !important;
-  border-right: 3px solid #8b5cf6 !important;
+/* Global overrides for element-plus teleported popup menus */
+:global(.el-menu--popup) {
+  background-color: var(--sidebar-bg, #ffffff) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  padding: 6px !important;
+  min-width: 180px;
+}
+
+:global(html.dark .el-menu--popup) {
+  background-color: #0f172a !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+:global(.el-menu--popup .el-menu-item) {
+  margin: 2px 4px !important;
+  border-radius: 6px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  color: var(--el-text-color-regular) !important;
+}
+
+:global(.el-menu--popup .el-menu-item:hover) {
+  background-color: var(--el-fill-color-light) !important;
+  color: var(--el-text-color-primary) !important;
+}
+
+:global(html.dark .el-menu--popup .el-menu-item:hover) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Custom modern active state for sidebar (Light Mode) */
+.custom-sidebar-menu :deep(.el-menu-item.is-active),
+:global(.el-menu--popup .el-menu-item.is-active) {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  color: #4f46e5 !important; /* Deep vibrant indigo */
+  border-right: 3px solid #6366f1 !important;
   position: relative;
+  font-weight: 500;
 }
 
 .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
@@ -308,8 +347,20 @@ html.dark .logo {
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: #8b5cf6;
+  background-color: #6366f1;
   border-radius: 0 4px 4px 0;
+}
+
+/* Dark Mode overrides for active state */
+html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active),
+:global(html.dark .el-menu--popup .el-menu-item.is-active) {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  color: #a78bfa !important; /* Lighter soft purple */
+  border-right: 3px solid #8b5cf6 !important;
+}
+
+html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
+  background-color: #8b5cf6;
 }
 
 .top-header {
