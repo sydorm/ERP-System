@@ -13,7 +13,8 @@
         :router="true"
         background-color="#304156"
         text-color="#bfcbd9"
-        active-text-color="#409eff"
+        active-text-color="#a78bfa"
+        class="custom-sidebar-menu"
       >
         <el-menu-item index="/dashboard">
           <el-icon><HomeFilled /></el-icon>
@@ -64,11 +65,7 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
-        <el-menu-item class="bg-indigo-900/50" index="/preview-document-statuses">
-          <el-icon><Monitor /></el-icon>
-          <template #title>Preview: Дизайн</template>
-        </el-menu-item>
-
+        <!-- Previews removed -->
         <!-- Administration Section -->
         <el-sub-menu index="admin" v-if="userStore.user?.role === 'admin'">
           <template #title>
@@ -250,6 +247,25 @@ const handleCommand = (command) => {
 
 .el-menu {
   border: none;
+}
+
+/* Custom modern active state for sidebar */
+.custom-sidebar-menu :deep(.el-menu-item.is-active) {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  color: #a78bfa !important;
+  border-right: 3px solid #8b5cf6 !important;
+  position: relative;
+}
+
+.custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #8b5cf6;
+  border-radius: 0 4px 4px 0;
 }
 
 .top-header {
