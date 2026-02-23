@@ -176,3 +176,67 @@
 - ✅ `feat(sales-order): add create endpoint and UI form save`
 - ❌ `fix all`
 - ❌ `many changes`
+
+---
+
+## 12. ERP Domain Core Rules (Critical Invariants)
+
+### 12.1 Document Lifecycle (Mandatory)
+Every ERP document MUST follow lifecycle:
+
+- DRAFT → POSTED → (optional) UNPOSTED → POSTED
+- CANCELLED (terminal state)
+
+Rules:
+- Document is created ONLY in DRAFT state.
+- DRAFT documents do NOT create register entries.
+- POST operation creates register entries.
+- Editing is allowed ONLY in DRAFT.
+- Editing POSTED requires explicit UNPOST first.
+- DELETE allowed ONLY in DRAFT.
+
+Auto-posting on create is forbidden.
+
+---
+
+### 12.2 Transaction Atomicity
+For any document operation:
+
+Header + Lines + Register entries MUST be written in ONE database transaction.
+
+If any part fails → entire operation must rollback.
+
+---
+
+### 12.3 Register Integrity
+- All register records must contain:
+  - document_type
+  - document_id
+  - line_id (if applicable)
+- Re-post must:
+  - delete previous register entries
+  - insert new ones
+- Duplicate register rows for same document are forbidden.
+
+---
+
+### 12.4 Backend Validation is Source of Truth
+- total_amount must be recalculated on backend.
+- Client-sent totals are not trusted.
+- Any mismatch returns 400 error.
+
+---
+
+### 12.5 No Business Logic in Routes
+Routes:
+- validate input
+- call service
+- return response
+
+All posting logic must live in services layer.
+
+---
+
+### 12.6 Stock Calculation Rule
+- Stock balance is derived only from AccumulationRegister.
+- No direct stock fields allowed in product tables.

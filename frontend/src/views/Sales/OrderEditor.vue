@@ -7,9 +7,9 @@
         <h2>{{ isEditMode ? 'Замовлення №' + form.order_number : 'Нове замовлення' }}</h2>
         <el-tag v-if="isEditMode && form.status" :type="statusType" size="small">{{ statusLabel }}</el-tag>
       </div>
-      <div class="header-actions">
-        <el-button @click="goBack">Скасувати</el-button>
-        <el-button type="primary" :loading="submitting" @click="saveOrder">
+      <div class="header-actions flex gap-2">
+        <el-button @click="goBack" class="hover:bg-gray-100 transition-colors">Скасувати</el-button>
+        <el-button type="primary" :loading="submitting" @click="saveOrder" class="shadow-md hover:shadow-lg transition-transform active:scale-95">
           Зберегти замовлення
         </el-button>
       </div>
@@ -22,7 +22,10 @@
         <el-row :gutter="40">
           <!-- Left Column: Customer Info -->
           <el-col :xs="24" :md="12" class="column-separator">
-            <h3 class="section-title">Інформація про клієнта</h3>
+            <h3 class="section-title flex items-center gap-2">
+              <el-icon><User /></el-icon>
+              Інформація про клієнта
+            </h3>
             <el-row :gutter="20">
               <el-col :span="24">
                 <el-form-item required>
@@ -47,7 +50,10 @@
 
           <!-- Right Column: System/Order Info -->
           <el-col :xs="24" :md="12">
-            <h3 class="section-title">Дані замовлення</h3>
+            <h3 class="section-title flex items-center gap-2">
+              <el-icon><Document /></el-icon>
+              Дані замовлення
+            </h3>
             <el-row :gutter="20">
               <el-col :sm="12">
                 <el-form-item>
@@ -300,6 +306,8 @@ const form = reactive({
   lines: []
 })
 
+const orderStatuses = ref([])
+
 // Options
 const customers = ref([])
 const warehouses = ref([])
@@ -339,13 +347,13 @@ const filteredProducts = computed(() => {
 })
 
 const statusType = computed(() => {
-  const map = { draft: 'info', confirmed: '', shipped: 'warning', completed: 'success', cancelled: 'danger' }
-  return map[form.status] || 'info'
+  const status = orderStatuses.value.find(s => s.code === form.status)
+  return status?.color || 'info'
 })
 
 const statusLabel = computed(() => {
-  const map = { draft: 'Чернетка', confirmed: 'Підтверджено', shipped: 'Відвантажено', completed: 'Завершено', cancelled: 'Скасовано' }
-  return map[form.status] || form.status
+  const status = orderStatuses.value.find(s => s.code === form.status)
+  return status?.name || form.status
 })
 
 const goBack = () => router.push('/sales/orders')
@@ -499,11 +507,13 @@ const fetchData = async () => {
     const [custRes, whRes, prodRes] = await Promise.all([
       api.get('/api/v1/counterparties', { params: { is_customer: true } }),
       api.get('/api/v1/warehouses'),
-      api.get('/api/v1/products')
+      api.get('/api/v1/products'),
+      api.get('/api/v1/dictionaries/ORDER_STATUS')
     ])
     customers.value = custRes.data
     warehouses.value = whRes.data
     products.value = prodRes.data
+    orderStatuses.value = statusRes.data
     
     if (isEditMode.value) {
       const data = res.data

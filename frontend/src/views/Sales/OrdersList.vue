@@ -108,6 +108,7 @@ const limit = ref(15)
 
 const searchQuery = ref('')
 const filterStatus = ref('')
+const orderStatuses = ref([])
 
 const fetchOrders = async () => {
   loading.value = true
@@ -131,6 +132,12 @@ const fetchOrders = async () => {
       } catch (e) {
         counterparties.value[id] = 'Н/Д'
       }
+    }
+    
+    // Fetch order statuses for labels/colors
+    if (orderStatuses.value.length === 0) {
+      const statusRes = await api.get('/api/v1/dictionaries/ORDER_STATUS')
+      orderStatuses.value = statusRes.data
     }
   } catch (error) {
     ElMessage.error('Помилка завантаження замовлень')
@@ -182,25 +189,13 @@ const getCounterpartyName = (id) => counterparties.value[id]
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(val)
 
 const getStatusType = (status) => {
-  const map = {
-    draft: 'info',
-    confirmed: 'primary',
-    shipped: 'warning',
-    completed: 'success',
-    cancelled: 'danger'
-  }
-  return map[status] || 'info'
+  const s = orderStatuses.value.find(item => item.code === status)
+  return s?.color || 'info'
 }
 
 const getStatusLabel = (status) => {
-  const map = {
-    draft: 'Чернетка',
-    confirmed: 'Підтверджено',
-    shipped: 'Відвантажено',
-    completed: 'Завершено',
-    cancelled: 'Скасовано'
-  }
-  return map[status] || status
+  const s = orderStatuses.value.find(item => item.code === status)
+  return s?.name || status
 }
 
 onMounted(fetchOrders)

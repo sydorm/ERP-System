@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from datetime import date
 from uuid import UUID
-from app.models.order import OrderStatus
+# from app.models.order import OrderStatus
 
 class OrderLineBase(BaseModel):
     """Base Order Line schema"""
@@ -47,7 +47,7 @@ class OrderUpdate(BaseModel):
     order_number: Optional[str] = Field(None, min_length=1, max_length=50)
     order_date: Optional[date] = None
     shipping_date: Optional[date] = None
-    status: Optional[OrderStatus] = None
+    status: Optional[str] = None
     
     counterparty_id: Optional[UUID] = None
     warehouse_id: Optional[UUID] = None
@@ -61,7 +61,7 @@ class OrderUpdate(BaseModel):
 class OrderResponse(OrderBase):
     """Schema for order response"""
     id: UUID
-    status: OrderStatus
+    status: str
     company_id: UUID
     created_by: Optional[UUID] = None
     

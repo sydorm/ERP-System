@@ -64,6 +64,11 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
+        <el-menu-item class="bg-indigo-900/50" index="/preview-document-statuses">
+          <el-icon><Monitor /></el-icon>
+          <template #title>Preview: Дизайн</template>
+        </el-menu-item>
+
         <!-- Administration Section -->
         <el-sub-menu index="admin" v-if="userStore.user?.role === 'admin'">
           <template #title>
@@ -173,7 +178,8 @@ import {
   Bell,
   User,
   UserFilled,
-  SwitchButton
+  SwitchButton,
+  Monitor
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 

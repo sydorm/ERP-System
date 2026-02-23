@@ -18,7 +18,7 @@ async def list_orders(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = None,
-    status: Optional[OrderStatus] = None,
+    status: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -58,7 +58,7 @@ async def create_order(
         total_amount=order_in.total_amount,
         company_id=current_user.company_id,
         created_by=current_user.id,
-        status=OrderStatus.DRAFT
+        status="draft"
     )
     db.add(order)
     db.flush()

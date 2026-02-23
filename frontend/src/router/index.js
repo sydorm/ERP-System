@@ -172,6 +172,13 @@ const router = createRouter({
                     component: () => import('@/views/Purchases/PurchaseReceiptEditor.vue'),
                     meta: { title: 'Редагування накладної' }
                 },
+                // Previews
+                {
+                    path: '/preview-document-statuses',
+                    name: 'preview-document-statuses',
+                    component: () => import('@/views/DocumentStatusPreview.vue'),
+                    meta: { title: 'Статуси Документів (Дизайн)' }
+                },
                 // Settings
                 {
                     path: '/settings/users',
