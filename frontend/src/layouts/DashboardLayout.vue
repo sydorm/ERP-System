@@ -284,8 +284,17 @@ html.dark .custom-sidebar-menu {
   color: var(--el-text-color-regular);
   margin: 4px 8px;
   border-radius: 8px;
-  height: 44px;
-  line-height: 44px;
+  height: 48px;
+  line-height: 48px;
+  font-size: 15px; /* Збільшений шрифт */
+  font-weight: 500;
+}
+
+/* Fix submenu arrow (chevron) alignment */
+.custom-sidebar-menu :deep(.el-sub-menu__icon-arrow) {
+  right: 12px;
+  margin-top: -6px; /* Center perfectly vertically */
+  font-size: 14px;
 }
 
 /* Fix inline submenu background turning black */
@@ -297,6 +306,16 @@ html.dark .custom-sidebar-menu {
 .custom-sidebar-menu :deep(.el-sub-menu__title:hover) {
   background-color: var(--sidebar-hover-bg) !important;
   color: var(--el-text-color-primary);
+}
+
+/* Match active color for the chevron/sub-menu title when active in light mode */
+.custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+  color: #4f46e5 !important;
+  font-weight: 600;
+}
+
+html.dark .custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+  color: #a78bfa !important;
 }
 
 /* Global overrides for element-plus teleported popup menus */
