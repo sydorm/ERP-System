@@ -193,7 +193,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isCollapse = ref(false)
-const sidebarWidth = computed(() => isCollapse.value ? '64px' : '200px')
+const sidebarWidth = computed(() => isCollapse.value ? '64px' : '230px')
 const activeMenu = computed(() => route.path)
 
 const isDark = useDark()
@@ -300,7 +300,7 @@ html.dark .custom-sidebar-menu {
   white-space: nowrap;
   display: inline-block;
   vertical-align: middle;
-  max-width: 110px;
+  max-width: 140px; /* Більше місця для тексту */
 }
 
 /* Fix submenu arrow (chevron) alignment */
