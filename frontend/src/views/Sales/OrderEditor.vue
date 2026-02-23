@@ -504,7 +504,7 @@ const getProductPrice = (productId) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const [custRes, whRes, prodRes] = await Promise.all([
+    const [custRes, whRes, prodRes, statusRes] = await Promise.all([
       api.get('/api/v1/counterparties', { params: { is_customer: true } }),
       api.get('/api/v1/warehouses'),
       api.get('/api/v1/products'),
@@ -514,9 +514,10 @@ const fetchData = async () => {
     warehouses.value = whRes.data
     products.value = prodRes.data
     orderStatuses.value = statusRes.data
-    
+
     if (isEditMode.value) {
-      const data = res.data
+      const orderRes = await api.get(`/api/v1/orders/${route.params.id}`)
+      const data = orderRes.data
       // Normalize numbers from API (Decimal strings -> Numbers)
       data.discount_percent = Number(data.discount_percent || 0)
       if (data.lines) {
