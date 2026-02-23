@@ -99,3 +99,43 @@ async def delete_dictionary_item(
     db.delete(item)
     db.commit()
     return None
+
+@router.put("/dictionaries/{item_id}", response_model=DictionaryItemResponse)
+async def update_dictionary_item(
+    item_id: str,
+    item_in: DictionaryItemUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Update a dictionary item
+    """
+    item = db.query(DictionaryItem).filter(
+        DictionaryItem.id == item_id,
+        DictionaryItem.company_id == current_user.company_id
+    ).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    # Check for duplicate code if code changed
+    if item_in.code and item_in.code != item.code:
+        existing = db.query(DictionaryItem).filter(
+            DictionaryItem.company_id == current_user.company_id,
+            DictionaryItem.category == item.category,
+            DictionaryItem.code == item_in.code
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Item with this code already exists in category")
+            
+    # Update fields
+    update_data = item_in.dict(exclude_unset=True)
+    if 'category' in update_data and update_data['category']:
+        update_data['category'] = update_data['category'].upper()
+        
+    for field, value in update_data.items():
+        setattr(item, field, value)
+        
+    db.commit()
+    db.refresh(item)
+    return item

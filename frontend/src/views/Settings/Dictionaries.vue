@@ -108,7 +108,6 @@
                   v-model="row.is_active" 
                   active-color="#10b981" 
                   inactive-color="#ef4444"
-                  :disabled="row.is_fixed"
                   @change="handleToggle(row)"
                   size="small"
                 />
@@ -123,7 +122,7 @@
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="edit" :disabled="row.is_fixed">Редагувати</el-dropdown-item>
+                      <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
                       <el-dropdown-item command="delete" :disabled="row.is_fixed" divided class="text-red-500">Видалити</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -151,8 +150,8 @@
         </el-form-item>
 
         <!-- Dynamic Fields based on active dictionary -->
-        <el-form-item v-if="['LEAD_SOURCE', 'ORDER_STATUS'].includes(activeDictionary)" label="Колір тегу">
-          <div class="flex gap-2 mb-2">
+        <el-form-item v-if="['LEAD_SOURCE', 'ORDER_STATUS', 'CANCEL_REASON'].includes(activeDictionary)" label="Колір тегу">
+          <div class="flex gap-2 mb-2 flex-wrap">
             <div 
               v-for="color in colors" 
               :key="color.value"
@@ -242,13 +241,18 @@ const form = reactive({
 })
 
 const colors = [
-  { value: 'blue', hex: '#409eff' },
-  { value: 'green', hex: '#67c23a' },
-  { value: 'orange', hex: '#e6a23c' },
-  { value: 'red', hex: '#f56c6c' },
-  { value: 'purple', hex: '#9c27b0' },
-  { value: 'teal', hex: '#009688' },
-  { value: 'gray', hex: '#909399' },
+  { value: 'blue', hex: '#3b82f6' },
+  { value: 'green', hex: '#10b981' },
+  { value: 'orange', hex: '#f59e0b' },
+  { value: 'red', hex: '#ef4444' },
+  { value: 'purple', hex: '#8b5cf6' },
+  { value: 'teal', hex: '#14b8a6' },
+  { value: 'gray', hex: '#64748b' },
+  { value: 'indigo', hex: '#4f46e5' },
+  { value: 'pink', hex: '#ec4899' },
+  { value: 'rose', hex: '#f43f5e' },
+  { value: 'cyan', hex: '#06b6d4' },
+  { value: 'amber', hex: '#f59e0b' }
 ]
 
 const rules = {
@@ -364,8 +368,21 @@ const submitForm = async () => {
     if (valid) {
       submitting.value = true
       try {
-        const payload = { ...form, category: activeDictionary.value }
-        await api.post('/api/v1/dictionaries', payload)
+        const payload = {
+          name: form.name,
+          code: form.code,
+          description: form.description, // Include description
+          color: form.color,
+          is_active: form.is_active,
+          is_fixed: form.is_fixed, // Include is_fixed
+          category: activeDictionary.value
+        }
+        
+        if (isEditMode.value) {
+          await api.put(`/api/v1/dictionaries/${form.id}`, payload)
+        } else {
+          await api.post('/api/v1/dictionaries', payload)
+        }
         
         ElMessage.success('Збережено успішно')
         dialogVisible.value = false
@@ -412,6 +429,11 @@ onMounted(() => {
 .bg-purple { background-color: #8b5cf6; }
 .bg-teal { background-color: #14b8a6; }
 .bg-gray { background-color: #64748b; }
+.bg-indigo { background-color: #4f46e5; }
+.bg-pink { background-color: #ec4899; }
+.bg-rose { background-color: #f43f5e; }
+.bg-cyan { background-color: #06b6d4; }
+.bg-amber { background-color: #fcd34d; }
 
 /* Custom premium styling for generic el-table */
 .custom-table {
