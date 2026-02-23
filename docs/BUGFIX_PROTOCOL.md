@@ -25,3 +25,50 @@
 ## 5. Документування
 - Оновити `walkthrough.md` після успішного виправлення.
 - Якщо помилка була критичною — додати опис у розділ "Known Issues" (якщо є).
+
+---
+
+## 6. Відомі пастки (Known Traps)
+
+### 🪤 Docker Anonymous Volumes та npm/pip пакети
+**Симптом:** Після додавання нового npm або pip пакету і виконання `docker compose up -d --build` пакет все одно не знаходиться (`Cannot find module 'tailwindcss'`).
+
+**Причина:** У `docker-compose.yml` є анонімний том:
+```yaml
+volumes:
+  - ./frontend:/app
+  - /app/node_modules   # ← ЦЕ анонімний том
+```
+Цей том зберігає старі `node_modules` між перезапусками. Навіть після `--build` Docker монтує **старий** том замість того, що встановив під час збірки.
+
+**Вирішення (якщо оновили пакети):**
+```bash
+docker compose down
+docker volume prune -f   # видаляє лише невикористані анонімні томи (postgres_data безпечний, він іменований)
+docker compose up -d
+```
+
+**Чи потрібен цей том взагалі?**
+Так, в режимі `dev` він потрібен, щоб папка `./frontend:/app` з хоста не затерла `node_modules` з контейнера. Але для production `docker compose` з `build` командою — краще взагалі не монтувати код, а тільки білдити образ.
+
+---
+
+### 🪤 PostgreSQL: "password authentication failed" після docker volume prune
+**Симптом:** Бекенд падає з `password authentication failed for user "erp_user"` навіть якщо паролі в `docker-compose.yml` збігаються.
+
+**Причина:** PostgreSQL зберігає паролі всередині `postgres_data` volume. Якщо том був створений зі СТАРИМ паролем — PostgreSQL ігнорує `POSTGRES_PASSWORD` при наступних запусках і залишає старий пароль.
+
+**Швидке виправлення (без втрати даних):**
+```bash
+# 1. Підключитись до psql всередині контейнера
+docker compose exec postgres psql -U erp_user erp_db
+
+# 2. У psql-консолі виконати:
+ALTER USER erp_user WITH PASSWORD 'erp_password';
+\q
+
+# 3. Перезапустити бекенд
+docker compose restart backend
+```
+
+**Важливо:** роль `postgres` (superuser) не існує в нашому setup, бо `POSTGRES_USER=erp_user`. Завжди підключатись саме як `-U erp_user`.

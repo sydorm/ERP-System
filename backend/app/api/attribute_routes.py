@@ -55,6 +55,25 @@ async def archive_attribute(
     db.refresh(attr)
     return attr
 
+@router.delete("/{attribute_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_attribute(
+    attribute_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    attr = db.query(Attribute).filter(
+        Attribute.id == attribute_id,
+        Attribute.company_id == current_user.company_id
+    ).first()
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+
+    # Delete related options first
+    db.query(AttributeOption).filter(AttributeOption.attribute_id == attribute_id).delete()
+    db.delete(attr)
+    db.commit()
+    return None
+
 @router.post("/{attribute_id}/options", response_model=AttributeOptionResponse)
 async def add_attribute_option(
     attribute_id: UUID,

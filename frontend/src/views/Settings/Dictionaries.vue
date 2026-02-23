@@ -566,7 +566,10 @@ const handleDelete = (row) => {
         { confirmButtonText: 'Видалити', type: 'warning' }
     ).then(async () => {
         try {
-            await api.delete(`/api/v1/dictionaries/${row.id}`)
+            const url = activeCategory.value === 'PRODUCT_ATTRIBUTES'
+                ? `/api/v1/attributes/${row.id}`
+                : `/api/v1/dictionaries/${row.id}`
+            await api.delete(url)
             ElMessage.success('Видалено')
             fetchItems()
             fetchCounts()
