@@ -1,136 +1,115 @@
-<template>
+﻿<template>
   <div class="page-container">
-    <!-- === TOP BAR: Title + Save === -->
+    <!-- === TOP BAR === -->
     <div class="page-header">
       <div class="header-left">
-        <el-button :icon="ArrowLeft" circle @click="goBack" />
-        <h2>{{ isEditMode ? 'Замовлення №' + form.order_number : 'Нове замовлення' }}</h2>
-        <el-tag v-if="isEditMode && form.status" :type="statusType" size="small">{{ statusLabel }}</el-tag>
+        <el-button :icon="ArrowLeft" circle size="small" @click="goBack" class="back-btn" />
+        <div>
+          <div class="header-title-row">
+            <h2>{{ isEditMode ? 'Замовлення №' + form.order_number : 'Нове замовлення' }}</h2>
+            <el-tag v-if="isEditMode && form.status" :type="statusType" size="small" class="status-tag">{{ statusLabel }}</el-tag>
+          </div>
+          <div class="breadcrumb-row">Головна / Продажі / Замовлення{{ isEditMode ? ' / №' + form.order_number : '' }}</div>
+        </div>
       </div>
-      <div class="header-actions flex gap-2">
-        <el-button @click="goBack" class="hover:bg-gray-100 transition-colors">Скасувати</el-button>
-        <el-button type="primary" :loading="submitting" @click="saveOrder" class="shadow-md hover:shadow-lg transition-transform active:scale-95">
-          Зберегти замовлення
+      <div class="header-actions">
+        <el-button @click="goBack">Записати</el-button>
+        <el-button type="primary" :loading="submitting" @click="saveOrder" class="btn-submit">
+          Провести
         </el-button>
       </div>
     </div>
 
-    <!-- === STICKY: Order details panel === -->
-    <!-- === MODERN HEADER: Two-column card layout === -->
+    <!-- === COMPACT INFO CARD === -->
     <div class="order-details-card">
-      <el-form :model="form" label-position="top" size="default" class="details-form">
-        <el-row :gutter="40">
-          <!-- Left Column: Customer Info -->
-          <el-col :xs="24" :md="12" class="column-separator">
-            <h3 class="section-title flex items-center gap-2">
-              <el-icon><User /></el-icon>
-              Інформація про клієнта
-            </h3>
-            <el-row :gutter="20">
-              <el-col :span="24">
-                <el-form-item required>
-                  <template #label>
-                    <span class="custom-label">Клієнт <span class="req">*</span></span>
-                  </template>
-                  <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" style="width: 100%" @change="onClientChange">
-                    <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item>
-                  <template #label>
-                    <span class="custom-label">Договір</span>
-                  </template>
-                  <el-input v-model="form.contract" placeholder="№ договору" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-col>
-
-          <!-- Right Column: System/Order Info -->
-          <el-col :xs="24" :md="12">
-            <h3 class="section-title flex items-center gap-2">
-              <el-icon><Document /></el-icon>
-              Дані замовлення
-            </h3>
-            <el-row :gutter="20">
-              <el-col :sm="12">
-                <el-form-item>
-                  <template #label>
-                    <span class="custom-label">Номер</span>
-                  </template>
-                  <el-input v-model="form.order_number" placeholder="Автоматично" />
-                </el-form-item>
-              </el-col>
-              <el-col :sm="12">
-                <el-form-item required>
-                  <template #label>
-                    <span class="custom-label">Склад <span class="req">*</span></span>
-                  </template>
-                  <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" style="width: 100%">
-                    <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
-                       <div style="display: flex; justify-content: space-between; align-items: center;">
-                         <span>{{ w.name }}</span>
-                         <el-tag v-if="w.is_default" size="small" type="success" effect="plain">Основний</el-tag>
-                       </div>
-                    </el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :sm="12">
-                <el-form-item>
-                  <template #label>
-                    <span class="custom-label">Дата створення</span>
-                  </template>
-                  <el-date-picker v-model="form.order_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" />
-                </el-form-item>
-              </el-col>
-              <el-col :sm="12">
-                <el-form-item>
-                  <template #label>
-                    <span class="custom-label">Дата відвантаження</span>
-                  </template>
-                  <el-date-picker v-model="form.shipping_date" type="date" style="width: 100%" value-format="YYYY-MM-DD" placeholder="Планова" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-col>
-        </el-row>
+      <div class="info-section-label">Основна інформація</div>
+      <el-form :model="form" label-position="top" size="small" class="details-form">
+        <div class="compact-form-grid">
+          <!-- Клієнт -->
+          <div class="cf-item">
+            <span class="cf-label">Клієнт <span class="req">*</span></span>
+            <el-select v-model="form.counterparty_id" filterable placeholder="Оберіть клієнта" class="cf-input" @change="onClientChange">
+              <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
+            </el-select>
+          </div>
+          <!-- Договір -->
+          <div class="cf-item">
+            <span class="cf-label">Договір</span>
+            <el-input v-model="form.contract" placeholder="№ договору" class="cf-input" />
+          </div>
+          <!-- Склад -->
+          <div class="cf-item">
+            <span class="cf-label">Склад <span class="req">*</span></span>
+            <el-select v-model="form.warehouse_id" placeholder="Оберіть склад" class="cf-input">
+              <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span>{{ w.name }}</span>
+                  <el-tag v-if="w.is_default" size="small" type="success" effect="plain">Основний</el-tag>
+                </div>
+              </el-option>
+            </el-select>
+          </div>
+          <!-- Дата створення -->
+          <div class="cf-item">
+            <span class="cf-label">Створено</span>
+            <el-date-picker v-model="form.order_date" type="date" class="cf-input" value-format="YYYY-MM-DD" />
+          </div>
+          <!-- Дата відвантаження -->
+          <div class="cf-item">
+            <span class="cf-label">Відвантаження</span>
+            <el-date-picker v-model="form.shipping_date" type="date" class="cf-input" value-format="YYYY-MM-DD" placeholder="Планова" />
+          </div>
+          <!-- Джерело ліда -->
+          <div class="cf-item">
+            <span class="cf-label">Джерело ліда</span>
+            <el-select v-model="form.lead_source" placeholder="Не вказано" class="cf-input" clearable>
+              <el-option v-for="ls in leadSources" :key="ls.code" :label="ls.name" :value="ls.code" />
+            </el-select>
+          </div>
+        </div>
       </el-form>
     </div>
 
-    <!-- === MIDDLE: Scrollable product lines === -->
+    <!-- === PRODUCT LINES === -->
     <div class="lines-section-card" v-loading="loading">
       <div class="lines-header">
-        <h3>Товари та послуги</h3>
-        <el-button type="primary" :icon="Plus" @click="addLine" size="small">Додати рядок</el-button>
+        <div class="lines-header-left">
+          <el-button type="primary" :icon="Plus" @click="addLine" size="small" class="btn-add-line">Додати позицію</el-button>
+        </div>
+        <div class="lines-header-right">
+          <span class="lines-title">Товари та послуги</span>
+          <el-popover placement="bottom-end" :width="200" trigger="click">
+            <template #reference>
+              <el-button :icon="Setting" circle size="small" class="col-settings-btn" title="Налаштування колонок" />
+            </template>
+            <div class="col-toggle-list">
+              <div class="col-toggle-title">Показати колонки</div>
+              <el-checkbox v-model="visibleCols.characteristic">Характеристика</el-checkbox>
+              <el-checkbox v-model="visibleCols.discount">Знижка</el-checkbox>
+            </div>
+          </el-popover>
+        </div>
       </div>
 
       <el-table :data="form.lines" border style="width: 100%" class="lines-table">
-        <el-table-column type="index" label="№" width="50" align="center" />
-        <el-table-column label="Товар" min-width="200">
+        <el-table-column type="index" label="№" width="44" align="center" />
+        <el-table-column label="Товар" min-width="180">
           <template #default="scope">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <el-select 
-                v-model="scope.row.product_id" 
-                filterable 
-                placeholder="Пошук товару..." 
-                style="flex: 1"
-                @change="(val) => handleProductChange(val, scope.row)"
-              >
-                <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id">
-                  <span>{{ p.name }}</span>
-                </el-option>
-              </el-select>
-              <el-button :icon="Search" circle size="small" @click="openNomenclatureDialog(scope.$index)" title="Відкрити номенклатуру" />
-            </div>
+            <el-select
+              v-model="scope.row.product_id"
+              filterable
+              placeholder="Пошук товару..."
+              style="width:100%"
+              @change="(val) => handleProductChange(val, scope.row)"
+            >
+              <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+            </el-select>
           </template>
         </el-table-column>
-        <el-table-column label="Характеристика" min-width="140">
+        <el-table-column v-if="visibleCols.characteristic" label="Характеристика" min-width="130">
           <template #default="scope">
             <div class="characteristic-cell-wrapper">
-              <div 
+              <div
                 class="characteristic-display-box"
                 :class="{ 'has-value': scope.row.variant_id || scope.row._virtual_label }"
                 @click="openVariantSelector(scope.row)"
@@ -141,18 +120,15 @@
                 <div v-else-if="scope.row._virtual_label" class="selection-content">
                   <span class="selection-text virtual">{{ scope.row._virtual_label }}</span>
                 </div>
-                <div v-else class="selection-placeholder">
-                  Оберіть...
-                </div>
+                <div v-else class="selection-placeholder">Оберіть...</div>
               </div>
-
-              <el-button 
+              <el-button
                 v-if="scope.row.product_id"
-                :icon="Setting" 
-                circle 
-                size="small" 
+                :icon="Setting"
+                circle
+                size="small"
                 class="config-btn"
-                @click="openVariantSelector(scope.row)" 
+                @click="openVariantSelector(scope.row)"
                 title="Конфігуратор характеристик"
               />
             </div>
@@ -163,68 +139,59 @@
             <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" @change="updateLineTotal(scope.row)" style="width: 100%" controls-position="right" />
           </template>
         </el-table-column>
-        <el-table-column label="Ціна" width="130">
+        <el-table-column label="Ціна" width="120">
           <template #default="scope">
             <el-input-number size="small" v-model="scope.row.price" :min="0" @change="updateLineTotal(scope.row)" :precision="2" style="width: 100%" controls-position="right" />
           </template>
         </el-table-column>
-        <el-table-column label="Сума" width="120" align="right">
+        <el-table-column v-if="visibleCols.discount" label="Знижка" width="80" align="center">
           <template #default="scope">
-            <span class="line-total text-sm font-medium">{{ formatCurrency(scope.row.total) }}</span>
+            <span class="text-sm" style="color:#94a3b8">—</span>
           </template>
         </el-table-column>
-        <el-table-column label="" width="50" align="center">
+        <el-table-column label="Сума" width="110" align="right">
           <template #default="scope">
-            <el-button type="danger" :icon="Delete" link @click="removeLine(scope.$index)" />
+            <span class="line-total">{{ formatCurrency(scope.row.total) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="" width="44" align="center">
+          <template #default="scope">
+            <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)" />
           </template>
         </el-table-column>
       </el-table>
 
       <div v-if="form.lines.length === 0" class="empty-lines">
         <el-empty description="Додайте товари до замовлення" :image-size="60">
-          <el-button type="primary" :icon="Plus" @click="addLine">Додати рядок</el-button>
+          <el-button type="primary" :icon="Plus" @click="addLine">Додати позицію</el-button>
         </el-empty>
       </div>
     </div>
 
-    <!-- === FIXED BOTTOM: Comments, discount, total === -->
+    <!-- === STICKY FOOTER === -->
     <div class="order-footer">
       <div class="footer-left">
+        <div class="footer-comment-label">Коментар до замовлення</div>
         <el-input
           v-model="form.comment"
           type="textarea"
-          :autosize="{ minRows: 1, maxRows: 3 }"
-          placeholder="Коментар до замовлення..."
+          :autosize="{ minRows: 1, maxRows: 2 }"
+          placeholder="Внутрішній коментар або уточнення..."
           class="comment-input"
         />
       </div>
       <div class="footer-right">
-        <div class="summary-rows">
-          <div class="summary-row">
-            <span class="s-label">Сума:</span>
-            <span class="s-value">{{ formatCurrency(subtotal) }}</span>
-          </div>
-          <div class="summary-row discount-row">
-            <span class="s-label">Знижка (%):</span>
-            <el-input-number
-              v-model="form.discount_percent"
-              :min="0"
-              :max="100"
-              :precision="1"
-              :step="1"
-              controls-position="right"
-              size="small"
-              style="width: 100px"
-            />
-          </div>
-          <div class="summary-row total-row" v-if="discountAmount > 0">
-            <span class="s-label">Знижка:</span>
-            <span class="s-value text-danger">-{{ formatCurrency(discountAmount) }}</span>
-          </div>
-          <div class="summary-row total-row">
-            <span class="s-label total-label">Разом:</span>
-            <span class="s-value total-value">{{ formatCurrency(totalAmount) }}</span>
-          </div>
+        <div class="footer-total-label">РАЗОМ ДО СПЛАТИ</div>
+        <div class="footer-total-amount">{{ formatCurrency(totalAmount) }}</div>
+        <div v-if="discountAmount > 0" class="footer-discount">Знижка: -{{ formatCurrency(discountAmount) }}</div>
+        <div class="discount-inline">
+          <span class="s-label">Знижка %:</span>
+          <el-input-number
+            v-model="form.discount_percent"
+            :min="0" :max="100" :precision="1" :step="1"
+            controls-position="right" size="small"
+            style="width: 90px"
+          />
         </div>
       </div>
     </div>
@@ -243,10 +210,10 @@
         clearable
         style="margin-bottom: 16px"
       />
-      <el-table 
-        :data="filteredProducts" 
-        border 
-        height="400px" 
+      <el-table
+        :data="filteredProducts"
+        border
+        height="400px"
         highlight-current-row
         @current-change="onDialogProductSelect"
       >
@@ -271,8 +238,8 @@
     <VariantSelectorDialog
       v-model="variantSelectorVisible"
       :product="selectedProductForSelector"
-      :initial-variant-id="activeLineForSelector?.variant_id"
       @select="onVariantSelected"
+      @clear="clearVirtualVariant(activeLineForSelector)"
     />
   </div>
 </template>
@@ -303,10 +270,18 @@ const form = reactive({
   comment: '',
   discount_percent: 0,
   status: 'draft',
+  lead_source: null,
   lines: []
 })
 
 const orderStatuses = ref([])
+const leadSources = ref([])
+
+// Column Visibility
+const visibleCols = reactive({
+  characteristic: true,
+  discount: true
+})
 
 // Options
 const customers = ref([])
@@ -340,8 +315,8 @@ const totalAmount = computed(() => {
 const filteredProducts = computed(() => {
   if (!nomenclatureSearch.value) return products.value
   const s = nomenclatureSearch.value.toLowerCase()
-  return products.value.filter(p => 
-    p.name.toLowerCase().includes(s) || 
+  return products.value.filter(p =>
+    p.name.toLowerCase().includes(s) ||
     p.sku.toLowerCase().includes(s)
   )
 })
@@ -386,10 +361,7 @@ const updateLineTotal = (line) => {
 const handleProductChange = (productId, line) => {
   const product = products.value.find(p => p.id === productId)
   if (product) {
-    // Reset variant
     line.variant_id = null
-    
-    // Auto-select primary variant or first variant if it has values
     const primaryVar = product.variants?.find(v => v.is_primary) || product.variants?.[0]
     if (primaryVar && primaryVar.values?.length > 0) {
       line.variant_id = primaryVar.id
@@ -397,7 +369,6 @@ const handleProductChange = (productId, line) => {
     } else {
       line.price = product.price
     }
-    
     updateLineTotal(line)
   }
 }
@@ -427,7 +398,6 @@ const confirmDialogSelection = () => {
 const openVariantSelector = (line) => {
   const product = products.value.find(p => p.id === line.product_id)
   if (!product) return
-  
   activeLineForSelector.value = line
   selectedProductForSelector.value = product
   variantSelectorVisible.value = true
@@ -440,11 +410,9 @@ const onVariantSelected = (variant) => {
       activeLineForSelector.value._virtual_label = null
       handleVariantChange(variant.id, activeLineForSelector.value)
     } else {
-      // Virtual variant from configurator
       activeLineForSelector.value.variant_id = null
       activeLineForSelector.value._virtual_label = getVariantLabel(variant)
       activeLineForSelector.value._virtual_values = variant.values
-      // Keep product price as base for virtual
       const prod = products.value.find(p => p.id === activeLineForSelector.value.product_id)
       activeLineForSelector.value.price = prod?.price || 0
       updateLineTotal(activeLineForSelector.value)
@@ -460,7 +428,6 @@ const clearVirtualVariant = (line) => {
 const handleVariantChange = (variantId, line) => {
   const product = products.value.find(p => p.id === line.product_id)
   if (!product) return
-
   if (variantId) {
     const variant = product.variants?.find(v => v.id === variantId)
     if (variant) {
@@ -480,8 +447,6 @@ const getProductVariants = (productId) => {
 const getVariantLabel = (variant) => {
   if (!variant) return ''
   if (!variant.values || variant.values.length === 0) return variant.sku || ''
-  
-  // Return "Attribute: Value", comma-separated
   return variant.values.map(v => {
     const attrName = v.attribute?.name || ''
     const valText = v.option?.value || v.text_value || ''
@@ -496,29 +461,25 @@ const getVariantLabelByLine = (line) => {
   return getVariantLabel(variant)
 }
 
-const getProductPrice = (productId) => {
-  const prod = products.value.find(p => p.id === productId)
-  return prod?.price || 0
-}
-
 const fetchData = async () => {
   loading.value = true
   try {
-    const [custRes, whRes, prodRes, statusRes] = await Promise.all([
+    const [custRes, whRes, prodRes, statusRes, leadRes] = await Promise.all([
       api.get('/api/v1/counterparties', { params: { is_customer: true } }),
       api.get('/api/v1/warehouses'),
       api.get('/api/v1/products'),
-      api.get('/api/v1/dictionaries/ORDER_STATUS')
+      api.get('/api/v1/dictionaries/ORDER_STATUS'),
+      api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] }))
     ])
     customers.value = custRes.data
     warehouses.value = whRes.data
     products.value = prodRes.data
     orderStatuses.value = statusRes.data
+    leadSources.value = leadRes.data
 
     if (isEditMode.value) {
       const orderRes = await api.get(`/api/v1/orders/${route.params.id}`)
       const data = orderRes.data
-      // Normalize numbers from API (Decimal strings -> Numbers)
       data.discount_percent = Number(data.discount_percent || 0)
       if (data.lines) {
         data.lines.forEach(line => {
@@ -529,7 +490,6 @@ const fetchData = async () => {
       }
       Object.assign(form, data)
     } else {
-      // Auto-select default warehouse for new orders
       const defaultWH = warehouses.value.find(w => w.is_default)
       if (defaultWH) {
         form.warehouse_id = defaultWH.id
@@ -550,7 +510,6 @@ const saveOrder = async () => {
     return
   }
 
-  // Clean empty optional fields
   const payload = {
     ...form,
     total_amount: totalAmount.value,
@@ -584,24 +543,25 @@ onMounted(fetchData)
 </script>
 
 <style scoped>
+/* ===== PAGE CONTAINER ===== */
 .page-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background-color: #f8fafc; /* bg-slate-50 */
+  background-color: #f4f5f9;
 }
 
-/* === TOP BAR === */
+/* ===== TOP BAR ===== */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: 10px 24px;
   background: white;
-  border-bottom: 1px solid #e2e8f0; /* border-slate-200 */
+  border-bottom: 1px solid #f0f0f7;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* shadow-sm placeholder */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .header-left {
@@ -610,65 +570,83 @@ onMounted(fetchData)
   gap: 12px;
 }
 
-.header-left h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1d1f;
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* === MODERN HEADER: Card layout === */
+.header-left h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e1b4b;
+  letter-spacing: -0.3px;
+}
+
+.status-tag { vertical-align: middle; }
+
+.breadcrumb-row {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+.back-btn { flex-shrink: 0; }
+
+/* ===== COMPACT INFO CARD ===== */
 .order-details-card {
-  margin: 0 16px 12px 16px;
-  background: #ffffff;
+  margin: 12px 20px 0;
+  background: #fff;
   padding: 14px 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f0f2f5;
+  border: 1px solid #f0f0f7;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
   flex-shrink: 0;
 }
 
-.section-title {
+.info-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 12px;
+}
+
+.compact-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 20px;
+}
+
+.cf-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cf-label {
   font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
 }
 
-.custom-label {
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 500;
-  margin-bottom: 2px;
-  display: block;
-}
-
-.req {
-  color: #ef4444;
-  margin-left: 2px;
-}
-
-.column-separator {
-  position: relative;
-}
-
-@media (min-width: 992px) {
-  .column-separator::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: #f1f5f9;
-  }
-}
-
-.details-form :deep(.el-form-item) {
-  margin-bottom: 10px;
-}
+.cf-input { width: 100% !important; }
 
 .details-form :deep(.el-input__wrapper),
 .details-form :deep(.el-select__wrapper),
@@ -677,57 +655,33 @@ onMounted(fetchData)
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   background-color: #ffffff !important;
-  transition: all 0.2s ease;
-  padding: 2px 10px;
-  min-height: 34px;
+  transition: all 0.15s ease;
+  min-height: 32px;
+  padding: 0 8px;
 }
 
 .details-form :deep(.el-input__wrapper:hover),
-.details-form :deep(.el-select__wrapper:hover),
-.details-form :deep(.el-date-editor.el-input__wrapper:hover) {
-  border-color: #cbd5e1 !important;
+.details-form :deep(.el-select__wrapper:hover) {
+  border-color: #c7d2fe !important;
 }
 
-.details-form :deep(.el-form-item__label) {
-  padding-bottom: 0 !important;
-  line-height: normal !important;
-}
-
-/* === TABLE INPUTS === */
-.lines-table :deep(.el-input__wrapper),
-.lines-table :deep(.el-select__wrapper) {
-  box-shadow: none !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  background-color: #ffffff !important;
-  transition: all 0.2s ease;
-  min-height: 32px;
-}
-
-.lines-table :deep(.el-input__wrapper:hover),
-.lines-table :deep(.el-select__wrapper:hover) {
-  border-color: #cbd5e1 !important;
-}
-
-.lines-table :deep(.el-input__wrapper.is-focus),
-.lines-table :deep(.el-select__wrapper.is-focus) {
+.details-form :deep(.el-input__wrapper.is-focus),
+.details-form :deep(.el-select__wrapper.is-focus) {
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99,102,241,0.15) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important;
 }
 
-/* Compact table rows */
-.lines-table :deep(.el-table__cell) {
-  padding: 8px !important;
-}
+.details-form :deep(.el-form-item) { margin-bottom: 0; }
 
-/* === SCROLLABLE LINES === */
+.req { color: #ef4444; margin-left: 2px; }
+
+/* ===== LINES SECTION ===== */
 .lines-section-card {
-  margin: 0 16px 12px 16px;
-  background: #ffffff;
-  padding: 14px 20px;
+  margin: 10px 20px;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f0f2f5;
+  border: 1px solid #f0f0f7;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
   flex: 1;
   overflow-y: auto;
   display: flex;
@@ -738,242 +692,207 @@ onMounted(fetchData)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8f7ff;
+  background: #fafbff;
+  flex-shrink: 0;
 }
 
-.lines-header h3 {
-  margin: 0;
+.lines-header-left,
+.lines-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lines-title {
   font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #1e1b4b;
 }
 
-.lines-table {
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.btn-add-line {
+  background: #6366f1;
+  border-color: #6366f1;
+  border-radius: 7px;
+  font-weight: 700;
 }
 
-.lines-table :deep(th.el-table__cell) {
-  background-color: #f8fafc;
-  color: #64748b;
-  font-weight: 600;
+.col-settings-btn { color: #94a3b8; border-color: #e2e8f0; }
+.col-settings-btn:hover { color: #6366f1; border-color: #6366f1; background: #f5f3ff; }
+
+.col-toggle-list { display: flex; flex-direction: column; gap: 8px; }
+.col-toggle-title {
   font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* === FIXED FOOTER === */
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 10px 16px;
-  margin: 0 16px 12px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
-  gap: 16px;
-}
-
-.footer-left {
-  flex: 1;
-  max-width: 300px;
-}
-
-.comment-input :deep(.el-textarea__inner) {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  min-height: 40px !important;
-  max-height: 80px;
-  resize: none;
-  font-size: 13px;
-}
-
-.footer-right {
-  flex-shrink: 0;
-  min-width: 280px;
-}
-
-.summary-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.s-label {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.s-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.total-row {
-  padding-top: 12px;
-  border-top: 2px solid #f1f5f9;
-}
-
-.total-label {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.total-value {
-  font-size: 24px;
+/* ===== UNIFORM TABLE HEADERS ===== */
+.lines-table :deep(th.el-table__cell) {
+  background-color: #f8f7ff !important;
+  color: #6366f1;
+  font-size: 10px;
   font-weight: 700;
-  color: #4f46e5; /* indigo-600 */
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #ede9fe !important;
 }
 
-/* Variant Selector Styles */
+.lines-table :deep(td.el-table__cell) {
+  border-bottom: 1px solid #f4f5f9 !important;
+  padding: 8px 12px !important;
+}
+
+.lines-table :deep(.el-input__wrapper),
+.lines-table :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 5px !important;
+  background-color: #fff !important;
+  min-height: 30px;
+}
+.lines-table :deep(.el-input__wrapper.is-focus),
+.lines-table :deep(.el-select__wrapper.is-focus) {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.12) !important;
+}
+
+.line-total {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.empty-lines {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== CHARACTERISTIC COLUMN ===== */
 .characteristic-cell-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
 .characteristic-display-box {
   flex: 1;
-  min-height: 32px;
+  min-height: 28px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: 5px;
+  padding: 3px 10px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   overflow: hidden;
 }
+.characteristic-display-box:hover { border-color: #c7d2fe; background: #f5f3ff; }
+.characteristic-display-box.has-value { border-color: #6366f1; background: white; }
 
-.characteristic-display-box:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
+.selection-content { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.selection-text { font-size: 12px; color: #374151; font-weight: 500; }
+.selection-text.virtual { color: #059669; }
+.selection-placeholder { font-size: 12px; color: #94a3b8; }
 
-.characteristic-display-box.has-value {
-  background: white;
-  border-color: #4f46e5;
-  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.05);
-}
+.config-btn { flex-shrink: 0; transition: transform 0.2s; }
+.config-btn:hover { transform: rotate(30deg); }
 
-.selection-content {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.selection-text {
-  font-size: 13px;
-  color: #1e293b;
-  font-weight: 500;
-}
-
-.selection-text.virtual {
-  color: #059669; /* emerald-600 */
-}
-
-.selection-placeholder {
-  font-size: 13px;
-  color: #94a3b8;
-}
-
-.config-btn {
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.config-btn:hover {
-  transform: rotate(30deg);
-}
-
-.option-item-display {
+/* ===== STICKY FOOTER ===== */
+.order-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  gap: 12px;
-}
-
-.label-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.price-tag {
+  padding: 12px 20px;
+  background: white;
+  border-top: 1px solid #f0f0f7;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
   flex-shrink: 0;
-  font-family: inherit;
+  gap: 20px;
+}
+
+.footer-left {
+  flex: 1;
+  max-width: 480px;
+}
+
+.footer-comment-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 5px;
+}
+
+.comment-input :deep(.el-textarea__inner) {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  min-height: 38px !important;
+  max-height: 60px;
+  resize: none;
+  font-size: 13px;
+}
+
+.footer-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.footer-total-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.footer-total-amount {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1e1b4b;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.footer-discount {
+  font-size: 12px;
+  color: #ef4444;
   font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.virtual-selection {
-  margin-left: 4px;
+.discount-inline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
 }
 
-.virtual-selection :deep(.el-tag) {
-  background-color: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #15803d;
-  font-weight: 500;
-}
+.s-label { font-size: 12px; color: #64748b; }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .page-header {
-    padding: 12px 16px;
-  }
-  .order-details-panel {
-    margin: 8px;
-    padding: 16px;
-  }
-  .details-form :deep(.el-form-item__label) {
-    font-size: 0.8125rem !important;
-    padding-bottom: 4px !important;
-  }
-  .lines-section {
-    padding: 0 8px 8px;
-  }
-  .order-footer {
-    flex-direction: column;
-    margin: 0 8px 8px;
-    padding: 16px;
-    gap: 16px;
-  }
-  .footer-right {
-    min-width: 0;
-    width: 100%;
-  }
+  .compact-form-grid { grid-template-columns: repeat(2, 1fr); }
+  .order-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .footer-right { text-align: left; width: 100%; }
+  .discount-inline { justify-content: flex-start; }
 }
 
-/* Extra small mobile fixes for very narrow screens */
 @media (max-width: 480px) {
-  .header-left h2 {
-    font-size: 16px;
-  }
-  .summary-row {
-     gap: 8px;
-  }
-  .total-value {
-    font-size: 20px;
-  }
+  .compact-form-grid { grid-template-columns: 1fr; }
+  .footer-total-amount { font-size: 22px; }
 }
 </style>
-
