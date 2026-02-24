@@ -285,11 +285,14 @@ html.dark .custom-sidebar-menu {
   margin: 4px 8px;
   border-radius: 8px;
   height: 48px;
-  line-height: 48px;
-  font-size: 15px; /* Збільшений шрифт */
+  line-height: normal;
+  display: flex !important;
+  align-items: center;
+  font-size: 15px;
   font-weight: 500;
-  padding-right: 36px !important; /* Місце для стрілочки */
+  padding-right: 36px !important;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Обрізаємо довгий текст трьома крапками, якщо сайдбар вузький */
@@ -298,9 +301,8 @@ html.dark .custom-sidebar-menu {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 140px; /* Більше місця для тексту */
+  flex: 1;
+  min-width: 0;
 }
 
 /* Fix submenu arrow (chevron) alignment */
@@ -385,8 +387,9 @@ html.dark .custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__titl
 .custom-sidebar-menu :deep(.el-menu-item.is-active),
 :global(.el-menu--popup .el-menu-item.is-active) {
   background-color: rgba(99, 102, 241, 0.1) !important;
-  color: #4f46e5 !important; /* Deep vibrant indigo */
-  border-right: 3px solid #6366f1 !important;
+  color: #4f46e5 !important;
+  box-shadow: inset -3px 0 0 0 #6366f1 !important;
+  border-right: none !important;
   position: relative;
   font-weight: 500;
 }
@@ -406,8 +409,9 @@ html.dark .custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__titl
 html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active),
 :global(html.dark .el-menu--popup .el-menu-item.is-active) {
   background-color: rgba(99, 102, 241, 0.15) !important;
-  color: #a78bfa !important; /* Lighter soft purple */
-  border-right: 3px solid #8b5cf6 !important;
+  color: #a78bfa !important;
+  box-shadow: inset -3px 0 0 0 #8b5cf6 !important;
+  border-right: none !important;
 }
 
 html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {

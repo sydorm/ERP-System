@@ -30,9 +30,9 @@
       </div>
       <div class="type-filter">
         <el-radio-group v-model="filterType" @change="fetchCounterparties">
-          <el-radio-button label="all">Всі</el-radio-button>
-          <el-radio-button label="customer">Клієнти</el-radio-button>
-          <el-radio-button label="supplier">Постачальники</el-radio-button>
+          <el-radio-button value="all">Всі</el-radio-button>
+          <el-radio-button value="customer">Клієнти</el-radio-button>
+          <el-radio-button value="supplier">Постачальники</el-radio-button>
         </el-radio-group>
       </div>
     </div>

@@ -89,10 +89,10 @@
         </div>
         <div class="view-toggle">
           <el-radio-group v-model="viewMode" size="large">
-            <el-radio-button label="grid">
+            <el-radio-button value="grid">
               <el-icon><Grid /></el-icon>
             </el-radio-button>
-            <el-radio-button label="list">
+            <el-radio-button value="list">
               <el-icon><Fold /></el-icon>
             </el-radio-button>
           </el-radio-group>

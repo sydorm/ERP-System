@@ -47,8 +47,8 @@
               <el-col :span="12">
                 <el-form-item label="Тип організації">
                   <el-radio-group v-model="form.company_type" @change="handleTypeChange">
-                    <el-radio-button label="FOP">ФОП</el-radio-button>
-                    <el-radio-button label="TOV">Юридична особа (ТОВ, ПП)</el-radio-button>
+                    <el-radio-button value="FOP">ФОП</el-radio-button>
+                    <el-radio-button value="TOV">Юридична особа (ТОВ, ПП)</el-radio-button>
                   </el-radio-group>
                 </el-form-item>
               </el-col>

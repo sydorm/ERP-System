@@ -323,7 +323,9 @@ const filteredProducts = computed(() => {
 
 const statusType = computed(() => {
   const status = orderStatuses.value.find(s => s.code === form.status)
-  return status?.color || 'info'
+  const color = status?.color || 'info'
+  const validTypes = ['primary', 'success', 'info', 'warning', 'danger']
+  return validTypes.includes(color) ? color : 'info'
 })
 
 const statusLabel = computed(() => {
