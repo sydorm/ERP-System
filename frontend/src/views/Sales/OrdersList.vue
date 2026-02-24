@@ -68,19 +68,21 @@
         @input="handleSearch"
         class="search-input"
       />
-      <el-date-picker
-        v-model="dateRange"
-        type="daterange"
-        size="small"
-        style="width: 230px"
-        range-separator="—"
-        start-placeholder="Від"
-        end-placeholder="До"
-        format="DD.MM.YYYY"
-        value-format="YYYY-MM-DD"
-        @change="fetchOrders"
-        class="date-picker"
-      />
+      <div style="width: 230px; flex-shrink: 0; overflow: hidden;">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          size="small"
+          style="width: 230px !important"
+          range-separator="—"
+          start-placeholder="Від"
+          end-placeholder="До"
+          format="DD.MM.YYYY"
+          value-format="YYYY-MM-DD"
+          @change="fetchOrders"
+          class="date-picker"
+        />
+      </div>
       <el-button link class="reset-btn" @click="handleReset" v-if="searchQuery || dateRange || activeTab">
         Скинути фільтри
       </el-button>
