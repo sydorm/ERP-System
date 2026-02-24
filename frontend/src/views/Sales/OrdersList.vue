@@ -72,6 +72,7 @@
         v-model="dateRange"
         type="daterange"
         size="small"
+        style="width: 230px"
         range-separator="—"
         start-placeholder="Від"
         end-placeholder="До"
