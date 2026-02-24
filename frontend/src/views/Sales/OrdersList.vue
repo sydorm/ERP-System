@@ -662,7 +662,10 @@ const getTimeline = (order) => {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
 }
-.date-picker { max-width: 250px; }
+.date-picker { 
+  width: 240px !important;
+  flex: 0 0 240px;
+}
 .date-picker :deep(.el-input__wrapper) {
   border-radius: 6px;
   border: 1px solid #e2e8f0;
