@@ -71,6 +71,7 @@
       <el-date-picker
         v-model="dateRange"
         type="daterange"
+        size="small"
         range-separator="—"
         start-placeholder="Від"
         end-placeholder="До"
@@ -661,10 +662,24 @@ const getTimeline = (order) => {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
 }
+.date-picker { max-width: 250px; }
 .date-picker :deep(.el-input__wrapper) {
-  border-radius: 9px;
-  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
   box-shadow: none !important;
+  height: 28px;
+  padding: 0 10px;
+}
+.date-picker :deep(.el-range-input) {
+  font-size: 12px;
+}
+.date-picker :deep(.el-range-separator) {
+  color: #64748b;
+  font-size: 11px;
+}
+.date-picker :deep(.el-input__wrapper.is-focus) {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
 }
 .reset-btn { color: #6366f1; font-size: 13px; }
 
