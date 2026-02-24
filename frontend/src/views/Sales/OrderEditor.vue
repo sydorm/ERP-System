@@ -7,7 +7,21 @@
         <div>
           <div class="header-title-row">
             <h2>{{ isEditMode ? 'Замовлення №' + form.order_number : 'Нове замовлення' }}</h2>
-            <el-tag v-if="isEditMode && form.status" :type="statusType" size="small" class="status-tag">{{ statusLabel }}</el-tag>
+            <el-dropdown trigger="click" @command="handleStatusChange" v-if="isEditMode && form.status">
+              <div class="creative-status-btn" :class="'status-' + statusType">
+                <span class="status-dot"></span>
+                <span class="status-text">{{ statusLabel }}</span>
+                <el-icon class="status-icon"><ArrowDown /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu class="status-dropdown">
+                  <el-dropdown-item v-for="s in orderStatuses" :key="s.code" :command="s.code" :class="{ 'is-active': form.status === s.code }">
+                    <span class="status-dot-small" :class="'bg-' + (s.color || 'info')"></span>
+                    {{ s.name }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
           <div class="breadcrumb-row">Головна / Продажі / Замовлення{{ isEditMode ? ' / №' + form.order_number : '' }}</div>
         </div>
@@ -247,7 +261,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search, Setting } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
@@ -506,6 +520,20 @@ const fetchData = async () => {
   }
 }
 
+const handleStatusChange = async (command) => {
+  if (form.status === command) return
+  const oldStatus = form.status
+  form.status = command
+  try {
+    const res = await api.put(`/api/v1/orders/${route.params.id}`, form)
+    ElMessage.success('Статус оновлено')
+  } catch (err) {
+    form.status = oldStatus // Revert on failure
+    console.error('Failed to change status:', err)
+    ElMessage.error(err.response?.data?.detail || 'Помилка при зміні статусу')
+  }
+}
+
 const saveOrder = async () => {
   if (!form.counterparty_id || !form.warehouse_id || form.lines.length === 0) {
     ElMessage.warning("Заповніть обов'язкові поля та додайте товари")
@@ -609,6 +637,72 @@ onMounted(fetchData)
 }
 
 .back-btn { flex-shrink: 0; }
+
+/* === CREATIVE STATUS BUTTON === */
+.creative-status-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+.creative-status-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.status-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Status variants */
+.status-info { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.status-info .status-dot { background: #94a3b8; }
+
+.status-primary { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
+.status-primary .status-dot { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+
+.status-success { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
+.status-success .status-dot { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+
+.status-warning { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+.status-warning .status-dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+
+.status-danger { background: #fef2f2; color: #dc2626; border-color: #fee2e2; }
+.status-danger .status-dot { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+
+/* Dropdown items */
+.status-dropdown .el-dropdown-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+}
+.status-dropdown .el-dropdown-menu__item.is-active {
+  background-color: #f8fafc;
+  font-weight: 700;
+}
+.status-dot-small {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.bg-info { background: #94a3b8; }
+.bg-primary { background: #3b82f6; }
+.bg-success { background: #22c55e; }
+.bg-warning { background: #f59e0b; }
+.bg-danger { background: #ef4444; }
 
 /* ===== COMPACT INFO CARD ===== */
 .order-details-card {
