@@ -101,7 +101,8 @@
       <el-table
         v-loading="loading"
         :data="filteredOrders"
-        height="calc(100vh - 380px)"
+        height="calc(100vh - 310px)"
+        size="small"
         style="width: 100%"
         class="orders-table"
         @selection-change="handleSelectionChange"
@@ -572,50 +573,50 @@ const getTimeline = (order) => {
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 .stat-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 16px 18px;
+  border-radius: 8px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-  border: 1px solid rgba(255,255,255,0.8);
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  border: 1px solid #e2e8f0;
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.15s;
 }
-.stat-card:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.12); transform: translateY(-2px); }
+.stat-card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.08); transform: translateY(-1px); }
 .stat-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
+  width: 32px; height: 32px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
+  font-size: 16px; flex-shrink: 0;
 }
-.stat-value { font-size: 22px; font-weight: 800; color: #1e1b4b; line-height: 1; }
-.stat-label { font-size: 12px; color: #9ca3af; margin-top: 2px; font-weight: 500; }
+.stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; }
+.stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .stat-dot {
-  position: absolute; top: 12px; right: 12px;
-  width: 8px; height: 8px; border-radius: 50%;
+  position: absolute; top: 10px; right: 10px;
+  width: 6px; height: 6px; border-radius: 50%;
 }
 
 /* ===== QUICK FILTER TABS ===== */
 .quick-filters {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 .filter-tab {
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 4px 10px;
+  border-radius: 16px;
   border: 1px solid #e5e7eb;
   background: #fff;
   color: #6b7280;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s;
@@ -647,16 +648,18 @@ const getTimeline = (order) => {
   margin-bottom: 12px;
   align-items: center;
 }
-.search-input { flex: 1; max-width: 360px; }
+.search-input { flex: 1; max-width: 320px; }
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 9px;
-  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
   box-shadow: none !important;
   background: #fff;
+  height: 28px;
 }
+.search-input :deep(.el-input__inner) { font-size: 12px; }
 .search-input :deep(.el-input__wrapper.is-focus) {
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
 }
 .date-picker :deep(.el-input__wrapper) {
   border-radius: 9px;
@@ -685,57 +688,59 @@ const getTimeline = (order) => {
 /* ===== TABLE CARD ===== */
 .table-card {
   background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
-  border: 1px solid #f0f0f7;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  border: 1px solid #e2e8f0;
   overflow: hidden;
 }
 
 .orders-table :deep(th.el-table__cell) {
-  background: #f8f7ff !important;
-  color: #6366f1;
-  font-size: 11px;
+  background: #f8fafc !important;
+  color: #64748b;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  border-bottom: 1px solid #ede9fe !important;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 6px 8px !important;
 }
 .orders-table :deep(td.el-table__cell) {
-  border-bottom: 1px solid #f4f5f9 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
   border-right: none !important;
-  padding: 12px 14px;
+  padding: 4px 8px !important;
 }
 .orders-table :deep(.order-row) { cursor: pointer; transition: background 0.15s; }
-.orders-table :deep(.order-row:hover > td) { background: #f5f3ff !important; }
+.orders-table :deep(.order-row:hover > td) { background: #f8fafc !important; }
 .orders-table :deep(.el-table__inner-wrapper::before) { display: none; }
 
 /* Cell styles */
-.order-num { font-weight: 700; color: #6366f1; font-size: 13px; }
-.date-text { color: #6b7280; font-size: 13px; }
-.client-cell { display: flex; align-items: center; gap: 10px; }
+.order-num { font-weight: 600; color: #1e293b; font-size: 12px; }
+.date-text { color: #64748b; font-size: 12px; }
+.client-cell { display: flex; align-items: center; gap: 6px; }
 .client-avatar {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff; font-size: 11px; font-weight: 700;
+  width: 20px; height: 20px; border-radius: 4px;
+  background: linear-gradient(135deg, #64748b, #94a3b8);
+  color: #fff; font-size: 9px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+.client-cell span { font-size: 12px; font-weight: 500; color: #1e293b; }
 .lines-badge {
-  background: #f3f4f6;
-  color: #374151;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
   font-weight: 600;
 }
-.amount-text { font-weight: 700; color: #1e1b4b; font-size: 14px; }
+.amount-text { font-weight: 600; color: #1e293b; font-size: 12px; }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 600;
   border: 1px solid;
   white-space: nowrap;
