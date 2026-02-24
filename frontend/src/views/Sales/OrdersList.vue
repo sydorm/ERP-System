@@ -532,20 +532,22 @@ const getTimeline = (order) => {
 <style scoped>
 /* ===== PAGE ===== */
 .orders-page {
-  padding: 16px 20px 0; /* Reduced padding, removed bottom padding as table fills it */
+  padding: 0;
   background: #f4f5f9;
-  height: calc(100vh - 64px);
+  min-height: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Prevent page itself from scrolling */
 }
 
 /* ===== FIXED TOP AREA ===== */
 .fixed-top-area {
-  flex-shrink: 0;
+  position: sticky;
+  top: -20px;  /* offset to compensate for parent .view-container padding: 20px */
+  z-index: 100;
+  background: #f4f5f9;
+  padding: 16px 20px 10px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 /* ===== HEADER ===== */
@@ -553,7 +555,7 @@ const getTimeline = (order) => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .page-title {
   margin: 0 0 4px;
@@ -720,23 +722,11 @@ const getTimeline = (order) => {
 /* ===== TABLE CARD ===== */
 .table-card {
   background: #fff;
-  border-radius: 8px 8px 0 0; /* flat bottom to attach to window edge */
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
   border: 1px solid #e2e8f0;
-  border-bottom: none;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.scrollable-table-area {
-  flex: 1; /* Takes remaining height */
-  min-height: 0; /* Required for Firefox flex scrolling */
-  margin-bottom: 0;
-}
-
-.orders-table {
-  flex: 1;
+  margin: 0 20px 20px;
 }
 
 .orders-table :deep(th.el-table__cell) {
