@@ -8,15 +8,15 @@
           <div class="header-title-row">
             <h2>{{ isEditMode ? 'Замовлення №' + form.order_number : 'Нове замовлення' }}</h2>
             <el-dropdown trigger="click" @command="handleStatusChange" v-if="isEditMode && form.status">
-              <div class="creative-status-btn" :class="'status-' + statusType">
-                <span class="status-dot"></span>
+              <div class="creative-status-btn" :style="{ '--status-color': statusColor }">
+                <span class="status-dot" :style="{ backgroundColor: statusColor, boxShadow: `0 0 8px ${statusColor}80` }"></span>
                 <span class="status-text">{{ statusLabel }}</span>
                 <el-icon class="status-icon"><ArrowDown /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu class="status-dropdown">
                   <el-dropdown-item v-for="s in orderStatuses" :key="s.code" :command="s.code" :class="{ 'is-active': form.status === s.code }">
-                    <span class="status-dot-small" :class="'bg-' + (s.color || 'info')"></span>
+                    <span class="status-dot-small" :style="{ backgroundColor: s.color || '#94a3b8' }"></span>
                     {{ s.name }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -342,6 +342,25 @@ const statusType = computed(() => {
   return validTypes.includes(color) ? color : 'info'
 })
 
+const statusColor = computed(() => {
+  const status = orderStatuses.value.find(s => s.code === form.status)
+  const c = status?.color || 'gray'
+  // Map our basic element colors to actual hex codes for dynamic display if they used standard names
+  const colorMap = {
+    gray: '#64748b',
+    info: '#64748b',
+    blue: '#3b82f6',
+    primary: '#3b82f6',
+    green: '#10b981',
+    success: '#10b981',
+    orange: '#f59e0b',
+    warning: '#f59e0b',
+    red: '#ef4444',
+    danger: '#ef4444'
+  }
+  return status?.color || 'gray' // Return the raw color name/hex
+})
+
 const statusLabel = computed(() => {
   const status = orderStatuses.value.find(s => s.code === form.status)
   return status?.name || form.status
@@ -649,7 +668,10 @@ onMounted(fetchData)
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
+  /* Dynamic colors injected via CSS custom property --status-color */
+  color: var(--status-color, #475569);
+  background: color-mix(in srgb, var(--status-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--status-color) 30%, transparent);
 }
 .creative-status-btn:hover {
   transform: translateY(-1px);
@@ -664,22 +686,6 @@ onMounted(fetchData)
   font-size: 12px;
   opacity: 0.7;
 }
-
-/* Status variants */
-.status-info { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-.status-info .status-dot { background: #94a3b8; }
-
-.status-primary { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
-.status-primary .status-dot { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
-
-.status-success { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
-.status-success .status-dot { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.4); }
-
-.status-warning { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
-.status-warning .status-dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
-
-.status-danger { background: #fef2f2; color: #dc2626; border-color: #fee2e2; }
-.status-danger .status-dot { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
 
 /* Dropdown items */
 .status-dropdown .el-dropdown-menu__item {
@@ -698,52 +704,61 @@ onMounted(fetchData)
   height: 6px;
   border-radius: 50%;
 }
-.bg-info { background: #94a3b8; }
-.bg-primary { background: #3b82f6; }
-.bg-success { background: #22c55e; }
-.bg-warning { background: #f59e0b; }
-.bg-danger { background: #ef4444; }
 
 /* ===== COMPACT INFO CARD ===== */
 .order-details-card {
   margin: 12px 20px 0;
   background: #fff;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: 1px solid #f0f0f7;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  padding: 12px 16px; /* tighter padding */
+  border-radius: 8px; /* sharper corners like 1C */
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
   flex-shrink: 0;
 }
 
 .info-section-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #6366f1;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 12px;
+  display: none; /* Hide for more compact look if desired, or keep small */
 }
 
 .compact-form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px 20px;
+  gap: 8px 20px; /* very tight gaps like 1c */
 }
 
 .cf-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px; /* almost no gap between label and input */
 }
 
 .cf-label {
-  font-size: 13px;
+  font-size: 12px; /* Small dense font */
   font-weight: 600;
   color: #475569;
+  line-height: 1;
 }
 
-.cf-input { width: 100% !important; }
-
+.cf-input {
+  width: 100%;
+}
+.cf-input :deep(.el-input__wrapper),
+.cf-input :deep(.el-select__wrapper) {
+  height: 28px !important; /* very compact inputs */
+  min-height: 28px !important;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px #cbd5e1 inset;
+  background-color: #fff;
+  padding: 0 8px;
+}
+.cf-input :deep(.el-input__inner) {
+  font-size: 12px;
+  height: 28px;
+  line-height: 28px;
+}
+.cf-input :deep(.el-select__wrapper) {
+  line-height: 28px;
+}
 .details-form :deep(.el-input__wrapper),
 .details-form :deep(.el-select__wrapper),
 .details-form :deep(.el-date-editor.el-input__wrapper) {
