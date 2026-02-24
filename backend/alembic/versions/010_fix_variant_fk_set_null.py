@@ -1,15 +1,15 @@
 """fix variant fk set null
 
-Revision ID: 010_fix_variant_fk
-Revises: 
+Revision ID: 011_fix_variant_fk
+Revises: 010_dynamic_order_statuses
 Create Date: 2026-02-24
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = '010_fix_variant_fk'
-down_revision = None
+revision = '011_fix_variant_fk'
+down_revision = '010_dynamic_order_statuses'
 branch_labels = None
 depends_on = None
 
