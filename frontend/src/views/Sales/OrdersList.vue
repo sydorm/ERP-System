@@ -1,8 +1,8 @@
 <template>
   <div class="orders-page">
-
-    <!-- ===== PAGE HEADER ===== -->
-    <div class="page-header">
+    <div class="fixed-top-area">
+      <!-- ===== PAGE HEADER ===== -->
+      <div class="page-header">
       <div>
         <h1 class="page-title">Замовлення клієнтів</h1>
         <el-breadcrumb separator="/" class="breadcrumb">
@@ -96,13 +96,14 @@
         <el-button size="small" link @click="selected = []">Скасувати вибір</el-button>
       </div>
     </transition>
+    </div> <!-- END fixed-top-area -->
 
     <!-- ===== MAIN TABLE CARD ===== -->
-    <div class="table-card">
+    <div class="table-card scrollable-table-area">
       <el-table
         v-loading="loading"
         :data="filteredOrders"
-        height="calc(100vh - 310px)"
+        height="100%"
         size="small"
         style="width: 100%"
         class="orders-table"
@@ -528,10 +529,20 @@ const getTimeline = (order) => {
 <style scoped>
 /* ===== PAGE ===== */
 .orders-page {
-  padding: 24px;
+  padding: 16px 20px 0; /* Reduced padding, removed bottom padding as table fills it */
   background: #f4f5f9;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent page itself from scrolling */
+}
+
+/* ===== FIXED TOP AREA ===== */
+.fixed-top-area {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== HEADER ===== */
@@ -706,10 +717,23 @@ const getTimeline = (order) => {
 /* ===== TABLE CARD ===== */
 .table-card {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  border-radius: 8px 8px 0 0; /* flat bottom to attach to window edge */
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
   border: 1px solid #e2e8f0;
+  border-bottom: none;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollable-table-area {
+  flex: 1; /* Takes remaining height */
+  min-height: 0; /* Required for Firefox flex scrolling */
+  margin-bottom: 0;
+}
+
+.orders-table {
+  flex: 1;
 }
 
 .orders-table :deep(th.el-table__cell) {
