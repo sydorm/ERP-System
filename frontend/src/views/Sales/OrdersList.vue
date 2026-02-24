@@ -160,18 +160,20 @@
 
         <el-table-column label="" width="60" align="right">
           <template #default="{ row }">
-            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)" @click.stop>
-              <span class="action-btn">
-                <el-icon><MoreFilled /></el-icon>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="view">Переглянути</el-dropdown-item>
-                  <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
-                  <el-dropdown-item command="delete" divided class="text-danger">Видалити</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div @click.stop>
+              <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
+                <span class="action-btn">
+                  <el-icon><MoreFilled /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="view">Переглянути</el-dropdown-item>
+                    <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="text-danger">Видалити</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
