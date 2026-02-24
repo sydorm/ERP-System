@@ -643,7 +643,7 @@ onMounted(fetchData)
 }
 
 .cf-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #475569;
 }

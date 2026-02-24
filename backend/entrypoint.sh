@@ -8,8 +8,13 @@ echo "Waiting for database..."
 #   sleep 1
 # done
 
-# Run migrations
+# Run migrations (auto-merge heads if multiple exist)
 echo "Running migrations..."
+HEADS=$(alembic heads 2>&1 | grep -c "(head)")
+if [ "$HEADS" -gt "1" ]; then
+  echo "Multiple heads detected ($HEADS), merging..."
+  alembic merge heads -m "auto_merge" --rev-id "auto_merge_$(date +%s)"
+fi
 alembic upgrade head
 
 # Create sample data (if needed and tables are empty)
