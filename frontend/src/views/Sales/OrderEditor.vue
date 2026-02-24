@@ -154,7 +154,7 @@
             <span class="line-total">{{ formatCurrency(scope.row.total) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="" width="44" align="center">
+        <el-table-column label="Дія" width="50" align="center" fixed="right">
           <template #default="scope">
             <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)" />
           </template>
@@ -643,7 +643,7 @@ onMounted(fetchData)
 .cf-label {
   font-size: 11px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #475569;
 }
 
 .cf-input { width: 100% !important; }
