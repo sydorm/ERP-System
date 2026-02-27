@@ -127,5 +127,8 @@ app.include_router(document_sequence_router, prefix="/api/v1", tags=["Administra
 
 from app.api.specification_routes import router as specification_router
 app.include_router(specification_router, prefix="/api/v1")
+
+from app.api.calculator_routes import router as calculator_router
+app.include_router(calculator_router)
 # from app.api.v1.api import api_router
 # app.include_router(api_router, prefix="/api/v1")

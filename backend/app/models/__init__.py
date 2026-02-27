@@ -18,6 +18,7 @@ from .purchase_receipt import PurchaseReceipt, PurchaseReceiptLine, PurchaseRece
 from .purchase_order import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
 from .sales_invoice import SalesInvoice, SalesInvoiceLine, SalesInvoiceStatus
 from .document_sequence import DocumentSequence
+from .calculator import CalcMaterial, CalcHardware, CalcService, CalcQuote
 
 __all__ = [
     "Base",
@@ -52,4 +53,8 @@ __all__ = [
     "SalesInvoiceLine",
     "SalesInvoiceStatus",
     "DocumentSequence",
+    "CalcMaterial",
+    "CalcHardware",
+    "CalcService",
+    "CalcQuote",
 ]

@@ -20,6 +20,19 @@ const router = createRouter({
             component: () => import('@/views/auth/SignupView.vue'),
             meta: { requiresAuth: false }
         },
+        // ─── Calculator (public, no auth required) ───────────────────────
+        {
+            path: '/calculator',
+            name: 'calculator',
+            component: () => import('@/views/Calculator/DrawerCalculator.vue'),
+            meta: { requiresAuth: false }
+        },
+        {
+            path: '/calculator/admin',
+            name: 'calculator-admin',
+            component: () => import('@/views/Calculator/CalculatorAdmin.vue'),
+            meta: { requiresAuth: false }
+        },
         {
             path: '/dashboard',
             component: () => import('@/layouts/DashboardLayout.vue'),
