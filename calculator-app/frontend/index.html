@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор шухляд</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f1f3f8;
+            min-height: 100vh
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a2332, #2d3f5e);
+            padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .25)
+        }
+
+        .header-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .logo-icon {
+            font-size: 38px
+        }
+
+        .logo h1 {
+            color: #fff;
+            font-size: 21px;
+            font-weight: 700
+        }
+
+        .logo p {
+            color: #9eb5d8;
+            font-size: 12px;
+            margin-top: 2px
+        }
+
+        .btn-admin {
+            color: #d4e4ff;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, .1);
+            transition: .2s
+        }
+
+        .btn-admin:hover {
+            background: rgba(255, 255, 255, .2)
+        }
+
+        .body {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 16px 80px
+        }
+
+        /* Mode tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px
+        }
+
+        .tab {
+            padding: 10px 22px;
+            border: 2px solid #dde3ef;
+            border-radius: 10px;
+            background: #fff;
+            color: #6b7a99;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .tab.active {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #1d4ed8
+        }
+
+        /* Sections */
+        .section {
+            display: none
+        }
+
+        .section.active {
+            display: block
+        }
+
+        /* AI */
+        .upload-area {
+            border: 2.5px dashed #c4cedf;
+            border-radius: 16px;
+            background: #fff;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: .2s;
+            overflow: hidden
+        }
+
+        .upload-area:hover,
+        .upload-area.drag {
+            border-color: #3b82f6;
+            background: #eff6ff
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            padding: 40px;
+            color: #8fa0bb
+        }
+
+        .upload-placeholder .icon {
+            font-size: 54px;
+            margin-bottom: 12px
+        }
+
+        .upload-placeholder .link {
+            color: #3b82f6;
+            font-weight: 600
+        }
+
+        .upload-placeholder small {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px
+        }
+
+        #preview-img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            display: none
+        }
+
+        .btn-analyze {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .btn-analyze:disabled {
+            opacity: .6;
+            cursor: not-allowed
+        }
+
+        .ai-result {
+            margin-top: 14px;
+            background: #f0fdf4;
+            border: 1.5px solid #86efac;
+            border-radius: 12px;
+            padding: 16px
+        }
+
+        .ai-result h4 {
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .ai-notes {
+            color: #4b5563;
+            font-size: 14px;
+            margin-bottom: 10px
+        }
+
+        .btn-apply {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: #16a34a;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        /* Constructor */
+        .constructor {
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .06)
+        }
+
+        .card-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .step-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        /* Type grid */
+        .type-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .type-card {
+            flex: 1;
+            min-width: 100px;
+            border: 2.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+            background: #fafbfc
+        }
+
+        .type-card:hover {
+            border-color: #93c5fd;
+            background: #f0f7ff
+        }
+
+        .type-card.sel {
+            border-color: #3b82f6;
+            background: #eff6ff
+        }
+
+        .type-icon {
+            font-size: 30px;
+            margin-bottom: 8px
+        }
+
+        .type-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155
+        }
+
+        /* Dir icons */
+        .dir-vert,
+        .dir-horiz {
+            display: flex;
+            gap: 3px
+        }
+
+        .dir-vert {
+            flex-direction: column
+        }
+
+        .dr {
+            background: #3b82f6;
+            border-radius: 3px;
+            opacity: .7
+        }
+
+        .dr-r {
+            width: 44px;
+            height: 11px
+        }
+
+        .dr-c {
+            width: 11px;
+            height: 40px
+        }
+
+        /* Dims */
+        .dims {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: 14px
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px
+        }
+
+        .field label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .04em
+        }
+
+        .field input,
+        .field select {
+            border: 2px solid #e2e8f0;
+            border-radius: 9px;
+            padding: 9px 12px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            outline: none;
+            transition: .2s;
+            background: #fff
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #3b82f6
+        }
+
+        /* Count */
+        .count {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 9px;
+            overflow: hidden
+        }
+
+        .count button {
+            width: 36px;
+            height: 38px;
+            border: none;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .count button:hover {
+            background: #dbeafe
+        }
+
+        .count span {
+            flex: 1;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e293b
+        }
+
+        /* Box preview */
+        .preview {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px
+        }
+
+        .cabinet {
+            background: #d4a76a;
+            border: 3px solid #9b6f3a;
+            border-radius: 6px;
+            padding: 4px;
+            gap: 3px;
+            overflow: hidden;
+            transition: .4s
+        }
+
+        .drawer {
+            flex: 1;
+            background: #e8c990;
+            border-radius: 3px;
+            border: 2px solid #b5892a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 18px;
+            transition: .3s
+        }
+
+        .preview-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600
+        }
+
+        /* Services */
+        .svc-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px
+        }
+
+        .svc-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #334155;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            transition: .2s
+        }
+
+        .svc-item:hover {
+            border-color: #93c5fd
+        }
+
+        .svc-item input {
+            width: 15px;
+            height: 15px;
+            accent-color: #3b82f6
+        }
+
+        /* Calc button */
+        .btn-calc {
+            width: 100%;
+            padding: 17px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, .35);
+            transition: .2s;
+            margin-top: 6px
+        }
+
+        .btn-calc:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(37, 99, 235, .45)
+        }
+
+        .btn-calc:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        /* Results */
+        .results {
+            margin-top: 28px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .1);
+            border-top: 4px solid #3b82f6;
+            display: none
+        }
+
+        .results.show {
+            display: block
+        }
+
+        .res-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px
+        }
+
+        .res-header h2 {
+            font-size: 20px;
+            color: #1e293b
+        }
+
+        .res-actions {
+            display: flex;
+            gap: 10px
+        }
+
+        .btn-save,
+        .btn-print {
+            padding: 8px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid
+        }
+
+        .btn-save {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff
+        }
+
+        .btn-print {
+            background: #fff;
+            border-color: #cbd5e1;
+            color: #475569
+        }
+
+        .summary-box {
+            background: #eff6ff;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #1e40af;
+            font-weight: 600
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 20px
+        }
+
+        th {
+            padding: 10px 12px;
+            text-align: left;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e2e8f0;
+            background: #f8fafc
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155
+        }
+
+        tr:hover td {
+            background: #f8fafc
+        }
+
+        .price-td {
+            font-weight: 700;
+            color: #1d4ed8;
+            text-align: right
+        }
+
+        .totals {
+            max-width: 320px;
+            margin-left: auto
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #334155;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f5f9
+        }
+
+        .grand {
+            padding-top: 12px;
+            border-top: 2px solid #1d4ed8;
+            border-bottom: none;
+            font-size: 18px;
+            color: #1e293b;
+            margin-top: 4px
+        }
+
+        .grand strong {
+            color: #1d4ed8;
+            font-size: 22px
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            display: none;
+            animation: slideUp .3s
+        }
+
+        .toast.show {
+            display: block
+        }
+
+        .toast.ok {
+            background: #10b981
+        }
+
+        .toast.err {
+            background: #ef4444
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0)
+            }
+        }
+
+        @media print {
+
+            .header,
+            .tabs,
+            .section,
+            .btn-save,
+            .btn-print,
+            .toast {
+                display: none !important
+            }
+
+            .results {
+                display: block !important;
+                box-shadow: none;
+                border: 1px solid #ccc
+            }
+        }
+
+        @media(max-width:640px) {
+            .header-inner {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center
+            }
+
+            .tabs {
+                flex-direction: column
+            }
+
+            .type-grid {
+                flex-direction: column
+            }
+
+            .dims {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🪵</span>
+                <div>
+                    <h1>Конструктор шухляд</h1>
+                    <p>Швидкий розрахунок вартості виробу</p>
+                </div>
+            </div>
+            <a href="/admin.html" class="btn-admin">⚙️ Налаштування</a>
+        </div>
+    </div>
+
+    <div class="body">
+        <div class="tabs">
+            <button class="tab active" onclick="setMode('manual')">📐 Конструктор</button>
+            <button class="tab" onclick="setMode('ai')" id="tab-ai">🤖 AI-аналіз фото</button>
+        </div>
+
+        <!-- AI -->
+        <div class="section" id="sec-ai">
+            <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-inp').click()"
+                ondragover="event.preventDefault();this.classList.add('drag')"
+                ondragleave="this.classList.remove('drag')" ondrop="onDrop(event)">
+                <input type="file" id="file-inp" accept="image/*" style="display:none"
+                    onchange="pickFile(this.files[0])">
+                <div class="upload-placeholder" id="upload-ph">
+                    <div class="icon">📸</div>
+                    <p>Перетягніть фото шухляди або <span class="link">натисніть</span></p>
+                    <small>JPG, PNG, WEBP до 10МБ</small>
+                </div>
+                <img id="preview-img" alt="preview">
+            </div>
+            <button class="btn-analyze" id="btn-analyze" disabled onclick="analyzeImg()">🤖 Аналізувати фото</button>
+            <div class="ai-result" id="ai-result" style="display:none">
+                <h4><span>✅ AI визначив:</span><span id="ai-conf"></span></h4>
+                <p class="ai-notes" id="ai-notes"></p>
+                <button class="btn-apply" onclick="applyAi()">↓ Заповнити форму і перейти до конструктора</button>
+            </div>
+        </div>
+
+        <!-- Constructor -->
+        <div class="section active" id="sec-manual">
+            <div class="constructor">
+                <!-- Step 1: Фасад -->
+                <div class="card">
+                    <div class="card-label"><span class="step-num">1</span> Тип фасаду</div>
+                    <div class="type-grid">
+                        <div class="type-card sel" onclick="pick('facade','overlay',this)" data-val="overlay">
+                            <div class="type-icon">🟫</div>
+                            <div class="type-name">Накладний</div>
+                        </div>
+                        <div class="type-card" onclick="pick('facade','inset',this)" data-val="inset">
+                            <div class="type-icon">⬛</div>
+                            <div class="type-name">Врізний</div>
+                        </div>
+                        <div class="type-card" onclick="pick('facade','none',this)" data-val="none">
+                            <div class="type-icon">⬜</div>
+                            <div class="type-name">Без фасаду</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 2: Напрямок -->
+                <div class="card">
+                    <div class="card-label"><span class="step-num">2</span> Розташування шухляд</div>
+                    <div class="type-grid" style="max-width:340px">
+                        <div class="type-card sel" onclick="pick('dir','vertical',this);redrawCabinet()"
+                            data-val="vertical">
+                            <div class="type-icon">
+                                <div class="dir-vert">
+                                    <div class="dr dr-r"></div>
+                                    <div class="dr dr-r"></div>
+                                    <div class="dr dr-r"></div>
+                                </div>
+                            </div>
+                            <div class="type-name">В стовпець</div>
+                        </div>
+                        <div class="type-card" onclick="pick('dir','horizontal',this);redrawCabinet()"
+                            data-val="horizontal">
+                            <div class="type-icon">
+                                <div class="dir-horiz">
+                                    <div class="dr dr-c"></div>
+                                    <div class="dr dr-c"></div>
+                                    <div class="dr dr-c"></div>
+                                </div>
+                            </div>
+                            <div class="type-name">В рядок</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 3: Розміри -->
+                <div class="card">
+                    <div class="card-label"><span class="step-num">3</span> Розміри та кількість</div>
+                    <div class="dims">
+                        <div class="field">
+                            <label>К-сть шухляд</label>
+                            <div class="count">
+                                <button onclick="chgCount(-1)">−</button>
+                                <span id="cnt-disp">2</span>
+                                <button onclick="chgCount(1)">+</button>
+                            </div>
+                        </div>
+                        <div class="field"><label>Ширина (мм)</label><input type="number" id="box_w" value="600"
+                                min="150" max="2400" oninput="redrawCabinet()"></div>
+                        <div class="field"><label>Висота (мм)</label><input type="number" id="box_h" value="720"
+                                min="100" max="2400" oninput="redrawCabinet()"></div>
+                        <div class="field"><label>Глибина (мм)</label><input type="number" id="box_d" value="560"
+                                min="200" max="800"></div>
+                        <div class="field"><label>Глибина шухляди</label><input type="number" id="drw_d" value="450"
+                                min="200" max="600"></div>
+                    </div>
+                    <!-- Preview -->
+                    <div class="preview">
+                        <div class="cabinet" id="cabinet"></div>
+                        <div class="preview-label" id="cabinet-label">600 × 720 мм</div>
+                    </div>
+                </div>
+                <!-- Step 4: Матеріали / фурнітура -->
+                <div class="card">
+                    <div class="card-label"><span class="step-num">4</span> Матеріали та фурнітура</div>
+                    <div class="dims" style="margin-bottom:16px">
+                        <div class="field"><label>Основний матеріал</label>
+                            <select id="mat-main"></select>
+                        </div>
+                        <div class="field"><label>Дно (ДВП)</label>
+                            <select id="mat-bot">
+                                <option value="">— як основний —</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Напрямні</label>
+                            <select id="hw-sel">
+                                <option value="">— без —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field"><label>Послуги</label>
+                        <div class="svc-grid" id="svc-grid"></div>
+                    </div>
+                </div>
+                <!-- Step 5: Клієнт -->
+                <div class="card">
+                    <div class="card-label"><span class="step-num">5</span> Клієнт (необов'язково)</div>
+                    <div class="dims">
+                        <div class="field" style="grid-column:span 2"><label>Ім'я клієнта</label><input type="text"
+                                id="client_name" placeholder="Іванов Іван"></div>
+                        <div class="field" style="grid-column:span 2"><label>Примітки</label><input type="text"
+                                id="notes" placeholder="Колір, особливості..."></div>
+                    </div>
+                </div>
+                <button class="btn-calc" id="btn-calc" onclick="calculate()">📊 Розрахувати вартість</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <div class="res-header">
+                <h2>📋 Розкрій та вартість</h2>
+                <div class="res-actions">
+                    <button class="btn-save" onclick="saveQuote()">💾 Зберегти</button>
+                    <button class="btn-print" onclick="window.print()">🖨️ Друк</button>
+                </div>
+            </div>
+            <div class="summary-box" id="res-summary"></div>
+            <table id="res-table">
+                <thead>
+                    <tr>
+                        <th>Деталь</th>
+                        <th>Матеріал</th>
+                        <th>Ш × В мм</th>
+                        <th>К-сть</th>
+                        <th>Площа м²</th>
+                        <th>Вартість</th>
+                    </tr>
+                </thead>
+                <tbody id="res-tbody"></tbody>
+            </table>
+            <div class="totals" id="res-totals"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '';  // same origin via nginx proxy
+        let form = {
+            facade: 'overlay', dir: 'vertical', count: 2,
+            matMain: null, matBot: null, hw: null, svcs: []
+        };
+        let lastResult = null;
+        let aiData = null;
+
+        // ── Init ──────────────────────────────────────────────────────────────────────
+        async function init() {
+            redrawCabinet();
+            const [mats, hws, svcs] = await Promise.all([
+                fetch(API + '/api/calculator/materials').then(r => r.json()),
+                fetch(API + '/api/calculator/hardware').then(r => r.json()),
+                fetch(API + '/api/calculator/services').then(r => r.json())
+            ]);
+            // Materials
+            mats.forEach(m => {
+                const opt = new Option(`${m.name} — ${m.price_per_m2} грн/м²`, m.id);
+                document.getElementById('mat-main').add(opt.cloneNode(true));
+                document.getElementById('mat-bot').add(opt.cloneNode(true));
+            });
+            form.matMain = mats[0]?.id;
+            const dvp = mats.find(m => m.name.includes('ДВП'));
+            if (dvp) { document.getElementById('mat-bot').value = dvp.id; form.matBot = dvp.id; }
+
+            // Hardware
+            hws.forEach(h => {
+                document.getElementById('hw-sel').add(new Option(`${h.name} — ${h.price_per_unit} грн/${h.unit}`, h.id));
+            });
+
+            // Services
+            const grid = document.getElementById('svc-grid');
+            svcs.forEach(s => {
+                const lbl = document.createElement('label');
+                lbl.className = 'svc-item';
+                lbl.innerHTML = `<input type="checkbox" value="${s.id}"> ${s.name} — ${s.price} грн/${s.unit}`;
+                grid.appendChild(lbl);
+            });
+        }
+        init();
+
+        // ── Mode toggle ───────────────────────────────────────────────────────────────
+        function setMode(m) {
+            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (m === 'manual' && i === 0) || (m === 'ai' && i === 1)));
+            document.getElementById('sec-manual').classList.toggle('active', m === 'manual');
+            document.getElementById('sec-ai').classList.toggle('active', m === 'ai');
+        }
+
+        // ── Type picker ───────────────────────────────────────────────────────────────
+        function pick(key, val, el) {
+            const grid = el.closest('.type-grid');
+            grid.querySelectorAll('.type-card').forEach(c => c.classList.remove('sel'));
+            el.classList.add('sel');
+            if (key === 'facade') form.facade = val;
+            if (key === 'dir') form.dir = val;
+        }
+
+        // ── Count ─────────────────────────────────────────────────────────────────────
+        function chgCount(d) {
+            form.count = Math.max(1, Math.min(8, form.count + d));
+            document.getElementById('cnt-disp').textContent = form.count;
+            redrawCabinet();
+        }
+
+        // ── Cabinet preview ───────────────────────────────────────────────────────────
+        function redrawCabinet() {
+            const w = parseInt(document.getElementById('box_w')?.value || 600);
+            const h = parseInt(document.getElementById('box_h')?.value || 720);
+            const cab = document.getElementById('cabinet');
+            const isH = form.dir === 'horizontal';
+            const cabH = Math.max(70, Math.min(180, h / 4));
+            cab.style.cssText = `width:120px;height:${cabH}px;display:flex;flex-direction:${isH ? 'row' : 'column'}`;
+            cab.innerHTML = '';
+            for (let i = 0; i < form.count; i++) {
+                const d = document.createElement('div');
+                d.className = 'drawer';
+                d.style.cssText = `flex:1;min-${isH ? 'width' : 'height'}:16px`;
+                d.textContent = form.facade !== 'none' ? (form.facade === 'overlay' ? '▪' : '◦') : '';
+                cab.appendChild(d);
+            }
+            document.getElementById('cabinet-label').textContent = `${w} × ${h} мм`;
+        }
+
+        // ── Calculate ─────────────────────────────────────────────────────────────────
+        async function calculate() {
+            const btn = document.getElementById('btn-calc');
+            btn.disabled = true; btn.textContent = '🔄 Рахую...';
+            const payload = {
+                drawer_count: form.count,
+                direction: form.dir,
+                facade_type: form.facade,
+                box_width: +document.getElementById('box_w').value,
+                box_height: +document.getElementById('box_h').value,
+                box_depth: +document.getElementById('box_d').value,
+                drawer_depth: +document.getElementById('drw_d').value,
+                main_material_id: +document.getElementById('mat-main').value,
+                bottom_material_id: document.getElementById('mat-bot').value ? +document.getElementById('mat-bot').value : null,
+                hardware_id: document.getElementById('hw-sel').value ? +document.getElementById('hw-sel').value : null,
+                service_ids: [...document.querySelectorAll('#svc-grid input:checked')].map(c => +c.value),
+                client_name: document.getElementById('client_name').value,
+                notes: document.getElementById('notes').value
+            };
+            try {
+                const r = await fetch(API + '/api/calculator/calculate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
+                lastResult = await r.json();
+                showResults(lastResult, payload);
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
+            finally { btn.disabled = false; btn.textContent = '📊 Розрахувати вартість'; }
+        }
+
+        function showResults(res, inp) {
+            document.getElementById('res-summary').textContent = res.summary;
+            const tbody = document.getElementById('res-tbody');
+            tbody.innerHTML = res.details.map(d => `
+    <tr>
+      <td>${d.name}</td>
+      <td style="color:#64748b;font-size:12px">${d.material}</td>
+      <td style="font-family:monospace">${d.width_mm} × ${d.height_mm}</td>
+      <td style="font-weight:700">${d.quantity} шт</td>
+      <td>${d.area_m2} м²</td>
+      <td class="price-td">${d.price.toFixed(0)} грн</td>
+    </tr>`).join('');
+            let totals = `<div class="total-row"><span>Матеріали:</span><strong>${res.materials_total.toFixed(0)} грн</strong></div>`;
+            if (res.hardware_total > 0) totals += `<div class="total-row"><span>Фурнітура:</span><strong>${res.hardware_total.toFixed(0)} грн</strong></div>`;
+            if (res.services_total > 0) totals += `<div class="total-row"><span>Послуги:</span><strong>${res.services_total.toFixed(0)} грн</strong></div>`;
+            totals += `<div class="total-row grand"><span>РАЗОМ:</span><strong>${res.grand_total.toFixed(0)} грн</strong></div>`;
+            document.getElementById('res-totals').innerHTML = totals;
+            const el = document.getElementById('results');
+            el.classList.add('show');
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
+
+        // ── AI ────────────────────────────────────────────────────────────────────────
+        let selFile = null;
+        function pickFile(f) {
+            selFile = f;
+            document.getElementById('preview-img').src = URL.createObjectURL(f);
+            document.getElementById('preview-img').style.display = 'block';
+            document.getElementById('upload-ph').style.display = 'none';
+            document.getElementById('btn-analyze').disabled = false;
+            document.getElementById('ai-result').style.display = 'none';
+        }
+        function onDrop(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('drag');
+            const f = e.dataTransfer.files[0];
+            if (f && f.type.startsWith('image/')) pickFile(f);
+        }
+        async function analyzeImg() {
+            if (!selFile) return;
+            const btn = document.getElementById('btn-analyze');
+            btn.disabled = true; btn.textContent = '🔄 Аналізую...';
+            try {
+                const fd = new FormData(); fd.append('file', selFile);
+                const r = await fetch(API + '/api/calculator/analyze-image', { method: 'POST', body: fd });
+                if (!r.ok) throw new Error('Помилка');
+                aiData = await r.json();
+                document.getElementById('ai-conf').textContent = aiData.confidence === 'high' ? '🟢 Впевнено' : '🟡 Орієнтовно';
+                document.getElementById('ai-notes').textContent = aiData.notes || '';
+                document.getElementById('ai-result').style.display = 'block';
+            } catch (e) { showToast('AI помилка: ' + e.message, 'err'); }
+            finally { btn.disabled = false; btn.textContent = '🤖 Аналізувати фото'; }
+        }
+        function applyAi() {
+            if (!aiData) return;
+            document.getElementById('box_w').value = aiData.approx_width || 600;
+            document.getElementById('box_h').value = aiData.approx_height || 720;
+            document.getElementById('box_d').value = aiData.approx_depth || 500;
+            document.getElementById('drw_d').value = aiData.drawer_depth || 450;
+            form.count = aiData.drawer_count || 2;
+            document.getElementById('cnt-disp').textContent = form.count;
+            form.dir = aiData.direction || 'vertical';
+            form.facade = aiData.facade_type || 'overlay';
+            // Update UI selections
+            document.querySelectorAll('[onclick*="pick(\'dir\'"]').forEach(el => {
+                el.classList.toggle('sel', el.dataset.val === form.dir);
+            });
+            document.querySelectorAll('[onclick*="pick(\'facade\'"]').forEach(el => {
+                el.classList.toggle('sel', el.dataset.val === form.facade);
+            });
+            redrawCabinet();
+            setMode('manual');
+            showToast('Дані застосовано! Перевірте і розрахуйте.', 'ok');
+        }
+
+        // ── Save ──────────────────────────────────────────────────────────────────────
+        async function saveQuote() {
+            if (!lastResult) return;
+            try {
+                await fetch(API + '/api/calculator/save-quote', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_name: document.getElementById('client_name').value,
+                        notes: document.getElementById('notes').value,
+                        result: lastResult
+                    })
+                });
+                showToast('Розрахунок збережено!', 'ok');
+            } catch { showToast('Не вдалось зберегти', 'err'); }
+        }
+
+        // ── Toast ─────────────────────────────────────────────────────────────────────
+        function showToast(msg, type = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.className = 'toast show ' + type;
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,52 @@
+services:
+  # PostgreSQL for calculator only
+  calc_postgres:
+    image: postgres:15-alpine
+    container_name: calc_postgres
+    environment:
+      POSTGRES_DB: calc_db
+      POSTGRES_USER: calc_user
+      POSTGRES_PASSWORD: calc_password
+    volumes:
+      - calc_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U calc_user -d calc_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend (calculator only)
+  calc_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: calc_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "3002:8001"
+    environment:
+      DATABASE_URL: postgresql://calc_user:calc_password@calc_postgres:5432/calc_db
+      OPENROUTER_API_KEY: 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
+      OPENROUTER_VISION_MODEL: google/gemini-2.0-flash-exp:free
+    depends_on:
+      calc_postgres:
+        condition: service_healthy
+
+  # Nginx serves static HTML frontend
+  calc_frontend:
+    image: nginx:alpine
+    container_name: calc_frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "3001:80"
+    depends_on:
+      - calc_backend
+
+volumes:
+  calc_postgres_data:
