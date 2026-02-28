@@ -1022,9 +1022,14 @@
                         <select id="weld-default-type" title="Тип з'єднання за замовчуванням"
                             style="border:1.5px solid #e2e8f0;border-radius:7px;padding:3px 7px;font-size:12px;outline:none;background:#f8fafc;cursor:pointer">
                             <option value="full">4 сторони</option>
-                            <option value="half">2 сторони</option>
+                            <option value="half">2 сторони (привар)</option>
                             <option value="cut45">Заріз 45°</option>
                             <option value="quarter">1 сторона</option>
+                        </select>
+                        <select id="weld-default-profile" title="Профіль для нових швів"
+                            style="border:1.5px solid #e2e8f0;border-radius:7px;padding:3px 7px;font-size:12px;outline:none;background:#f8fafc;cursor:pointer;max-width:160px"
+                            onmousedown="updateWeldDefaultProfileOptions()">
+                            <option value="">— профіль —</option>
                         </select>
                         <input type="color" id="pen-color" value="#ef4444" title="Колір"
                             style="width:30px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px">
@@ -1408,6 +1413,8 @@
             }
             if (canvas) canvas.style.pointerEvents = t === 'weld' ? 'none' : 'auto';
             if (area) area.style.cursor = t === 'weld' ? 'crosshair' : 'crosshair';
+
+            if (t === 'weld') updateWeldDefaultProfileOptions();
         }
 
         function clearCanvas() {
@@ -1627,6 +1634,26 @@
         const WELD_FACTORS = { full: 1.0, half: 0.5, cut45: 1.0, quarter: 0.25 };
         const WELD_LABELS = { full: '4 сторони', half: '2 сторони (привар)', cut45: 'Заріз 45°', quarter: '1 сторона' };
 
+        function updateWeldDefaultProfileOptions() {
+            const sel = document.getElementById('weld-default-profile');
+            if (!sel) return;
+            const curVal = sel.value;
+            sel.innerHTML = '';
+            document.querySelectorAll('.prof-table tbody tr').forEach((tr, i) => {
+                const id = tr.id.replace('row-', '');
+                const ps = tr.querySelector('select');
+                if (ps) {
+                    const text = ps.options[ps.selectedIndex]?.text?.split('—')[0]?.trim() || `Рядок ${i + 1}`;
+                    sel.add(new Option(text, id));
+                }
+            });
+            if (curVal && [...sel.options].some(o => o.value === curVal)) {
+                sel.value = curVal;
+            } else if (sel.options.length > 0) {
+                sel.selectedIndex = 0;
+            }
+        }
+
         function onWeldOverlayClick(e) {
             const area = document.getElementById('photo-area');
             const rect = area.getBoundingClientRect();
@@ -1634,9 +1661,15 @@
             const yPct = (e.clientY - rect.top) / rect.height;
             // Use selected default type from toolbar dropdown
             const defaultType = document.getElementById('weld-default-type')?.value || 'full';
-            // Default profile = first row
-            const firstRow = document.querySelector('.prof-table tbody tr');
-            const profileRowId = firstRow ? firstRow.id.replace('row-', '') : null;
+
+            // Default profile = selected dynamic dropdown, fallback to first row
+            const defProfSel = document.getElementById('weld-default-profile');
+            let profileRowId = defProfSel?.value;
+            if (!profileRowId) {
+                const firstRow = document.querySelector('.prof-table tbody tr');
+                profileRowId = firstRow ? firstRow.id.replace('row-', '') : null;
+            }
+
             weldMarkers.push({ id: ++weldIdSeq, xPct, yPct, type: defaultType, profileRowId });
             renderWeldDots();
             renderWeldList();
