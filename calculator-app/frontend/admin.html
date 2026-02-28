@@ -750,7 +750,7 @@
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(p)})'>✏️</button>
         <button class="bt" onclick="toggle('m-paints',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
             } else if (t === 'm-work') {
-                const typeLabel = { 'per_m2': 'За м²', 'fixed': 'Фіксована', 'per_unit': 'За одиницю' };
+                const typeLabel = { 'per_m2': 'За м²', 'fixed': 'Фіксована', 'per_unit': 'За одиницю', 'per_linear_m': 'За м.п.' };
                 tb.innerHTML = data.map(w => `<tr>
       <td>${w.name}</td>
       <td><span class="type-tag">${typeLabel[w.pricing_type] || w.pricing_type}</span></td>
@@ -813,6 +813,7 @@
       <option value="per_m2" ${data.pricing_type === 'per_m2' ? 'selected' : ''}>За м²</option>
       <option value="fixed" ${data.pricing_type === 'fixed' ? 'selected' : ''}>Фіксована</option>
       <option value="per_unit" ${data.pricing_type === 'per_unit' ? 'selected' : ''}>За одиницю</option>
+      <option value="per_linear_m" ${data.pricing_type === 'per_linear_m' ? 'selected' : ''}>За м.п. (погонний метр)</option>
     </select></div>
     <div class="f"><label>Ціна (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price || 0}"></div>
     <div class="f"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'м²'}"></div>`;

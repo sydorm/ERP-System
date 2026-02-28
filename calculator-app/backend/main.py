@@ -681,7 +681,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
                 cost = round(total_m2 * float(wi.price), 2)
                 qty  = total_m2
                 unit = "м²"
-            elif wi.pricing_type == "per_unit" or is_welder or is_cuts:
+            elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts:
                 # Use metres of weld seam for welder, cuts count for cuts
                 if is_cuts:
                     unit_count = inp.cuts_qty
