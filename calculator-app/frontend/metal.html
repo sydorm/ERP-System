@@ -1811,10 +1811,210 @@
             }
         }
 
+        // ── Ruler Measurement Tool ─────────────────────────────────────────────
+        let rulerLines = []; // { id, startX, startY, endX, endY, pxLen, meters, isReference, profileRowId }
+        let rulerSeq = 0;
+        let pxPerMeter = null; // Scale: Pixels per meter
+        let isRuling = false;
+        let rStartX = 0, rStartY = 0;
+
+        function rGetPos(e) {
+            const area = document.getElementById('photo-area');
+            const r = area.getBoundingClientRect();
+            let x = e.clientX, y = e.clientY;
+            if (e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
+            return [x - r.left, y - r.top];
+        }
+
+        function initRulerEvents() {
+            const overlay = document.getElementById('ruler-overlay');
+            if (!overlay) return;
+
+            const startRuler = (e) => {
+                if (activeTool !== 'ruler') return;
+                // prevent if clicking on existing ruler label
+                if (e.target.classList.contains('ruler-label') || e.target.classList.contains('ruler-line')) return;
+                e.preventDefault();
+                isRuling = true;
+                [rStartX, rStartY] = rGetPos(e);
+                const activeL = document.getElementById('active-ruler-line');
+                if (activeL) {
+                    activeL.style.left = rStartX + 'px';
+                    activeL.style.top = rStartY + 'px';
+                    activeL.style.width = '0px';
+                    activeL.style.display = 'block';
+                }
+            };
+
+            const moveRuler = (e) => {
+                if (!isRuling) return;
+                e.preventDefault();
+                const [curX, curY] = rGetPos(e);
+                const dx = curX - rStartX;
+                const dy = curY - rStartY;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const activeL = document.getElementById('active-ruler-line');
+                if (activeL) {
+                    activeL.style.width = len + 'px';
+                    activeL.style.transform = `rotate(${angle}deg)`;
+                }
+            };
+
+            const endRuler = (e) => {
+                if (!isRuling) return;
+                isRuling = false;
+                const activeL = document.getElementById('active-ruler-line');
+                if (activeL) activeL.style.display = 'none';
+
+                const [curX, curY] = rGetPos(e);
+                const dx = curX - rStartX;
+                const dy = curY - rStartY;
+                const pxLen = Math.sqrt(dx * dx + dy * dy);
+
+                if (pxLen < 10) return; // Too small, ignore
+
+                let meters = 0;
+                let isRef = false;
+
+                if (pxPerMeter === null && rulerLines.length === 0) {
+                    // First line drawn — ask for reference length
+                    const inputStr = prompt("Це перша лінія (Масштаб).\nВведіть реальну довжину цієї лінії в МЕТРАХ (наприклад 1.2 або 0.8):");
+                    if (!inputStr) return;
+                    const refMeters = parseFloat((inputStr || '').replace(',', '.'));
+                    if (refMeters > 0) {
+                        pxPerMeter = pxLen / refMeters;
+                        meters = refMeters;
+                        isRef = true;
+                        const sd = document.getElementById('ruler-scale-disp');
+                        if (sd) {
+                            sd.textContent = `${Math.round(pxPerMeter)} px / 1 м`;
+                            sd.style.color = '#10b981';
+                        }
+                    } else {
+                        showToast("Скасовано. Масштаб не встановлено.", "err");
+                        return;
+                    }
+                } else if (pxPerMeter > 0) {
+                    meters = pxLen / pxPerMeter;
+                }
+
+                const defProfSel = document.getElementById('weld-default-profile');
+                let profId = defProfSel?.value;
+                if (!profId && window.rowId > 0) profId = window.rowId; // Fallback
+
+                rulerLines.push({
+                    id: ++rulerSeq, startX: rStartX, startY: rStartY, endX: curX, endY: curY,
+                    pxLen, meters, isReference: isRef, profileRowId: profId
+                });
+
+                renderRulers();
+
+                // If not reference, ask to add to table
+                if (!isRef && profId) {
+                    const add = confirm(`Довжина: ${meters.toFixed(3)} м.\nДодати цей розмір у вибраний профіль (Рядок ${profId})?`);
+                    if (add) {
+                        const lenInput = document.getElementById(`len-${profId}`);
+                        if (lenInput) {
+                            if (lenInput.value === '1' || lenInput.value === '0') lenInput.value = meters.toFixed(3);
+                            else lenInput.value = lenInput.value + ' + ' + meters.toFixed(3);
+                            evalFormula(lenInput); // Try to auto-sum
+                            recalcRow(profId);
+                            showToast('Додано розмір до Рядка ' + profId, 'ok');
+                        }
+                    }
+                }
+            };
+
+            overlay.addEventListener('mousedown', startRuler);
+            overlay.addEventListener('mousemove', moveRuler);
+            document.addEventListener('mouseup', endRuler); // catch outside
+
+            overlay.addEventListener('touchstart', startRuler, { passive: false });
+            overlay.addEventListener('touchmove', moveRuler, { passive: false });
+            document.addEventListener('touchend', endRuler);
+        }
+
+        function renderRulers() {
+            const overlay = document.getElementById('ruler-overlay');
+            if (!overlay) return;
+            // Keep active, clean others
+            Array.from(overlay.children).forEach(c => {
+                if (c.id !== 'active-ruler-line') c.remove();
+            });
+
+            const listPan = document.getElementById('ruler-list');
+            const rowsCont = document.getElementById('ruler-rows');
+            if (!listPan || !rowsCont) return;
+            if (rulerLines.length === 0) { listPan.style.display = 'none'; return; }
+            listPan.style.display = 'block';
+            rowsCont.innerHTML = '';
+
+            rulerLines.forEach(rl => {
+                // Line
+                const dx = rl.endX - rl.startX;
+                const dy = rl.endY - rl.startY;
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const l = document.createElement('div');
+                l.className = 'ruler-line';
+                l.style.left = rl.startX + 'px';
+                l.style.top = rl.startY + 'px';
+                l.style.width = rl.pxLen + 'px';
+                l.style.transform = `rotate(${angle}deg)`;
+                if (rl.isReference) l.style.background = '#10b981';
+
+                // Label
+                const lb = document.createElement('div');
+                lb.className = 'ruler-label';
+                lb.style.left = (rl.startX + dx / 2) + 'px';
+                lb.style.top = (rl.startY + dy / 2) + 'px';
+                lb.textContent = rl.isReference ? `${rl.meters.toFixed(2)}м (Еталон)` : `${rl.meters.toFixed(3)}м`;
+                if (rl.isReference) lb.style.background = '#10b981';
+
+                lb.onclick = (e) => { e.stopPropagation(); removeRuler(rl.id); };
+                l.onclick = (e) => { e.stopPropagation(); removeRuler(rl.id); };
+
+                overlay.appendChild(l);
+                overlay.appendChild(lb);
+
+                // List row (reuse weld style)
+                const tr = document.createElement('div');
+                tr.className = 'weld-row';
+                tr.style.justifyContent = 'space-between';
+                tr.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <div class="weld-num" style="background:${rl.isReference ? '#10b981' : '#3b82f6'}">${rl.id}</div>
+                        <span style="font-weight:600">${rl.meters.toFixed(3)} м</span>
+                        ${rl.isReference ? '<span class="type-tag" style="background:#d1fae5;color:#047857">Еталон</span>' : ''}
+                    </div>
+                    <div>
+                        <button class="btn-del" onclick="removeRuler(${rl.id})" title="Видалити" style="padding:2px 6px">✕</button>
+                    </div>
+                `;
+                rowsCont.appendChild(tr);
+            });
+        }
+
+        function removeRuler(id) {
+            const idx = rulerLines.findIndex(r => r.id === id);
+            if (idx === -1) return;
+            const wasRef = rulerLines[idx].isReference;
+            rulerLines.splice(idx, 1);
+            if (wasRef && rulerLines.length === 0) {
+                pxPerMeter = null;
+                const sd = document.getElementById('ruler-scale-disp');
+                if (sd) { sd.textContent = 'Не встановлено'; sd.style.color = '#64748b'; }
+            } else if (wasRef && rulerLines.length > 0) {
+                showToast("Еталонну лінію видалено. Масштаб зберігся, поки не видалити всі лінії.", "err");
+            }
+            renderRulers();
+        }
+
         // Restore session on load
         renderSession();
 
         init();
+        setTimeout(initRulerEvents, 100);
     </script>
 </body>
 
