@@ -2015,7 +2015,39 @@
                     inp.onkeydown = (ev) => { if (ev.key === 'Enter') finalize(true); if (ev.key === 'Escape') finalize(false); };
                 } else if (pxPerMeter > 0) {
                     meters = pxLen / pxPerMeter;
-                    finishLine();
+
+                    popup.innerHTML = `
+                        <div style="font-size:12px;font-weight:bold;color:#3b82f6;margin-bottom:2px">Розраховано: ${meters.toFixed(3)} м</div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:4px">Ви можете змінити це значення:</div>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input type="number" id="r_input" step="0.001" value="${meters.toFixed(3)}"> <span style="font-size:12px">м</span>
+                        </div>
+                        <div class="btns" style="margin-top:6px;">
+                            <button id="r_cancel" class="btn-cancel">Скасувати</button>
+                            <button id="r_ok" class="btn-ok">Зберегти лінію</button>
+                        </div>
+                    `;
+                    overlay.appendChild(popup);
+                    const inp = popup.querySelector('#r_input');
+                    inp.focus();
+                    inp.select();
+
+                    const finalize = (save) => {
+                        if (save) {
+                            const customMeters = parseFloat(inp.value.replace(',', '.'));
+                            if (customMeters > 0) {
+                                meters = customMeters;
+                                finishLine();
+                            } else {
+                                showToast("Невірне число", "err");
+                            }
+                        }
+                        popup.remove();
+                    };
+
+                    popup.querySelector('#r_ok').onclick = () => finalize(true);
+                    popup.querySelector('#r_cancel').onclick = () => finalize(false);
+                    inp.onkeydown = (ev) => { if (ev.key === 'Enter') finalize(true); if (ev.key === 'Escape') finalize(false); };
                 }
 
                 function finishLine() {
