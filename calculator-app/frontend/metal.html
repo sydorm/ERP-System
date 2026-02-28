@@ -779,6 +779,20 @@
 
     <div class="page">
 
+        <!-- ── Templates bar ── -->
+        <div class="card" style="margin-bottom:14px;padding:14px 20px" id="tpl-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                <div style="font-size:13px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:7px">
+                    <span
+                        style="background:#7c3aed;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">★</span>
+                    Шаблони виробів
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="tpl-chips">
+                    <span style="color:#94a3b8;font-size:12px">Немає шаблонів — збережіть перший розрахунок</span>
+                </div>
+            </div>
+        </div>
+
         <!-- ── ROW 1: Виріб + Фарбування + Послуги ── -->
         <div class="form-grid">
 
@@ -913,6 +927,7 @@
                         <button class="gprint" onclick="window.print()">🖨️ Друк</button>
                         <button class="gsave" style="background:#8b5cf6" onclick="lockResult()">📌 До
                             загального</button>
+                        <button class="gsave" style="background:#7c3aed" onclick="saveAsTemplate()">★ Шаблон</button>
                     </div>
                 </div>
                 <div class="grand-val"><span id="r-total">—</span><span
@@ -975,6 +990,7 @@
             });
 
             addRow();
+            loadTemplates();
         }
 
         // ── Excel-style formula evaluator ─────────────────────────────────────
@@ -1259,6 +1275,113 @@
             localStorage.removeItem(SESSION_KEY);
             document.body.style.paddingBottom = '';
             renderSession();
+        }
+
+        // ── Templates ──────────────────────────────────────────────────────────
+        let templates = [];
+
+        async function loadTemplates() {
+            try {
+                templates = await fetch(`${API}/api/metal/templates`).then(r => r.json());
+                renderTemplates();
+            } catch { /* silent */ }
+        }
+
+        function renderTemplates() {
+            const el = document.getElementById('tpl-chips');
+            if (!el) return;
+            if (!templates.length) {
+                el.innerHTML = '<span style="color:#94a3b8;font-size:12px">Немає шаблонів — збережіть перший розрахунок кнопкою ★ Шаблон</span>';
+                return;
+            }
+            el.innerHTML = templates.map(t => `
+                <div style="display:inline-flex;align-items:center;gap:5px;background:#f0ebff;border:1.5px solid #c4b5fd;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="loadTemplate(${t.id})" title="Завантажити '${t.name}'">
+                    <span>★ <strong>${t.name}</strong>${t.total_price ? ' — ' + Math.round(t.total_price) + ' грн' : ''}</span>
+                    <button onclick="event.stopPropagation();deleteTemplate(${t.id})" style="background:none;border:none;color:#a78bfa;cursor:pointer;font-size:13px;padding:0;line-height:1" title="Видалити шаблон">×</button>
+                </div>`).join('');
+        }
+
+        async function loadTemplate(id) {
+            const tpl = templates.find(t => t.id === id);
+            if (!tpl) return;
+            const inp = JSON.parse(tpl.input_json);
+
+            // Fill basic fields
+            if (inp.product_name) document.getElementById('product-name').value = inp.product_name;
+            if (inp.client_name) document.getElementById('client-name').value = inp.client_name;
+            if (inp.notes) document.getElementById('notes').value = inp.notes;
+
+            // Fill profile rows
+            const tbody = document.getElementById('profile-rows');
+            tbody.innerHTML = '';
+            rowId = 0;
+            (inp.rows || []).forEach(row => {
+                addRow();
+                const tr = document.querySelector(`#row-${rowId}`);
+                const sel = tr.querySelector('select');
+                // Select matching profile
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (+sel.options[i].value === row.profile_id) { sel.selectedIndex = i; break; }
+                }
+                document.getElementById(`len-${rowId}`).value = row.length_m;
+                document.getElementById(`qty-${rowId}`).value = row.quantity;
+                recalcRow(rowId);
+            });
+
+            // Fill paint
+            const ps = document.getElementById('paint-sel');
+            if (inp.paint_id) {
+                for (let i = 0; i < ps.options.length; i++) if (+ps.options[i].value === inp.paint_id) { ps.selectedIndex = i; break; }
+            } else ps.selectedIndex = 0;
+
+            // Primer
+            const wp = document.getElementById('with-primer');
+            wp.checked = !!inp.with_primer;
+            togglePrimer();
+            if (inp.primer_id) {
+                const pr = document.getElementById('primer-sel');
+                for (let i = 0; i < pr.options.length; i++) if (+pr.options[i].value === inp.primer_id) { pr.selectedIndex = i; break; }
+            }
+
+            // Work items
+            document.querySelectorAll('#work-grid input[type=checkbox]').forEach(cb => {
+                cb.checked = (inp.work_item_ids || []).includes(+cb.value);
+                cb.closest('label').classList.toggle('on', cb.checked);
+            });
+
+            // Overheads
+            document.querySelectorAll('#overhead-grid input[type=checkbox]').forEach(cb => {
+                cb.checked = (inp.overhead_ids || []).includes(+cb.value);
+                cb.closest('label').classList.toggle('on', cb.checked);
+            });
+
+            // Counters
+            if (inp.welder_qty != null) { form.welder = inp.welder_qty; document.getElementById('welder-disp').textContent = form.welder; }
+            if (inp.cuts_qty != null) { form.cuts = inp.cuts_qty; document.getElementById('cuts-disp').textContent = form.cuts; }
+
+            showToast(`★ Завантажено шаблон "${tpl.name}"`, 'ok');
+        }
+
+        async function saveAsTemplate() {
+            if (!lastInp) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
+            const name = prompt('Назва шаблону:', document.getElementById('product-name').value || 'Мій виріб');
+            if (!name) return;
+            try {
+                await fetch(`${API}/api/metal/templates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, inp: lastInp, result: lastResult })
+                });
+                showToast(`★ Шаблон "${name}" збережено!`, 'ok');
+                loadTemplates();
+            } catch { showToast('Помилка збереження', 'err'); }
+        }
+
+        async function deleteTemplate(id) {
+            if (!confirm('Видалити цей шаблон?')) return;
+            await fetch(`${API}/api/metal/templates/${id}`, { method: 'DELETE' });
+            loadTemplates();
+            showToast('Шаблон видалено', 'ok');
         }
 
         // Restore session on load

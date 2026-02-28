@@ -124,6 +124,18 @@ class MetalQuote(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class MetalTemplate(Base):
+    """Saved calculator configurations — load to pre-fill the form"""
+    __tablename__ = "metal_templates"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)           # Display name: "Стелаж Лорен"
+    description = Column(Text, nullable=True)             # Optional description
+    input_json = Column(Text, nullable=False)             # Full MetalCalcInput JSON
+    result_json = Column(Text, nullable=True)             # Last computed result JSON
+    total_price = Column(Numeric(12, 2), nullable=True)   # Last total for display
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
 # ── Create tables + seed data ─────────────────────────────────────────────────
 def seed_data(db: Session):
     if db.query(CalcMaterial).count() == 0:
@@ -709,3 +721,48 @@ def metal_save_quote(body: dict, db: Session=Depends(get_db)):
 @app.get("/api/metal/quotes")
 def metal_list_quotes(db: Session=Depends(get_db)):
     return db.query(MetalQuote).order_by(MetalQuote.created_at.desc()).limit(50).all()
+
+# ── Metal Templates ────────────────────────────────────────────────────────────
+@app.get("/api/metal/templates")
+def list_templates(db: Session=Depends(get_db)):
+    rows = db.query(MetalTemplate).order_by(MetalTemplate.created_at.desc()).all()
+    return [
+        {
+            "id": r.id,
+            "name": r.name,
+            "description": r.description,
+            "total_price": float(r.total_price) if r.total_price else None,
+            "input_json": r.input_json,
+            "result_json": r.result_json,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in rows
+    ]
+
+@app.post("/api/metal/templates")
+def save_template(body: dict, db: Session=Depends(get_db)):
+    t = MetalTemplate(
+        name=body.get("name", "Без назви"),
+        description=body.get("description"),
+        input_json=json.dumps(body.get("inp", {})),
+        result_json=json.dumps(body.get("result", {})) if body.get("result") else None,
+        total_price=body.get("result", {}).get("grand_total") if body.get("result") else None,
+    )
+    db.add(t); db.commit(); db.refresh(t)
+    return {"id": t.id, "name": t.name}
+
+@app.patch("/api/metal/templates/{tid}")
+def update_template(tid: int, body: dict, db: Session=Depends(get_db)):
+    t = db.query(MetalTemplate).filter(MetalTemplate.id == tid).first()
+    if not t: raise HTTPException(status_code=404, detail="Not found")
+    if "name" in body: t.name = body["name"]
+    if "description" in body: t.description = body["description"]
+    db.commit(); db.refresh(t)
+    return {"id": t.id}
+
+@app.delete("/api/metal/templates/{tid}")
+def delete_template(tid: int, db: Session=Depends(get_db)):
+    t = db.query(MetalTemplate).filter(MetalTemplate.id == tid).first()
+    if not t: raise HTTPException(status_code=404, detail="Not found")
+    db.delete(t); db.commit()
+    return {"ok": True}

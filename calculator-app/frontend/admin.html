@@ -491,6 +491,7 @@
                     <button class="tab metal" data-tab="m-paints">Фарби / Ґрунтовки</button>
                     <button class="tab metal" data-tab="m-work">Послуги</button>
                     <button class="tab metal" data-tab="m-overhead">Накладні</button>
+                    <button class="tab metal" style="border-color:#7c3aed" data-tab="m-templates">★ Шаблони</button>
                 </div>
             </div>
         </div>
@@ -635,6 +636,26 @@
                 <tbody id="tb-m-overhead"></tbody>
             </table>
         </div>
+
+        <!-- ── METAL: Templates ── -->
+        <div class="panel" id="p-m-templates">
+            <div class="panel-hdr">
+                <h2>★ Шаблони виробів</h2><a href="/metal.html" class="btn-add"
+                    style="background:#7c3aed;text-decoration:none">↗ Відкрити калькулятор</a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Опис</th>
+                        <th>Остання ціна</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb-m-templates"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -680,7 +701,8 @@
                 'm-profiles': '/api/metal/profiles',
                 'm-paints': '/api/metal/paints',
                 'm-work': '/api/metal/work-items',
-                'm-overhead': '/api/metal/overhead'
+                'm-overhead': '/api/metal/overhead',
+                'm-templates': '/api/metal/templates'
             };
             const data = await fetch(`${API}${apiMap[t]}?active_only=false`).then(r => r.json());
             renderTable(t, data);
@@ -744,6 +766,16 @@
       <td><span class="badge ${o.is_active ? 'on' : 'off'}">${o.is_active ? 'Активна' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(o)})'>✏️</button>
         <button class="bt" onclick="toggle('m-overhead',${o.id},${o.is_active})">${o.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'm-templates') {
+                const tb2 = document.getElementById('tb-m-templates');
+                if (!tb2) return;
+                if (!data.length) { tb2.innerHTML = '<tr><td colspan="5" style="color:#94a3b8;text-align:center;padding:20px">Шаблонів ще немає. Зробіть розрахунок і натисніть ★ Шаблон у калькуляторі.</td></tr>'; return; }
+                tb2.innerHTML = data.map(t => `<tr>
+      <td><strong>${t.name}</strong></td>
+      <td style="color:#64748b">${t.description || '—'}</td>
+      <td class="price-amber">${t.total_price ? Math.round(t.total_price) + ' грн' : '—'}</td>
+      <td style="color:#94a3b8;font-size:12px">${t.created_at ? t.created_at.slice(0, 10) : '—'}</td>
+      <td class="acts"><button class="bt" onclick="delTpl(${t.id})" title="Видалити">🗑️</button></td></tr>`).join('');
             }
         }
 
@@ -851,6 +883,13 @@
                 headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !cur })
             });
             loadTab(type); showToast(cur ? 'Вимкнено' : 'Увімкнено', 'ok');
+        }
+
+        async function delTpl(id) {
+            if (!confirm('Видалити цей шаблон?')) return;
+            await fetch(`${API}/api/metal/templates/${id}`, { method: 'DELETE' });
+            loadTab('m-templates');
+            showToast('Шаблон видалено', 'ok');
         }
 
         function showToast(msg, type = 'ok') {
