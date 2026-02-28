@@ -1120,7 +1120,7 @@
         const API = '';
         let profiles = [], paints = [], workItems = [], overheads = [];
         let form = { welder: 1, cuts: 0 };
-        let lastResult = null, lastInp = null, rowId = 0;
+        let lastResult = null, lastInp = null, rowId = 0, loadedTemplateId = null;
 
         async function init() {
             const [p, pa, w, o] = await Promise.all([
@@ -1563,20 +1563,51 @@
             if (cd && inp.cuts_qty != null) cd.value = inp.cuts_qty;
             syncWelderHint();
 
+            loadedTemplateId = id; // Track loaded template
             showToast(`★ Завантажено шаблон "${tpl.name}"`, 'ok');
         }
 
         async function saveAsTemplate() {
             if (!lastInp) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
-            const name = prompt('Назва шаблону:', document.getElementById('product-name').value || 'Мій виріб');
-            if (!name) return;
+
+            let name = document.getElementById('product-name').value || 'Мій виріб';
+            let isOverwrite = false;
+
+            if (loadedTemplateId) {
+                const curTpl = templates.find(t => t.id === loadedTemplateId);
+                if (curTpl) {
+                    const ans = confirm(`Ви хочете оновити існуючий шаблон "${curTpl.name}"?\n\n[OK] = Оновити існуючий\n[Отмена] = Зберегти як новий`);
+                    if (ans) {
+                        isOverwrite = true;
+                        name = curTpl.name;
+                    }
+                }
+            }
+
+            if (!isOverwrite) {
+                name = prompt('Назва нового шаблону:', name);
+                if (!name) return;
+            }
+
             try {
-                await fetch(`${API}/api/metal/templates`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, inp: lastInp, result: lastResult })
-                });
-                showToast(`★ Шаблон "${name}" збережено!`, 'ok');
+                if (isOverwrite) {
+                    // Update existing template (needs PUT method on backend to update JSONs)
+                    const r = await fetch(`${API}/api/metal/templates/${loadedTemplateId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, inp: lastInp, result: lastResult })
+                    });
+                    if (!r.ok) throw new Error('Помилка оновлення');
+                    showToast(`★ Шаблон "${name}" оновлено!`, 'ok');
+                } else {
+                    // Create new
+                    await fetch(`${API}/api/metal/templates`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, inp: lastInp, result: lastResult })
+                    });
+                    showToast(`★ Новий шаблон "${name}" збережено!`, 'ok');
+                }
                 loadTemplates();
             } catch { showToast('Помилка збереження', 'err'); }
         }

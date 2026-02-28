@@ -783,6 +783,10 @@ def update_template(tid: int, body: dict, db: Session=Depends(get_db)):
     if not t: raise HTTPException(status_code=404, detail="Not found")
     if "name" in body: t.name = body["name"]
     if "description" in body: t.description = body["description"]
+    if "inp" in body: t.input_json = json.dumps(body["inp"])
+    if "result" in body:
+        t.result_json = json.dumps(body["result"])
+        t.total_price = body["result"].get("grand_total")
     db.commit(); db.refresh(t)
     return {"id": t.id}
 
