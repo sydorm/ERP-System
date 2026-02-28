@@ -1437,18 +1437,26 @@
             document.getElementById('tool-pen').classList.toggle('active', t === 'pen');
             document.getElementById('tool-erase').classList.toggle('active', t === 'erase');
             document.getElementById('tool-weld').classList.toggle('active', t === 'weld');
-            // Weld overlay captures clicks; drawing canvas gets them in other modes
-            const overlay = document.getElementById('weld-overlay');
+            const rulerBtn = document.getElementById('tool-ruler');
+            if (rulerBtn) rulerBtn.classList.toggle('active', t === 'ruler');
+
+            // Overlays management
+            const wOverlay = document.getElementById('weld-overlay');
+            const rOverlay = document.getElementById('ruler-overlay');
             const canvas = document.getElementById('anno-canvas');
             const area = document.getElementById('photo-area');
-            if (overlay) {
-                overlay.style.display = t === 'weld' ? 'block' : 'none';
-                overlay.style.cursor = 'crosshair';
+            if (wOverlay) {
+                wOverlay.style.display = t === 'weld' ? 'block' : 'none';
+                wOverlay.style.cursor = 'crosshair';
             }
-            if (canvas) canvas.style.pointerEvents = t === 'weld' ? 'none' : 'auto';
-            if (area) area.style.cursor = t === 'weld' ? 'crosshair' : 'crosshair';
+            if (rOverlay) {
+                rOverlay.style.display = t === 'ruler' ? 'block' : 'none';
+                rOverlay.style.pointerEvents = t === 'ruler' ? 'auto' : 'none';
+            }
+            if (canvas) canvas.style.pointerEvents = (t === 'weld' || t === 'ruler') ? 'none' : 'auto';
+            if (area) area.style.cursor = (t === 'weld' || t === 'ruler') ? 'crosshair' : 'crosshair';
 
-            if (t === 'weld') updateWeldDefaultProfileOptions();
+            if (t === 'weld' || t === 'ruler') updateWeldDefaultProfileOptions();
         }
 
         function clearCanvas() {
