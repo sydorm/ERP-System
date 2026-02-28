@@ -834,13 +834,24 @@
                     <div class="chk-grid" id="work-grid"></div>
                 </div>
                 <div class="ctr-row">
-                    <div class="ctr-block"><label>Зварювань</label>
-                        <div class="ctr"><button onclick="chg('welder',-1)">−</button><span
-                                id="welder-disp">1</span><button onclick="chg('welder',1)">+</button></div>
+                    <div class="ctr-block">
+                        <label>Зварювальник <small id="welder-price-hint"
+                                style="color:#94a3b8;font-weight:400"></small></label>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input type="number" id="welder-disp" value="0" min="0" step="0.1"
+                                style="width:90px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:700;color:#1e293b;outline:none"
+                                oninput="syncWelderHint()" title="Введіть метри зварного шва">
+                            <span style="font-size:12px;color:#64748b">м шва</span>
+                        </div>
                     </div>
-                    <div class="ctr-block"><label>Різань</label>
-                        <div class="ctr"><button onclick="chg('cuts',-1)">−</button><span id="cuts-disp">0</span><button
-                                onclick="chg('cuts',1)">+</button></div>
+                    <div class="ctr-block"><label>Різань <small style="color:#94a3b8;font-weight:400"
+                                id="cuts-price-hint"></small></label>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input type="number" id="cuts-disp" value="0" min="0" step="0.1"
+                                style="width:90px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:700;color:#1e293b;outline:none"
+                                title="Кількість різань">
+                            <span style="font-size:12px;color:#64748b">шт</span>
+                        </div>
                     </div>
                 </div>
                 <div class="f" style="margin-top:12px"><label>Накладні витрати</label>
@@ -1056,7 +1067,21 @@
         }
 
         function togglePrimer() { document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked); }
-        function chg(k, d) { form[k] = Math.max(0, form[k] + d); document.getElementById(k === 'welder' ? 'welder-disp' : 'cuts-disp').textContent = form[k]; }
+
+        // ── Welder/Cuts hint (live cost preview) ──────────────────────────────
+        function syncWelderHint() {
+            const meters = parseFloat(document.getElementById('welder-disp')?.value) || 0;
+            // Find the welder work item price from loaded data
+            const welderItem = workItems.find(w =>
+                w.name.toLowerCase().includes('звар') && (w.pricing_type === 'per_unit' || w.pricing_type === 'per_linear_m'));
+            if (welderItem && meters > 0) {
+                const cost = (meters * welderItem.price).toFixed(0);
+                document.getElementById('welder-price-hint').textContent =
+                    `${meters} м × ${welderItem.price} грн = ${cost} грн`;
+            } else {
+                document.getElementById('welder-price-hint').textContent = '';
+            }
+        }
 
         async function calculate() {
             const btn = document.getElementById('btn-calc');
@@ -1074,13 +1099,16 @@
             const primerId = document.getElementById('primer-sel').value;
             const wIds = [...document.querySelectorAll('#work-grid input:checked')].map(c => +c.value);
             const oIds = [...document.querySelectorAll('#overhead-grid input:checked')].map(c => +c.value);
+            // Read decimals directly from inputs
+            const welderMeters = parseFloat(document.getElementById('welder-disp')?.value) || 0;
+            const cutsQty = parseFloat(document.getElementById('cuts-disp')?.value) || 0;
             const inp = {
                 product_name: document.getElementById('product-name').value || null,
                 client_name: document.getElementById('client-name').value || null,
                 rows, paint_id: paintId ? +paintId : null,
                 with_primer: withPrimer, primer_id: primerId && withPrimer ? +primerId : null,
                 work_item_ids: wIds, overhead_ids: oIds,
-                welder_qty: form.welder, cuts_qty: form.cuts,
+                welder_qty: welderMeters, cuts_qty: cutsQty,
                 notes: document.getElementById('notes').value || null
             };
             try {
@@ -1355,9 +1383,12 @@
                 cb.closest('label').classList.toggle('on', cb.checked);
             });
 
-            // Counters
-            if (inp.welder_qty != null) { form.welder = inp.welder_qty; document.getElementById('welder-disp').textContent = form.welder; }
-            if (inp.cuts_qty != null) { form.cuts = inp.cuts_qty; document.getElementById('cuts-disp').textContent = form.cuts; }
+            // Counters — now decimal inputs
+            const wd = document.getElementById('welder-disp');
+            const cd = document.getElementById('cuts-disp');
+            if (wd && inp.welder_qty != null) wd.value = inp.welder_qty;
+            if (cd && inp.cuts_qty != null) cd.value = inp.cuts_qty;
+            syncWelderHint();
 
             showToast(`★ Завантажено шаблон "${tpl.name}"`, 'ok');
         }
