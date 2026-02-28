@@ -775,7 +775,10 @@
       <td style="color:#64748b">${t.description || '—'}</td>
       <td class="price-amber">${t.total_price ? Math.round(t.total_price) + ' грн' : '—'}</td>
       <td style="color:#94a3b8;font-size:12px">${t.created_at ? t.created_at.slice(0, 10) : '—'}</td>
-      <td class="acts"><button class="bt" onclick="delTpl(${t.id})" title="Видалити">🗑️</button></td></tr>`).join('');
+      <td class="acts">
+        <button class="be" onclick="editTpl(${t.id}, '${t.name.replace(/'/g, "\\'")}', '${(t.description || '').replace(/'/g, "\\'")}')">✏️</button>
+        <button class="bt" onclick="delTpl(${t.id})" title="Видалити">🗑️</button>
+      </td></tr>`).join('');
             }
         }
 
@@ -886,11 +889,28 @@
             loadTab(type); showToast(cur ? 'Вимкнено' : 'Увімкнено', 'ok');
         }
 
+        async function editTpl(id, oldName, oldDesc) {
+            const newName = prompt('Нова назва шаблону:', oldName);
+            if (!newName || newName === oldName && oldDesc === undefined) return;
+            const newDesc = prompt('Новий опис (необов\'язково):', oldDesc || '');
+            if (newDesc === null) return;
+
+            try {
+                const r = await fetch(`${API}/api/metal/templates/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName, description: newDesc || null })
+                });
+                if (!r.ok) throw new Error('Помилка сервера');
+                showToast('Шаблон оновлено', 'ok');
+                loadTab('m-templates');
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
+        }
+
         async function delTpl(id) {
             if (!confirm('Видалити цей шаблон?')) return;
             await fetch(`${API}/api/metal/templates/${id}`, { method: 'DELETE' });
-            loadTab('m-templates');
-            showToast('Шаблон видалено', 'ok');
+            loadTab('m-templates'); showToast('Видалено', 'ok');
         }
 
         function showToast(msg, type = 'ok') {
