@@ -652,22 +652,48 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
     work_lines = []
     work_subtotal = 0.0
 
-    if inp.work_item_ids:
-        items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(inp.work_item_ids)).all()
+    # Checked items from UI
+    checked_ids = set(inp.work_item_ids or [])
+
+    # Auto-include welder/cuts items when qty > 0 (even if not checked)
+    if inp.welder_qty > 0:
+        welder_item = db.query(MetalWorkItem).filter(
+            MetalWorkItem.name.ilike("%зварюваль%"),
+            MetalWorkItem.is_active == True
+        ).first()
+        if welder_item:
+            checked_ids.add(welder_item.id)
+
+    if inp.cuts_qty > 0:
+        cuts_item = db.query(MetalWorkItem).filter(
+            MetalWorkItem.name.ilike("%різан%"),
+            MetalWorkItem.is_active == True
+        ).first()
+        if cuts_item:
+            checked_ids.add(cuts_item.id)
+
+    if checked_ids:
+        items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(checked_ids)).all()
         for wi in items:
+            is_welder = "зварюваль" in wi.name.lower()
+            is_cuts   = "різан" in wi.name.lower()
             if wi.pricing_type == "per_m2":
                 cost = round(total_m2 * float(wi.price), 2)
-                qty = total_m2
+                qty  = total_m2
                 unit = "м²"
-            elif wi.pricing_type == "per_unit":
-                # welder = welder_qty, cuts = cuts_qty
-                unit_count = inp.cuts_qty if "різ" in wi.name.lower() else inp.welder_qty
+            elif wi.pricing_type == "per_unit" or is_welder or is_cuts:
+                # Use metres of weld seam for welder, cuts count for cuts
+                if is_cuts:
+                    unit_count = inp.cuts_qty
+                    unit = wi.unit or "різ"
+                else:
+                    unit_count = inp.welder_qty
+                    unit = wi.unit or "м шва"
                 cost = round(unit_count * float(wi.price), 2)
-                qty = float(unit_count)
-                unit = wi.unit
+                qty  = float(unit_count)
             else:  # fixed
                 cost = float(wi.price)
-                qty = 1
+                qty  = 1
                 unit = wi.unit
             work_lines.append(MetalResultLine(
                 name=wi.name, qty=qty, unit=unit,
