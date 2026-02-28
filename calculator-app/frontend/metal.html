@@ -1361,6 +1361,21 @@
             loadPhoto(e.dataTransfer.files[0]);
         }
 
+        // Handle Paste Event (Ctrl+V / Cmd+V) to load image from clipboard
+        document.addEventListener('paste', function (e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.includes('image/')) {
+                    const blob = item.getAsFile();
+                    loadPhoto(blob);
+                    // scroll to photo area
+                    document.getElementById('photo-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        });
+
         function setupCanvasEvents(canvas) {
             canvas.onmousedown = e => { isDrawing = true;[lastX, lastY] = getPos(e, canvas); };
             canvas.onmousemove = e => { if (isDrawing) draw(e, canvas); };
