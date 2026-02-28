@@ -1174,6 +1174,10 @@
                             style="font-weight:bold;color:#1e293b">Не встановлено</span></div>
                 </div>
                 <div id="ruler-rows"></div>
+                <div class="weld-total-bar" style="margin-top:8px">
+                    <span>Загальна довжина ліній: <strong id="ruler-total-m">0.00 м</strong></span>
+                    <button class="weld-apply" onclick="applyRulerTotal()">→ Додати до профілю</button>
+                </div>
             </div>
         </div>
 
@@ -2011,42 +2015,14 @@
                     inp.onkeydown = (ev) => { if (ev.key === 'Enter') finalize(true); if (ev.key === 'Escape') finalize(false); };
                 } else if (pxPerMeter > 0) {
                     meters = pxLen / pxPerMeter;
-
-                    popup.innerHTML = `
-                        <div style="font-size:12px;font-weight:bold;color:#3b82f6;margin-bottom:2px">Довжина: ${meters.toFixed(3)} м</div>
-                        <div style="font-size:11px;color:#64748b;margin-bottom:4px">Додати до вибраного профілю?</div>
-                        <div class="btns" style="margin-top:6px;">
-                            <button id="r_skip" class="btn-cancel">Тільки намалювати</button>
-                            <button id="r_add" class="btn-ok">+ до Рядка ${profId || '?'}</button>
-                        </div>
-                    `;
-                    overlay.appendChild(popup);
-
-                    const finishLineWithAdd = (add) => {
-                        finishLine();
-                        if (add && profId) {
-                            const lenInput = document.getElementById('len-' + profId);
-                            if (lenInput) {
-                                if (lenInput.value === '1' || lenInput.value === '0') lenInput.value = meters.toFixed(3);
-                                else lenInput.value = lenInput.value + ' + ' + meters.toFixed(3);
-                                evalFormula(lenInput);
-                                recalcRow(profId);
-                                showToast('Додано розмір ' + meters.toFixed(3) + ' м до Рядка ' + profId, 'ok');
-                            } else {
-                                showToast('Профіль не знайдено', 'err');
-                            }
-                        }
-                        popup.remove();
-                    };
-
-                    popup.querySelector('#r_add').onclick = () => finishLineWithAdd(true);
-                    popup.querySelector('#r_skip').onclick = () => finishLineWithAdd(false);
+                    finishLine();
                 }
 
                 function finishLine() {
+                    const color = document.getElementById('pen-color').value || '#3b82f6';
                     rulerLines.push({
                         id: ++rulerSeq, startX: rStartX, startY: rStartY, endX: curX, endY: curY,
-                        pxLen, meters, isReference: isRef, profileRowId: profId
+                        pxLen, meters, isReference: isRef, profileRowId: profId, color: isRef ? '#10b981' : color
                     });
                     renderRulers();
                 }
@@ -2087,7 +2063,7 @@
                 l.style.top = rl.startY + 'px';
                 l.style.width = rl.pxLen + 'px';
                 l.style.transform = `rotate(${angle}deg)`;
-                if (rl.isReference) l.style.background = '#10b981';
+                l.style.background = rl.color || '#3b82f6';
 
                 // Label
                 const lb = document.createElement('div');
@@ -2095,7 +2071,7 @@
                 lb.style.left = (rl.startX + dx / 2) + 'px';
                 lb.style.top = (rl.startY + dy / 2) + 'px';
                 lb.textContent = rl.isReference ? `${rl.meters.toFixed(2)}м (Еталон)` : `${rl.meters.toFixed(3)}м`;
-                if (rl.isReference) lb.style.background = '#10b981';
+                lb.style.background = rl.color || '#3b82f6';
 
                 lb.onclick = (e) => { e.stopPropagation(); removeRuler(rl.id); };
                 l.onclick = (e) => { e.stopPropagation(); removeRuler(rl.id); };
@@ -2109,7 +2085,7 @@
                 tr.style.justifyContent = 'space-between';
                 tr.innerHTML = `
                     <div style="display:flex;align-items:center;gap:8px">
-                        <div class="weld-num" style="background:${rl.isReference ? '#10b981' : '#3b82f6'}">${rl.id}</div>
+                        <div class="weld-num" style="background:${rl.color || '#3b82f6'}">${rl.id}</div>
                         <span style="font-weight:600">${rl.meters.toFixed(3)} м</span>
                         ${rl.isReference ? '<span class="type-tag" style="background:#d1fae5;color:#047857">Еталон</span>' : ''}
                     </div>
@@ -2119,6 +2095,33 @@
                 `;
                 rowsCont.appendChild(tr);
             });
+
+            const totalM = rulerLines.filter(r => !r.isReference).reduce((s, r) => s + r.meters, 0);
+            const totEl = document.getElementById('ruler-total-m');
+            if (totEl) totEl.textContent = totalM.toFixed(3) + ' м';
+        }
+
+        function applyRulerTotal() {
+            const total = rulerLines.filter(r => !r.isReference).reduce((sum, r) => sum + r.meters, 0);
+            if (total <= 0) return showToast('Немає ліній для додавання', 'err');
+            const defProfSel = document.getElementById('weld-default-profile');
+            let profId = defProfSel?.value;
+            if (!profId && window.rowId > 0) profId = window.rowId;
+            if (!profId) return showToast('Виберіть профіль у списку після кнопки лінійки', 'err');
+
+            const add = confirm(`Додати загальну довжину ${total.toFixed(3)} м до Рядка ${profId}?`);
+            if (add) {
+                const lenInput = document.getElementById('len-' + profId);
+                if (lenInput) {
+                    if (lenInput.value === '1' || lenInput.value === '0') lenInput.value = total.toFixed(3);
+                    else lenInput.value = lenInput.value + ' + ' + total.toFixed(3);
+                    evalFormula(lenInput);
+                    recalcRow(profId);
+                    showToast('Додано ' + total.toFixed(3) + ' м до Рядка ' + profId, 'ok');
+                } else {
+                    showToast('Рядок профілю не знайдено', 'err');
+                }
+            }
         }
 
         function removeRuler(id) {
