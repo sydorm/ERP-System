@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор металоконструкцій</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f7;
+            min-height: 100vh
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1c2b3a, #2e4057);
+            padding: 0 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .3)
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .logo-icon {
+            font-size: 36px
+        }
+
+        .logo h1 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 800
+        }
+
+        .logo p {
+            color: #8fadc8;
+            font-size: 12px;
+            margin-top: 2px
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px
+        }
+
+        .nav-btn {
+            color: #c8ddf0;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(255, 255, 255, .08);
+            transition: .2s
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, .18)
+        }
+
+        .nav-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff
+        }
+
+        /* Layout */
+        .main {
+            max-width: 1280px;
+            margin: 22px auto;
+            padding: 0 16px 80px;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 20px;
+            align-items: start
+        }
+
+        @media(max-width:900px) {
+            .main {
+                grid-template-columns: 1fr
+            }
+        }
+
+        /* ── Left panel (inputs) ── */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 22px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: .03em
+        }
+
+        .step-badge {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        /* Profile rows */
+        .profile-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .profile-row {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1.5px solid #e2e8f0;
+            position: relative;
+            transition: .2s
+        }
+
+        .profile-row:hover {
+            border-color: #93c5fd
+        }
+
+        .pr-sel select {
+            width: 100%;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            background: #fff;
+            color: #1e293b;
+            outline: none;
+            transition: .2s
+        }
+
+        .pr-sel select:focus {
+            border-color: #3b82f6
+        }
+
+        .pr-dims {
+            display: grid;
+            grid-template-columns: 1fr 1fr 80px;
+            gap: 6px
+        }
+
+        .mini-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px
+        }
+
+        .mini-field label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase
+        }
+
+        .mini-field input {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 6px 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            outline: none;
+            transition: .2s;
+            text-align: center
+        }
+
+        .mini-field input:focus {
+            border-color: #3b82f6;
+            background: #eff6ff
+        }
+
+        .m2-badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px
+        }
+
+        .btn-del-row {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #cbd5e1;
+            font-size: 16px;
+            line-height: 1;
+            transition: .2s
+        }
+
+        .btn-del-row:hover {
+            color: #ef4444
+        }
+
+        .btn-add-row {
+            width: 100%;
+            padding: 9px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            background: none;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .btn-add-row:hover {
+            border-color: #3b82f6;
+            color: #2563eb;
+            background: #eff6ff
+        }
+
+        /* Generic fields */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 12px
+        }
+
+        .field:last-child {
+            margin-bottom: 0
+        }
+
+        .field label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .04em
+        }
+
+        .field input,
+        .field select {
+            border: 2px solid #e2e8f0;
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #1e293b;
+            outline: none;
+            transition: .2s;
+            background: #fff
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #3b82f6;
+            background: #eff6ff
+        }
+
+        .primer-row {
+            display: none;
+            animation: fadeIn .3s
+        }
+
+        .primer-row.show {
+            display: block
+        }
+
+        /* Checkboxes grid */
+        .check-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            color: #334155;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            transition: .2s;
+            user-select: none
+        }
+
+        .check-item:hover {
+            border-color: #93c5fd;
+            background: #f0f7ff
+        }
+
+        .check-item input {
+            width: 14px;
+            height: 14px;
+            accent-color: #2563eb
+        }
+
+        .check-item.selected {
+            border-color: #2563eb;
+            background: #eff6ff
+        }
+
+        /* Counters */
+        .counter-row {
+            display: flex;
+            gap: 12px
+        }
+
+        .counter-block {
+            flex: 1
+        }
+
+        .counter-block label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .counter {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 9px;
+            overflow: hidden
+        }
+
+        .counter button {
+            width: 34px;
+            height: 36px;
+            border: none;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s
+        }
+
+        .counter button:hover {
+            background: #dbeafe
+        }
+
+        .counter span {
+            flex: 1;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b
+        }
+
+        /* Calc button */
+        .btn-calc {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+            color: #fff;
+            border: none;
+            border-radius: 13px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(29, 78, 216, .35);
+            transition: .2s
+        }
+
+        .btn-calc:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(29, 78, 216, .45)
+        }
+
+        .btn-calc:disabled {
+            opacity: .6;
+            transform: none
+        }
+
+        /* ── Right panel (results) ── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px
+        }
+
+        .empty-state {
+            background: #fff;
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            color: #94a3b8;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 14px
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            line-height: 1.6
+        }
+
+        /* m2 total bar */
+        .m2-bar {
+            background: linear-gradient(135deg, #1c2b3a, #2563eb);
+            border-radius: 14px;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff
+        }
+
+        .m2-bar .label {
+            font-size: 13px;
+            color: #93c5fd;
+            font-weight: 600
+        }
+
+        .m2-bar .value {
+            font-size: 26px;
+            font-weight: 800
+        }
+
+        /* Result tables */
+        .result-section {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+        }
+
+        .rs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9
+        }
+
+        .rs-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .rs-subtotal {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2563eb
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        th {
+            padding: 9px 12px;
+            text-align: left;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f5f9;
+            background: #fafbfc
+        }
+
+        td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #f8fafc;
+            color: #334155
+        }
+
+        tr:hover td {
+            background: #fafcff
+        }
+
+        .num {
+            text-align: right;
+            font-family: monospace;
+            font-size: 13px
+        }
+
+        .total-cell {
+            text-align: right;
+            font-weight: 800;
+            color: #1d4ed8
+        }
+
+        /* Grand total */
+        .grand-card {
+            background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+            border-radius: 16px;
+            padding: 24px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .grand-label {
+            font-size: 14px;
+            color: #bfdbfe;
+            font-weight: 600;
+            margin-bottom: 4px
+        }
+
+        .grand-sub {
+            font-size: 12px;
+            color: #93c5fd
+        }
+
+        .grand-value {
+            font-size: 36px;
+            font-weight: 900
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        .btn-save,
+        .btn-print {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: .2s
+        }
+
+        .btn-save {
+            background: #10b981;
+            color: #fff
+        }
+
+        .btn-print {
+            background: rgba(255, 255, 255, .15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, .25)
+        }
+
+        .btn-print:hover {
+            background: rgba(255, 255, 255, .25)
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            display: none;
+            animation: slideUp .3s
+        }
+
+        .toast.show {
+            display: block
+        }
+
+        .toast.ok {
+            background: #10b981
+        }
+
+        .toast.err {
+            background: #ef4444
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0)
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @media print {
+
+            .header,
+            .left-panel,
+            .btn-save,
+            .btn-print,
+            .toast {
+                display: none !important
+            }
+
+            .main {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:640px) {
+            .pr-dims {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .grand-value {
+                font-size: 26px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🔩</span>
+                <div>
+                    <h1>Калькулятор металоконструкцій</h1>
+                    <p>Профілі · Фарбування · Послуги · Накладні</p>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-btn">🪵 Шухляди</a>
+                <a href="/metal.html" class="nav-btn active">🔩 Метал</a>
+                <a href="/admin.html" class="nav-btn">⚙️ Налаштування</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- ─────────────── LEFT PANEL ─────────────── -->
+        <div class="left-panel">
+
+            <!-- Product name -->
+            <div class="card">
+                <div class="card-title"><span class="step-badge">0</span> Виріб</div>
+                <div class="field"><label>Назва виробу</label><input id="product-name"
+                        placeholder="Лорен / Каркас / Стелаж..."></div>
+                <div class="field"><label>Клієнт</label><input id="client-name" placeholder="Іванов Іван"></div>
+            </div>
+
+            <!-- Profile rows -->
+            <div class="card">
+                <div class="card-title"><span class="step-badge">1</span> Профілі та матеріал</div>
+                <div class="profile-rows" id="profile-rows"></div>
+                <button class="btn-add-row" onclick="addRow()" style="margin-top:10px">+ Додати профіль</button>
+            </div>
+
+            <!-- Paint -->
+            <div class="card">
+                <div class="card-title"><span class="step-badge">2</span> Фарбування (порошкове)</div>
+                <div class="field">
+                    <label>Фарба</label>
+                    <select id="paint-sel">
+                        <option value="">— без фарбування —</option>
+                    </select>
+                </div>
+                <label
+                    style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;margin-bottom:12px">
+                    <input type="checkbox" id="with-primer" style="width:16px;height:16px;accent-color:#2563eb"
+                        onchange="togglePrimer()">
+                    З ґрунтовкою
+                </label>
+                <div class="primer-row" id="primer-row">
+                    <div class="field"><label>Ґрунтовка</label>
+                        <select id="primer-sel">
+                            <option value="">— оберіть ґрунтовку —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Work items -->
+            <div class="card">
+                <div class="card-title"><span class="step-badge">3</span> Послуги виробництва</div>
+                <div class="check-grid" id="work-grid"></div>
+                <div class="counter-row" style="margin-top:14px" id="counters-area">
+                    <div class="counter-block">
+                        <label>Зварювань</label>
+                        <div class="counter">
+                            <button onclick="chg('welder',-1)">−</button>
+                            <span id="welder-disp">1</span>
+                            <button onclick="chg('welder',1)">+</button>
+                        </div>
+                    </div>
+                    <div class="counter-block">
+                        <label>Різань</label>
+                        <div class="counter">
+                            <button onclick="chg('cuts',-1)">−</button>
+                            <span id="cuts-disp">0</span>
+                            <button onclick="chg('cuts',1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overhead -->
+            <div class="card">
+                <div class="card-title"><span class="step-badge">4</span> Накладні витрати</div>
+                <div class="check-grid" id="overhead-grid"></div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card">
+                <div class="field"><label>Примітки</label><input id="notes" placeholder="Колір, особливості..."></div>
+            </div>
+
+            <button class="btn-calc" id="btn-calc" onclick="calculate()">🔩 Розрахувати</button>
+        </div>
+
+        <!-- ─────────────── RIGHT PANEL ─────────────── -->
+        <div class="right-panel" id="right-panel">
+            <div class="empty-state">
+                <div class="empty-icon">🔩</div>
+                <p>Додайте профілі, оберіть фарбування та послуги,<br>потім натисніть <strong>«Розрахувати»</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '';
+        let profiles = [], paints = [], workItems = [], overheads = [];
+        let form = { welder: 1, cuts: 0 };
+        let lastResult = null, lastInp = null;
+        let rowId = 0;
+
+        async function init() {
+            const [p, pa, w, o] = await Promise.all([
+                fetch(`${API}/api/metal/profiles`).then(r => r.json()),
+                fetch(`${API}/api/metal/paints`).then(r => r.json()),
+                fetch(`${API}/api/metal/work-items`).then(r => r.json()),
+                fetch(`${API}/api/metal/overhead`).then(r => r.json()),
+            ]);
+            profiles = p; paints = pa; workItems = w; overheads = o;
+
+            // Paints
+            const paintSel = document.getElementById('paint-sel');
+            const primerSel = document.getElementById('primer-sel');
+            paints.filter(x => x.paint_type === 'фарба').forEach(x => {
+                paintSel.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг, ${x.consumption_kg_per_m2} кг/м²)`, x.id));
+            });
+            paints.filter(x => x.paint_type === 'ґрунтовка').forEach(x => {
+                primerSel.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг)`, x.id));
+            });
+
+            // Work items
+            const wGrid = document.getElementById('work-grid');
+            workItems.forEach(w => {
+                const lbl = document.createElement('label');
+                lbl.className = 'check-item';
+                lbl.dataset.id = w.id;
+                const typeLabel = w.pricing_type === 'per_m2' ? `${w.price} грн/м²` : w.pricing_type === 'fixed' ? `${w.price} грн/фікс` : `${w.price} грн/${w.unit}`;
+                lbl.innerHTML = `<input type="checkbox" value="${w.id}"> ${w.name}<br><small style="color:#94a3b8">${typeLabel}</small>`;
+                lbl.querySelector('input').addEventListener('change', e => {
+                    lbl.classList.toggle('selected', e.target.checked);
+                });
+                wGrid.appendChild(lbl);
+            });
+            // Auto-check all per_m2 work items on load
+            wGrid.querySelectorAll('input').forEach(inp => {
+                const wi = workItems.find(x => x.id == inp.value);
+                if (wi?.pricing_type === 'per_m2') { inp.checked = true; inp.closest('.check-item').classList.add('selected'); }
+            });
+
+            // Overhead
+            const oGrid = document.getElementById('overhead-grid');
+            overheads.forEach(o => {
+                const lbl = document.createElement('label');
+                lbl.className = 'check-item';
+                lbl.innerHTML = `<input type="checkbox" value="${o.id}"> ${o.name}<br><small style="color:#94a3b8">${o.price} грн</small>`;
+                lbl.querySelector('input').addEventListener('change', e => {
+                    lbl.classList.toggle('selected', e.target.checked);
+                });
+                oGrid.appendChild(lbl);
+            });
+
+            // Add first row
+            addRow();
+        }
+
+        function addRow() {
+            const id = ++rowId;
+            const div = document.createElement('div');
+            div.className = 'profile-row';
+            div.id = `row-${id}`;
+            const opts = profiles.map(p => `<option value="${p.id}" data-per="${p.perimeter_m}">${p.name} — ${p.price_per_meter} грн/м</option>`).join('');
+            div.innerHTML = `
+    <button class="btn-del-row" onclick="delRow(${id})" title="Видалити">×</button>
+    <div class="pr-sel"><select onchange="recalcRow(${id})">${opts}</select></div>
+    <div class="pr-dims">
+      <div class="mini-field"><label>Метри (м)</label><input type="number" id="len-${id}" value="1" min="0.01" step="0.01" oninput="recalcRow(${id})"></div>
+      <div class="mini-field"><label>Кількість</label><input type="number" id="qty-${id}" value="1" min="1" step="1" oninput="recalcRow(${id})"></div>
+      <div class="mini-field"><label>М²</label><div class="m2-badge" id="m2-${id}">—</div></div>
+    </div>`;
+            document.getElementById('profile-rows').appendChild(div);
+            recalcRow(id);
+        }
+
+        function delRow(id) {
+            const el = document.getElementById(`row-${id}`);
+            if (document.querySelectorAll('.profile-row').length > 1) el.remove();
+            else showToast('Мінімум 1 рядок', 'err');
+        }
+
+        function recalcRow(id) {
+            const sel = document.querySelector(`#row-${id} select`);
+            const opt = sel.options[sel.selectedIndex];
+            const per = parseFloat(opt.dataset.per) || 0;
+            const len = parseFloat(document.getElementById(`len-${id}`)?.value) || 0;
+            const qty = parseFloat(document.getElementById(`qty-${id}`)?.value) || 1;
+            const m2 = (per * len * qty).toFixed(4);
+            const badge = document.getElementById(`m2-${id}`);
+            if (badge) badge.textContent = m2 + ' м²';
+        }
+
+        function togglePrimer() {
+            document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked);
+        }
+
+        function chg(key, d) {
+            form[key] = Math.max(0, form[key] + d);
+            document.getElementById(key === 'welder' ? 'welder-disp' : 'cuts-disp').textContent = form[key];
+        }
+
+        async function calculate() {
+            const btn = document.getElementById('btn-calc');
+            btn.disabled = true; btn.textContent = '🔄 Рахую...';
+
+            const rows = [...document.querySelectorAll('.profile-row')].map(row => {
+                const id = row.id.replace('row-', '');
+                const sel = row.querySelector('select');
+                return {
+                    profile_id: +sel.value,
+                    length_m: +(document.getElementById(`len-${id}`)?.value || 1),
+                    quantity: +(document.getElementById(`qty-${id}`)?.value || 1)
+                };
+            }).filter(r => r.profile_id && r.length_m > 0);
+
+            const paintId = document.getElementById('paint-sel').value;
+            const withPrimer = document.getElementById('with-primer').checked;
+            const primerId = document.getElementById('primer-sel').value;
+            const workIds = [...document.querySelectorAll('#work-grid input:checked')].map(c => +c.value);
+            const ohIds = [...document.querySelectorAll('#overhead-grid input:checked')].map(c => +c.value);
+
+            const inp = {
+                product_name: document.getElementById('product-name').value || null,
+                client_name: document.getElementById('client-name').value || null,
+                rows,
+                paint_id: paintId ? +paintId : null,
+                with_primer: withPrimer,
+                primer_id: primerId && withPrimer ? +primerId : null,
+                work_item_ids: workIds,
+                overhead_ids: ohIds,
+                welder_qty: form.welder,
+                cuts_qty: form.cuts,
+                notes: document.getElementById('notes').value || null
+            };
+
+            try {
+                const r = await fetch(`${API}/api/metal/calculate`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp)
+                });
+                if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Помилка'); }
+                lastResult = await r.json();
+                lastInp = inp;
+                renderResults(lastResult);
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
+            finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати'; }
+        }
+
+        function makeTable(lines, icon) {
+            if (!lines.length) return '';
+            const rows = lines.map(l => `<tr>
+    <td>${l.name}</td>
+    <td class="num">${typeof l.qty === 'number' ? l.qty.toFixed(4) : l.qty}</td>
+    <td>${l.unit}</td>
+    <td class="num">${l.price_unit.toFixed(2)}</td>
+    <td class="total-cell">${l.total.toFixed(2)}</td>
+  </tr>`).join('');
+            return `<table><thead><tr>
+    <th>Назва</th><th style="text-align:right">К-сть</th><th>Од.</th>
+    <th style="text-align:right">Ціна</th><th style="text-align:right">Сума</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function renderResults(res) {
+            const rp = document.getElementById('right-panel');
+            const productTitle = res.product_name ? `<strong>"${res.product_name}"</strong>` : 'Виріб';
+
+            rp.innerHTML = `
+    <!-- M² bar -->
+    <div class="m2-bar">
+      <div><div class="label">Загальна площа поверхні</div><div class="value">${res.total_m2.toFixed(4)} м²</div></div>
+      <div style="font-size:13px;color:#93c5fd;text-align:right">${productTitle}<br>Від ${res.metal_lines.length} профілів</div>
+    </div>
+
+    <!-- Metal -->
+    ${res.metal_lines.length ? `
+    <div class="result-section">
+      <div class="rs-header">
+        <div class="rs-title">🔩 Прорахунок метал</div>
+        <div class="rs-subtotal">${res.metal_subtotal.toFixed(2)} грн</div>
+      </div>
+      ${makeTable(res.metal_lines)}
+    </div>`: ''}
+
+    <!-- Coating -->
+    ${res.coating_lines.length ? `
+    <div class="result-section">
+      <div class="rs-header">
+        <div class="rs-title">🎨 Фарбування</div>
+        <div class="rs-subtotal">${res.coating_subtotal.toFixed(2)} грн</div>
+      </div>
+      ${makeTable(res.coating_lines)}
+    </div>`: ''}
+
+    <!-- Work -->
+    ${res.work_lines.length ? `
+    <div class="result-section">
+      <div class="rs-header">
+        <div class="rs-title">⚙️ Послуги виробництва</div>
+        <div class="rs-subtotal">${res.work_subtotal.toFixed(2)} грн</div>
+      </div>
+      ${makeTable(res.work_lines)}
+    </div>`: ''}
+
+    <!-- Overhead -->
+    ${res.overhead_lines.length ? `
+    <div class="result-section">
+      <div class="rs-header">
+        <div class="rs-title">📊 Накладні витрати</div>
+        <div class="rs-subtotal">${res.overhead_subtotal.toFixed(2)} грн</div>
+      </div>
+      ${makeTable(res.overhead_lines)}
+    </div>`: ''}
+
+    <!-- Grand total -->
+    <div class="grand-card">
+      <div>
+        <div class="grand-label">ЗАГАЛЬНА ВАРТІСТЬ</div>
+        <div class="grand-sub">${productTitle} · Площа: ${res.total_m2.toFixed(4)} м²</div>
+        <div class="result-actions">
+          <button class="btn-save" onclick="saveQuote()">💾 Зберегти</button>
+          <button class="btn-print" onclick="window.print()">🖨️ Друк</button>
+        </div>
+      </div>
+      <div class="grand-value">${res.grand_total.toFixed(2)}<span style="font-size:18px;margin-left:4px;opacity:.8">грн</span></div>
+    </div>`;
+        }
+
+        async function saveQuote() {
+            if (!lastResult) return;
+            try {
+                await fetch(`${API}/api/metal/save-quote`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_name: lastResult.product_name,
+                        client_name: lastInp?.client_name, inp: lastInp, result: lastResult
+                    })
+                });
+                showToast('Розрахунок збережено!', 'ok');
+            } catch { showToast('Не вдалося зберегти', 'err'); }
+        }
+
+        function showToast(msg, type = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.className = 'toast show ' + type;
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

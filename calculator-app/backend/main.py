@@ -70,6 +70,60 @@ class CalcQuote(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+# ── Metal Calculator Models ───────────────────────────────────────────────────
+class MetalProfile(Base):
+    """Metal profiles: tubes, angles, rounds, sheets — with cross-section perimeter for M² calc"""
+    __tablename__ = "metal_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)          # "30×30*1.2", "Круг 10мм"
+    profile_type = Column(String(50), nullable=False, default="труба")  # труба/куток/круг/лист
+    perimeter_m = Column(Numeric(10, 4), nullable=False, default=0)     # Cross-section perimeter in metres
+    price_per_meter = Column(Numeric(12, 2), nullable=False, default=0) # UAH per linear metre
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MetalPaint(Base):
+    """Paints and primers for powder coating"""
+    __tablename__ = "metal_paints"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)            # "Чорна RAL 9005"
+    paint_type = Column(String(20), nullable=False, default="фарба")  # фарба / ґрунтовка
+    price_per_kg = Column(Numeric(12, 2), nullable=False, default=0)  # UAH/kg
+    consumption_kg_per_m2 = Column(Numeric(8, 4), nullable=False, default=0.28)  # kg/m²
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MetalWorkItem(Base):
+    """Per-M² or fixed cost items: painting labor, oven, consumables, prep, assembly, welder"""
+    __tablename__ = "metal_work_items"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    pricing_type = Column(String(20), nullable=False, default="per_m2")  # per_m2 / fixed / per_unit
+    price = Column(Numeric(12, 2), nullable=False, default=0)
+    unit = Column(String(50), nullable=False, default="м²")
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MetalOverhead(Base):
+    """Fixed overhead items per quote: marketing, rent, electricity"""
+    __tablename__ = "metal_overhead"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    price = Column(Numeric(12, 2), nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MetalQuote(Base):
+    __tablename__ = "metal_quotes"
+    id = Column(Integer, primary_key=True, index=True)
+    product_name = Column(String(255), nullable=True)
+    client_name = Column(String(255), nullable=True)
+    input_json = Column(Text, nullable=False)
+    result_json = Column(Text, nullable=False)
+    total_price = Column(Numeric(12, 2), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 # ── Create tables + seed data ─────────────────────────────────────────────────
 def seed_data(db: Session):
     if db.query(CalcMaterial).count() == 0:
@@ -103,9 +157,49 @@ def seed_data(db: Session):
         ])
     db.commit()
 
+def seed_metal_data(db: Session):
+    if db.query(MetalProfile).count() == 0:
+        db.add_all([
+            MetalProfile(name="Профіль 20×20*1.2", profile_type="труба", perimeter_m=0.08, price_per_meter=28),
+            MetalProfile(name="Профіль 25×25*1.5", profile_type="труба", perimeter_m=0.10, price_per_meter=38),
+            MetalProfile(name="Профіль 30×30*1.2", profile_type="труба", perimeter_m=0.12, price_per_meter=50),
+            MetalProfile(name="Профіль 40×40*2.0", profile_type="труба", perimeter_m=0.16, price_per_meter=85),
+            MetalProfile(name="Профіль 60×60*2.0", profile_type="труба", perimeter_m=0.24, price_per_meter=130),
+            MetalProfile(name="Куток 25×25*3", profile_type="куток", perimeter_m=0.10, price_per_meter=45),
+            MetalProfile(name="Куток 40×40*4", profile_type="куток", perimeter_m=0.16, price_per_meter=78),
+            MetalProfile(name="Круг 10мм", profile_type="круг", perimeter_m=0.0314, price_per_meter=24),
+            MetalProfile(name="Круг 12мм", profile_type="круг", perimeter_m=0.0377, price_per_meter=34),
+            MetalProfile(name="Лист 1мм", profile_type="лист", perimeter_m=1.0, price_per_meter=65),   # price per m²
+            MetalProfile(name="Лист 2мм", profile_type="лист", perimeter_m=1.0, price_per_meter=125),
+        ])
+    if db.query(MetalPaint).count() == 0:
+        db.add_all([
+            MetalPaint(name="Чорна RAL 9005", paint_type="фарба", price_per_kg=198, consumption_kg_per_m2=0.28),
+            MetalPaint(name="Біла RAL 9003", paint_type="фарба", price_per_kg=210, consumption_kg_per_m2=0.28),
+            MetalPaint(name="Сіра RAL 7016", paint_type="фарба", price_per_kg=205, consumption_kg_per_m2=0.28),
+            MetalPaint(name="Ґрунтовка епоксидна", paint_type="ґрунтовка", price_per_kg=145, consumption_kg_per_m2=0.20),
+        ])
+    if db.query(MetalWorkItem).count() == 0:
+        db.add_all([
+            MetalWorkItem(name="Робота покраски", pricing_type="per_m2", price=50, unit="м²"),
+            MetalWorkItem(name="Піч (порошкове покриття)", pricing_type="per_m2", price=40, unit="м²"),
+            MetalWorkItem(name="Розхідник", pricing_type="per_m2", price=50, unit="м²"),
+            MetalWorkItem(name="Підготовка металу", pricing_type="per_m2", price=30, unit="м²"),
+            MetalWorkItem(name="Збирання", pricing_type="per_m2", price=25, unit="м²"),
+            MetalWorkItem(name="Робота зварювальника", pricing_type="fixed", price=330, unit="виріб"),
+            MetalWorkItem(name="Різання металу", pricing_type="per_unit", price=15, unit="різ"),
+        ])
+    if db.query(MetalOverhead).count() == 0:
+        db.add_all([
+            MetalOverhead(name="Маркетинг", price=50),
+            MetalOverhead(name="Оренда / Світло", price=170),
+        ])
+    db.commit()
+
 Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     seed_data(db)
+    seed_metal_data(db)
 
 # ── FastAPI App ───────────────────────────────────────────────────────────────
 app = FastAPI(title="Drawer Calculator API")
@@ -334,4 +428,284 @@ def list_quotes(db: Session = Depends(get_db)):
     return db.query(CalcQuote).order_by(CalcQuote.created_at.desc()).limit(50).all()
 
 @app.get("/")
-def root(): return {"status": "ok", "service": "Drawer Calculator API"}
+def root(): return {"status": "ok", "service": "Calculator API (Drawer + Metal)"}
+
+# ════════════════════════════════════════════════════════════════════
+# METAL CALCULATOR API
+# ════════════════════════════════════════════════════════════════════
+
+# ── Metal Pydantic Schemas ────────────────────────────────────────────────────
+class MetalProfileOut(BaseModel):
+    id: int; name: str; profile_type: str; perimeter_m: float
+    price_per_meter: float; is_active: bool
+    class Config: from_attributes = True
+
+class MetalProfileCreate(BaseModel):
+    name: str; profile_type: str = "труба"; perimeter_m: float; price_per_meter: float
+
+class MetalProfileUpdate(BaseModel):
+    name: Optional[str]=None; profile_type: Optional[str]=None
+    perimeter_m: Optional[float]=None; price_per_meter: Optional[float]=None; is_active: Optional[bool]=None
+
+class MetalPaintOut(BaseModel):
+    id: int; name: str; paint_type: str; price_per_kg: float
+    consumption_kg_per_m2: float; is_active: bool
+    class Config: from_attributes = True
+
+class MetalPaintCreate(BaseModel):
+    name: str; paint_type: str = "фарба"; price_per_kg: float; consumption_kg_per_m2: float = 0.28
+
+class MetalPaintUpdate(BaseModel):
+    name: Optional[str]=None; paint_type: Optional[str]=None
+    price_per_kg: Optional[float]=None; consumption_kg_per_m2: Optional[float]=None; is_active: Optional[bool]=None
+
+class MetalWorkItemOut(BaseModel):
+    id: int; name: str; pricing_type: str; price: float; unit: str; is_active: bool
+    class Config: from_attributes = True
+
+class MetalWorkItemCreate(BaseModel):
+    name: str; pricing_type: str = "per_m2"; price: float; unit: str = "м²"
+
+class MetalWorkItemUpdate(BaseModel):
+    name: Optional[str]=None; pricing_type: Optional[str]=None
+    price: Optional[float]=None; unit: Optional[str]=None; is_active: Optional[bool]=None
+
+class MetalOverheadOut(BaseModel):
+    id: int; name: str; price: float; is_active: bool
+    class Config: from_attributes = True
+
+class MetalOverheadCreate(BaseModel):
+    name: str; price: float
+
+class MetalOverheadUpdate(BaseModel):
+    name: Optional[str]=None; price: Optional[float]=None; is_active: Optional[bool]=None
+
+# Input for metal calculation
+class MetalProfileRow(BaseModel):
+    profile_id: int
+    length_m: float        # linear metres
+    quantity: int = 1      # pieces
+
+class MetalCalcInput(BaseModel):
+    product_name: Optional[str] = None
+    client_name: Optional[str] = None
+    rows: List[MetalProfileRow]          # list of profile rows
+    paint_id: Optional[int] = None
+    with_primer: bool = False
+    primer_id: Optional[int] = None
+    work_item_ids: Optional[List[int]] = []   # selected work items
+    overhead_ids: Optional[List[int]] = []    # selected overhead items
+    welder_qty: int = 1                       # number of weld jobs
+    cuts_qty: int = 0                         # number of cuts
+    notes: Optional[str] = None
+
+class MetalResultLine(BaseModel):
+    name: str; qty: float; unit: str; price_unit: float; total: float
+
+class MetalCalcResult(BaseModel):
+    product_name: Optional[str]
+    total_m2: float
+    metal_lines: List[MetalResultLine]
+    coating_lines: List[MetalResultLine]
+    work_lines: List[MetalResultLine]
+    overhead_lines: List[MetalResultLine]
+    metal_subtotal: float
+    coating_subtotal: float
+    work_subtotal: float
+    overhead_subtotal: float
+    grand_total: float
+
+# ── Metal CRUD ────────────────────────────────────────────────────────────────
+@app.get("/api/metal/profiles", response_model=List[MetalProfileOut])
+def get_profiles(active_only: bool=True, db: Session=Depends(get_db)):
+    q = db.query(MetalProfile)
+    if active_only: q = q.filter(MetalProfile.is_active==True)
+    return q.order_by(MetalProfile.profile_type, MetalProfile.name).all()
+
+@app.post("/api/metal/profiles", response_model=MetalProfileOut)
+def add_profile(data: MetalProfileCreate, db: Session=Depends(get_db)):
+    p=MetalProfile(**data.model_dump()); db.add(p); db.commit(); db.refresh(p); return p
+
+@app.patch("/api/metal/profiles/{id}", response_model=MetalProfileOut)
+def upd_profile(id: int, data: MetalProfileUpdate, db: Session=Depends(get_db)):
+    p=db.get(MetalProfile,id)
+    if not p: raise HTTPException(404,"Not found")
+    for k,v in data.model_dump(exclude_unset=True).items(): setattr(p,k,v)
+    db.commit(); db.refresh(p); return p
+
+@app.get("/api/metal/paints", response_model=List[MetalPaintOut])
+def get_paints(active_only: bool=True, db: Session=Depends(get_db)):
+    q = db.query(MetalPaint)
+    if active_only: q = q.filter(MetalPaint.is_active==True)
+    return q.order_by(MetalPaint.paint_type, MetalPaint.name).all()
+
+@app.post("/api/metal/paints", response_model=MetalPaintOut)
+def add_paint(data: MetalPaintCreate, db: Session=Depends(get_db)):
+    p=MetalPaint(**data.model_dump()); db.add(p); db.commit(); db.refresh(p); return p
+
+@app.patch("/api/metal/paints/{id}", response_model=MetalPaintOut)
+def upd_paint(id: int, data: MetalPaintUpdate, db: Session=Depends(get_db)):
+    p=db.get(MetalPaint,id)
+    if not p: raise HTTPException(404,"Not found")
+    for k,v in data.model_dump(exclude_unset=True).items(): setattr(p,k,v)
+    db.commit(); db.refresh(p); return p
+
+@app.get("/api/metal/work-items", response_model=List[MetalWorkItemOut])
+def get_work_items(active_only: bool=True, db: Session=Depends(get_db)):
+    q = db.query(MetalWorkItem)
+    if active_only: q = q.filter(MetalWorkItem.is_active==True)
+    return q.order_by(MetalWorkItem.name).all()
+
+@app.post("/api/metal/work-items", response_model=MetalWorkItemOut)
+def add_work_item(data: MetalWorkItemCreate, db: Session=Depends(get_db)):
+    w=MetalWorkItem(**data.model_dump()); db.add(w); db.commit(); db.refresh(w); return w
+
+@app.patch("/api/metal/work-items/{id}", response_model=MetalWorkItemOut)
+def upd_work_item(id: int, data: MetalWorkItemUpdate, db: Session=Depends(get_db)):
+    w=db.get(MetalWorkItem,id)
+    if not w: raise HTTPException(404,"Not found")
+    for k,v in data.model_dump(exclude_unset=True).items(): setattr(w,k,v)
+    db.commit(); db.refresh(w); return w
+
+@app.get("/api/metal/overhead", response_model=List[MetalOverheadOut])
+def get_overhead(active_only: bool=True, db: Session=Depends(get_db)):
+    q = db.query(MetalOverhead)
+    if active_only: q = q.filter(MetalOverhead.is_active==True)
+    return q.all()
+
+@app.post("/api/metal/overhead", response_model=MetalOverheadOut)
+def add_overhead(data: MetalOverheadCreate, db: Session=Depends(get_db)):
+    o=MetalOverhead(**data.model_dump()); db.add(o); db.commit(); db.refresh(o); return o
+
+@app.patch("/api/metal/overhead/{id}", response_model=MetalOverheadOut)
+def upd_overhead(id: int, data: MetalOverheadUpdate, db: Session=Depends(get_db)):
+    o=db.get(MetalOverhead,id)
+    if not o: raise HTTPException(404,"Not found")
+    for k,v in data.model_dump(exclude_unset=True).items(): setattr(o,k,v)
+    db.commit(); db.refresh(o); return o
+
+# ── Metal Calculate ───────────────────────────────────────────────────────────
+@app.post("/api/metal/calculate", response_model=MetalCalcResult)
+def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
+    metal_lines = []
+    total_m2 = 0.0
+
+    for row in inp.rows:
+        prof = db.get(MetalProfile, row.profile_id)
+        if not prof: continue
+        # M² = perimeter × length × quantity
+        m2 = round(float(prof.perimeter_m) * row.length_m * row.quantity, 4)
+        total_m2 += m2
+        mat_cost = round(row.length_m * row.quantity * float(prof.price_per_meter), 2)
+        metal_lines.append(MetalResultLine(
+            name=prof.name,
+            qty=round(row.length_m * row.quantity, 3),
+            unit="м",
+            price_unit=float(prof.price_per_meter),
+            total=mat_cost
+        ))
+
+    total_m2 = round(total_m2, 4)
+    metal_subtotal = round(sum(l.total for l in metal_lines), 2)
+
+    # ── Coating (paint + oven) ──────────────────────────────────────────────
+    coating_lines = []
+    coating_subtotal = 0.0
+
+    if inp.paint_id:
+        paint = db.get(MetalPaint, inp.paint_id)
+        if paint:
+            paint_kg = round(total_m2 * float(paint.consumption_kg_per_m2), 4)
+            paint_cost = round(paint_kg * float(paint.price_per_kg), 2)
+            coating_lines.append(MetalResultLine(
+                name=paint.name, qty=paint_kg, unit="кг",
+                price_unit=float(paint.price_per_kg), total=paint_cost
+            ))
+            coating_subtotal += paint_cost
+
+    if inp.with_primer and inp.primer_id:
+        primer = db.get(MetalPaint, inp.primer_id)
+        if primer:
+            primer_kg = round(total_m2 * float(primer.consumption_kg_per_m2), 4)
+            primer_cost = round(primer_kg * float(primer.price_per_kg), 2)
+            coating_lines.append(MetalResultLine(
+                name=f"Ґрунтовка: {primer.name}", qty=primer_kg, unit="кг",
+                price_unit=float(primer.price_per_kg), total=primer_cost
+            ))
+            coating_subtotal += primer_cost
+
+    coating_subtotal = round(coating_subtotal, 2)
+
+    # ── Work items ────────────────────────────────────────────────────────────
+    work_lines = []
+    work_subtotal = 0.0
+
+    if inp.work_item_ids:
+        items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(inp.work_item_ids)).all()
+        for wi in items:
+            if wi.pricing_type == "per_m2":
+                cost = round(total_m2 * float(wi.price), 2)
+                qty = total_m2
+                unit = "м²"
+            elif wi.pricing_type == "per_unit":
+                # welder = welder_qty, cuts = cuts_qty
+                unit_count = inp.cuts_qty if "різ" in wi.name.lower() else inp.welder_qty
+                cost = round(unit_count * float(wi.price), 2)
+                qty = float(unit_count)
+                unit = wi.unit
+            else:  # fixed
+                cost = float(wi.price)
+                qty = 1
+                unit = wi.unit
+            work_lines.append(MetalResultLine(
+                name=wi.name, qty=qty, unit=unit,
+                price_unit=float(wi.price), total=cost
+            ))
+            work_subtotal += cost
+    work_subtotal = round(work_subtotal, 2)
+
+    # ── Overhead ───────────────────────────────────────────────────────────────
+    overhead_lines = []
+    overhead_subtotal = 0.0
+    if inp.overhead_ids:
+        ovs = db.query(MetalOverhead).filter(MetalOverhead.id.in_(inp.overhead_ids)).all()
+        for o in ovs:
+            overhead_lines.append(MetalResultLine(
+                name=o.name, qty=1, unit="разово",
+                price_unit=float(o.price), total=float(o.price)
+            ))
+            overhead_subtotal += float(o.price)
+    overhead_subtotal = round(overhead_subtotal, 2)
+
+    grand = round(metal_subtotal + coating_subtotal + work_subtotal + overhead_subtotal, 2)
+
+    return MetalCalcResult(
+        product_name=inp.product_name,
+        total_m2=total_m2,
+        metal_lines=metal_lines,
+        coating_lines=coating_lines,
+        work_lines=work_lines,
+        overhead_lines=overhead_lines,
+        metal_subtotal=metal_subtotal,
+        coating_subtotal=coating_subtotal,
+        work_subtotal=work_subtotal,
+        overhead_subtotal=overhead_subtotal,
+        grand_total=grand
+    )
+
+@app.post("/api/metal/save-quote")
+def metal_save_quote(body: dict, db: Session=Depends(get_db)):
+    q = MetalQuote(
+        product_name=body.get("product_name"),
+        client_name=body.get("client_name"),
+        input_json=json.dumps(body.get("inp", {})),
+        result_json=json.dumps(body.get("result", {})),
+        total_price=body.get("result", {}).get("grand_total"),
+        notes=body.get("notes")
+    )
+    db.add(q); db.commit(); db.refresh(q)
+    return {"id": q.id}
+
+@app.get("/api/metal/quotes")
+def metal_list_quotes(db: Session=Depends(get_db)):
+    return db.query(MetalQuote).order_by(MetalQuote.created_at.desc()).limit(50).all()
