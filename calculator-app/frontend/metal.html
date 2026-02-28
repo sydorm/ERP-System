@@ -844,6 +844,34 @@
             addRow();
         }
 
+        // ── Excel-style formula evaluator ─────────────────────────────────────
+        function evalFormula(input) {
+            let expr = input.value.trim();
+            if (!expr.startsWith('=')) return; // plain number — skip
+            expr = expr.slice(1).replace(/,/g, '.'); // remove "=" and handle comma decimals
+            // Safety: allow only digits, operators and parentheses
+            if (!/^[\d\s\+\-\*\/\(\)\.]+$/.test(expr)) {
+                input.style.borderColor = '#ef4444';
+                setTimeout(() => input.style.borderColor = '', 1500);
+                return;
+            }
+            try {
+                // eslint-disable-next-line no-new-func
+                const result = Function('"use strict"; return (' + expr + ')')();
+                if (isFinite(result) && result >= 0) {
+                    input.value = parseFloat(result.toFixed(4));
+                    input.style.borderColor = '#10b981';
+                    setTimeout(() => input.style.borderColor = '', 1000);
+                    // Trigger recalcRow
+                    const rowEl = input.closest('tr');
+                    if (rowEl) recalcRow(rowEl.id.replace('row-', ''));
+                }
+            } catch {
+                input.style.borderColor = '#ef4444';
+                setTimeout(() => input.style.borderColor = '', 1500);
+            }
+        }
+
         function addRow() {
             const id = ++rowId;
             const opts = profiles.map(p => `<option value="${p.id}" data-per="${p.perimeter_m}">${p.name} — ${p.price_per_meter} грн/м</option>`).join('');
@@ -851,7 +879,7 @@
             tr.id = `row-${id}`;
             tr.innerHTML = `
     <td><select onchange="recalcRow(${id})">${opts}</select></td>
-    <td><input type="number" id="len-${id}" value="1" min="0.01" step="0.01" style="width:80px" oninput="recalcRow(${id})"></td>
+    <td><input type="text" id="len-${id}" value="1" style="width:100px" placeholder="м або =вираз" title="Введіть число або формулу: =0.3*4+0.8*6" oninput="recalcRow(${id})" onblur="evalFormula(this)"></td>
     <td><input type="number" id="qty-${id}" value="1" min="1" style="width:60px" oninput="recalcRow(${id})"></td>
     <td><div class="m2-badge" id="m2-${id}">—</div></td>
     <td><button class="btn-del" onclick="delRow(${id})" title="Видалити">✕</button></td>`;
@@ -868,11 +896,14 @@
         function recalcRow(id) {
             const sel = document.querySelector(`#row-${id} select`);
             const per = parseFloat(sel?.options[sel.selectedIndex]?.dataset.per) || 0;
-            const len = parseFloat(document.getElementById(`len-${id}`)?.value) || 0;
+            const lenEl = document.getElementById(`len-${id}`);
+            const lenVal = lenEl ? lenEl.value.trim() : '0';
+            // If formula not yet evaluated, show pending
+            const len = lenVal.startsWith('=') ? 0 : (parseFloat(lenVal) || 0);
             const qty = parseFloat(document.getElementById(`qty-${id}`)?.value) || 1;
             const m2 = (per * len * qty);
             const el = document.getElementById(`m2-${id}`);
-            if (el) el.textContent = m2.toFixed(4) + ' м²';
+            if (el) el.textContent = len === 0 && lenVal.startsWith('=') ? '...' : m2.toFixed(4) + ' м²';
         }
 
         function togglePrimer() { document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked); }
