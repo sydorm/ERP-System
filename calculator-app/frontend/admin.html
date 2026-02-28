@@ -469,18 +469,30 @@
 
     <div class="body">
         <!-- Tabs -->
-        <div class="tabs" id="tabs">
-            <!-- Drawer tabs -->
-            <button class="tab active" data-tab="materials">🪵 Матеріали (шухляди)</button>
-            <button class="tab" data-tab="hardware">⚙️ Фурнітура</button>
-            <button class="tab" data-tab="services">🔨 Послуги (шухляди)</button>
-            <!-- Separator -->
-            <div class="sep"></div>
-            <!-- Metal tabs -->
-            <button class="tab metal" data-tab="m-profiles">🔩 Профілі</button>
-            <button class="tab metal" data-tab="m-paints">🎨 Фарби / Ґрунтовки</button>
-            <button class="tab metal" data-tab="m-work">⚙️ Послуги (метал)</button>
-            <button class="tab metal" data-tab="m-overhead">📊 Накладні</button>
+        <div style="margin-bottom:16px">
+            <!-- Group 1: Drawer -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div
+                    style="font-size:10px;font-weight:800;color:#3b82f6;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">
+                    🪵 Шухляди:</div>
+                <div class="tabs" style="margin:0;padding:0;display:flex;gap:6px">
+                    <button class="tab active" data-tab="materials">Матеріали</button>
+                    <button class="tab" data-tab="hardware">Фурнітура</button>
+                    <button class="tab" data-tab="services">Послуги</button>
+                </div>
+            </div>
+            <!-- Group 2: Metal -->
+            <div style="display:flex;align-items:center;gap:8px">
+                <div
+                    style="font-size:10px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">
+                    🔩 Метал:</div>
+                <div class="tabs" style="margin:0;padding:0;display:flex;gap:6px">
+                    <button class="tab metal" data-tab="m-profiles">Профілі</button>
+                    <button class="tab metal" data-tab="m-paints">Фарби / Ґрунтовки</button>
+                    <button class="tab metal" data-tab="m-work">Послуги</button>
+                    <button class="tab metal" data-tab="m-overhead">Накладні</button>
+                </div>
+            </div>
         </div>
 
         <!-- ── DRAWER: Materials ── -->

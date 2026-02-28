@@ -615,6 +615,28 @@
                 display: block !important
             }
         }
+
+        /* Tool buttons for annotation */
+        .tool-btn {
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            border-radius: 7px;
+            padding: 4px 9px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: .2s;
+            line-height: 1.3
+        }
+
+        .tool-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff
+        }
+
+        .tool-btn.active {
+            border-color: #2563eb;
+            background: #dbeafe
+        }
     </style>
 </head>
 
@@ -710,6 +732,44 @@
                 <tbody id="profile-rows"></tbody>
             </table>
             <button class="btn-add-row" onclick="addRow()">+ Додати профіль</button>
+        </div>
+
+        <!-- ── ROW 3: Photo Annotator ── -->
+        <div class="card" style="margin-bottom:14px">
+            <div class="card-title" style="justify-content:space-between">
+                <span><span class="step">📷</span> Фото виробу (з анотацією)</span>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <!-- Toolbar — shown only when image is loaded -->
+                    <div id="canvas-toolbar" style="display:none;align-items:center;gap:6px">
+                        <button id="tool-pen" class="tool-btn active" onclick="setTool('pen')"
+                            title="Олівець">✏️</button>
+                        <button id="tool-erase" class="tool-btn" onclick="setTool('erase')" title="Гумка">🧹</button>
+                        <input type="color" id="pen-color" value="#ef4444" title="Колір"
+                            style="width:30px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px">
+                        <input type="range" id="pen-size" min="1" max="30" value="4" title="Розмір" style="width:70px">
+                        <button class="tool-btn" onclick="clearCanvas()" title="Очистити">🗑️</button>
+                        <button class="tool-btn" onclick="downloadAnnotated()" title="Завантажити">⬇️</button>
+                    </div>
+                    <button class="tool-btn" onclick="document.getElementById('photo-inp').click()"
+                        title="Завантажити фото">📂 Фото</button>
+                    <input type="file" id="photo-inp" accept="image/*" style="display:none"
+                        onchange="loadPhoto(this.files[0])">
+                </div>
+            </div>
+            <!-- Drop zone / canvas area -->
+            <div id="photo-area"
+                style="position:relative;border:2.5px dashed #cbd5e1;border-radius:12px;overflow:hidden;cursor:crosshair;min-height:160px;display:flex;align-items:center;justify-content:center;background:#fafbfc"
+                ondragover="event.preventDefault();this.style.borderColor='#3b82f6'"
+                ondragleave="this.style.borderColor='#cbd5e1'" ondrop="onPhotoDrop(event)">
+                <div id="photo-empty" style="text-align:center;color:#94a3b8;padding:40px;pointer-events:none">
+                    <div style="font-size:40px;margin-bottom:8px">📸</div>
+                    <p style="font-size:13px">Перетягніть фото або натисніть <strong>📂 Фото</strong></p>
+                    <p style="font-size:11px;margin-top:4px">Після завантаження малюйте олівцем прямо на фото</p>
+                </div>
+                <img id="bg-photo"
+                    style="display:none;width:100%;max-height:420px;object-fit:contain;user-select:none;pointer-events:none">
+                <canvas id="anno-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%"></canvas>
+            </div>
         </div>
 
         <!-- ── CALCULATE ── -->
@@ -894,6 +954,96 @@
             const t = document.getElementById('toast');
             t.textContent = msg; t.className = 'toast show ' + type;
             setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ── Photo Annotation Canvas ───────────────────────────────────────────
+        let activeTool = 'pen', isDrawing = false, lastX = 0, lastY = 0;
+
+        function loadPhoto(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('bg-photo');
+                img.onload = () => {
+                    // Show photo and canvas
+                    document.getElementById('photo-empty').style.display = 'none';
+                    img.style.display = 'block';
+                    const canvas = document.getElementById('anno-canvas');
+                    canvas.style.display = 'block';
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    document.getElementById('canvas-toolbar').style.display = 'flex';
+                    setupCanvasEvents(canvas);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function onPhotoDrop(e) {
+            e.preventDefault();
+            document.getElementById('photo-area').style.borderColor = '#cbd5e1';
+            loadPhoto(e.dataTransfer.files[0]);
+        }
+
+        function setupCanvasEvents(canvas) {
+            canvas.onmousedown = e => { isDrawing = true;[lastX, lastY] = getPos(e, canvas); };
+            canvas.onmousemove = e => { if (isDrawing) draw(e, canvas); };
+            canvas.onmouseup = canvas.onmouseleave = () => { isDrawing = false; };
+            // Touch support
+            canvas.ontouchstart = e => { e.preventDefault(); isDrawing = true;[lastX, lastY] = getPos(e.touches[0], canvas); };
+            canvas.ontouchmove = e => { e.preventDefault(); if (isDrawing) draw(e.touches[0], canvas); };
+            canvas.ontouchend = () => { isDrawing = false; };
+        }
+
+        function getPos(e, canvas) {
+            const r = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / r.width;
+            const scaleY = canvas.height / r.height;
+            return [(e.clientX - r.left) * scaleX, (e.clientY - r.top) * scaleY];
+        }
+
+        function draw(e, canvas) {
+            const ctx = canvas.getContext('2d');
+            const [x, y] = getPos(e, canvas);
+            const size = +document.getElementById('pen-size').value;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.lineWidth = activeTool === 'erase' ? size * 4 : size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = activeTool === 'erase' ? 'rgba(0,0,0,1)' : document.getElementById('pen-color').value;
+            if (activeTool === 'erase') {
+                ctx.globalCompositeOperation = 'destination-out';
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+            }
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function setTool(t) {
+            activeTool = t;
+            document.getElementById('tool-pen').classList.toggle('active', t === 'pen');
+            document.getElementById('tool-erase').classList.toggle('active', t === 'erase');
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('anno-canvas');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function downloadAnnotated() {
+            const img = document.getElementById('bg-photo');
+            const canvas = document.getElementById('anno-canvas');
+            const merged = document.createElement('canvas');
+            merged.width = canvas.width; merged.height = canvas.height;
+            const ctx = merged.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(canvas, 0, 0);
+            const a = document.createElement('a');
+            a.download = 'annotated.png'; a.href = merged.toDataURL('image/png'); a.click();
         }
 
         init();
