@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Калькулятор металоконструкцій</title>
     <style>
         * {
@@ -19,14 +19,14 @@
         }
 
         /* Header */
-        .header {
+        .hdr {
             background: linear-gradient(135deg, #1c2b3a, #2e4057);
             padding: 0 24px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, .3)
         }
 
-        .header-inner {
-            max-width: 1280px;
+        .hdr-in {
+            max-width: 1100px;
             margin: 0 auto;
             display: flex;
             align-items: center;
@@ -37,16 +37,16 @@
         .logo {
             display: flex;
             align-items: center;
-            gap: 14px
+            gap: 12px
         }
 
-        .logo-icon {
-            font-size: 36px
+        .logo span {
+            font-size: 34px
         }
 
         .logo h1 {
             color: #fff;
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 800
         }
 
@@ -56,12 +56,12 @@
             margin-top: 2px
         }
 
-        .nav-links {
+        .nav {
             display: flex;
             gap: 8px
         }
 
-        .nav-btn {
+        .nbtn {
             color: #c8ddf0;
             font-size: 13px;
             text-decoration: none;
@@ -72,65 +72,60 @@
             transition: .2s
         }
 
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, .18)
-        }
-
-        .nav-btn.active {
+        .nbtn:hover,
+        .nbtn.on {
             background: #2563eb;
             border-color: #2563eb;
             color: #fff
         }
 
-        /* Layout */
-        .main {
-            max-width: 1280px;
+        /* Page */
+        .page {
+            max-width: 1100px;
             margin: 22px auto;
-            padding: 0 16px 80px;
-            display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 20px;
-            align-items: start
+            padding: 0 16px 80px
         }
 
-        @media(max-width:900px) {
-            .main {
+        /* TOP FORM — horizontal grid on desktop */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px
+        }
+
+        @media(max-width:760px) {
+            .form-grid {
                 grid-template-columns: 1fr
             }
         }
 
-        /* ── Left panel (inputs) ── */
-        .left-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 14px
-        }
-
+        /* Cards */
         .card {
             background: #fff;
-            border-radius: 16px;
-            padding: 20px 22px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+            border-radius: 15px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .07)
         }
 
         .card-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             color: #1e293b;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
             letter-spacing: .03em
         }
 
-        .step-badge {
-            width: 22px;
-            height: 22px;
+        .step {
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: #2563eb;
             color: #fff;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -138,113 +133,122 @@
             flex-shrink: 0
         }
 
-        /* Profile rows */
-        .profile-rows {
+        /* Fields */
+        .f {
             display: flex;
             flex-direction: column;
-            gap: 8px
+            gap: 4px;
+            margin-bottom: 11px
         }
 
-        .profile-row {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 12px;
-            border: 1.5px solid #e2e8f0;
-            position: relative;
-            transition: .2s
+        .f:last-child {
+            margin-bottom: 0
         }
 
-        .profile-row:hover {
-            border-color: #93c5fd
-        }
-
-        .pr-sel select {
-            width: 100%;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 7px 10px;
-            font-size: 13px;
-            margin-bottom: 8px;
-            background: #fff;
-            color: #1e293b;
-            outline: none;
-            transition: .2s
-        }
-
-        .pr-sel select:focus {
-            border-color: #3b82f6
-        }
-
-        .pr-dims {
-            display: grid;
-            grid-template-columns: 1fr 1fr 80px;
-            gap: 6px
-        }
-
-        .mini-field {
-            display: flex;
-            flex-direction: column;
-            gap: 3px
-        }
-
-        .mini-field label {
+        .f label {
             font-size: 10px;
             font-weight: 700;
-            color: #94a3b8;
+            color: #64748b;
             text-transform: uppercase
         }
 
-        .mini-field input {
-            border: 1.5px solid #e2e8f0;
-            border-radius: 7px;
-            padding: 6px 8px;
+        .f input,
+        .f select {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 7px 10px;
             font-size: 14px;
-            font-weight: 700;
             color: #1e293b;
             outline: none;
             transition: .2s;
-            text-align: center
+            background: #fff
         }
 
-        .mini-field input:focus {
-            border-color: #3b82f6;
-            background: #eff6ff
+        .f input:focus,
+        .f select:focus {
+            border-color: #3b82f6
+        }
+
+        /* Profiles table */
+        .profiles-card {
+            margin-bottom: 14px
+        }
+
+        .prof-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        .prof-table th {
+            padding: 7px 10px;
+            text-align: left;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f5f9;
+            background: #f8fafc
+        }
+
+        .prof-table td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #f8fafc;
+            color: #334155;
+            vertical-align: middle
+        }
+
+        .prof-table select,
+        .prof-table input {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 5px 7px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            outline: none;
+            transition: .2s;
+            background: #fff;
+            width: 100%
+        }
+
+        .prof-table select:focus,
+        .prof-table input:focus {
+            border-color: #3b82f6
         }
 
         .m2-badge {
             background: #dbeafe;
             color: #1d4ed8;
-            border-radius: 6px;
-            font-size: 12px;
+            border-radius: 5px;
+            font-size: 11px;
             font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px
+            text-align: center;
+            padding: 5px 4px
         }
 
-        .btn-del-row {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: none;
+        .btn-del {
             border: none;
+            background: none;
             cursor: pointer;
             color: #cbd5e1;
-            font-size: 16px;
-            line-height: 1;
+            font-size: 14px;
+            padding: 3px 5px;
+            border-radius: 5px;
             transition: .2s
         }
 
-        .btn-del-row:hover {
-            color: #ef4444
+        .btn-del:hover {
+            color: #ef4444;
+            background: #fef2f2
         }
 
         .btn-add-row {
             width: 100%;
-            padding: 9px;
+            padding: 8px;
+            margin-top: 8px;
             border: 2px dashed #cbd5e1;
-            border-radius: 10px;
+            border-radius: 9px;
             background: none;
             color: #64748b;
             font-size: 13px;
@@ -259,101 +263,55 @@
             background: #eff6ff
         }
 
-        /* Generic fields */
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-bottom: 12px
-        }
-
-        .field:last-child {
-            margin-bottom: 0
-        }
-
-        .field label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: .04em
-        }
-
-        .field input,
-        .field select {
-            border: 2px solid #e2e8f0;
-            border-radius: 9px;
-            padding: 8px 12px;
-            font-size: 14px;
-            color: #1e293b;
-            outline: none;
-            transition: .2s;
-            background: #fff
-        }
-
-        .field input:focus,
-        .field select:focus {
-            border-color: #3b82f6;
-            background: #eff6ff
-        }
-
-        .primer-row {
-            display: none;
-            animation: fadeIn .3s
-        }
-
-        .primer-row.show {
-            display: block
-        }
-
-        /* Checkboxes grid */
-        .check-grid {
+        /* Checkboxes */
+        .chk-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px
+            gap: 6px;
+            margin-top: 4px
         }
 
-        .check-item {
+        .chi {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 12.5px;
+            gap: 5px;
+            font-size: 11.5px;
             color: #334155;
             cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 8px;
+            padding: 5px 9px;
+            border-radius: 7px;
             border: 1.5px solid #e2e8f0;
             transition: .2s;
-            user-select: none
+            user-select: none;
+            line-height: 1.2
         }
 
-        .check-item:hover {
+        .chi:hover {
             border-color: #93c5fd;
             background: #f0f7ff
         }
 
-        .check-item input {
-            width: 14px;
-            height: 14px;
-            accent-color: #2563eb
+        .chi input {
+            width: 13px;
+            height: 13px;
+            accent-color: #2563eb;
+            flex-shrink: 0
         }
 
-        .check-item.selected {
+        .chi.on {
             border-color: #2563eb;
             background: #eff6ff
         }
 
         /* Counters */
-        .counter-row {
-            display: flex;
-            gap: 12px
+        .ctr-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px
         }
 
-        .counter-block {
-            flex: 1
-        }
-
-        .counter-block label {
+        .ctr-block label {
             font-size: 10px;
             font-weight: 700;
             color: #94a3b8;
@@ -362,42 +320,53 @@
             margin-bottom: 4px
         }
 
-        .counter {
+        .ctr {
             display: flex;
             align-items: center;
             border: 2px solid #e2e8f0;
-            border-radius: 9px;
+            border-radius: 8px;
             overflow: hidden
         }
 
-        .counter button {
-            width: 34px;
-            height: 36px;
+        .ctr button {
+            width: 30px;
+            height: 34px;
             border: none;
             background: #f1f5f9;
             color: #475569;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: .2s
         }
 
-        .counter button:hover {
+        .ctr button:hover {
             background: #dbeafe
         }
 
-        .counter span {
+        .ctr span {
             flex: 1;
             text-align: center;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             color: #1e293b
+        }
+
+        /* Primer toggle */
+        .primer-row {
+            display: none;
+            margin-top: 8px;
+            animation: fadeIn .2s
+        }
+
+        .primer-row.show {
+            display: block
         }
 
         /* Calc button */
         .btn-calc {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             background: linear-gradient(135deg, #1d4ed8, #4f46e5);
             color: #fff;
             border: none;
@@ -406,7 +375,8 @@
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(29, 78, 216, .35);
-            transition: .2s
+            transition: .2s;
+            margin-bottom: 20px
         }
 
         .btn-calc:hover {
@@ -419,82 +389,74 @@
             transform: none
         }
 
-        /* ── Right panel (results) ── */
-        .right-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 16px
+        /* Results */
+        .results {
+            display: none
         }
 
-        .empty-state {
-            background: #fff;
-            border-radius: 16px;
-            padding: 60px;
-            text-align: center;
-            color: #94a3b8;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+        .results.show {
+            display: block
         }
 
-        .empty-icon {
-            font-size: 60px;
-            margin-bottom: 14px
-        }
-
-        .empty-state p {
-            font-size: 15px;
-            line-height: 1.6
-        }
-
-        /* m2 total bar */
         .m2-bar {
             background: linear-gradient(135deg, #1c2b3a, #2563eb);
             border-radius: 14px;
-            padding: 18px 24px;
+            padding: 16px 22px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #fff
+            color: #fff;
+            margin-bottom: 14px
         }
 
-        .m2-bar .label {
-            font-size: 13px;
+        .m2-bar .lbl {
+            font-size: 12px;
             color: #93c5fd;
             font-weight: 600
         }
 
-        .m2-bar .value {
-            font-size: 26px;
+        .m2-bar .val {
+            font-size: 24px;
             font-weight: 800
         }
 
-        /* Result tables */
-        .result-section {
-            background: #fff;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, .07)
+        .res-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px
         }
 
-        .rs-header {
+        @media(max-width:650px) {
+            .res-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .rsec {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .07)
+        }
+
+        .rsec-hdr {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
-            padding-bottom: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #f1f5f9
         }
 
-        .rs-title {
-            font-size: 16px;
+        .rsec-title {
+            font-size: 14px;
             font-weight: 800;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 8px
+            color: #1e293b
         }
 
-        .rs-subtotal {
-            font-size: 18px;
+        .rsec-sub {
+            font-size: 16px;
             font-weight: 800;
             color: #2563eb
         }
@@ -502,99 +464,87 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px
+            font-size: 12.5px
         }
 
         th {
-            padding: 9px 12px;
+            padding: 7px 10px;
             text-align: left;
             color: #64748b;
             font-weight: 700;
-            font-size: 10.5px;
+            font-size: 10px;
             text-transform: uppercase;
             border-bottom: 2px solid #f1f5f9;
             background: #fafbfc
         }
 
         td {
-            padding: 9px 12px;
+            padding: 7px 10px;
             border-bottom: 1px solid #f8fafc;
             color: #334155
         }
 
-        tr:hover td {
-            background: #fafcff
-        }
-
-        .num {
+        .nr {
             text-align: right;
-            font-family: monospace;
-            font-size: 13px
+            font-family: monospace
         }
 
-        .total-cell {
+        .tr {
             text-align: right;
             font-weight: 800;
             color: #1d4ed8
         }
 
-        /* Grand total */
-        .grand-card {
+        .grand {
             background: linear-gradient(135deg, #1d4ed8, #4f46e5);
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 14px;
+            padding: 20px 24px;
             color: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center
         }
 
-        .grand-label {
-            font-size: 14px;
+        .grand-lbl {
+            font-size: 13px;
             color: #bfdbfe;
-            font-weight: 600;
-            margin-bottom: 4px
+            margin-bottom: 3px
         }
 
-        .grand-sub {
-            font-size: 12px;
-            color: #93c5fd
-        }
-
-        .grand-value {
-            font-size: 36px;
+        .grand-val {
+            font-size: 34px;
             font-weight: 900
         }
 
-        .result-actions {
+        .grand-acts {
             display: flex;
             gap: 10px;
-            margin-top: 12px
+            margin-top: 10px
         }
 
-        .btn-save,
-        .btn-print {
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-size: 14px;
+        .gsave,
+        .gprint {
+            padding: 9px 16px;
+            border-radius: 9px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
             border: none;
             transition: .2s
         }
 
-        .btn-save {
+        .gsave {
             background: #10b981;
             color: #fff
         }
 
-        .btn-print {
+        .gprint {
             background: rgba(255, 255, 255, .15);
             color: #fff;
             border: 1px solid rgba(255, 255, 255, .25)
         }
 
-        .btn-print:hover {
+        .gprint:hover {
             background: rgba(255, 255, 255, .25)
         }
 
@@ -604,7 +554,7 @@
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
+            padding: 11px 22px;
             border-radius: 10px;
             color: #fff;
             font-size: 14px;
@@ -641,7 +591,7 @@
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-6px)
+                transform: translateY(-5px)
             }
 
             to {
@@ -652,85 +602,69 @@
 
         @media print {
 
-            .header,
-            .left-panel,
-            .btn-save,
-            .btn-print,
+            .hdr,
+            .form-grid,
+            .profiles-card,
+            .btn-calc,
+            .grand-acts,
             .toast {
                 display: none !important
             }
 
-            .main {
-                grid-template-columns: 1fr
-            }
-        }
-
-        @media(max-width:640px) {
-            .pr-dims {
-                grid-template-columns: 1fr 1fr
-            }
-
-            .grand-value {
-                font-size: 26px
+            .results {
+                display: block !important
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <div class="header-inner">
+    <div class="hdr">
+        <div class="hdr-in">
             <div class="logo">
-                <span class="logo-icon">🔩</span>
+                <span>🔩</span>
                 <div>
                     <h1>Калькулятор металоконструкцій</h1>
                     <p>Профілі · Фарбування · Послуги · Накладні</p>
                 </div>
             </div>
-            <div class="nav-links">
-                <a href="/" class="nav-btn">🪵 Шухляди</a>
-                <a href="/metal.html" class="nav-btn active">🔩 Метал</a>
-                <a href="/admin.html" class="nav-btn">⚙️ Налаштування</a>
+            <div class="nav">
+                <a href="/" class="nbtn">🪵 Шухляди</a>
+                <a href="/metal.html" class="nbtn on">🔩 Метал</a>
+                <a href="/admin.html" class="nbtn">⚙️ Налаштування</a>
             </div>
         </div>
     </div>
 
-    <div class="main">
-        <!-- ─────────────── LEFT PANEL ─────────────── -->
-        <div class="left-panel">
+    <div class="page">
 
-            <!-- Product name -->
+        <!-- ── ROW 1: Виріб + Фарбування + Послуги ── -->
+        <div class="form-grid">
+
+            <!-- Виріб -->
             <div class="card">
-                <div class="card-title"><span class="step-badge">0</span> Виріб</div>
-                <div class="field"><label>Назва виробу</label><input id="product-name"
-                        placeholder="Лорен / Каркас / Стелаж..."></div>
-                <div class="field"><label>Клієнт</label><input id="client-name" placeholder="Іванов Іван"></div>
+                <div class="card-title"><span class="step">0</span> Виріб</div>
+                <div class="f"><label>Назва виробу</label><input id="product-name" placeholder="Лорен / Каркас...">
+                </div>
+                <div class="f"><label>Клієнт</label><input id="client-name" placeholder="Іванов Іван"></div>
+                <div class="f"><label>Примітки</label><input id="notes" placeholder="Колір, особливості..."></div>
             </div>
 
-            <!-- Profile rows -->
+            <!-- Фарбування -->
             <div class="card">
-                <div class="card-title"><span class="step-badge">1</span> Профілі та матеріал</div>
-                <div class="profile-rows" id="profile-rows"></div>
-                <button class="btn-add-row" onclick="addRow()" style="margin-top:10px">+ Додати профіль</button>
-            </div>
-
-            <!-- Paint -->
-            <div class="card">
-                <div class="card-title"><span class="step-badge">2</span> Фарбування (порошкове)</div>
-                <div class="field">
-                    <label>Фарба</label>
+                <div class="card-title"><span class="step">2</span> Фарбування (порошкове)</div>
+                <div class="f"><label>Фарба</label>
                     <select id="paint-sel">
                         <option value="">— без фарбування —</option>
                     </select>
                 </div>
                 <label
-                    style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;margin-bottom:12px">
-                    <input type="checkbox" id="with-primer" style="width:16px;height:16px;accent-color:#2563eb"
-                        onchange="togglePrimer()">
-                    З ґрунтовкою
+                    style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;margin-bottom:10px">
+                    <input type="checkbox" id="with-primer" style="width:15px;height:15px;accent-color:#2563eb"
+                        onchange="togglePrimer()"> З ґрунтовкою
                 </label>
                 <div class="primer-row" id="primer-row">
-                    <div class="field"><label>Ґрунтовка</label>
+                    <div class="f"><label>Ґрунтовка</label>
                         <select id="primer-sel">
                             <option value="">— оберіть ґрунтовку —</option>
                         </select>
@@ -738,49 +672,70 @@
                 </div>
             </div>
 
-            <!-- Work items -->
+            <!-- Послуги + лічильники -->
             <div class="card">
-                <div class="card-title"><span class="step-badge">3</span> Послуги виробництва</div>
-                <div class="check-grid" id="work-grid"></div>
-                <div class="counter-row" style="margin-top:14px" id="counters-area">
-                    <div class="counter-block">
-                        <label>Зварювань</label>
-                        <div class="counter">
-                            <button onclick="chg('welder',-1)">−</button>
-                            <span id="welder-disp">1</span>
-                            <button onclick="chg('welder',1)">+</button>
-                        </div>
+                <div class="card-title"><span class="step">3</span> Послуги та накладні</div>
+                <div class="f"><label>Послуги виробництва</label>
+                    <div class="chk-grid" id="work-grid"></div>
+                </div>
+                <div class="ctr-row">
+                    <div class="ctr-block"><label>Зварювань</label>
+                        <div class="ctr"><button onclick="chg('welder',-1)">−</button><span
+                                id="welder-disp">1</span><button onclick="chg('welder',1)">+</button></div>
                     </div>
-                    <div class="counter-block">
-                        <label>Різань</label>
-                        <div class="counter">
-                            <button onclick="chg('cuts',-1)">−</button>
-                            <span id="cuts-disp">0</span>
-                            <button onclick="chg('cuts',1)">+</button>
-                        </div>
+                    <div class="ctr-block"><label>Різань</label>
+                        <div class="ctr"><button onclick="chg('cuts',-1)">−</button><span id="cuts-disp">0</span><button
+                                onclick="chg('cuts',1)">+</button></div>
                     </div>
                 </div>
+                <div class="f" style="margin-top:12px"><label>Накладні витрати</label>
+                    <div class="chk-grid" id="overhead-grid"></div>
+                </div>
             </div>
-
-            <!-- Overhead -->
-            <div class="card">
-                <div class="card-title"><span class="step-badge">4</span> Накладні витрати</div>
-                <div class="check-grid" id="overhead-grid"></div>
-            </div>
-
-            <!-- Notes -->
-            <div class="card">
-                <div class="field"><label>Примітки</label><input id="notes" placeholder="Колір, особливості..."></div>
-            </div>
-
-            <button class="btn-calc" id="btn-calc" onclick="calculate()">🔩 Розрахувати</button>
         </div>
 
-        <!-- ─────────────── RIGHT PANEL ─────────────── -->
-        <div class="right-panel" id="right-panel">
-            <div class="empty-state">
-                <div class="empty-icon">🔩</div>
-                <p>Додайте профілі, оберіть фарбування та послуги,<br>потім натисніть <strong>«Розрахувати»</strong></p>
+        <!-- ── ROW 2: Профілі (full-width) ── -->
+        <div class="card profiles-card">
+            <div class="card-title"><span class="step">1</span> Профілі та матеріал</div>
+            <table class="prof-table">
+                <thead>
+                    <tr>
+                        <th style="width:40%">Профіль</th>
+                        <th>Метри (м)</th>
+                        <th>К-сть</th>
+                        <th style="width:80px">М²</th>
+                        <th style="width:30px"></th>
+                    </tr>
+                </thead>
+                <tbody id="profile-rows"></tbody>
+            </table>
+            <button class="btn-add-row" onclick="addRow()">+ Додати профіль</button>
+        </div>
+
+        <!-- ── CALCULATE ── -->
+        <button class="btn-calc" id="btn-calc" onclick="calculate()">🔩 Розрахувати вартість</button>
+
+        <!-- ── RESULTS ── -->
+        <div class="results" id="results">
+            <div class="m2-bar">
+                <div>
+                    <div class="lbl">Загальна площа поверхні</div>
+                    <div class="val" id="r-m2">—</div>
+                </div>
+                <div style="font-size:13px;color:#93c5fd;text-align:right" id="r-title">Виріб</div>
+            </div>
+            <div class="res-grid" id="res-grid"></div>
+            <div class="grand">
+                <div>
+                    <div class="grand-lbl">ЗАГАЛЬНА ВАРТІСТЬ</div>
+                    <div style="font-size:12px;color:#93c5fd" id="r-sub"></div>
+                    <div class="grand-acts">
+                        <button class="gsave" onclick="saveQuote()">💾 Зберегти</button>
+                        <button class="gprint" onclick="window.print()">🖨️ Друк</button>
+                    </div>
+                </div>
+                <div class="grand-val"><span id="r-total">—</span><span
+                        style="font-size:18px;opacity:.7;margin-left:4px">грн</span></div>
             </div>
         </div>
     </div>
@@ -791,8 +746,7 @@
         const API = '';
         let profiles = [], paints = [], workItems = [], overheads = [];
         let form = { welder: 1, cuts: 0 };
-        let lastResult = null, lastInp = null;
-        let rowId = 0;
+        let lastResult = null, lastInp = null, rowId = 0;
 
         async function init() {
             const [p, pa, w, o] = await Promise.all([
@@ -803,230 +757,134 @@
             ]);
             profiles = p; paints = pa; workItems = w; overheads = o;
 
-            // Paints
-            const paintSel = document.getElementById('paint-sel');
-            const primerSel = document.getElementById('primer-sel');
-            paints.filter(x => x.paint_type === 'фарба').forEach(x => {
-                paintSel.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг, ${x.consumption_kg_per_m2} кг/м²)`, x.id));
-            });
-            paints.filter(x => x.paint_type === 'ґрунтовка').forEach(x => {
-                primerSel.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг)`, x.id));
-            });
+            const ps = document.getElementById('paint-sel'), pr = document.getElementById('primer-sel');
+            paints.filter(x => x.paint_type === 'фарба').forEach(x => ps.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг)`, x.id)));
+            paints.filter(x => x.paint_type === 'ґрунтовка').forEach(x => pr.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг)`, x.id)));
 
-            // Work items
-            const wGrid = document.getElementById('work-grid');
+            const wg = document.getElementById('work-grid');
             workItems.forEach(w => {
                 const lbl = document.createElement('label');
-                lbl.className = 'check-item';
-                lbl.dataset.id = w.id;
-                const typeLabel = w.pricing_type === 'per_m2' ? `${w.price} грн/м²` : w.pricing_type === 'fixed' ? `${w.price} грн/фікс` : `${w.price} грн/${w.unit}`;
-                lbl.innerHTML = `<input type="checkbox" value="${w.id}"> ${w.name}<br><small style="color:#94a3b8">${typeLabel}</small>`;
-                lbl.querySelector('input').addEventListener('change', e => {
-                    lbl.classList.toggle('selected', e.target.checked);
-                });
-                wGrid.appendChild(lbl);
-            });
-            // Auto-check all per_m2 work items on load
-            wGrid.querySelectorAll('input').forEach(inp => {
-                const wi = workItems.find(x => x.id == inp.value);
-                if (wi?.pricing_type === 'per_m2') { inp.checked = true; inp.closest('.check-item').classList.add('selected'); }
+                lbl.className = 'chi'; lbl.dataset.id = w.id;
+                const sub = w.pricing_type === 'per_m2' ? `${w.price}/м²` : w.pricing_type === 'fixed' ? `${w.price} фікс` : `${w.price}/${w.unit}`;
+                lbl.innerHTML = `<input type="checkbox" value="${w.id}"> ${w.name} <small style="color:#94a3b8;margin-left:3px">${sub}</small>`;
+                lbl.querySelector('input').addEventListener('change', e => lbl.classList.toggle('on', e.target.checked));
+                wg.appendChild(lbl);
+                if (w.pricing_type === 'per_m2') { lbl.querySelector('input').checked = true; lbl.classList.add('on'); }
             });
 
-            // Overhead
-            const oGrid = document.getElementById('overhead-grid');
+            const og = document.getElementById('overhead-grid');
             overheads.forEach(o => {
                 const lbl = document.createElement('label');
-                lbl.className = 'check-item';
-                lbl.innerHTML = `<input type="checkbox" value="${o.id}"> ${o.name}<br><small style="color:#94a3b8">${o.price} грн</small>`;
-                lbl.querySelector('input').addEventListener('change', e => {
-                    lbl.classList.toggle('selected', e.target.checked);
-                });
-                oGrid.appendChild(lbl);
+                lbl.className = 'chi';
+                lbl.innerHTML = `<input type="checkbox" value="${o.id}"> ${o.name} <small style="color:#94a3b8;margin-left:3px">${o.price} грн</small>`;
+                lbl.querySelector('input').addEventListener('change', e => lbl.classList.toggle('on', e.target.checked));
+                og.appendChild(lbl);
             });
 
-            // Add first row
             addRow();
         }
 
         function addRow() {
             const id = ++rowId;
-            const div = document.createElement('div');
-            div.className = 'profile-row';
-            div.id = `row-${id}`;
             const opts = profiles.map(p => `<option value="${p.id}" data-per="${p.perimeter_m}">${p.name} — ${p.price_per_meter} грн/м</option>`).join('');
-            div.innerHTML = `
-    <button class="btn-del-row" onclick="delRow(${id})" title="Видалити">×</button>
-    <div class="pr-sel"><select onchange="recalcRow(${id})">${opts}</select></div>
-    <div class="pr-dims">
-      <div class="mini-field"><label>Метри (м)</label><input type="number" id="len-${id}" value="1" min="0.01" step="0.01" oninput="recalcRow(${id})"></div>
-      <div class="mini-field"><label>Кількість</label><input type="number" id="qty-${id}" value="1" min="1" step="1" oninput="recalcRow(${id})"></div>
-      <div class="mini-field"><label>М²</label><div class="m2-badge" id="m2-${id}">—</div></div>
-    </div>`;
-            document.getElementById('profile-rows').appendChild(div);
+            const tr = document.createElement('tr');
+            tr.id = `row-${id}`;
+            tr.innerHTML = `
+    <td><select onchange="recalcRow(${id})">${opts}</select></td>
+    <td><input type="number" id="len-${id}" value="1" min="0.01" step="0.01" style="width:80px" oninput="recalcRow(${id})"></td>
+    <td><input type="number" id="qty-${id}" value="1" min="1" style="width:60px" oninput="recalcRow(${id})"></td>
+    <td><div class="m2-badge" id="m2-${id}">—</div></td>
+    <td><button class="btn-del" onclick="delRow(${id})" title="Видалити">✕</button></td>`;
+            document.getElementById('profile-rows').appendChild(tr);
             recalcRow(id);
         }
 
         function delRow(id) {
-            const el = document.getElementById(`row-${id}`);
-            if (document.querySelectorAll('.profile-row').length > 1) el.remove();
+            if (document.querySelectorAll('.prof-table tbody tr').length > 1)
+                document.getElementById(`row-${id}`).remove();
             else showToast('Мінімум 1 рядок', 'err');
         }
 
         function recalcRow(id) {
             const sel = document.querySelector(`#row-${id} select`);
-            const opt = sel.options[sel.selectedIndex];
-            const per = parseFloat(opt.dataset.per) || 0;
+            const per = parseFloat(sel?.options[sel.selectedIndex]?.dataset.per) || 0;
             const len = parseFloat(document.getElementById(`len-${id}`)?.value) || 0;
             const qty = parseFloat(document.getElementById(`qty-${id}`)?.value) || 1;
-            const m2 = (per * len * qty).toFixed(4);
-            const badge = document.getElementById(`m2-${id}`);
-            if (badge) badge.textContent = m2 + ' м²';
+            const m2 = (per * len * qty);
+            const el = document.getElementById(`m2-${id}`);
+            if (el) el.textContent = m2.toFixed(4) + ' м²';
         }
 
-        function togglePrimer() {
-            document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked);
-        }
-
-        function chg(key, d) {
-            form[key] = Math.max(0, form[key] + d);
-            document.getElementById(key === 'welder' ? 'welder-disp' : 'cuts-disp').textContent = form[key];
-        }
+        function togglePrimer() { document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked); }
+        function chg(k, d) { form[k] = Math.max(0, form[k] + d); document.getElementById(k === 'welder' ? 'welder-disp' : 'cuts-disp').textContent = form[k]; }
 
         async function calculate() {
             const btn = document.getElementById('btn-calc');
             btn.disabled = true; btn.textContent = '🔄 Рахую...';
-
-            const rows = [...document.querySelectorAll('.profile-row')].map(row => {
-                const id = row.id.replace('row-', '');
-                const sel = row.querySelector('select');
+            const rows = [...document.querySelectorAll('.prof-table tbody tr')].map(tr => {
+                const id = tr.id.replace('row-', '');
                 return {
-                    profile_id: +sel.value,
+                    profile_id: +tr.querySelector('select').value,
                     length_m: +(document.getElementById(`len-${id}`)?.value || 1),
                     quantity: +(document.getElementById(`qty-${id}`)?.value || 1)
                 };
             }).filter(r => r.profile_id && r.length_m > 0);
-
             const paintId = document.getElementById('paint-sel').value;
             const withPrimer = document.getElementById('with-primer').checked;
             const primerId = document.getElementById('primer-sel').value;
-            const workIds = [...document.querySelectorAll('#work-grid input:checked')].map(c => +c.value);
-            const ohIds = [...document.querySelectorAll('#overhead-grid input:checked')].map(c => +c.value);
-
+            const wIds = [...document.querySelectorAll('#work-grid input:checked')].map(c => +c.value);
+            const oIds = [...document.querySelectorAll('#overhead-grid input:checked')].map(c => +c.value);
             const inp = {
                 product_name: document.getElementById('product-name').value || null,
                 client_name: document.getElementById('client-name').value || null,
-                rows,
-                paint_id: paintId ? +paintId : null,
-                with_primer: withPrimer,
-                primer_id: primerId && withPrimer ? +primerId : null,
-                work_item_ids: workIds,
-                overhead_ids: ohIds,
-                welder_qty: form.welder,
-                cuts_qty: form.cuts,
+                rows, paint_id: paintId ? +paintId : null,
+                with_primer: withPrimer, primer_id: primerId && withPrimer ? +primerId : null,
+                work_item_ids: wIds, overhead_ids: oIds,
+                welder_qty: form.welder, cuts_qty: form.cuts,
                 notes: document.getElementById('notes').value || null
             };
-
             try {
-                const r = await fetch(`${API}/api/metal/calculate`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp)
-                });
+                const r = await fetch(`${API}/api/metal/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp) });
                 if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Помилка'); }
-                lastResult = await r.json();
-                lastInp = inp;
+                lastResult = await r.json(); lastInp = inp;
                 renderResults(lastResult);
             } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
-            finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати'; }
+            finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати вартість'; }
         }
 
-        function makeTable(lines, icon) {
-            if (!lines.length) return '';
-            const rows = lines.map(l => `<tr>
-    <td>${l.name}</td>
-    <td class="num">${typeof l.qty === 'number' ? l.qty.toFixed(4) : l.qty}</td>
-    <td>${l.unit}</td>
-    <td class="num">${l.price_unit.toFixed(2)}</td>
-    <td class="total-cell">${l.total.toFixed(2)}</td>
-  </tr>`).join('');
-            return `<table><thead><tr>
-    <th>Назва</th><th style="text-align:right">К-сть</th><th>Од.</th>
-    <th style="text-align:right">Ціна</th><th style="text-align:right">Сума</th>
-  </tr></thead><tbody>${rows}</tbody></table>`;
+        function makeTable(lines) {
+            if (!lines.length) return '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:8px">—</p>';
+            return `<table><thead><tr><th>Назва</th><th class="nr">К-сть</th><th>Од.</th><th class="nr">Ціна</th><th class="nr">Сума</th></tr></thead><tbody>${lines.map(l => `<tr><td>${l.name}</td><td class="nr">${l.qty.toFixed(4)}</td><td>${l.unit}</td><td class="nr">${l.price_unit.toFixed(2)}</td><td class="tr">${l.total.toFixed(2)}</td></tr>`).join('')
+                }</tbody></table>`;
+        }
+
+        function sec(icon, title, sub, content) {
+            if (!sub) return '';
+            return `<div class="rsec"><div class="rsec-hdr"><div class="rsec-title">${icon} ${title}</div><div class="rsec-sub">${sub.toFixed(2)} грн</div></div>${content}</div>`;
         }
 
         function renderResults(res) {
-            const rp = document.getElementById('right-panel');
-            const productTitle = res.product_name ? `<strong>"${res.product_name}"</strong>` : 'Виріб';
-
-            rp.innerHTML = `
-    <!-- M² bar -->
-    <div class="m2-bar">
-      <div><div class="label">Загальна площа поверхні</div><div class="value">${res.total_m2.toFixed(4)} м²</div></div>
-      <div style="font-size:13px;color:#93c5fd;text-align:right">${productTitle}<br>Від ${res.metal_lines.length} профілів</div>
-    </div>
-
-    <!-- Metal -->
-    ${res.metal_lines.length ? `
-    <div class="result-section">
-      <div class="rs-header">
-        <div class="rs-title">🔩 Прорахунок метал</div>
-        <div class="rs-subtotal">${res.metal_subtotal.toFixed(2)} грн</div>
-      </div>
-      ${makeTable(res.metal_lines)}
-    </div>`: ''}
-
-    <!-- Coating -->
-    ${res.coating_lines.length ? `
-    <div class="result-section">
-      <div class="rs-header">
-        <div class="rs-title">🎨 Фарбування</div>
-        <div class="rs-subtotal">${res.coating_subtotal.toFixed(2)} грн</div>
-      </div>
-      ${makeTable(res.coating_lines)}
-    </div>`: ''}
-
-    <!-- Work -->
-    ${res.work_lines.length ? `
-    <div class="result-section">
-      <div class="rs-header">
-        <div class="rs-title">⚙️ Послуги виробництва</div>
-        <div class="rs-subtotal">${res.work_subtotal.toFixed(2)} грн</div>
-      </div>
-      ${makeTable(res.work_lines)}
-    </div>`: ''}
-
-    <!-- Overhead -->
-    ${res.overhead_lines.length ? `
-    <div class="result-section">
-      <div class="rs-header">
-        <div class="rs-title">📊 Накладні витрати</div>
-        <div class="rs-subtotal">${res.overhead_subtotal.toFixed(2)} грн</div>
-      </div>
-      ${makeTable(res.overhead_lines)}
-    </div>`: ''}
-
-    <!-- Grand total -->
-    <div class="grand-card">
-      <div>
-        <div class="grand-label">ЗАГАЛЬНА ВАРТІСТЬ</div>
-        <div class="grand-sub">${productTitle} · Площа: ${res.total_m2.toFixed(4)} м²</div>
-        <div class="result-actions">
-          <button class="btn-save" onclick="saveQuote()">💾 Зберегти</button>
-          <button class="btn-print" onclick="window.print()">🖨️ Друк</button>
-        </div>
-      </div>
-      <div class="grand-value">${res.grand_total.toFixed(2)}<span style="font-size:18px;margin-left:4px;opacity:.8">грн</span></div>
-    </div>`;
+            document.getElementById('r-m2').textContent = res.total_m2.toFixed(4) + ' м²';
+            document.getElementById('r-title').innerHTML = (res.product_name ? `<strong>"${res.product_name}"</strong><br>` : '') + `Від ${res.metal_lines.length} профілів`;
+            document.getElementById('r-total').textContent = res.grand_total.toFixed(2);
+            document.getElementById('r-sub').textContent = (res.product_name ? `"${res.product_name}" · ` : '') + 'Площа: ' + res.total_m2.toFixed(4) + ' м²';
+            document.getElementById('res-grid').innerHTML =
+                sec('🔩', 'Прорахунок метал', res.metal_subtotal, makeTable(res.metal_lines)) +
+                sec('🎨', 'Фарбування', res.coating_subtotal, makeTable(res.coating_lines)) +
+                sec('⚙️', 'Послуги виробництва', res.work_subtotal, makeTable(res.work_lines)) +
+                sec('📊', 'Накладні витрати', res.overhead_subtotal, makeTable(res.overhead_lines));
+            const el = document.getElementById('results');
+            el.classList.add('show');
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
         }
 
         async function saveQuote() {
             if (!lastResult) return;
             try {
                 await fetch(`${API}/api/metal/save-quote`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        product_name: lastResult.product_name,
-                        client_name: lastInp?.client_name, inp: lastInp, result: lastResult
-                    })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_name: lastResult.product_name, client_name: lastInp?.client_name, inp: lastInp, result: lastResult })
                 });
                 showToast('Розрахунок збережено!', 'ok');
             } catch { showToast('Не вдалося зберегти', 'err'); }

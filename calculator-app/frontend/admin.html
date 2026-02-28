@@ -18,33 +18,33 @@
             min-height: 100vh
         }
 
-        .header {
+        .hdr {
             background: linear-gradient(135deg, #1a2332, #2d3f5e);
             padding: 0 24px
         }
 
-        .header-inner {
+        .hdr-in {
             max-width: 1100px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 0
+            padding: 15px 0
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 14px
+            gap: 12px
         }
 
         .logo span {
-            font-size: 30px
+            font-size: 28px
         }
 
         .logo h1 {
             color: #fff;
-            font-size: 19px;
+            font-size: 18px;
             font-weight: 700
         }
 
@@ -54,43 +54,68 @@
             margin-top: 2px
         }
 
-        .btn-back {
+        .nav-links {
+            display: flex;
+            gap: 8px
+        }
+
+        .nbtn {
             color: #d4e4ff;
             font-size: 13px;
             text-decoration: none;
-            padding: 8px 14px;
+            padding: 7px 13px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, .2);
             background: rgba(255, 255, 255, .1);
             transition: .2s
         }
 
-        .btn-back:hover {
+        .nbtn:hover {
             background: rgba(255, 255, 255, .2)
         }
 
         .body {
             max-width: 1100px;
-            margin: 24px auto;
+            margin: 22px auto;
             padding: 0 16px 80px
+        }
+
+        /* Tab groups */
+        .tab-group-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            padding: 0 4px;
+            margin-bottom: 6px;
+            margin-top: 14px
+        }
+
+        .tab-group-label:first-child {
+            margin-top: 0
         }
 
         .tabs {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
             margin-bottom: 16px
         }
 
         .tab {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: 2px solid #dde3ef;
             border-radius: 10px;
             background: #fff;
             color: #6b7a99;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: .2s
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            gap: 6px
         }
 
         .tab.active {
@@ -99,10 +124,30 @@
             color: #1d4ed8
         }
 
+        .tab.metal {
+            border-color: #d4a26a
+        }
+
+        .tab.metal.active {
+            border-color: #b45309;
+            background: #fef3c7;
+            color: #92400e
+        }
+
+        /* Tab separatator */
+        .sep {
+            width: 2px;
+            height: 28px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            align-self: center
+        }
+
+        /* Panels */
         .panel {
             background: #fff;
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 15px;
+            padding: 22px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
             display: none
         }
@@ -115,20 +160,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px
+            margin-bottom: 18px
         }
 
         .panel-hdr h2 {
-            font-size: 18px;
-            color: #1e293b
+            font-size: 17px;
+            color: #1e293b;
+            font-weight: 700
         }
 
         .btn-add {
             background: #3b82f6;
             color: #fff;
             border: none;
-            border-radius: 9px;
-            padding: 9px 16px;
+            border-radius: 8px;
+            padding: 8px 15px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -139,18 +185,27 @@
             background: #2563eb
         }
 
+        .btn-add.amber {
+            background: #d97706
+        }
+
+        .btn-add.amber:hover {
+            background: #b45309
+        }
+
+        /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px
+            font-size: 13.5px
         }
 
         th {
-            padding: 10px 14px;
+            padding: 9px 12px;
             text-align: left;
             color: #64748b;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             border-bottom: 2px solid #e2e8f0;
             background: #f8fafc;
@@ -158,7 +213,7 @@
         }
 
         td {
-            padding: 11px 14px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f5f9;
             color: #334155
         }
@@ -172,31 +227,36 @@
             color: #1d4ed8
         }
 
-        .acts {
-            display: flex;
-            gap: 6px
+        .price-amber {
+            font-weight: 700;
+            color: #b45309
         }
 
-        .btn-e,
-        .btn-t {
+        .acts {
+            display: flex;
+            gap: 5px
+        }
+
+        .be,
+        .bt {
             border: none;
             background: none;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             padding: 4px 6px;
-            border-radius: 6px;
+            border-radius: 5px;
             transition: .2s
         }
 
-        .btn-e:hover,
-        .btn-t:hover {
+        .be:hover,
+        .bt:hover {
             background: #f1f5f9
         }
 
         .badge {
-            padding: 3px 10px;
+            padding: 3px 9px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600
         }
 
@@ -210,6 +270,15 @@
             color: #dc2626
         }
 
+        .type-tag {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #475569
+        }
+
         /* Modal */
         .overlay {
             position: fixed;
@@ -218,7 +287,8 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000
+            z-index: 1000;
+            animation: fadeIn .2s
         }
 
         .overlay.show {
@@ -227,10 +297,10 @@
 
         .modal {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 15px;
             width: 100%;
             max-width: 420px;
-            padding: 28px;
+            padding: 26px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, .2)
         }
 
@@ -238,53 +308,53 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px
+            margin-bottom: 18px
         }
 
         .modal-hdr h3 {
-            font-size: 18px;
+            font-size: 17px;
             color: #1e293b
         }
 
         .cls {
             background: none;
             border: none;
-            font-size: 18px;
+            font-size: 17px;
             cursor: pointer;
             color: #64748b
         }
 
-        .fields {
+        .flds {
             display: flex;
             flex-direction: column;
-            gap: 14px
+            gap: 12px
         }
 
-        .field {
+        .f {
             display: flex;
             flex-direction: column;
-            gap: 5px
+            gap: 4px
         }
 
-        .field label {
-            font-size: 11px;
+        .f label {
+            font-size: 10px;
             font-weight: 700;
             color: #64748b;
             text-transform: uppercase
         }
 
-        .field input,
-        .field select {
+        .f input,
+        .f select {
             border: 2px solid #e2e8f0;
             border-radius: 8px;
-            padding: 9px 12px;
+            padding: 8px 11px;
             font-size: 14px;
             outline: none;
             transition: .2s
         }
 
-        .field input:focus,
-        .field select:focus {
+        .f input:focus,
+        .f select:focus {
             border-color: #3b82f6
         }
 
@@ -292,7 +362,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 10px;
-            margin-top: 24px
+            margin-top: 20px
         }
 
         .btn-cancel {
@@ -300,7 +370,7 @@
             color: #475569;
             border: none;
             border-radius: 8px;
-            padding: 10px 18px;
+            padding: 9px 17px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer
@@ -311,7 +381,7 @@
             color: #fff;
             border: none;
             border-radius: 8px;
-            padding: 10px 18px;
+            padding: 9px 17px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer
@@ -321,12 +391,17 @@
             opacity: .6
         }
 
+        .btn-save.amber-bg {
+            background: #d97706
+        }
+
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
+            padding: 11px 22px;
             border-radius: 10px;
             color: #fff;
             font-size: 14px;
@@ -347,8 +422,18 @@
             background: #ef4444
         }
 
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
         @media(max-width:640px) {
-            .header-inner {
+            .hdr-in {
                 flex-direction: column;
                 gap: 10px
             }
@@ -367,29 +452,41 @@
 </head>
 
 <body>
-    <div class="header">
-        <div class="header-inner">
-            <div class="logo">
-                <span>⚙️</span>
+    <div class="hdr">
+        <div class="hdr-in">
+            <div class="logo"><span>⚙️</span>
                 <div>
                     <h1>Налаштування калькулятора</h1>
                     <p>Ціни на матеріали, фурнітуру і послуги</p>
                 </div>
             </div>
-            <a href="/" class="btn-back">← Конструктор</a>
+            <div class="nav-links">
+                <a href="/" class="nbtn">🪵 Шухляди</a>
+                <a href="/metal.html" class="nbtn">🔩 Метал</a>
+            </div>
         </div>
     </div>
 
     <div class="body">
-        <div class="tabs">
-            <button class="tab active" onclick="setTab('materials')">🪵 Матеріали</button>
-            <button class="tab" onclick="setTab('hardware')">⚙️ Фурнітура</button>
-            <button class="tab" onclick="setTab('services')">🔨 Послуги</button>
+        <!-- Tabs -->
+        <div class="tabs" id="tabs">
+            <!-- Drawer tabs -->
+            <button class="tab active" data-tab="materials">🪵 Матеріали (шухляди)</button>
+            <button class="tab" data-tab="hardware">⚙️ Фурнітура</button>
+            <button class="tab" data-tab="services">🔨 Послуги (шухляди)</button>
+            <!-- Separator -->
+            <div class="sep"></div>
+            <!-- Metal tabs -->
+            <button class="tab metal" data-tab="m-profiles">🔩 Профілі</button>
+            <button class="tab metal" data-tab="m-paints">🎨 Фарби / Ґрунтовки</button>
+            <button class="tab metal" data-tab="m-work">⚙️ Послуги (метал)</button>
+            <button class="tab metal" data-tab="m-overhead">📊 Накладні</button>
         </div>
 
+        <!-- ── DRAWER: Materials ── -->
         <div class="panel active" id="p-materials">
             <div class="panel-hdr">
-                <h2>Матеріали</h2><button class="btn-add" onclick="openAdd()">+ Додати</button>
+                <h2>🪵 Матеріали (шухляди)</h2><button class="btn-add" onclick="openAdd('materials')">+ Додати</button>
             </div>
             <table>
                 <thead>
@@ -404,9 +501,11 @@
                 <tbody id="tb-materials"></tbody>
             </table>
         </div>
+
+        <!-- ── DRAWER: Hardware ── -->
         <div class="panel" id="p-hardware">
             <div class="panel-hdr">
-                <h2>Фурнітура</h2><button class="btn-add" onclick="openAdd()">+ Додати</button>
+                <h2>⚙️ Фурнітура</h2><button class="btn-add" onclick="openAdd('hardware')">+ Додати</button>
             </div>
             <table>
                 <thead>
@@ -423,9 +522,11 @@
                 <tbody id="tb-hardware"></tbody>
             </table>
         </div>
+
+        <!-- ── DRAWER: Services ── -->
         <div class="panel" id="p-services">
             <div class="panel-hdr">
-                <h2>Послуги</h2><button class="btn-add" onclick="openAdd()">+ Додати</button>
+                <h2>🔨 Послуги (шухляди)</h2><button class="btn-add" onclick="openAdd('services')">+ Додати</button>
             </div>
             <table>
                 <thead>
@@ -440,6 +541,88 @@
                 <tbody id="tb-services"></tbody>
             </table>
         </div>
+
+        <!-- ── METAL: Profiles ── -->
+        <div class="panel" id="p-m-profiles">
+            <div class="panel-hdr">
+                <h2>🔩 Профілі металоконструкцій</h2><button class="btn-add amber" onclick="openAdd('m-profiles')">+
+                    Додати</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Тип</th>
+                        <th>Периметр (м)</th>
+                        <th>Ціна / м</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb-m-profiles"></tbody>
+            </table>
+        </div>
+
+        <!-- ── METAL: Paints ── -->
+        <div class="panel" id="p-m-paints">
+            <div class="panel-hdr">
+                <h2>🎨 Фарби та ґрунтовки</h2><button class="btn-add amber" onclick="openAdd('m-paints')">+
+                    Додати</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Тип</th>
+                        <th>Ціна / кг</th>
+                        <th>Витрата кг/м²</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb-m-paints"></tbody>
+            </table>
+        </div>
+
+        <!-- ── METAL: Work ── -->
+        <div class="panel" id="p-m-work">
+            <div class="panel-hdr">
+                <h2>⚙️ Послуги виробництва (метал)</h2><button class="btn-add amber" onclick="openAdd('m-work')">+
+                    Додати</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Тип нарахування</th>
+                        <th>Ціна</th>
+                        <th>Одиниця</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb-m-work"></tbody>
+            </table>
+        </div>
+
+        <!-- ── METAL: Overhead ── -->
+        <div class="panel" id="p-m-overhead">
+            <div class="panel-hdr">
+                <h2>📊 Накладні витрати</h2><button class="btn-add amber" onclick="openAdd('m-overhead')">+
+                    Додати</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th>Сума</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb-m-overhead"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -448,117 +631,200 @@
             <div class="modal-hdr">
                 <h3 id="modal-title">Додати</h3><button class="cls" onclick="closeModal()">✕</button>
             </div>
-            <div class="fields" id="modal-fields"></div>
+            <div class="flds" id="modal-fields"></div>
             <div class="modal-foot">
                 <button class="btn-cancel" onclick="closeModal()">Скасувати</button>
-                <button class="btn-save" id="btn-save" onclick="doSave()">Зберегти</button>
+                <button id="btn-save" onclick="doSave()">Зберегти</button>
             </div>
         </div>
     </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
         const API = '';
         let curTab = 'materials', editId = null;
-        const tabs = ['materials', 'hardware', 'services'];
 
-        function setTab(t) {
-            curTab = t;
-            tabs.forEach(x => {
-                document.getElementById('p-' + x).classList.toggle('active', x === t);
+        // ── Tab init ──────────────────────────────────────────────────────────────────
+        document.querySelectorAll('.tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                curTab = btn.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+                document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'p-' + curTab));
+                loadTab(curTab);
+                // Save btn color
+                const bsave = document.getElementById('btn-save');
+                if (bsave) bsave.className = curTab.startsWith('m-') ? 'btn-save amber-bg' : 'btn-save';
             });
-            document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', tabs[i] === t));
-            loadTab(t);
+        });
+        loadTab('materials');
+
+        // ── Load ──────────────────────────────────────────────────────────────────────
+        async function loadTab(t) {
+            const apiMap = {
+                'materials': '/api/calculator/materials',
+                'hardware': '/api/calculator/hardware',
+                'services': '/api/calculator/services',
+                'm-profiles': '/api/metal/profiles',
+                'm-paints': '/api/metal/paints',
+                'm-work': '/api/metal/work-items',
+                'm-overhead': '/api/metal/overhead'
+            };
+            const data = await fetch(`${API}${apiMap[t]}?active_only=false`).then(r => r.json());
+            renderTable(t, data);
         }
 
-        async function loadTab(t) {
-            const data = await fetch(`${API}/api/calculator/${t}?active_only=false`).then(r => r.json());
+        function renderTable(t, data) {
             const tb = document.getElementById('tb-' + t);
+            if (!tb) return;
             if (t === 'materials') {
                 tb.innerHTML = data.map(m => `<tr>
       <td>${m.name}</td><td>${m.thickness_mm ? m.thickness_mm + 'мм' : '—'}</td>
       <td class="price">${m.price_per_m2} грн</td>
-      <td><span class="badge ${m.is_active ? 'on' : 'off'}">${m.is_active ? 'Активний' : 'Вимкнений'}</span></td>
-      <td class="acts">
-        <button class="btn-e" onclick='openEdit(${JSON.stringify(m)})'>✏️</button>
-        <button class="btn-t" onclick="toggle('materials',${m.id},${m.is_active})">${m.is_active ? '🔴' : '🟢'}</button>
-      </td></tr>`).join('');
+      <td><span class="badge ${m.is_active ? 'on' : 'off'}">${m.is_active ? 'Активний' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(m)})'>✏️</button>
+        <button class="bt" onclick="toggle('materials',${m.id},${m.is_active})">${m.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
             } else if (t === 'hardware') {
                 tb.innerHTML = data.map(h => `<tr>
-      <td>${h.name}</td><td>${h.brand || '—'}</td>
-      <td>${h.length_mm ? h.length_mm + 'мм' : '—'}</td><td>${h.category}</td>
-      <td class="price">${h.price_per_unit} грн</td>
-      <td><span class="badge ${h.is_active ? 'on' : 'off'}">${h.is_active ? 'Активна' : 'Вимкнена'}</span></td>
-      <td class="acts">
-        <button class="btn-e" onclick='openEdit(${JSON.stringify(h)})'>✏️</button>
-        <button class="btn-t" onclick="toggle('hardware',${h.id},${h.is_active})">${h.is_active ? '🔴' : '🟢'}</button>
-      </td></tr>`).join('');
-            } else {
+      <td>${h.name}</td><td>${h.brand || '—'}</td><td>${h.length_mm ? h.length_mm + 'мм' : '—'}</td>
+      <td>${h.category}</td><td class="price">${h.price_per_unit} грн</td>
+      <td><span class="badge ${h.is_active ? 'on' : 'off'}">${h.is_active ? 'Активна' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(h)})'>✏️</button>
+        <button class="bt" onclick="toggle('hardware',${h.id},${h.is_active})">${h.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'services') {
                 tb.innerHTML = data.map(s => `<tr>
       <td>${s.name}</td><td class="price">${s.price} грн</td><td>${s.unit}</td>
-      <td><span class="badge ${s.is_active ? 'on' : 'off'}">${s.is_active ? 'Активна' : 'Вимкнена'}</span></td>
-      <td class="acts">
-        <button class="btn-e" onclick='openEdit(${JSON.stringify(s)})'>✏️</button>
-        <button class="btn-t" onclick="toggle('services',${s.id},${s.is_active})">${s.is_active ? '🔴' : '🟢'}</button>
-      </td></tr>`).join('');
+      <td><span class="badge ${s.is_active ? 'on' : 'off'}">${s.is_active ? 'Активна' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(s)})'>✏️</button>
+        <button class="bt" onclick="toggle('services',${s.id},${s.is_active})">${s.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'm-profiles') {
+                tb.innerHTML = data.map(p => `<tr>
+      <td>${p.name}</td>
+      <td><span class="type-tag">${p.profile_type}</span></td>
+      <td>${p.perimeter_m} м</td>
+      <td class="price-amber">${p.price_per_meter} грн/м</td>
+      <td><span class="badge ${p.is_active ? 'on' : 'off'}">${p.is_active ? 'Активний' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(p)})'>✏️</button>
+        <button class="bt" onclick="toggle('m-profiles',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'm-paints') {
+                tb.innerHTML = data.map(p => `<tr>
+      <td>${p.name}</td>
+      <td><span class="type-tag">${p.paint_type}</span></td>
+      <td class="price-amber">${p.price_per_kg} грн/кг</td>
+      <td>${p.consumption_kg_per_m2} кг/м²</td>
+      <td><span class="badge ${p.is_active ? 'on' : 'off'}">${p.is_active ? 'Активна' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(p)})'>✏️</button>
+        <button class="bt" onclick="toggle('m-paints',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'm-work') {
+                const typeLabel = { 'per_m2': 'За м²', 'fixed': 'Фіксована', 'per_unit': 'За одиницю' };
+                tb.innerHTML = data.map(w => `<tr>
+      <td>${w.name}</td>
+      <td><span class="type-tag">${typeLabel[w.pricing_type] || w.pricing_type}</span></td>
+      <td class="price-amber">${w.price} грн</td>
+      <td>${w.unit}</td>
+      <td><span class="badge ${w.is_active ? 'on' : 'off'}">${w.is_active ? 'Активна' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(w)})'>✏️</button>
+        <button class="bt" onclick="toggle('m-work',${w.id},${w.is_active})">${w.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+            } else if (t === 'm-overhead') {
+                tb.innerHTML = data.map(o => `<tr>
+      <td>${o.name}</td>
+      <td class="price-amber">${o.price} грн</td>
+      <td><span class="badge ${o.is_active ? 'on' : 'off'}">${o.is_active ? 'Активна' : 'Вимк.'}</span></td>
+      <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(o)})'>✏️</button>
+        <button class="bt" onclick="toggle('m-overhead',${o.id},${o.is_active})">${o.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
             }
         }
 
+        // ── Modal fields ──────────────────────────────────────────────────────────────
         function getFields(data = {}) {
             if (curTab === 'materials') return `
-    <div class="field"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
-    <div class="field"><label>Товщина (мм)</label><input id="f-thick" type="number" value="${data.thickness_mm || 16}"></div>
-    <div class="field"><label>Ціна за м²</label><input id="f-price" type="number" step="0.01" value="${data.price_per_m2 || 0}"></div>
-    <div class="field"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'м²'}"></div>`;
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Товщина (мм)</label><input id="f-thick" type="number" value="${data.thickness_mm || 16}"></div>
+    <div class="f"><label>Ціна за м²</label><input id="f-price" type="number" value="${data.price_per_m2 || 0}"></div>
+    <div class="f"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'м²'}"></div>`;
             if (curTab === 'hardware') return `
-    <div class="field"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
-    <div class="field"><label>Бренд</label><input id="f-brand" value="${data.brand || ''}"></div>
-    <div class="field"><label>Довжина (мм)</label><input id="f-len" type="number" value="${data.length_mm || ''}"></div>
-    <div class="field"><label>Категорія</label>
-      <select id="f-cat">
-        ${['направляючі', 'ручки', 'петлі', 'інше'].map(c => `<option ${data.category === c ? 'selected' : ''}>${c}</option>`).join('')}
-      </select></div>
-    <div class="field"><label>Ціна (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price_per_unit || 0}"></div>
-    <div class="field"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'пара'}"></div>`;
-            return `
-    <div class="field"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
-    <div class="field"><label>Ціна (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price || 0}"></div>
-    <div class="field"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'шт'}"></div>`;
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Бренд</label><input id="f-brand" value="${data.brand || ''}"></div>
+    <div class="f"><label>Довжина (мм)</label><input id="f-len" type="number" value="${data.length_mm || ''}"></div>
+    <div class="f"><label>Категорія</label><select id="f-cat">${['направляючі', 'ручки', 'петлі', 'інше'].map(c => `<option ${data.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    <div class="f"><label>Ціна (грн)</label><input id="f-price" type="number" value="${data.price_per_unit || 0}"></div>
+    <div class="f"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'пара'}"></div>`;
+            if (curTab === 'services') return `
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Ціна (грн)</label><input id="f-price" type="number" value="${data.price || 0}"></div>
+    <div class="f"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'шт'}"></div>`;
+            if (curTab === 'm-profiles') return `
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Тип</label><select id="f-type">${['труба', 'куток', 'круг', 'лист'].map(c => `<option ${data.profile_type === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    <div class="f"><label>Периметр перерізу (м) <small style="font-weight:400;text-transform:none">напр. 30×30 = 0.12</small></label><input id="f-per" type="number" step="0.0001" value="${data.perimeter_m || 0}"></div>
+    <div class="f"><label>Ціна за м (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price_per_meter || 0}"></div>`;
+            if (curTab === 'm-paints') return `
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Тип</label><select id="f-type"><option ${data.paint_type === 'фарба' ? 'selected' : ''}>фарба</option><option ${data.paint_type === 'ґрунтовка' ? 'selected' : ''}>ґрунтовка</option></select></div>
+    <div class="f"><label>Ціна за кг (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price_per_kg || 0}"></div>
+    <div class="f"><label>Витрата (кг/м²)</label><input id="f-cons" type="number" step="0.001" value="${data.consumption_kg_per_m2 || 0.28}"></div>`;
+            if (curTab === 'm-work') return `
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Тип нарахування</label><select id="f-ptype">
+      <option value="per_m2" ${data.pricing_type === 'per_m2' ? 'selected' : ''}>За м²</option>
+      <option value="fixed" ${data.pricing_type === 'fixed' ? 'selected' : ''}>Фіксована</option>
+      <option value="per_unit" ${data.pricing_type === 'per_unit' ? 'selected' : ''}>За одиницю</option>
+    </select></div>
+    <div class="f"><label>Ціна (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price || 0}"></div>
+    <div class="f"><label>Одиниця</label><input id="f-unit" value="${data.unit || 'м²'}"></div>`;
+            if (curTab === 'm-overhead') return `
+    <div class="f"><label>Назва</label><input id="f-name" value="${data.name || ''}"></div>
+    <div class="f"><label>Сума (грн)</label><input id="f-price" type="number" step="0.01" value="${data.price || 0}"></div>`;
+            return '';
         }
+
+        function v(id) { return document.getElementById(id)?.value || ''; }
+
+        function getPayload() {
+            if (curTab === 'materials') return { name: v('f-name'), thickness_mm: +v('f-thick') || null, price_per_m2: +v('f-price'), unit: v('f-unit') };
+            if (curTab === 'hardware') return { name: v('f-name'), brand: v('f-brand') || null, length_mm: +v('f-len') || null, category: v('f-cat'), price_per_unit: +v('f-price'), unit: v('f-unit') };
+            if (curTab === 'services') return { name: v('f-name'), price: +v('f-price'), unit: v('f-unit') };
+            if (curTab === 'm-profiles') return { name: v('f-name'), profile_type: v('f-type'), perimeter_m: +v('f-per'), price_per_meter: +v('f-price') };
+            if (curTab === 'm-paints') return { name: v('f-name'), paint_type: v('f-type'), price_per_kg: +v('f-price'), consumption_kg_per_m2: +v('f-cons') };
+            if (curTab === 'm-work') return { name: v('f-name'), pricing_type: v('f-ptype'), price: +v('f-price'), unit: v('f-unit') };
+            if (curTab === 'm-overhead') return { name: v('f-name'), price: +v('f-price') };
+            return {};
+        }
+
+        // ── CRUD helpers ──────────────────────────────────────────────────────────────
+        const apiPath = t => ({
+            'materials': '/api/calculator/materials',
+            'hardware': '/api/calculator/hardware',
+            'services': '/api/calculator/services',
+            'm-profiles': '/api/metal/profiles',
+            'm-paints': '/api/metal/paints',
+            'm-work': '/api/metal/work-items',
+            'm-overhead': '/api/metal/overhead'
+        }[t]);
 
         function openAdd() {
             editId = null;
             document.getElementById('modal-title').textContent = 'Додати';
             document.getElementById('modal-fields').innerHTML = getFields();
+            const btn = document.getElementById('btn-save');
+            btn.className = curTab.startsWith('m-') ? 'btn-save amber-bg' : 'btn-save';
             document.getElementById('overlay').classList.add('show');
         }
         function openEdit(item) {
             editId = item.id;
             document.getElementById('modal-title').textContent = 'Редагувати';
             document.getElementById('modal-fields').innerHTML = getFields(item);
+            const btn = document.getElementById('btn-save');
+            btn.className = curTab.startsWith('m-') ? 'btn-save amber-bg' : 'btn-save';
             document.getElementById('overlay').classList.add('show');
         }
         function closeModal() { document.getElementById('overlay').classList.remove('show'); }
-
-        function getPayload() {
-            const n = v => document.getElementById(n)?.value;
-            if (curTab === 'materials') return {
-                name: v('f-name'), thickness_mm: +v('f-thick') || null,
-                price_per_m2: +v('f-price'), unit: v('f-unit')
-            };
-            if (curTab === 'hardware') return {
-                name: v('f-name'), brand: v('f-brand') || null, length_mm: +v('f-len') || null,
-                category: v('f-cat'), price_per_unit: +v('f-price'), unit: v('f-unit')
-            };
-            return { name: v('f-name'), price: +v('f-price'), unit: v('f-unit') };
-        }
-        function v(id) { return document.getElementById(id)?.value || ''; }
 
         async function doSave() {
             const btn = document.getElementById('btn-save');
             btn.disabled = true; btn.textContent = 'Зберігаю...';
             try {
-                const url = editId ? `${API}/api/calculator/${curTab}/${editId}` : `${API}/api/calculator/${curTab}`;
+                const url = editId ? `${API}${apiPath(curTab)}/${editId}` : `${API}${apiPath(curTab)}`;
                 const method = editId ? 'PATCH' : 'POST';
                 const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getPayload()) });
                 if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
@@ -568,12 +834,11 @@
         }
 
         async function toggle(type, id, cur) {
-            await fetch(`${API}/api/calculator/${type}/${id}`, {
-                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ is_active: !cur })
+            await fetch(`${API}${apiPath(type)}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !cur })
             });
-            loadTab(type);
-            showToast(cur ? 'Вимкнено' : 'Увімкнено', 'ok');
+            loadTab(type); showToast(cur ? 'Вимкнено' : 'Увімкнено', 'ok');
         }
 
         function showToast(msg, type = 'ok') {
@@ -581,8 +846,6 @@
             t.textContent = msg; t.className = 'toast show ' + type;
             setTimeout(() => t.classList.remove('show'), 3000);
         }
-
-        loadTab('materials');
     </script>
 </body>
 
