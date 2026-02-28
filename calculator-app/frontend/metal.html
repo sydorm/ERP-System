@@ -1019,6 +1019,9 @@
                         <button id="tool-erase" class="tool-btn" onclick="setTool('erase')" title="Гумка">🧹</button>
                         <button id="tool-weld" class="tool-btn" onclick="setTool('weld')"
                             title="Відмітити зварний шов (клік на з'єднання)" style="font-size:13px">🔩 Шов</button>
+                        <button id="tool-ruler" class="tool-btn" onclick="setTool('ruler')"
+                            title="Виміряти довжину лінією (натисніть і тягніть)" style="font-size:13px">📏
+                            Лінійка</button>
                         <select id="weld-default-type" title="Тип з'єднання за замовчуванням"
                             style="border:1.5px solid #e2e8f0;border-radius:7px;padding:3px 7px;font-size:12px;outline:none;background:#f8fafc;cursor:pointer">
                             <option value="full">4 сторони</option>
@@ -1060,6 +1063,12 @@
                 <!-- Weld marker overlay — sits above canvas, captures clicks in weld mode -->
                 <div id="weld-overlay" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:10"
                     onclick="onWeldOverlayClick(event)"></div>
+                <!-- Ruler marker overlay -->
+                <div id="ruler-overlay">
+                    <div id="active-ruler-line"
+                        style="display:none;position:absolute;height:2px;background:#3b82f6;transform-origin:left center;z-index:30;pointer-events:none;box-shadow:0 0 4px rgba(0,0,0,0.4)">
+                    </div>
+                </div>
             </div>
             <!-- Weld seam list (shown when markers exist) -->
             <div id="weld-list" style="display:none">
@@ -1073,6 +1082,16 @@
                     <span>Загальна довжина швів: <strong id="weld-total-m">0.00 м</strong></span>
                     <button class="weld-apply" onclick="applyWeldTotal()">→ Записати у «м шва»</button>
                 </div>
+            </div>
+            <!-- Ruler length list -->
+            <div id="ruler-list"
+                style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-top:8px; padding:8px 12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <div style="font-weight:600;font-size:14px;color:#1e293b">📏 Виміряні лінії</div>
+                    <div style="font-size:12px;color:#64748b">Масштаб: <span id="ruler-scale-disp"
+                            style="font-weight:bold;color:#1e293b">Не встановлено</span></div>
+                </div>
+                <div id="ruler-rows"></div>
             </div>
         </div>
 
