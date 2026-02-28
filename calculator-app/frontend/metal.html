@@ -757,6 +757,87 @@
             background: rgba(239, 68, 68, .45)
         }
 
+        /* ── Ruler Marking Tool ─────────────────────────── */
+        .ruler-line {
+            position: absolute;
+            height: 2px;
+            background: #3b82f6;
+            transform-origin: left center;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 30;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .ruler-label {
+            position: absolute;
+            background: #3b82f6;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 35;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ruler-label:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .ruler-popup {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .ruler-popup input {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 14px;
+            outline: none;
+            width: 100px;
+        }
+
+        .ruler-popup .btns {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .ruler-popup button {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .ruler-popup .btn-ok {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .ruler-popup .btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
         /* ── Weld Markers ──────────────────────────── */
         .weld-dot {
             position: absolute;
@@ -1878,52 +1959,96 @@
                 let meters = 0;
                 let isRef = false;
 
-                if (pxPerMeter === null && rulerLines.length === 0) {
-                    // First line drawn — ask for reference length
-                    const inputStr = prompt("Це перша лінія (Масштаб).\nВведіть реальну довжину цієї лінії в МЕТРАХ (наприклад 1.2 або 0.8):");
-                    if (!inputStr) return;
-                    const refMeters = parseFloat((inputStr || '').replace(',', '.'));
-                    if (refMeters > 0) {
-                        pxPerMeter = pxLen / refMeters;
-                        meters = refMeters;
-                        isRef = true;
-                        const sd = document.getElementById('ruler-scale-disp');
-                        if (sd) {
-                            sd.textContent = `${Math.round(pxPerMeter)} px / 1 м`;
-                            sd.style.color = '#10b981';
-                        }
-                    } else {
-                        showToast("Скасовано. Масштаб не встановлено.", "err");
-                        return;
-                    }
-                } else if (pxPerMeter > 0) {
-                    meters = pxLen / pxPerMeter;
-                }
-
                 const defProfSel = document.getElementById('weld-default-profile');
                 let profId = defProfSel?.value;
-                if (!profId && window.rowId > 0) profId = window.rowId; // Fallback
+                if (!profId && window.rowId > 0) profId = window.rowId;
 
-                rulerLines.push({
-                    id: ++rulerSeq, startX: rStartX, startY: rStartY, endX: curX, endY: curY,
-                    pxLen, meters, isReference: isRef, profileRowId: profId
-                });
+                // Create popup HTML
+                const popup = document.createElement('div');
+                popup.className = 'ruler-popup';
+                popup.style.left = curX + 'px';
+                popup.style.top = curY + 'px';
 
-                renderRulers();
+                if (pxPerMeter === null && rulerLines.length === 0) {
+                    // First line drawn — ask for reference length
+                    popup.innerHTML = `
+                        <div style="font-size:12px;font-weight:bold;color:#10b981;margin-bottom:2px">Еталонний розмір (Масштаб)</div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:4px">Введіть реальну довжину лінії:</div>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input type="number" id="r_input" step="0.001" placeholder="напр. 1.2"> <span style="font-size:12px">м</span>
+                        </div>
+                        <div class="btns" style="margin-top:6px;">
+                            <button id="r_cancel" class="btn-cancel">Скасувати</button>
+                            <button id="r_ok" class="btn-ok" style="background:#10b981">Зберегти</button>
+                        </div>
+                    `;
+                    overlay.appendChild(popup);
+                    const inp = popup.querySelector('#r_input');
+                    inp.focus();
 
-                // If not reference, ask to add to table
-                if (!isRef && profId) {
-                    const add = confirm(`Довжина: ${meters.toFixed(3)} м.\nДодати цей розмір у вибраний профіль (Рядок ${profId})?`);
-                    if (add) {
-                        const lenInput = document.getElementById(`len-${profId}`);
-                        if (lenInput) {
-                            if (lenInput.value === '1' || lenInput.value === '0') lenInput.value = meters.toFixed(3);
-                            else lenInput.value = lenInput.value + ' + ' + meters.toFixed(3);
-                            evalFormula(lenInput); // Try to auto-sum
-                            recalcRow(profId);
-                            showToast('Додано розмір до Рядка ' + profId, 'ok');
+                    const finalize = (save) => {
+                        if (save) {
+                            const refMeters = parseFloat(inp.value.replace(',', '.'));
+                            if (refMeters > 0) {
+                                pxPerMeter = pxLen / refMeters;
+                                meters = refMeters;
+                                isRef = true;
+                                const sd = document.getElementById('ruler-scale-disp');
+                                if (sd) {
+                                    sd.textContent = `${Math.round(pxPerMeter)} px / 1 м`;
+                                    sd.style.color = '#10b981';
+                                }
+                                finishLine();
+                            } else {
+                                showToast("Масштаб не встановлено (невірне число)", "err");
+                            }
                         }
-                    }
+                        popup.remove();
+                    };
+
+                    popup.querySelector('#r_ok').onclick = () => finalize(true);
+                    popup.querySelector('#r_cancel').onclick = () => finalize(false);
+                    inp.onkeydown = (ev) => { if (ev.key === 'Enter') finalize(true); if (ev.key === 'Escape') finalize(false); };
+                } else if (pxPerMeter > 0) {
+                    meters = pxLen / pxPerMeter;
+
+                    popup.innerHTML = `
+                        <div style="font-size:12px;font-weight:bold;color:#3b82f6;margin-bottom:2px">Довжина: ${meters.toFixed(3)} м</div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:4px">Додати до вибраного профілю?</div>
+                        <div class="btns" style="margin-top:6px;">
+                            <button id="r_skip" class="btn-cancel">Тільки намалювати</button>
+                            <button id="r_add" class="btn-ok">+ до Рядка ${profId || '?'}</button>
+                        </div>
+                    `;
+                    overlay.appendChild(popup);
+
+                    const finishLineWithAdd = (add) => {
+                        finishLine();
+                        if (add && profId) {
+                            const lenInput = document.getElementById('len-' + profId);
+                            if (lenInput) {
+                                if (lenInput.value === '1' || lenInput.value === '0') lenInput.value = meters.toFixed(3);
+                                else lenInput.value = lenInput.value + ' + ' + meters.toFixed(3);
+                                evalFormula(lenInput);
+                                recalcRow(profId);
+                                showToast('Додано розмір ' + meters.toFixed(3) + ' м до Рядка ' + profId, 'ok');
+                            } else {
+                                showToast('Профіль не знайдено', 'err');
+                            }
+                        }
+                        popup.remove();
+                    };
+
+                    popup.querySelector('#r_add').onclick = () => finishLineWithAdd(true);
+                    popup.querySelector('#r_skip').onclick = () => finishLineWithAdd(false);
+                }
+
+                function finishLine() {
+                    rulerLines.push({
+                        id: ++rulerSeq, startX: rStartX, startY: rStartY, endX: curX, endY: curY,
+                        pxLen, meters, isReference: isRef, profileRowId: profId
+                    });
+                    renderRulers();
                 }
             };
 
