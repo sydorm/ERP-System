@@ -1019,6 +1019,13 @@
                         <button id="tool-erase" class="tool-btn" onclick="setTool('erase')" title="Гумка">🧹</button>
                         <button id="tool-weld" class="tool-btn" onclick="setTool('weld')"
                             title="Відмітити зварний шов (клік на з'єднання)" style="font-size:13px">🔩 Шов</button>
+                        <select id="weld-default-type" title="Тип з'єднання за замовчуванням"
+                            style="border:1.5px solid #e2e8f0;border-radius:7px;padding:3px 7px;font-size:12px;outline:none;background:#f8fafc;cursor:pointer">
+                            <option value="full">4 сторони</option>
+                            <option value="half">2 сторони</option>
+                            <option value="cut45">Заріз 45°</option>
+                            <option value="quarter">1 сторона</option>
+                        </select>
                         <input type="color" id="pen-color" value="#ef4444" title="Колір"
                             style="width:30px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px">
                         <input type="range" id="pen-size" min="1" max="30" value="4" title="Розмір" style="width:70px">
@@ -1587,10 +1594,12 @@
             const rect = area.getBoundingClientRect();
             const xPct = (e.clientX - rect.left) / rect.width;
             const yPct = (e.clientY - rect.top) / rect.height;
+            // Use selected default type from toolbar dropdown
+            const defaultType = document.getElementById('weld-default-type')?.value || 'full';
             // Default profile = first row
             const firstRow = document.querySelector('.prof-table tbody tr');
             const profileRowId = firstRow ? firstRow.id.replace('row-', '') : null;
-            weldMarkers.push({ id: ++weldIdSeq, xPct, yPct, type: 'full', profileRowId });
+            weldMarkers.push({ id: ++weldIdSeq, xPct, yPct, type: defaultType, profileRowId });
             renderWeldDots();
             renderWeldList();
         }
