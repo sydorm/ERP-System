@@ -507,8 +507,8 @@ class MetalCalcInput(BaseModel):
     primer_id: Optional[int] = None
     work_item_ids: Optional[List[int]] = []   # selected work items
     overhead_ids: Optional[List[int]] = []    # selected overhead items
-    welder_qty: int = 1                       # number of weld jobs
-    cuts_qty: int = 0                         # number of cuts
+    welder_qty: float = 0.0                     # metres of weld seam (decimal)
+    cuts_qty: float = 0.0                        # number of cuts (can be decimal)
     notes: Optional[str] = None
 
 class MetalResultLine(BaseModel):

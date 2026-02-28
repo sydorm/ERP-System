@@ -1268,10 +1268,17 @@
             };
             try {
                 const r = await fetch(`${API}/api/metal/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp) });
-                if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Помилка'); }
+                if (!r.ok) {
+                    const body = await r.json();
+                    // FastAPI validation errors have detail as an array
+                    const msg = Array.isArray(body.detail)
+                        ? body.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join('; ')
+                        : (typeof body.detail === 'string' ? body.detail : JSON.stringify(body));
+                    throw new Error(msg || 'Помилка сервера');
+                }
                 lastResult = await r.json(); lastInp = inp;
                 renderResults(lastResult);
-            } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); console.error(e); }
             finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати вартість'; }
         }
 
