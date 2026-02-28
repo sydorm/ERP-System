@@ -756,6 +756,135 @@
         .btn-clear-session:hover {
             background: rgba(239, 68, 68, .45)
         }
+
+        /* ── Weld Markers ──────────────────────────── */
+        .weld-dot {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #f59e0b;
+            border: 2.5px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: transform .15s;
+            z-index: 20;
+        }
+
+        .weld-dot:hover {
+            transform: translate(-50%, -50%) scale(1.2)
+        }
+
+        .weld-dot.full {
+            background: #ef4444
+        }
+
+        .weld-dot.half {
+            background: #f59e0b
+        }
+
+        .weld-dot.cut45 {
+            background: #8b5cf6
+        }
+
+        #weld-list {
+            border-top: 1.5px solid #e2e8f0;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .weld-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .weld-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f59e0b;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .weld-num.full {
+            background: #ef4444
+        }
+
+        .weld-num.cut45 {
+            background: #8b5cf6
+        }
+
+        .weld-select {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 6px;
+            font-size: 11px;
+            outline: none
+        }
+
+        .weld-meters {
+            font-weight: 700;
+            color: #1e293b;
+            min-width: 60px
+        }
+
+        .weld-rm {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px
+        }
+
+        .weld-rm:hover {
+            color: #ef4444
+        }
+
+        .weld-total-bar {
+            background: linear-gradient(90deg, #1e3a5f, #0f172a);
+            color: #fff;
+            border-radius: 10px;
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .weld-apply {
+            background: #10b981;
+            border: none;
+            color: #fff;
+            border-radius: 7px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .weld-apply:hover {
+            background: #059669
+        }
     </style>
 </head>
 
@@ -888,10 +1017,12 @@
                         <button id="tool-pen" class="tool-btn active" onclick="setTool('pen')"
                             title="Олівець">✏️</button>
                         <button id="tool-erase" class="tool-btn" onclick="setTool('erase')" title="Гумка">🧹</button>
+                        <button id="tool-weld" class="tool-btn" onclick="setTool('weld')"
+                            title="Відмітити зварний шов (клік на з'єднання)" style="font-size:13px">🔩 Шов</button>
                         <input type="color" id="pen-color" value="#ef4444" title="Колір"
                             style="width:30px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:1px">
                         <input type="range" id="pen-size" min="1" max="30" value="4" title="Розмір" style="width:70px">
-                        <button class="tool-btn" onclick="clearCanvas()" title="Очистити">🗑️</button>
+                        <button class="tool-btn" onclick="clearCanvas()" title="Очистити малюнок">🗑️</button>
                         <button class="tool-btn" onclick="downloadAnnotated()" title="Завантажити">⬇️</button>
                     </div>
                     <button class="tool-btn" onclick="document.getElementById('photo-inp').click()"
@@ -908,11 +1039,28 @@
                 <div id="photo-empty" style="text-align:center;color:#94a3b8;padding:40px;pointer-events:none">
                     <div style="font-size:40px;margin-bottom:8px">📸</div>
                     <p style="font-size:13px">Перетягніть фото або натисніть <strong>📂 Фото</strong></p>
-                    <p style="font-size:11px;margin-top:4px">Після завантаження малюйте олівцем прямо на фото</p>
+                    <p style="font-size:11px;margin-top:4px">Після завантаження малюйте олівцем або відмічайте 🔩 шви
+                    </p>
                 </div>
                 <img id="bg-photo"
                     style="display:none;width:100%;max-height:420px;object-fit:contain;user-select:none;pointer-events:none">
                 <canvas id="anno-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%"></canvas>
+                <!-- Weld marker overlay — sits above canvas, captures clicks in weld mode -->
+                <div id="weld-overlay" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:10"
+                    onclick="onWeldOverlayClick(event)"></div>
+            </div>
+            <!-- Weld seam list (shown when markers exist) -->
+            <div id="weld-list" style="display:none">
+                <div
+                    style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                    🔩 Відмічені з'єднання <span style="color:#94a3b8;font-weight:400">— оберіть профіль і тип для
+                        кожного</span>
+                </div>
+                <div id="weld-rows"></div>
+                <div class="weld-total-bar">
+                    <span>Загальна довжина швів: <strong id="weld-total-m">0.00 м</strong></span>
+                    <button class="weld-apply" onclick="applyWeldTotal()">→ Записати у «м шва»</button>
+                </div>
             </div>
         </div>
 
@@ -1235,6 +1383,17 @@
             activeTool = t;
             document.getElementById('tool-pen').classList.toggle('active', t === 'pen');
             document.getElementById('tool-erase').classList.toggle('active', t === 'erase');
+            document.getElementById('tool-weld').classList.toggle('active', t === 'weld');
+            // Weld overlay captures clicks; drawing canvas gets them in other modes
+            const overlay = document.getElementById('weld-overlay');
+            const canvas = document.getElementById('anno-canvas');
+            const area = document.getElementById('photo-area');
+            if (overlay) {
+                overlay.style.display = t === 'weld' ? 'block' : 'none';
+                overlay.style.cursor = 'crosshair';
+            }
+            if (canvas) canvas.style.pointerEvents = t === 'weld' ? 'none' : 'auto';
+            if (area) area.style.cursor = t === 'weld' ? 'crosshair' : 'crosshair';
         }
 
         function clearCanvas() {
@@ -1413,6 +1572,121 @@
             await fetch(`${API}/api/metal/templates/${id}`, { method: 'DELETE' });
             loadTemplates();
             showToast('Шаблон видалено', 'ok');
+        }
+
+        // ── Weld Seam Marker Tool ─────────────────────────────────────────────
+        let weldMarkers = []; // [{id, xPct, yPct, type, profileRowId}]
+        let weldIdSeq = 0;
+
+        // Weld factor per type (multiplied by profile perimeter)
+        const WELD_FACTORS = { full: 1.0, half: 0.5, cut45: 1.0, quarter: 0.25 };
+        const WELD_LABELS = { full: '4 сторони', half: '2 сторони (привар)', cut45: 'Заріз 45°', quarter: '1 сторона' };
+
+        function onWeldOverlayClick(e) {
+            const area = document.getElementById('photo-area');
+            const rect = area.getBoundingClientRect();
+            const xPct = (e.clientX - rect.left) / rect.width;
+            const yPct = (e.clientY - rect.top) / rect.height;
+            // Default profile = first row
+            const firstRow = document.querySelector('.prof-table tbody tr');
+            const profileRowId = firstRow ? firstRow.id.replace('row-', '') : null;
+            weldMarkers.push({ id: ++weldIdSeq, xPct, yPct, type: 'full', profileRowId });
+            renderWeldDots();
+            renderWeldList();
+        }
+
+        function renderWeldDots() {
+            // Remove old dots
+            document.querySelectorAll('.weld-dot').forEach(d => d.remove());
+            const area = document.getElementById('photo-area');
+            weldMarkers.forEach(m => {
+                const dot = document.createElement('div');
+                dot.className = `weld-dot ${m.type}`;
+                dot.textContent = m.id;
+                dot.style.left = (m.xPct * 100) + '%';
+                dot.style.top = (m.yPct * 100) + '%';
+                dot.title = `Шов #${m.id} — натисніть для видалення`;
+                dot.onclick = (e) => { e.stopPropagation(); removeWeldMarker(m.id); };
+                area.appendChild(dot);
+            });
+        }
+
+        function removeWeldMarker(id) {
+            weldMarkers = weldMarkers.filter(m => m.id !== id);
+            renderWeldDots();
+            renderWeldList();
+        }
+
+        function renderWeldList() {
+            const list = document.getElementById('weld-list');
+            const rows = document.getElementById('weld-rows');
+            if (!weldMarkers.length) { list.style.display = 'none'; return; }
+            list.style.display = 'block';
+            // Profile rows options
+            const profileOpts = [...document.querySelectorAll('.prof-table tbody tr')].map(tr => {
+                const id = tr.id.replace('row-', '');
+                const sel = tr.querySelector('select');
+                const name = sel?.options[sel.selectedIndex]?.text.split('—')[0].trim() || `Рядок ${id}`;
+                const per = parseFloat(sel?.options[sel.selectedIndex]?.dataset.per) || 0;
+                return { id, name, per };
+            });
+            rows.innerHTML = weldMarkers.map(m => {
+                const profOpts = profileOpts.map(p =>
+                    `<option value="${p.id}" data-per="${p.per}" ${m.profileRowId === p.id ? 'selected' : ''}>${p.name}</option>`
+                ).join('');
+                const per = profileOpts.find(p => p.id === m.profileRowId)?.per || 0;
+                const meters = (per * WELD_FACTORS[m.type] || 0).toFixed(4);
+                return `<div class="weld-row">
+                    <div class="weld-num ${m.type}">${m.id}</div>
+                    <select class="weld-select" onchange="weldChangeProfile(${m.id}, this)">
+                        ${profOpts}
+                    </select>
+                    <select class="weld-select" onchange="weldChangeType(${m.id}, this)">
+                        ${Object.entries(WELD_LABELS).map(([k, v]) =>
+                    `<option value="${k}" ${m.type === k ? 'selected' : ''}>${v}</option>`).join('')}
+                    </select>
+                    <span class="weld-meters">= ${meters} м</span>
+                    <button class="weld-rm" onclick="removeWeldMarker(${m.id})" title="Видалити">×</button>
+                </div>`;
+            }).join('');
+            recalcWeldTotal();
+        }
+
+        function weldChangeProfile(id, sel) {
+            const m = weldMarkers.find(x => x.id === id);
+            if (m) m.profileRowId = sel.value;
+            renderWeldList();
+        }
+
+        function weldChangeType(id, sel) {
+            const m = weldMarkers.find(x => x.id === id);
+            if (m) { m.type = sel.value; renderWeldDots(); renderWeldList(); }
+        }
+
+        function recalcWeldTotal() {
+            const profileRows = [...document.querySelectorAll('.prof-table tbody tr')].reduce((acc, tr) => {
+                const id = tr.id.replace('row-', '');
+                const sel = tr.querySelector('select');
+                acc[id] = parseFloat(sel?.options[sel.selectedIndex]?.dataset.per) || 0;
+                return acc;
+            }, {});
+            const total = weldMarkers.reduce((sum, m) => {
+                const per = profileRows[m.profileRowId] || 0;
+                return sum + per * (WELD_FACTORS[m.type] || 0);
+            }, 0);
+            document.getElementById('weld-total-m').textContent = total.toFixed(3) + ' м';
+            return total;
+        }
+
+        function applyWeldTotal() {
+            const total = recalcWeldTotal();
+            const wd = document.getElementById('welder-disp');
+            if (wd) {
+                const cur = parseFloat(wd.value) || 0;
+                wd.value = parseFloat((cur + total).toFixed(3));
+                syncWelderHint();
+                showToast(`🔩 +${total.toFixed(3)} м шва додано до поля зварювальника`, 'ok');
+            }
         }
 
         // Restore session on load
