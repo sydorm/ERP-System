@@ -794,10 +794,10 @@
             const view = vOverride || activeView;
             if (view === '3d') {
                 const radX = rotX * Math.PI / 180, radY = rotY * Math.PI / 180;
-                let x1 = x * Math.cos(radY) + z * Math.sin(radY);
-                let z1 = z * Math.cos(radY) - x * Math.sin(radY);
-                let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
-                u = x1; v = y1;
+                let xRot = x * Math.cos(radY) + z * Math.sin(radY);
+                let zRot = z * Math.cos(radY) - x * Math.sin(radY);
+                let yRot = y * Math.cos(radX) - zRot * Math.sin(radX);
+                u = xRot; v = yRot;
             } else {
                 switch (view) {
                     case 'front': u = x; v = y; break;
@@ -809,13 +809,13 @@
                     default: u = x; v = y;
                 }
             }
-            let cx = u * cellPx + offsetX, cy = v * cellPx + offsetY;
-            if (isQuadView && !vOverride) {
+
+            let cp = cellPx, ox = offsetX, oy = offsetY;
+            if (isQuadView) {
                 const q = getQuadOffsets(view);
-                cx = u * (cellPx / 2) + q.ox;
-                cy = v * (cellPx / 2) + q.oy;
+                ox = q.ox; oy = q.oy; cp = cellPx / 2;
             }
-            return { cx, cy };
+            return { cx: u * cp + ox, cy: v * cp + oy };
         }
 
         function getQuadOffsets(view) {
@@ -839,7 +839,7 @@
         function unproject2D(cx, cy, vOverride) {
             const v = vOverride || getViewAt(cx, cy);
             let cp = cellPx, ox = offsetX, oy = offsetY;
-            if (isQuadView && !vOverride) {
+            if (isQuadView) {
                 const q = getQuadOffsets(v);
                 ox = q.ox; oy = q.oy; cp = cellPx / 2;
             }
@@ -851,6 +851,13 @@
                 case 'bottom': return { x: u, y: null, z: -vv, view: v };
                 case 'right': return { x: null, y: vv, z: u, view: v };
                 case 'left': return { x: null, y: vv, z: -u, view: v };
+                case '3d': {
+                    const rX = rotX * Math.PI / 180, rY = rotY * Math.PI / 180;
+                    const x = u * Math.cos(rY);
+                    const z = u * Math.sin(rY);
+                    const y = vv / Math.cos(rX);
+                    return { x: Math.round(x), y: Math.round(y), z: Math.round(z), view: v };
+                }
             }
             return { x: 0, y: 0, z: 0, view: v };
         }
@@ -859,13 +866,14 @@
             const v = view || activeView;
             if (v === 'front' || v === 'back') return 'z';
             if (v === 'top' || v === 'bottom') return 'y';
-            return 'x';
+            if (v === 'right' || v === 'left') return 'x';
+            return null;
         }
 
         function fillDepth(p, d, v) {
             const ax = depthAxis(v || p.view);
             const res = { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 };
-            res[ax] = d;
+            if (ax && p[ax] === null) res[ax] = d;
             return res;
         }
 
@@ -940,26 +948,18 @@
             ctx.save();
             ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
 
-            const oldOX = offsetX, oldOY = offsetY, oldCP = cellPx;
-            if (isQuadView) {
-                const q = getQuadOffsets(view);
-                offsetX = q.ox; offsetY = q.oy; cellPx = oldCP / 2;
-            }
-
             drawGrid(vw, vh, vx, vy, view);
             if (view === '3d') drawAxes();
             drawSegments(view);
             drawJoints(view);
 
             if (snapPt && getViewAt(mousePos.x, mousePos.y) === view) drawSnapIndicator(view);
-            if (isDrawing && drawStart3D && view !== '3d') drawPreview(view);
+            if (isDrawing && drawStart3D) drawPreview(view);
 
             if (label) {
                 ctx.fillStyle = '#475569'; ctx.font = 'bold 11px Segoe UI';
                 ctx.textAlign = 'left'; ctx.fillText(label, vx + 10, vy + 22);
             }
-
-            offsetX = oldOX; offsetY = oldOY; cellPx = oldCP;
             ctx.restore();
         }
 
@@ -982,35 +982,43 @@
         function drawGrid(W, H, vx, vy, vOverride) {
             const view = vOverride || activeView;
             if (view === '3d') return;
+            const origin = project3D(0, 0, 0, view);
+            const ox = origin.cx, oy = origin.cy;
+            let cp = cellPx;
+            if (isQuadView) cp = cellPx / 2;
+
             ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
 
-            // Grid lines relative to viewport
-            const startX = Math.floor(-offsetX / cellPx) - 1;
-            const endX = Math.ceil((W) / cellPx) + 1; // W is vw
-            const startY = Math.floor(-offsetY / cellPx) - 1;
-            const endY = Math.ceil((H) / cellPx) + 1;
+            const startX = Math.floor((vx - ox) / cp);
+            const endX = Math.ceil((vx + W - ox) / cp);
+            const startY = Math.floor((vy - oy) / cp);
+            const endY = Math.ceil((vy + H - oy) / cp);
 
-            for (let gx = startX; gx <= endX; gx++) {
-                const px = gx * cellPx + offsetX;
-                if (px < 0 || px > W) continue;
-                ctx.beginPath(); ctx.moveTo(px + vx, vy); ctx.lineTo(px + vx, vy + H);
-                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
+            for (let i = startX; i <= endX; i++) {
+                const px = ox + i * cp;
+                if (px < vx || px > vx + W) continue;
+                ctx.beginPath(); ctx.moveTo(px, vy); ctx.lineTo(px, vy + H);
+                ctx.globalAlpha = i % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
             }
-            for (let gy = startY; gy <= endY; gy++) {
-                const py = gy * cellPx + offsetY;
-                if (py < 0 || py > H) continue;
-                ctx.beginPath(); ctx.moveTo(vx, py + vy); ctx.lineTo(vx + W, py + vy);
-                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
+            for (let i = startY; i <= endY; i++) {
+                const py = oy + i * cp;
+                if (py < vy || py > vy + H) continue;
+                ctx.beginPath(); ctx.moveTo(vx, py); ctx.lineTo(vx + W, py);
+                ctx.globalAlpha = i % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
             }
             ctx.globalAlpha = 1;
 
+            // Highlight origin axes
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+            if (ox >= vx && ox <= vx + W) { ctx.beginPath(); ctx.moveTo(ox, vy); ctx.lineTo(ox, vy + H); ctx.stroke(); }
+            if (oy >= vy && oy <= vy + H) { ctx.beginPath(); ctx.moveTo(vx, oy); ctx.lineTo(vx + W, oy); ctx.stroke(); }
+
             if (!isQuadView) {
-                // Large labels only in main view
                 ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
-                for (let gx = startX; gx <= endX; gx++) {
-                    if (gx % 5 === 0) {
-                        const px = gx * cellPx + offsetX;
-                        if (px > 40 && px < W - 40) ctx.fillText(gx * gridScale + 'см', px, 15);
+                for (let i = startX; i <= endX; i++) {
+                    if (i % 5 === 0) {
+                        const px = ox + i * cp;
+                        if (px > vx + 40 && px < vx + W - 40) ctx.fillText(i * gridScale + 'см', px, vy + 15);
                     }
                 }
             }
