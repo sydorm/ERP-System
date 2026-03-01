@@ -795,6 +795,9 @@
         let axisSnapLine = null; // { axis: 'x'|'y'|'z', pt: {x,y,z} }
         let activeDepth = 0; // default Z depth
         let selectedSegs = new Set();
+        let mousePos = { x: 0, y: 0 };
+        let isDrawing = false;
+        let drawStart3D = null;
 
         function toggleDrawer(open) {
             const el = document.getElementById('cut-plan-drawer');
@@ -998,7 +1001,7 @@
             drawSegments(view);
             drawJoints(view);
 
-            if (snapPt && getViewAt(mousePos.x, mousePos.y) === view) drawSnapIndicator(view);
+            if (snapPt && mousePos && getViewAt(mousePos.x, mousePos.y) === view) drawSnapIndicator(view);
             if (isDrawing && drawStart3D) drawPreview(view);
 
             if (label) {
