@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>🔧 Розкрій металу — ERP</title>
+    <title>рџ”§ Р РѕР·РєСЂС–Р№ РјРµС‚Р°Р»Сѓ вЂ” ERP</title>
     <style>
         *,
         *::before,
@@ -23,7 +23,7 @@
             overflow: hidden;
         }
 
-        /* ── NAV ── */
+        /* в”Ђв”Ђ NAV в”Ђв”Ђ */
         .nav {
             background: #0f172a;
             padding: 10px 18px;
@@ -57,14 +57,14 @@
             color: #fff;
         }
 
-        /* ── LAYOUT ── */
+        /* в”Ђв”Ђ LAYOUT в”Ђв”Ђ */
         .main {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
 
-        /* ── LEFT PANEL ── */
+        /* в”Ђв”Ђ LEFT PANEL в”Ђв”Ђ */
         .panel-left {
             width: 220px;
             background: #fff;
@@ -219,7 +219,7 @@
             margin: 4px 0;
         }
 
-        /* ── CANVAS AREA ── */
+        /* в”Ђв”Ђ CANVAS AREA в”Ђв”Ђ */
         .canvas-area {
             flex: 1;
             position: relative;
@@ -236,7 +236,7 @@
             display: block;
         }
 
-        /* ── VIEW TABS ── */
+        /* в”Ђв”Ђ VIEW TABS в”Ђв”Ђ */
         .view-tab-bar {
             position: absolute;
             top: 8px;
@@ -273,7 +273,7 @@
             color: #fff;
         }
 
-        /* ── CUT PLAN DRAWER ── */
+        /* в”Ђв”Ђ CUT PLAN DRAWER в”Ђв”Ђ */
         .cut-plan-drawer {
             position: fixed;
             bottom: 0;
@@ -376,7 +376,7 @@
             justify-content: center;
         }
 
-        /* ── RIGHT PANEL ── */
+        /* в”Ђв”Ђ RIGHT PANEL в”Ђв”Ђ */
         .panel-right {
             width: 260px;
             background: #fff;
@@ -478,7 +478,7 @@
             gap: 6px;
         }
 
-        /* ── PRINT ── */
+        /* в”Ђв”Ђ PRINT в”Ђв”Ђ */
         @media print {
             body {
                 height: auto;
@@ -510,7 +510,7 @@
             display: none;
         }
 
-        /* ── TOOLTIP ── */
+        /* в”Ђв”Ђ TOOLTIP в”Ђв”Ђ */
         .tooltip {
             position: absolute;
             background: #0f172a;
@@ -523,7 +523,7 @@
             white-space: nowrap;
         }
 
-        /* ── TEMPLATE MODAL ── */
+        /* в”Ђв”Ђ TEMPLATE MODAL в”Ђв”Ђ */
         .tpl-overlay {
             position: fixed;
             inset: 0;
@@ -602,10 +602,10 @@
 <body>
 
     <div class="nav">
-        <span class="nav-logo">🔩 ERP Система</span>
-        <a href="/metal.html">🔩 Метал</a>
-        <a href="/cutter.html" class="on">🔧 Розкрій</a>
-        <a href="/admin.html">⚙️ Налаштування</a>
+        <span class="nav-logo">рџ”© ERP РЎРёСЃС‚РµРјР°</span>
+        <a href="/metal.html">рџ”© РњРµС‚Р°Р»</a>
+        <a href="/cutter.html" class="on">рџ”§ Р РѕР·РєСЂС–Р№</a>
+        <a href="/admin.html">вљ™пёЏ РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ</a>
     </div>
 
     <div class="main">
@@ -613,74 +613,74 @@
         <!-- LEFT PANEL -->
         <div class="panel-left">
             <div>
-                <div class="panel-section">Профіль</div>
-                <label>Тип труби</label>
+                <div class="panel-section">РџСЂРѕС„С–Р»СЊ</div>
+                <label>РўРёРї С‚СЂСѓР±Рё</label>
                 <select id="profile-sel">
-                    <option value="20x20">Квадрат 20×20</option>
-                    <option value="25x25">Квадрат 25×25</option>
-                    <option value="30x30" selected>Квадрат 30×30</option>
-                    <option value="40x40">Квадрат 40×40</option>
-                    <option value="50x50">Квадрат 50×50</option>
-                    <option value="20x40">Прямокутник 20×40</option>
-                    <option value="20x60">Прямокутник 20×60</option>
-                    <option value="40x80">Прямокутник 40×80</option>
-                    <option value="custom">Власний розмір...</option>
+                    <option value="20x20">РљРІР°РґСЂР°С‚ 20Г—20</option>
+                    <option value="25x25">РљРІР°РґСЂР°С‚ 25Г—25</option>
+                    <option value="30x30" selected>РљРІР°РґСЂР°С‚ 30Г—30</option>
+                    <option value="40x40">РљРІР°РґСЂР°С‚ 40Г—40</option>
+                    <option value="50x50">РљРІР°РґСЂР°С‚ 50Г—50</option>
+                    <option value="20x40">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 20Г—40</option>
+                    <option value="20x60">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 20Г—60</option>
+                    <option value="40x80">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 40Г—80</option>
+                    <option value="custom">Р’Р»Р°СЃРЅРёР№ СЂРѕР·РјС–СЂ...</option>
                 </select>
                 <div id="custom-profile" style="display:none;margin-top:6px;display:flex;gap:5px;align-items:center">
-                    <input type="number" id="custom-w" value="30" min="5" max="200" style="width:60px"> ×
-                    <input type="number" id="custom-h" value="30" min="5" max="200" style="width:60px"> мм
+                    <input type="number" id="custom-w" value="30" min="5" max="200" style="width:60px"> Г—
+                    <input type="number" id="custom-h" value="30" min="5" max="200" style="width:60px"> РјРј
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">Масштаб сітки</div>
-                <label>Одна клітинка =</label>
+                <div class="panel-section">РњР°СЃС€С‚Р°Р± СЃС–С‚РєРё</div>
+                <label>РћРґРЅР° РєР»С–С‚РёРЅРєР° =</label>
                 <select id="grid-scale">
-                    <option value="5">5 см</option>
-                    <option value="10" selected>10 см</option>
-                    <option value="20">20 см</option>
-                    <option value="50">50 см</option>
+                    <option value="5">5 СЃРј</option>
+                    <option value="10" selected>10 СЃРј</option>
+                    <option value="20">20 СЃРј</option>
+                    <option value="50">50 СЃРј</option>
                 </select>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">Інструмент</div>
+                <div class="panel-section">Р†РЅСЃС‚СЂСѓРјРµРЅС‚</div>
                 <div class="tool-group">
-                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">✏️ Лінія (сегмент)</button>
-                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">🖱 Вибрати / Видалити</button>
-                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">🔗 Тип з'єднання</button>
+                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">вњЏпёЏ Р›С–РЅС–СЏ (СЃРµРіРјРµРЅС‚)</button>
+                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">рџ–± Р’РёР±СЂР°С‚Рё / Р’РёРґР°Р»РёС‚Рё</button>
+                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">рџ”— РўРёРї Р·'С”РґРЅР°РЅРЅСЏ</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div id="joint-panel">
-                <div class="panel-section">Тип різу в з'єднанні</div>
-                <div style="font-size:11px;color:#64748b;margin-bottom:6px">ЛКМ = змінити тип<br>ПКМ = видалити мітку
+                <div class="panel-section">РўРёРї СЂС–Р·Сѓ РІ Р·'С”РґРЅР°РЅРЅС–</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px">Р›РљРњ = Р·РјС–РЅРёС‚Рё С‚РёРї<br>РџРљРњ = РІРёРґР°Р»РёС‚Рё РјС–С‚РєСѓ
                 </div>
                 <div class="cut-options">
                     <button class="cut-btn active" id="cut-straight"
-                        onclick="setCutType('straight')">90°<br>Прямий</button>
-                    <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45°<br>Під кут</button>
-                    <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>Примика</button>
+                        onclick="setCutType('straight')">90В°<br>РџСЂСЏРјРёР№</button>
+                    <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45В°<br>РџС–Рґ РєСѓС‚</button>
+                    <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>РџСЂРёРјРёРєР°</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">Шаблони</div>
+                <div class="panel-section">РЁР°Р±Р»РѕРЅРё</div>
                 <div class="tool-group">
-                    <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
-                    <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
-                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
-                    <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
+                    <button class="tool-btn" onclick="insertTemplate('square')">в¬њ РљРІР°РґСЂР°С‚</button>
+                    <button class="tool-btn" onclick="insertTemplate('rect')">в–­ РџСЂСЏРјРѕРєСѓС‚РЅРёРє</button>
+                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">вЏў РўСЂР°РїРµС†С–СЏ</button>
+                    <button class="tool-btn" onclick="insertTemplate('triangle')">в–і РўСЂРёРєСѓС‚РЅРёРє</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
+                <button class="btn-action btn-danger" onclick="clearAll()">рџ—‘ РћС‡РёСЃС‚РёС‚Рё РІСЃРµ</button>
             </div>
         </div>
 
@@ -688,19 +688,19 @@
         <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
             <!-- View tab bar -->
             <div class="view-tab-bar">
-                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
-                <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
-                <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">рџ“ђ Р¤СЂРѕРЅС‚</button>
+                <button class="view-tab" id="vtab-side" onclick="switchView('side')">в—» Р‘С–С‡РЅРёР№</button>
+                <button class="view-tab" id="vtab-top" onclick="switchView('top')">рџ”І Р—РІРµСЂС…Сѓ</button>
             </div>
 
             <!-- Canvas -->
             <div class="canvas-area" id="canvas-area" style="flex:1">
                 <canvas id="main-canvas"></canvas>
-                <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
+                <div class="canvas-info" id="canvas-info">РљР»С–РєРЅС–С‚СЊ С‚Р° С‚СЏРіРЅС–С‚СЊ С‰РѕР± РЅР°РјР°Р»СЋРІР°С‚Рё Р»С–РЅС–СЋ РєР°СЂРєР°СЃСѓ</div>
                 <div class="zoom-bar">
-                    <button onclick="zoom(1.2)" title="Збільшити">+</button>
-                    <button onclick="zoom(0.8)" title="Зменшити">−</button>
-                    <button onclick="resetView()" title="Скинути вид">⊙</button>
+                    <button onclick="zoom(1.2)" title="Р—Р±С–Р»СЊС€РёС‚Рё">+</button>
+                    <button onclick="zoom(0.8)" title="Р—РјРµРЅС€РёС‚Рё">в€’</button>
+                    <button onclick="resetView()" title="РЎРєРёРЅСѓС‚Рё РІРёРґ">вЉ™</button>
                 </div>
             </div>
         </div>
@@ -708,21 +708,21 @@
         <!-- RIGHT PANEL -->
         <div class="panel-right">
             <div class="panel-right-header">
-                <h3>📋 Список відрізків</h3>
+                <h3>рџ“‹ РЎРїРёСЃРѕРє РІС–РґСЂС–Р·РєС–РІ</h3>
             </div>
             <div class="panel-right-content" id="seg-list">
-                <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
+                <div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР± РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>
             </div>
             <div class="panel-bottom">
                 <div class="cut-summary" id="cut-summary" style="display:none">
-                    <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
+                    <div style="margin-bottom:4px"><strong>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°:</strong> <span id="total-len">0</span> Рј
                     </div>
-                    <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
+                    <div><strong>РџСЂРѕС„С–Р»СЊ:</strong> <span id="summary-profile">вЂ”</span></div>
                 </div>
-                <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
-                <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
-                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
-                    Метал</button>
+                <button class="btn-action btn-green" onclick="generateCutPlan()">рџ“„ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ</button>
+                <button class="btn-action btn-print" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє РєР°СЂС‚Рё</button>
+                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">рџ”— РќР°РґС–СЃР»Р°С‚Рё РІ
+                    РњРµС‚Р°Р»</button>
             </div>
         </div>
 
@@ -732,14 +732,14 @@
     <div class="cut-plan-drawer" id="cut-plan-drawer">
         <div class="cut-plan-drawer-inner">
             <div class="cut-plan-drawer-header">
-                <h3>📄 Карта розкрою металу</h3>
-                <button class="drawer-close" onclick="toggleDrawer(false)" title="Закрити">✕</button>
+                <h3>рџ“„ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ РјРµС‚Р°Р»Сѓ</h3>
+                <button class="drawer-close" onclick="toggleDrawer(false)" title="Р—Р°РєСЂРёС‚Рё">вњ•</button>
             </div>
             <div class="cut-plan-drawer-body" id="cut-plan-body"></div>
             <div class="cut-plan-drawer-footer">
-                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">🖨 Друк карти</button>
+                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє РєР°СЂС‚Рё</button>
                 <button class="btn-action btn-danger" style="flex:0;padding:9px 16px"
-                    onclick="toggleDrawer(false)">Закрити</button>
+                    onclick="toggleDrawer(false)">Р—Р°РєСЂРёС‚Рё</button>
             </div>
         </div>
     </div>
@@ -748,72 +748,109 @@
     <div class="print-sheet" id="print-sheet"></div>
 
     <script>
-        // ═══════════════════════════════════════════════════════
-        // DATA — multi-view store
-        // ═══════════════════════════════════════════════════════
-        const VIEW_IDS = ['front', 'side', 'top'];
-        const viewStore = {
-            front: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 },
-            side: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 },
-            top: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 }
-        };
-        let activeView = 'front';
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // 3D DATA MODEL
+        // Single shared array вЂ” views are projections
+        // Front: looking along +Z, shows (X, Y)
+        // Side:  looking along -X, shows (Z, Y)
+        // Top:   looking along +Y, shows (X, Z)
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        let segments = [];   // [{id, x1,y1,z1, x2,y2,z2}]
+        let joints = {};   // key="x,y,z" в†’ {type:'straight'|'45'|'T'}
+        let segId = 0;
 
-        // Working references (point to current view) — declared first to avoid TDZ
-        let segments, joints, segId;
+        let activeView = 'front';
         let activeTool = 'line';
         let activeCutType = 'straight';
-        let gridScale = 10; // cm per cell
-        let cellPx = 40;    // pixels per cell
+        let gridScale = 10;   // cm per grid cell
+        let cellPx = 40;   // pixels per cell
         let offsetX = 0, offsetY = 0;
-
-        function saveViewState() {
-            viewStore[activeView].segments = segments;
-            viewStore[activeView].joints = joints;
-            viewStore[activeView].segId = segId;
-            viewStore[activeView].cellPx = cellPx;
-            viewStore[activeView].offsetX = offsetX;
-            viewStore[activeView].offsetY = offsetY;
-        }
-
-        function loadViewState(v) {
-            segments = viewStore[v].segments;
-            joints = viewStore[v].joints;
-            segId = viewStore[v].segId;
-            cellPx = viewStore[v].cellPx;
-            offsetX = viewStore[v].offsetX;
-            offsetY = viewStore[v].offsetY || 0;
-        }
-
-        function switchView(v) {
-            saveViewState();
-            activeView = v;
-            loadViewState(v);
-            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
-            const tab = document.getElementById('vtab-' + v);
-            if (tab) tab.classList.add('active');
-            updateUI();
-            redrawAll();
-        }
-
-        // ── initial load (all vars already declared above) ──
-        loadViewState('front');
 
         // Drawing state
         let isDrawing = false;
-        let drawStart = null;
+        let drawStart3D = null;   // full {x,y,z}
         let mousePos = { x: 0, y: 0 };
+        let snapPt = null;   // highlighted snap point {x,y,z} or null
 
-        // ── Drawer ──
+        // в”Ђв”Ђ Drawer в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         function toggleDrawer(open) {
             const el = document.getElementById('cut-plan-drawer');
             if (open === undefined) open = !el.classList.contains('open');
             el.classList.toggle('open', open);
         }
 
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // 3D в†” 2D PROJECTION
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // Project 3D grid point в†’ canvas pixel
+        function project3D(x, y, z) {
+            let u, v;
+            switch (activeView) {
+                case 'front': u = x; v = y; break;   // X-Y plane
+                case 'side': u = z; v = y; break;   // Z-Y plane
+                case 'top': u = x; v = z; break;   // X-Z plane
+            }
+            return { cx: u * cellPx + offsetX, cy: v * cellPx + offsetY };
+        }
+
+        // Unproject canvas pixel в†’ partial 3D (null = unknown depth axis)
+        function unproject2D(cx, cy) {
+            const u = (cx - offsetX) / cellPx;
+            const v = (cy - offsetY) / cellPx;
+            switch (activeView) {
+                case 'front': return { x: u, y: v, z: null };
+                case 'side': return { x: null, y: v, z: u };
+                case 'top': return { x: u, y: null, z: v };
+            }
+        }
+
+        // Depth axis name for current view
+        function depthAxis() {
+            return activeView === 'front' ? 'z' : activeView === 'side' ? 'x' : 'y';
+        }
+
+        // Fill the unknown depth with a value
+        function fillDepth(partial, d) {
+            return { ...partial, [depthAxis()]: d };
+        }
+
+        // Find nearest existing 3D endpoint within threshold pixels.
+        // Returns full {x,y,z} or null.
+        function findSnapPoint(cx, cy, threshPx = 14) {
+            let best = null, bestD = Infinity;
+            for (const seg of segments) {
+                for (const pt of [{ x: seg.x1, y: seg.y1, z: seg.z1 }, { x: seg.x2, y: seg.y2, z: seg.z2 }]) {
+                    const { cx: px, cy: py } = project3D(pt.x, pt.y, pt.z);
+                    const d = Math.hypot(cx - px, cy - py);
+                    if (d < threshPx && d < bestD) { bestD = d; best = pt; }
+                }
+            }
+            return best;
+        }
+
+        // Grid-snap value
+        function snap(val) { return Math.round(val); }
+
+        // Get grid position from mouse event (snaps to existing endpoint if close)
+        function getGridPos(e) {
+            const r = canvas.getBoundingClientRect();
+            const cx = e.clientX - r.left, cy = e.clientY - r.top;
+            const ep = findSnapPoint(cx, cy);
+            if (ep) return { pt3D: ep, snapped: true, cx, cy };
+            // Grid snap + use drawStart depth if drawing, else 0
+            const partial = unproject2D(cx, cy);
+            const ax = depthAxis();
+            const depthVal = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
+            const full = fillDepth({ x: snap(partial.x ?? 0), y: snap(partial.y ?? 0), z: snap(partial.z ?? 0) }, depthVal);
+            return { pt3D: full, snapped: false, cx, cy };
+        }
+
+        // Point key for joints
+        function ptKey(x, y, z) { return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // CANVAS SETUP
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         const canvas = document.getElementById('main-canvas');
         const ctx = canvas.getContext('2d');
         const area = document.getElementById('canvas-area');
@@ -825,47 +862,22 @@
         }
         window.addEventListener('resize', resizeCanvas);
 
-        // ═══════════════════════════════════════════════════════
-        // COORDINATE HELPERS
-        // ═══════════════════════════════════════════════════════
-        function toCanvas(gx, gy) {
-            return { x: gx * cellPx + offsetX, y: gy * cellPx + offsetY };
-        }
-        function toGrid(cx, cy) {
-            return { x: (cx - offsetX) / cellPx, y: (cy - offsetY) / cellPx };
-        }
-        function snap(val) { return Math.round(val); }
-
-        function getGridPos(e) {
-            const r = canvas.getBoundingClientRect();
-            const cx = e.clientX - r.left, cy = e.clientY - r.top;
-            const g = toGrid(cx, cy);
-            return { gx: snap(g.x), gy: snap(g.y), cx, cy };
-        }
-
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // DRAW
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function redrawAll() {
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
-
-            // Background
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, W, H);
-
+            ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
             drawGrid(W, H);
-            drawGhostProjections();
             drawSegments();
             drawJoints();
-            if (isDrawing && drawStart) drawPreview();
+            if (snapPt) drawSnapIndicator();
+            if (isDrawing && drawStart3D) drawPreview();
         }
 
         function drawGrid(W, H) {
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1;
-
-            // Calculate visible grid range
+            ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
             const startX = Math.floor((0 - offsetX) / cellPx) - 1;
             const endX = Math.ceil((W - offsetX) / cellPx) + 1;
             const startY = Math.floor((0 - offsetY) / cellPx) - 1;
@@ -873,179 +885,139 @@
 
             for (let gx = startX; gx <= endX; gx++) {
                 const px = gx * cellPx + offsetX;
-                ctx.beginPath();
-                ctx.moveTo(px, 0);
-                ctx.lineTo(px, H);
-                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.25;
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H);
+                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.22; ctx.stroke();
             }
             for (let gy = startY; gy <= endY; gy++) {
                 const py = gy * cellPx + offsetY;
-                ctx.beginPath();
-                ctx.moveTo(0, py);
-                ctx.lineTo(W, py);
-                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.25;
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py);
+                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.22; ctx.stroke();
             }
             ctx.globalAlpha = 1;
 
-            // Axis labels (every 5 cells)
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '10px Segoe UI';
+            // Axis labels
+            const VIEW_LABELS = { front: ['X', 'Y'], side: ['Z', 'Y'], top: ['X', 'Z'] };
+            const [hL] = VIEW_LABELS[activeView];
+            ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI';
             ctx.textAlign = 'center';
             for (let gx = startX; gx <= endX; gx++) {
                 if (gx % 5 === 0) {
                     const px = gx * cellPx + offsetX;
-                    const label = gx * gridScale + ' см';
-                    ctx.fillText(label, px, offsetY - 4 < 12 ? 12 : offsetY - 4);
+                    ctx.fillText(gx * gridScale + ' СЃРј', px, offsetY - 4 < 12 ? 12 : offsetY - 4);
                 }
             }
             ctx.textAlign = 'right';
             for (let gy = startY; gy <= endY; gy++) {
                 if (gy % 5 === 0) {
                     const py = gy * cellPx + offsetY;
-                    const label = gy * gridScale + ' см';
-                    ctx.fillText(label, offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
+                    ctx.fillText(gy * gridScale + ' СЃРј', offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
                 }
             }
-        }
 
-        // Ghost projections from other views
-        function drawGhostProjections() {
-            ctx.save();
-            ctx.globalAlpha = 0.22;
-            ctx.strokeStyle = '#64748b';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([6, 5]);
-            ctx.lineCap = 'round';
-
-            Object.entries(viewStore).forEach(([vName, vData]) => {
-                if (vName === activeView) return; // skip current
-                vData.segments.forEach(seg => {
-                    const p1 = toCanvas(seg.x1, seg.y1);
-                    const p2 = toCanvas(seg.x2, seg.y2);
-                    ctx.beginPath();
-                    ctx.moveTo(p1.x, p1.y);
-                    ctx.lineTo(p2.x, p2.y);
-                    ctx.stroke();
-                });
-            });
-
-            ctx.restore();
-            ctx.setLineDash([]);
+            // View label in corner
+            const VIEW_NAMES = { front: 'Р¤СЂРѕРЅС‚ (X-Y)', side: 'Р‘С–С‡РЅРёР№ (Z-Y)', top: 'Р—РІРµСЂС…Сѓ (X-Z)' };
+            ctx.fillStyle = 'rgba(59,130,246,0.5)'; ctx.font = 'bold 11px Segoe UI';
+            ctx.textAlign = 'left';
+            ctx.fillText(VIEW_NAMES[activeView], 8, 20);
         }
 
         function drawSegments() {
-            const profile = getProfileLabel();
             segments.forEach((seg, i) => {
-                const p1 = toCanvas(seg.x1, seg.y1);
-                const p2 = toCanvas(seg.x2, seg.y2);
+                const p1 = project3D(seg.x1, seg.y1, seg.z1);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2);
 
-                // Shadow
-                ctx.shadowColor = 'rgba(0,0,0,0.15)';
-                ctx.shadowBlur = 3;
+                // Dot projection (segment perpendicular to view)
+                const isDot = Math.abs(p1.cx - p2.cx) < 1 && Math.abs(p1.cy - p2.cy) < 1;
+                if (isDot) {
+                    ctx.fillStyle = '#93c5fd';
+                    ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 5, 0, Math.PI * 2); ctx.fill();
+                    return;
+                }
 
-                // Main line (thick = profile width)
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.strokeStyle = '#1e40af';
-                ctx.lineWidth = 6;
-                ctx.lineCap = 'square';
-                ctx.stroke();
-
+                ctx.shadowColor = 'rgba(0,0,0,0.15)'; ctx.shadowBlur = 3;
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+                ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 6; ctx.lineCap = 'square'; ctx.stroke();
                 ctx.shadowBlur = 0;
 
-                // Inner highlight
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.strokeStyle = '#60a5fa';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+                ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2; ctx.stroke();
 
                 // Length label
-                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+                const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 const lenCm = segLengthCm(seg);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px Segoe UI';
-                ctx.textAlign = 'center';
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'Рј' : lenCm.toFixed(0) + 'СЃРј';
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
                 const tw = ctx.measureText(label).width + 8;
                 ctx.fillRect(mx - tw / 2, my - 9, tw, 16);
-                ctx.fillStyle = '#1e3a8a';
-                ctx.fillText(label, mx, my + 3);
+                ctx.fillStyle = '#1e3a8a'; ctx.fillText(label, mx, my + 3);
 
-                // Segment number
+                // Number dot
                 ctx.fillStyle = '#3b82f6';
-                ctx.beginPath();
-                ctx.arc(p1.x, p1.y, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 9px Segoe UI';
-                ctx.fillText(i + 1, p1.x, p1.y + 3);
+                ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 7, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Segoe UI';
+                ctx.fillText(i + 1, p1.cx, p1.cy + 3);
             });
-            ctx.lineWidth = 1;
-            ctx.textAlign = 'left';
+            ctx.lineWidth = 1; ctx.textAlign = 'left'; ctx.shadowBlur = 0;
         }
 
         function drawJoints() {
+            const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
+            const LABELS = { straight: '90', '45': '45', T: 'T' };
             Object.entries(joints).forEach(([key, joint]) => {
-                const [gxStr, gyStr] = key.split(',');
-                const p = toCanvas(+gxStr, +gyStr);
-                // color by type
-                const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
-                const LABELS = { straight: '90', '45': '45', T: 'T' };
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
-                ctx.fillStyle = COLORS[joint.type] || '#f59e0b';
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 8px Segoe UI';
-                ctx.textAlign = 'center';
-                ctx.fillText(LABELS[joint.type] || '90', p.x, p.y + 3);
+                const [gx, gy, gz] = key.split(',').map(Number);
+                const { cx, cy } = project3D(gx, gy, gz);
+                ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+                ctx.fillStyle = COLORS[joint.type] || '#f59e0b'; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 8px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(LABELS[joint.type] || '90', cx, cy + 3);
             });
-            ctx.textAlign = 'left';
-            ctx.lineWidth = 1;
+            ctx.textAlign = 'left'; ctx.lineWidth = 1;
+        }
+
+        function drawSnapIndicator() {
+            const { cx, cy } = project3D(snapPt.x, snapPt.y, snapPt.z);
+            ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+            ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
+            ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
 
         function drawPreview() {
-            const p1 = toCanvas(drawStart.gx, drawStart.gy);
-            const g = toGrid(mousePos.x, mousePos.y);
-            const gx2 = snap(g.x), gy2 = snap(g.y);
-            const p2 = toCanvas(gx2, gy2);
+            if (!drawStart3D || !mousePos) return;
+            const r = canvas.getBoundingClientRect();
+            // Mouse might be in canvas coords already
+            const cx = mousePos.x, cy = mousePos.y;
+            const snap = findSnapPoint(cx, cy);
+            let endPt;
+            if (snap) {
+                endPt = snap;
+            } else {
+                const partial = unproject2D(cx, cy);
+                const ax = depthAxis();
+                endPt = fillDepth(
+                    { x: Math.round(partial.x ?? 0), y: Math.round(partial.y ?? 0), z: Math.round(partial.z ?? 0) },
+                    drawStart3D[ax]
+                );
+            }
+            const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z);
+            const p2 = project3D(endPt.x, endPt.y, endPt.z);
 
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = 'rgba(59,130,246,0.5)';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([6, 4]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+            ctx.strokeStyle = 'rgba(59,130,246,0.5)'; ctx.lineWidth = 4;
+            ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
 
-            // Preview length
-            const dx = (gx2 - drawStart.gx) * gridScale;
-            const dy = (gy2 - drawStart.gy) * gridScale;
-            const lenCm = Math.sqrt(dx * dx + dy * dy);
+            const lenCm = segLengthCm({ x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z, x2: endPt.x, y2: endPt.y, z2: endPt.z });
             if (lenCm > 0) {
-                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
-                ctx.fillStyle = 'rgba(59,130,246,0.9)';
-                ctx.font = 'bold 11px Segoe UI';
-                ctx.textAlign = 'center';
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
-                ctx.fillText(label, mx, my - 8);
-                ctx.textAlign = 'left';
+                const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
+                ctx.fillStyle = 'rgba(59,130,246,0.9)'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'Рј' : lenCm.toFixed(0) + 'СЃРј';
+                ctx.fillText(label, mx, my - 8); ctx.textAlign = 'left';
             }
         }
 
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // MOUSE EVENTS
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         canvas.addEventListener('mousedown', onMouseDown);
         canvas.addEventListener('mousemove', onMouseMove);
         canvas.addEventListener('mouseup', onMouseUp);
@@ -1055,11 +1027,15 @@
         canvas.addEventListener('contextmenu', e => {
             e.preventDefault();
             if (activeTool !== 'joint') return;
-            const { gx, gy } = getGridPos(e);
-            let nearKey = null, nearDist = 2.5;
+            const { pt3D } = getGridPos(e);
+            const key = ptKey(pt3D.x, pt3D.y, pt3D.z);
+            // Also fuzzy-search nearby joints
+            let nearKey = null, nearDist = 15;
             Object.keys(joints).forEach(k => {
-                const [jx, jy] = k.split(',').map(Number);
-                const d = Math.hypot(gx - jx, gy - jy);
+                const [jx, jy, jz] = k.split(',').map(Number);
+                const { cx, cy } = project3D(jx, jy, jz);
+                const r = canvas.getBoundingClientRect();
+                const d = Math.hypot((e.clientX - r.left) - cx, (e.clientY - r.top) - cy);
                 if (d < nearDist) { nearDist = d; nearKey = k; }
             });
             if (nearKey) { delete joints[nearKey]; redrawAll(); }
@@ -1071,8 +1047,7 @@
             if (e.button === 1 || (e.button === 0 && e.altKey)) {
                 panning = true;
                 panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
-                canvas.style.cursor = 'grab';
-                e.preventDefault();
+                canvas.style.cursor = 'grab'; e.preventDefault();
             }
         });
         canvas.addEventListener('mousemove', e => {
@@ -1086,37 +1061,29 @@
 
         function onMouseDown(e) {
             if (e.button !== 0 || panning) return;
-            const { gx, gy, cx, cy } = getGridPos(e);
+            const { pt3D, snapped, cx, cy } = getGridPos(e);
 
             if (activeTool === 'line') {
                 isDrawing = true;
-                drawStart = { gx, gy };
+                drawStart3D = { ...pt3D };
             } else if (activeTool === 'select') {
-                // Find nearest segment and remove
                 const seg = findNearestSegment(cx, cy);
-                if (seg) {
-                    segments = segments.filter(s => s.id !== seg.id);
-                    updateUI();
-                    redrawAll();
-                }
+                if (seg) { segments = segments.filter(s => s.id !== seg.id); updateUI(); redrawAll(); }
             } else if (activeTool === 'joint') {
-                const key = `${gx},${gy}`;
-                // Try to find nearest joint (within 2 cells)
-                let nearKey = null;
-                let nearDist = 2.5;
+                // Find existing joint near click
+                let nearKey = null, nearDist = 15;
                 Object.keys(joints).forEach(k => {
-                    const [jx, jy] = k.split(',').map(Number);
-                    const d = Math.hypot(gx - jx, gy - jy);
+                    const [jx, jy, jz] = k.split(',').map(Number);
+                    const { cx: px, cy: py } = project3D(jx, jy, jz);
+                    const d = Math.hypot(cx - px, cy - py);
                     if (d < nearDist) { nearDist = d; nearKey = k; }
                 });
                 if (nearKey) {
-                    // Cycle type: straight → 45 → T → straight
                     const ORDER = ['straight', '45', 'T'];
                     const cur = joints[nearKey].type;
-                    const nextIdx = (ORDER.indexOf(cur) + 1) % ORDER.length;
-                    joints[nearKey].type = ORDER[nextIdx];
+                    joints[nearKey].type = ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length];
                 } else {
-                    joints[key] = { type: activeCutType };
+                    joints[ptKey(pt3D.x, pt3D.y, pt3D.z)] = { type: activeCutType };
                 }
                 redrawAll();
             }
@@ -1125,291 +1092,85 @@
         function onMouseMove(e) {
             const r = canvas.getBoundingClientRect();
             mousePos = { x: e.clientX - r.left, y: e.clientY - r.top };
-            const { gx, gy } = getGridPos(e);
 
-            // Snap dot
-            if (!panning) {
-                const snapped = toCanvas(gx, gy);
-                ctx.clearRect(snapped.x - 6, snapped.y - 6, 12, 12);
-                redrawAll();
+            // Update snap indicator
+            const ep = findSnapPoint(mousePos.x, mousePos.y);
+            snapPt = ep;
 
-                // Draw snap indicator
-                ctx.beginPath();
-                ctx.arc(snapped.x, snapped.y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = activeTool === 'line' ? 'rgba(59,130,246,0.8)' : 'rgba(239,68,68,0.8)';
-                ctx.fill();
-            }
+            // Update info bar
+            const partial = unproject2D(mousePos.x, mousePos.y);
+            const ax = depthAxis();
+            const d = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
+            const full = fillDepth({ x: Math.round(partial.x ?? 0), y: Math.round(partial.y ?? 0), z: Math.round(partial.z ?? 0) }, d);
+            document.getElementById('canvas-info').textContent =
+                `X:${full.x * gridScale} Y:${full.y * gridScale} Z:${full.z * gridScale} СЃРј`;
 
-            // Info bar
-            const info = document.getElementById('canvas-info');
-            if (isDrawing) {
-                const g = toGrid(mousePos.x, mousePos.y);
-                const dx = (snap(g.x) - drawStart.gx) * gridScale;
-                const dy = (snap(g.y) - drawStart.gy) * gridScale;
-                const lenCm = Math.sqrt(dx * dx + dy * dy);
-                info.textContent = `Довжина: ${lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см'} | Відпустіть щоб завершити`;
-            } else {
-                info.textContent = `Координати: ${gx * gridScale} × ${gy * gridScale} см`;
-            }
-
-            if (isDrawing) redrawAll();
+            if (panning || (isDrawing && drawStart3D)) redrawAll();
+            else if (snapPt !== null || ep !== null) redrawAll();
         }
 
         function onMouseUp(e) {
-            if (!isDrawing || panning) return;
-            isDrawing = false;
-            const { gx, gy } = getGridPos(e);
+            if (e.button !== 0 || !isDrawing || panning) return;
+            const { pt3D } = getGridPos(e);
+            const start = drawStart3D;
+            isDrawing = false; drawStart3D = null;
 
-            if (gx === drawStart.gx && gy === drawStart.gy) return; // zero-length
+            // Don't add zero-length segment
+            if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) { redrawAll(); return; }
 
-            const dx = gx - drawStart.gx, dy = gy - drawStart.gy;
-            if (dx === 0 && dy === 0) return;
-
-            const seg = { id: ++segId, x1: drawStart.gx, y1: drawStart.gy, x2: gx, y2: gy };
-            segments.push(seg);
-
-            // Auto-add joints at endpoints
-            const k1 = `${seg.x1},${seg.y1}`;
-            const k2 = `${seg.x2},${seg.y2}`;
-            if (!joints[k1]) joints[k1] = { type: activeCutType };
-            if (!joints[k2]) joints[k2] = { type: activeCutType };
-
-            drawStart = null;
-            updateUI();
-            redrawAll();
+            segments.push({ id: ++segId, x1: start.x, y1: start.y, z1: start.z, x2: pt3D.x, y2: pt3D.y, z2: pt3D.z });
+            updateUI(); redrawAll();
         }
 
         function onWheel(e) {
             e.preventDefault();
-            const factor = e.deltaY < 0 ? 1.15 : 0.87;
             const r = canvas.getBoundingClientRect();
             const mx = e.clientX - r.left, my = e.clientY - r.top;
-            offsetX = mx - (mx - offsetX) * factor;
-            offsetY = my - (my - offsetY) * factor;
-            cellPx = Math.min(Math.max(cellPx * factor, 10), 200);
+            const factor = e.deltaY < 0 ? 1.12 : 0.88;
+            const newCellPx = Math.min(Math.max(cellPx * factor, 8), 250);
+            offsetX = mx - (mx - offsetX) * (newCellPx / cellPx);
+            offsetY = my - (my - offsetY) * (newCellPx / cellPx);
+            cellPx = newCellPx;
             redrawAll();
         }
 
-        // ═══════════════════════════════════════════════════════
-        // HELPERS
-        // ═══════════════════════════════════════════════════════
-        function segLengthCm(seg) {
-            const dx = (seg.x2 - seg.x1) * gridScale;
-            const dy = (seg.y2 - seg.y1) * gridScale;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        function findNearestSegment(cx, cy, maxPx = 12) {
-            let best = null, bestD = maxPx;
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // FIND NEAREST SEGMENT (for select tool)
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function findNearestSegment(cx, cy, threshold = 12) {
+            let best = null, bestD = Infinity;
             segments.forEach(seg => {
-                const p1 = toCanvas(seg.x1, seg.y1);
-                const p2 = toCanvas(seg.x2, seg.y2);
-                const d = pointToSegmentDist(cx, cy, p1.x, p1.y, p2.x, p2.y);
-                if (d < bestD) { bestD = d; best = seg; }
+                const p1 = project3D(seg.x1, seg.y1, seg.z1);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2);
+                const d = ptToSegDist(cx, cy, p1.cx, p1.cy, p2.cx, p2.cy);
+                if (d < threshold && d < bestD) { bestD = d; best = seg; }
             });
             return best;
         }
 
-        function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+        function ptToSegDist(px, py, x1, y1, x2, y2) {
             const dx = x2 - x1, dy = y2 - y1;
-            if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
-            const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+            const len2 = dx * dx + dy * dy;
+            if (len2 === 0) return Math.hypot(px - x1, py - y1);
+            const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2));
             return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
         }
 
-        function getProfileLabel() {
-            const sel = document.getElementById('profile-sel').value;
-            if (sel === 'custom') {
-                const w = document.getElementById('custom-w').value;
-                const h = document.getElementById('custom-h').value;
-                return `${w}×${h} мм`;
-            }
-            return sel + ' мм';
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // SEGMENT LENGTH (true 3D)
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function segLengthCm(seg) {
+            const dx = (seg.x2 - seg.x1) * gridScale;
+            const dy = (seg.y2 - seg.y1) * gridScale;
+            const dz = (seg.z2 - seg.z1) * gridScale;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
         }
 
-        function getProfileDims() {
-            const sel = document.getElementById('profile-sel').value;
-            if (sel === 'custom') {
-                return { w: +document.getElementById('custom-w').value, h: +document.getElementById('custom-h').value };
-            }
-            const parts = sel.split('x');
-            return { w: +parts[0], h: +parts[1] };
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // TOOL + CONFIG
-        // ═══════════════════════════════════════════════════════
-        function setTool(t) {
-            activeTool = t;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById('tool-' + t);
-            if (btn) btn.classList.add('active');
-            canvas.style.cursor = t === 'select' ? 'pointer' : 'crosshair';
-        }
-
-        function setCutType(t) {
-            activeCutType = t;
-            document.querySelectorAll('.cut-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('cut-' + t).classList.add('active');
-        }
-
-        document.getElementById('grid-scale').addEventListener('change', e => {
-            gridScale = +e.target.value;
-            updateUI();
-            redrawAll();
-        });
-
-        document.getElementById('profile-sel').addEventListener('change', e => {
-            const isCustom = e.target.value === 'custom';
-            document.getElementById('custom-profile').style.display = isCustom ? 'flex' : 'none';
-            updateUI();
-        });
-
-        // ═══════════════════════════════════════════════════════
-        // UI UPDATE
-        // ═══════════════════════════════════════════════════════
-        function updateUI() {
-            const list = document.getElementById('seg-list');
-            if (segments.length === 0) {
-                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>';
-                document.getElementById('cut-summary').style.display = 'none';
-                return;
-            }
-
-            // Group by rounded length (mm) for duplicate detection
-            const groups = {};
-            let totalCm = 0;
-            segments.forEach((seg, i) => {
-                const lenCm = segLengthCm(seg);
-                totalCm += lenCm;
-                const lenMm = Math.round(lenCm * 10);
-                if (!groups[lenMm]) groups[lenMm] = { lenCm, segs: [] };
-                groups[lenMm].segs.push({ seg, i });
-            });
-
-            list.innerHTML = '';
-            let rowNum = 0;
-            Object.values(groups).forEach(group => {
-                const qty = group.segs.length;
-                const lenCm = group.lenCm;
-                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
-                // Use first segment's joint data for cut label
-                const seg0 = group.segs[0].seg;
-                const k1 = `${seg0.x1},${seg0.y1}`, k2 = `${seg0.x2},${seg0.y2}`;
-                const cut1 = joints[k1]?.type || 'straight', cut2 = joints[k2]?.type || 'straight';
-                const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
-                const cutLabel = `${CUT_L[cut1] || '90°'} / ${CUT_L[cut2] || '90°'}`;
-
-                const row = document.createElement('div');
-                row.className = 'seg-row';
-                rowNum++;
-                const qtyBadge = qty > 1
-                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:2px">${qty}×</span>`
-                    : '';
-                row.innerHTML = `
-      <div class="seg-num">${rowNum}</div>
-      <div class="seg-info">
-        <div class="seg-len">${lenLabel} ${qtyBadge}</div>
-        <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
-      </div>
-      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Видалити">✕</button>
-    `;
-                list.appendChild(row);
-            });
-
-            const sumEl = document.getElementById('cut-summary');
-            sumEl.style.display = 'block';
-            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' м';
-            document.getElementById('summary-profile').textContent = getProfileLabel();
-        }
-
-        function removeSeg(id) {
-            segments = segments.filter(s => s.id !== id);
-            viewStore[activeView].segments = segments;
-            updateUI();
-            redrawAll();
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // TEMPLATES
-        // ═══════════════════════════════════════════════════════
-        function insertTemplate(type) {
-            const TITLES = { square: 'Квадрат', rect: 'Прямокутник', trapezoid: 'Трапеція', triangle: 'Трикутник' };
-            const ov = document.createElement('div');
-            ov.className = 'tpl-overlay';
-
-            let fields = '';
-            if (type === 'square') fields = `<label>Сторона (см)</label><input type="number" id="t1" value="50" min="1">`;
-            if (type === 'rect') fields = `<label>Ширина (см)</label><input type="number" id="t1" value="80" min="1"><label>Висота (см)</label><input type="number" id="t2" value="50" min="1">`;
-            if (type === 'trapezoid') fields = `<label>Нижня основа (см)</label><input type="number" id="t1" value="80" min="1"><label>Верхня основа (см)</label><input type="number" id="t2" value="50" min="1"><label>Висота (см)</label><input type="number" id="t3" value="40" min="1">`;
-            if (type === 'triangle') fields = `<label>Основа (см)</label><input type="number" id="t1" value="60" min="1"><label>Висота (см)</label><input type="number" id="t2" value="40" min="1">`;
-
-            ov.innerHTML = `<div class="tpl-box">
-                <h4>Шаблон: ${TITLES[type]}</h4>
-                ${fields}
-                <div class="tpl-btns">
-                    <button class="tpl-btn-cancel" id="tpl-cancel">Скасувати</button>
-                    <button class="tpl-btn-ok" id="tpl-ok">Вставити</button>
-                </div>
-            </div>`;
-            document.body.appendChild(ov);
-
-            ov.querySelector('#tpl-cancel').onclick = () => ov.remove();
-            ov.querySelector('#tpl-ok').onclick = () => {
-                const v = (id) => +(ov.querySelector('#' + id)?.value || 0) / gridScale; // cm -> grid cells
-                const cx = 0, cy = 0; // insert at origin
-                const segsToAdd = [];
-
-                if (type === 'square') {
-                    const s = v('t1');
-                    segsToAdd.push([cx, cy, cx + s, cy], [cx + s, cy, cx + s, cy + s], [cx + s, cy + s, cx, cy + s], [cx, cy + s, cx, cy]);
-                } else if (type === 'rect') {
-                    const w = v('t1'), h = v('t2');
-                    segsToAdd.push([cx, cy, cx + w, cy], [cx + w, cy, cx + w, cy + h], [cx + w, cy + h, cx, cy + h], [cx, cy + h, cx, cy]);
-                } else if (type === 'trapezoid') {
-                    const bot = v('t1'), top2 = v('t2'), h = v('t3');
-                    const offset = (bot - top2) / 2;
-                    segsToAdd.push([cx, cy + h, cx + bot, cy + h], [cx + offset, cy, cx + offset + top2, cy], [cx, cy + h, cx + offset, cy], [cx + bot, cy + h, cx + offset + top2, cy]);
-                } else if (type === 'triangle') {
-                    const b = v('t1'), h = v('t2');
-                    segsToAdd.push([cx, cy + h, cx + b, cy + h], [cx, cy + h, cx + b / 2, cy], [cx + b, cy + h, cx + b / 2, cy]);
-                }
-
-                segsToAdd.forEach(([x1, y1, x2, y2]) => {
-                    segments.push({ id: ++segId, x1: Math.round(x1), y1: Math.round(y1), x2: Math.round(x2), y2: Math.round(y2) });
-                });
-                viewStore[activeView].segments = segments;
-                viewStore[activeView].segId = segId;
-                ov.remove();
-                updateUI();
-                redrawAll();
-            };
-            // first input focus
-            setTimeout(() => ov.querySelector('input')?.focus(), 50);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // SEND TO METAL
-        // ═══════════════════════════════════════════════════════
-        function sendToMetal() {
-            // Sum all segments across all views
-            let totalCm = 0;
-            saveViewState();
-            Object.values(viewStore).forEach(v => {
-                v.segments.forEach(seg => { totalCm += Math.sqrt(Math.pow((seg.x2 - seg.x1) * gridScale, 2) + Math.pow((seg.y2 - seg.y1) * gridScale, 2)); });
-            });
-            if (totalCm <= 0) { alert('Немає ліній для надсилання!'); return; }
-            const totalM = (totalCm / 100).toFixed(3);
-            window.open(`/metal.html?cut_length=${totalM}`, '_blank');
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // ZOOM / PAN
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // ZOOM / PAN / VIEW
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function zoom(factor) {
-            offsetX = canvas.width / 2 - (canvas.width / 2 - offsetX) * factor;
-            offsetY = canvas.height / 2 - (canvas.height / 2 - offsetY) * factor;
-            cellPx = Math.min(Math.max(cellPx * factor, 10), 200);
+            cellPx = Math.min(Math.max(cellPx * factor, 8), 250);
             redrawAll();
         }
 
@@ -1420,44 +1181,225 @@
             redrawAll();
         }
 
-        function clearAll() {
-            if (!confirm('Очистити весь малюнок?')) return;
-            segments = [];
-            joints = {};
-            segId = 0;
-            updateUI();
+        function switchView(v) {
+            activeView = v;
+            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+            const tab = document.getElementById('vtab-' + v);
+            if (tab) tab.classList.add('active');
             redrawAll();
         }
 
-        // ═══════════════════════════════════════════════════════
-        // CUT PLAN GENERATION
-        // ═══════════════════════════════════════════════════════
-        function generateCutPlan() {
-            if (segments.length === 0) { alert('Намалюйте хоча б одну лінію!'); return; }
+        function clearAll() {
+            if (!confirm('РћС‡РёСЃС‚РёС‚Рё РІРµСЃСЊ РјР°Р»СЋРЅРѕРє?')) return;
+            segments = []; joints = {}; segId = 0;
+            updateUI(); redrawAll();
+        }
 
-            // Capture the canvas drawing as a PNG image
-            const imgDataUrl = canvas.toDataURL('image/png');
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // TOOL / CUT TYPE
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function setTool(t) {
+            activeTool = t;
+            ['line', 'select', 'joint'].forEach(id => {
+                document.getElementById('tool-' + id)?.classList.toggle('active', id === t);
+            });
+            canvas.style.cursor = t === 'select' ? 'default' : 'crosshair';
+        }
 
-            const profile = getProfileLabel();
+        function setCutType(t) {
+            activeCutType = t;
+            ['straight', '45', 'T'].forEach(id => {
+                document.getElementById('cut-' + id)?.classList.toggle('active', id === t);
+            });
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // PROFILE HELPERS
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function getProfileLabel() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') {
+                const w = document.getElementById('custom-w').value;
+                const h = document.getElementById('custom-h').value;
+                return `${w}Г—${h} РјРј`;
+            }
+            return sel + ' РјРј';
+        }
+
+        function getProfileDims() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') return { w: +document.getElementById('custom-w').value, h: +document.getElementById('custom-h').value };
+            const [w, h] = sel.split('x').map(Number);
+            return { w, h };
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // GRID SCALE + PROFILE LISTENERS
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        document.getElementById('grid-scale').addEventListener('change', e => {
+            gridScale = +e.target.value; updateUI(); redrawAll();
+        });
+        document.getElementById('profile-sel').addEventListener('change', e => {
+            document.getElementById('custom-profile').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+            updateUI();
+        });
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // UI UPDATE вЂ” grouped by length
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function updateUI() {
+            const list = document.getElementById('seg-list');
+            if (segments.length === 0) {
+                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР± РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>';
+                document.getElementById('cut-summary').style.display = 'none';
+                return;
+            }
+
+            const groups = {};
             let totalCm = 0;
-            const CUT_LABELS = { straight: '90°', '45': '45°', T: 'T-прим.' };
-
-            const rows = segments.map((seg, i) => {
+            segments.forEach(seg => {
                 const lenCm = segLengthCm(seg);
                 totalCm += lenCm;
-                const k1 = `${seg.x1},${seg.y1}`;
-                const k2 = `${seg.x2},${seg.y2}`;
-                const cut1 = joints[k1]?.type || 'straight';
-                const cut2 = joints[k2]?.type || 'straight';
-                const c1Label = CUT_LABELS[cut1] || '90°';
-                const c2Label = CUT_LABELS[cut2] || '90°';
-                const lenMm = (lenCm * 10).toFixed(0);
-                const oddRow = i % 2 === 1 ? 'background:#f8fafc' : '';
-                return `<tr style="${oddRow}">
-      <td style="padding:6px 8px;text-align:center;font-weight:800;color:#1e3a8a">${i + 1}</td>
-      <td style="padding:6px 8px;text-align:center">1 шт</td>
-      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} мм</td>
-      <td style="padding:6px 8px;text-align:center">${c1Label} / ${c2Label}</td>
+                const lenMm = Math.round(lenCm * 10);
+                if (!groups[lenMm]) groups[lenMm] = { lenCm, segs: [] };
+                groups[lenMm].segs.push(seg);
+            });
+
+            list.innerHTML = '';
+            let rowNum = 0;
+            Object.values(groups).forEach(group => {
+                const qty = group.segs.length;
+                const lenCm = group.lenCm;
+                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' Рј' : lenCm.toFixed(0) + ' СЃРј';
+                const seg0 = group.segs[0];
+                const k1 = ptKey(seg0.x1, seg0.y1, seg0.z1), k2 = ptKey(seg0.x2, seg0.y2, seg0.z2);
+                const cut1 = joints[k1]?.type || 'straight', cut2 = joints[k2]?.type || 'straight';
+                const CUT_L = { straight: '90В°', '45': '45В°', T: 'T' };
+                const cutLabel = `${CUT_L[cut1] || '90В°'} / ${CUT_L[cut2] || '90В°'}`;
+                const qtyBadge = qty > 1
+                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:3px">${qty}Г—</span>`
+                    : '';
+                rowNum++;
+                const row = document.createElement('div');
+                row.className = 'seg-row';
+                row.innerHTML = `
+      <div class="seg-num">${rowNum}</div>
+      <div class="seg-info">
+        <div class="seg-len">${lenLabel}${qtyBadge}</div>
+        <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
+      </div>
+      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Р’РёРґР°Р»РёС‚Рё">вњ•</button>`;
+                list.appendChild(row);
+            });
+
+            document.getElementById('cut-summary').style.display = 'block';
+            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' Рј';
+            document.getElementById('summary-profile').textContent = getProfileLabel();
+        }
+
+        function removeSeg(id) {
+            segments = segments.filter(s => s.id !== id);
+            updateUI(); redrawAll();
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // TEMPLATES  (inserts into 3D at Z=0, Y=0 etc.)
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function insertTemplate(type) {
+            const TITLES = { square: 'РљРІР°РґСЂР°С‚', rect: 'РџСЂСЏРјРѕРєСѓС‚РЅРёРє', trapezoid: 'РўСЂР°РїРµС†С–СЏ', triangle: 'РўСЂРёРєСѓС‚РЅРёРє' };
+            const ov = document.createElement('div');
+            ov.className = 'tpl-overlay';
+            let fields = '';
+            if (type === 'square') fields = `<label>РЎС‚РѕСЂРѕРЅР° (СЃРј)</label><input type="number" id="t1" value="50" min="1">`;
+            if (type === 'rect') fields = `<label>РЁРёСЂРёРЅР° (СЃРј)</label><input type="number" id="t1" value="80" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t2" value="50" min="1">`;
+            if (type === 'trapezoid') fields = `<label>РќРёР¶РЅСЏ РѕСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t1" value="80" min="1"><label>Р’РµСЂС…РЅСЏ РѕСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t2" value="50" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t3" value="40" min="1">`;
+            if (type === 'triangle') fields = `<label>РћСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t1" value="60" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t2" value="40" min="1">`;
+            ov.innerHTML = `<div class="tpl-box"><h4>РЁР°Р±Р»РѕРЅ: ${TITLES[type]}</h4>${fields}
+                <div class="tpl-btns">
+                    <button class="tpl-btn-cancel" id="tpl-cancel">РЎРєР°СЃСѓРІР°С‚Рё</button>
+                    <button class="tpl-btn-ok" id="tpl-ok">Р’СЃС‚Р°РІРёС‚Рё</button>
+                </div></div>`;
+            document.body.appendChild(ov);
+            ov.querySelector('#tpl-cancel').onclick = () => ov.remove();
+            ov.querySelector('#tpl-ok').onclick = () => {
+                const v = id => +(ov.querySelector('#' + id)?.value || 0) / gridScale;
+                const segsToAdd = [];
+                const ax = depthAxis(); const d = 0; // insert at depth 0 on current view
+                const make3D = (u, v2) => {
+                    // current view maps u в†’ horiz axis, v2 в†’ vertical axis
+                    if (activeView === 'front') return { x: u, y: v2, z: d };
+                    if (activeView === 'side') return { x: d, y: v2, z: u };
+                    return { x: u, y: d, z: v2 };
+                };
+                const addLine = (u1, v1, u2, v2) => {
+                    const a = make3D(u1, v1), b = make3D(u2, v2);
+                    segsToAdd.push([a.x, a.y, a.z, b.x, b.y, b.z]);
+                };
+                if (type === 'square') {
+                    const s = v('t1');
+                    addLine(0, 0, s, 0); addLine(s, 0, s, s); addLine(s, s, 0, s); addLine(0, s, 0, 0);
+                } else if (type === 'rect') {
+                    const w = v('t1'), h = v('t2');
+                    addLine(0, 0, w, 0); addLine(w, 0, w, h); addLine(w, h, 0, h); addLine(0, h, 0, 0);
+                } else if (type === 'trapezoid') {
+                    const bot = v('t1'), top2 = v('t2'), h = v('t3');
+                    const off = (bot - top2) / 2;
+                    addLine(0, h, bot, h); addLine(off, 0, off + top2, 0);
+                    addLine(0, h, off, 0); addLine(bot, h, off + top2, 0);
+                } else if (type === 'triangle') {
+                    const b = v('t1'), h = v('t2');
+                    addLine(0, h, b, h); addLine(0, h, b / 2, 0); addLine(b, h, b / 2, 0);
+                }
+                segsToAdd.forEach(([x1, y1, z1, x2, y2, z2]) => {
+                    segments.push({ id: ++segId, x1: Math.round(x1), y1: Math.round(y1), z1: Math.round(z1), x2: Math.round(x2), y2: Math.round(y2), z2: Math.round(z2) });
+                });
+                ov.remove(); updateUI(); redrawAll();
+            };
+            setTimeout(() => ov.querySelector('input')?.focus(), 50);
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // SEND TO METAL
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function sendToMetal() {
+            const total = segments.reduce((s, seg) => s + segLengthCm(seg), 0);
+            if (total <= 0) { alert('РќРµРјР°С” Р»С–РЅС–Р№ РґР»СЏ РЅР°РґСЃРёР»Р°РЅРЅСЏ!'); return; }
+            window.open(`/metal.html?cut_length=${(total / 100).toFixed(3)}`, '_blank');
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // CUT PLAN GENERATION
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function generateCutPlan() {
+            if (segments.length === 0) { alert('РќР°РјР°Р»СЋР№С‚Рµ С…РѕС‡Р° Р± РѕРґРЅСѓ Р»С–РЅС–СЋ!'); return; }
+
+            const imgDataUrl = canvas.toDataURL('image/png');
+            const profile = getProfileLabel();
+            const CUT_LABELS = { straight: '90В°', '45': '45В°', T: 'T-РїСЂРёРј.' };
+
+            // Group by rounded mm
+            const groups = {};
+            let totalCm = 0;
+            segments.forEach(seg => {
+                const lenCm = segLengthCm(seg);
+                totalCm += lenCm;
+                const lenMm = Math.round(lenCm * 10);
+                if (!groups[lenMm]) groups[lenMm] = { lenCm, qty: 0, seg };
+                groups[lenMm].qty++;
+            });
+
+            let rowNum = 0;
+            const rows = Object.values(groups).map(g => {
+                const lenMm = Math.round(g.lenCm * 10);
+                const k1 = ptKey(g.seg.x1, g.seg.y1, g.seg.z1), k2 = ptKey(g.seg.x2, g.seg.y2, g.seg.z2);
+                const c1 = CUT_LABELS[joints[k1]?.type || 'straight'];
+                const c2 = CUT_LABELS[joints[k2]?.type || 'straight'];
+                const odd = ++rowNum % 2 === 0 ? 'background:#f8fafc' : '';
+                return `<tr style="${odd}">
+      <td style="padding:6px 8px;text-align:center;font-weight:800;color:#1e3a8a">${rowNum}</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:700">${g.qty} С€С‚</td>
+      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} РјРј</td>
+      <td style="padding:6px 8px;text-align:center">${c1} / ${c2}</td>
       <td style="padding:6px 8px;color:#64748b">${profile}</td>
     </tr>`;
             }).join('');
@@ -1466,44 +1408,35 @@
     <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:800px;margin:0 auto">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #0f172a;padding-bottom:10px">
         <div>
-          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">🔧 Карта розкрою металу</h2>
-          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong style="color:#0f172a">${profile}</strong></div>
+          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">рџ”§ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ РјРµС‚Р°Р»Сѓ</h2>
+          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | РџСЂРѕС„С–Р»СЊ: <strong style="color:#0f172a">${profile}</strong></div>
         </div>
         <div style="text-align:right;font-size:12px;color:#334155">
-          <div>Сегментів: <strong>${segments.length}</strong></div>
-          <div>Загальна довжина: <strong style="color:#2563eb">${(totalCm / 100).toFixed(3)} м</strong></div>
+          <div>Р’С–РґСЂС–Р·РєС–РІ (РіСЂСѓРї): <strong>${Object.keys(groups).length}</strong></div>
+          <div>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°: <strong style="color:#2563eb">${(totalCm / 100).toFixed(3)} Рј</strong></div>
         </div>
       </div>
-
-      <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8fafc;text-align:center;padding:10px">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">Малюнок конструкції (масштаб сітки: ${gridScale} см / клітинка):</div>
-        <img src="${imgDataUrl}" style="max-width:100%;max-height:320px;object-fit:contain;border:1px solid #e2e8f0">
+      <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;text-align:center;padding:10px">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">РњР°Р»СЋРЅРѕРє (РІРёРґ: ${activeView}, РјР°СЃС€С‚Р°Р±: ${gridScale} СЃРј/РєР»С–С‚РёРЅРєР°):</div>
+        <img src="${imgDataUrl}" style="max-width:100%;max-height:300px;object-fit:contain;border:1px solid #e2e8f0">
       </div>
-
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
-        <thead>
-          <tr style="background:#0f172a;color:#fff">
-            <th style="padding:8px;width:36px">№</th>
-            <th style="padding:8px;width:60px">К-сть</th>
-            <th style="padding:8px">Довжина</th>
-            <th style="padding:8px">Різ (поч/кін)</th>
-            <th style="padding:8px">Профіль</th>
-          </tr>
-        </thead>
+        <thead><tr style="background:#0f172a;color:#fff">
+          <th style="padding:8px;width:36px">в„–</th><th style="padding:8px;width:60px">Рљ-СЃС‚СЊ</th>
+          <th style="padding:8px">Р”РѕРІР¶РёРЅР°</th><th style="padding:8px">Р С–Р· (РїРѕС‡/РєС–РЅ)</th><th style="padding:8px">РџСЂРѕС„С–Р»СЊ</th>
+        </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-
       <div style="padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px">
-        <strong>💡 Примітки для різчика:</strong>
+        <strong>рџ’Ў РџСЂРёРјС–С‚РєРё РґР»СЏ СЂС–Р·С‡РёРєР°:</strong>
         <ul style="margin-top:5px;padding-left:16px;color:#475569">
-          <li>Різ <strong>90°</strong> = прямий торець</li>
-          <li>Різ <strong>45°</strong> = скіс для кутового з'єднання</li>
-          <li>Різ <strong>T-прим.</strong> = примикання до поверхні труби</li>
-          <li>Всі розміри — по зовнішньому розміру деталі</li>
+          <li>Р С–Р· <strong>90В°</strong> = РїСЂСЏРјРёР№ С‚РѕСЂРµС†СЊ</li>
+          <li>Р С–Р· <strong>45В°</strong> = СЃРєС–СЃ РґР»СЏ РєСѓС‚РѕРІРѕРіРѕ Р·'С”РґРЅР°РЅРЅСЏ</li>
+          <li>Р С–Р· <strong>T-РїСЂРёРј.</strong> = РїСЂРёРјРёРєР°РЅРЅСЏ РґРѕ РїРѕРІРµСЂС…РЅС– С‚СЂСѓР±Рё</li>
+          <li>Р’СЃС– СЂРѕР·РјС–СЂРё вЂ” РїРѕ Р·РѕРІРЅС–С€РЅСЊРѕРјСѓ СЂРѕР·РјС–СЂСѓ РґРµС‚Р°Р»С–</li>
         </ul>
       </div>
-    </div>
-  `;
+    </div>`;
             document.getElementById('cut-plan-body').innerHTML = html;
             document.getElementById('print-sheet').innerHTML = html;
             toggleDrawer(true);
@@ -1515,9 +1448,9 @@
             window.print();
         }
 
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // INIT
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         resizeCanvas();
         resetView();
     </script>
