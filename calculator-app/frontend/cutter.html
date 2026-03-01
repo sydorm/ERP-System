@@ -653,7 +653,24 @@
                     <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">🔗 Тип з'єднання</button>
                     <button class="tool-btn" id="tool-mirror" onclick="setTool('mirror')">🪞 Дублювати /
                         Дзеркало</button>
+                    <button class="tool-btn" id="tool-pick-depth" onclick="setTool('pick-depth')"
+                        title="Вибрати глибину з моделі">📍 Вибрати глибину</button>
                 </div>
+            </div>
+
+            <hr class="divider">
+            <div id="depth-panel">
+                <div class="panel-section">Глибина малювання (Z)</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input type="number" id="depth-input" value="0"
+                        style="width:70px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;font-weight:bold"
+                        onchange="activeDepth = +this.value / gridScale; redrawAll()">
+                    <span style="font-size:12px;color:#64748b">см</span>
+                    <button class="tool-btn" style="padding:6px 10px;margin:0"
+                        onclick="activeDepth = 0; document.getElementById('depth-input').value=0; redrawAll()">Скинути</button>
+                </div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:4px">Визначає, де з'являться лінії у фронтальному
+                    виді</div>
             </div>
 
             <hr class="divider">
@@ -773,11 +790,10 @@
         // 3D View rotation
         let rotX = -20, rotY = 45;
 
-        // Drawing state
-        let isDrawing = false;
-        let drawStart3D = null;
-        let mousePos = { x: 0, y: 0 };
         let snapPt = null;
+        let inferencePt = null;
+        let axisSnapLine = null; // { axis: 'x'|'y'|'z', pt: {x,y,z} }
+        let activeDepth = 0; // default Z depth
         let selectedSegs = new Set();
 
         function toggleDrawer(open) {
@@ -896,13 +912,36 @@
             const r = canvas.getBoundingClientRect();
             const cx = e.clientX - r.left, cy = e.clientY - r.top;
             const v = getViewAt(cx, cy);
+            if (!v) return { pt3D: { x: 0, y: 0, z: 0 }, cx, cy, view: 'front' };
+
+            // 1. Hard Endpoint Snap
             const ep = findSnapPoint(cx, cy, v);
-            if (ep) return { pt3D: ep, snapped: true, cx, cy, view: v };
-            const p = unproject2D(cx, cy, v);
-            const ax = depthAxis(v);
-            const d = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
-            const full = fillDepth({ x: snap(p.x ?? 0), y: snap(p.y ?? 0), z: snap(p.z ?? 0) }, d, v);
-            return { pt3D: full, snapped: false, cx, cy, view: v };
+            if (ep) return { pt3D: { ...ep }, snapped: true, cx, cy, view: v };
+
+            // 2. Base unprojection
+            let p = unproject2D(cx, cy, v);
+
+            // 3. Axis Sniffing / Ortho Lock (if drawing)
+            let axis = null;
+            if (isDrawing && drawStart3D && v !== '3d') {
+                const s = drawStart3D;
+                // current view determine which 2 axis we are moving in
+                const axX = Math.abs(p.x - s.x), axY = Math.abs(p.y - s.y), axZ = Math.abs(p.z - s.z);
+                const thresh = 1.5; // grid units threshold
+                if (axX < thresh && p.x !== null) { p.x = s.x; axis = 'x'; }
+                if (axY < thresh && p.y !== null) { p.y = s.y; axis = 'y'; }
+                if (axZ < thresh && p.z !== null) { p.z = s.z; axis = 'z'; }
+            }
+
+            // 4. Fill Depth logic
+            const currentDepthAxis = depthAxis(v);
+            let d = activeDepth;
+            if (isDrawing && drawStart3D) {
+                // If we are drawing, we stay on the same depth plane we started on
+                d = drawStart3D[currentDepthAxis] ?? activeDepth;
+            }
+            const full = fillDepth({ x: snap(p.x ?? 0), y: snap(p.y ?? 0), z: snap(p.z ?? 0), view: v }, d, v);
+            return { pt3D: full, snapped: false, cx, cy, view: v, axisHint: axis };
         }
 
         function ptKey(x, y, z) { return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
@@ -931,16 +970,22 @@
 
             if (isQuadView) {
                 const w2 = W / 2, h2 = H / 2;
-                drawViewport('front', 0, 0, w2, h2, 'Спереду (Front)');
-                drawViewport('right', w2, 0, w2, h2, 'Праворуч (Right)');
-                drawViewport('top', 0, h2, w2, h2, 'Зверху (Top)');
-                drawViewport('bottom', w2, h2, w2, h2, 'Знизу (Bottom)');
+                drawViewport('front', 0, 0, w2, h2, '📐 Сперед (X,Y)');
+                drawViewport('right', w2, 0, w2, h2, 'Праворуч (Z,Y)');
+                drawViewport('top', 0, h2, w2, h2, '🔲 Зверху (X,Z)');
+                drawViewport('bottom', w2, h2, w2, h2, 'Знизу (X,-Z)');
 
-                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.moveTo(w2, 0); ctx.lineTo(w2, H); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(0, h2); ctx.lineTo(W, h2); ctx.stroke();
             } else {
-                drawViewport(activeView, 0, 0, W, H);
+                const labels = {
+                    front: '📐 Спед. (X,Y)', back: 'Ззаду (-X,Y)',
+                    top: '🔲 Зверху (X,Z)', bottom: 'Знизу (X,-Z)',
+                    right: 'Праворуч (Z,Y)', left: 'Ліворуч (-Z,Y)',
+                    '3d': '🧊 3D Огляд'
+                };
+                drawViewport(activeView, 0, 0, W, H, labels[activeView]);
             }
         }
 
@@ -1077,27 +1122,28 @@
         function drawPreview(viewOverride) {
             if (!drawStart3D || !mousePos) return;
             const view = viewOverride || activeView;
-            const cx = mousePos.x, cy = mousePos.y;
-            const snap = findSnapPoint(cx, cy, view);
-            let endPt;
-            if (snap) {
-                endPt = snap;
-            } else {
-                const partial = unproject2D(cx, cy, view);
-                endPt = fillDepth(partial, drawStart3D[depthAxis(view)], view);
-            }
+            // Get grid position relative to this viewport
+            const r = canvas.getBoundingClientRect();
+            const { pt3D, axisHint } = getGridPos({ clientX: mousePos.x + r.left, clientY: mousePos.y + r.top });
+
             const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z, view);
-            const p2 = project3D(endPt.x, endPt.y, endPt.z, view);
+            const p2 = project3D(pt3D.x, pt3D.y, pt3D.z, view);
 
             ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
-            ctx.strokeStyle = 'rgba(59,130,246,0.5)'; ctx.lineWidth = 4;
-            ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
 
-            const lenCm = segLengthCm({ x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z, x2: endPt.x, y2: endPt.y, z2: endPt.z });
+            // Axis coloring
+            const AXIS_COLORS = { x: '#ef4444', y: '#3b82f6', z: '#10b981' };
+            ctx.strokeStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.5)';
+            ctx.lineWidth = 4;
+            if (!axisHint) ctx.setLineDash([6, 4]);
+            ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+
+            const lenCm = segLengthCm({ x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z, x2: pt3D.x, y2: pt3D.y, z2: pt3D.z });
             if (lenCm > 0) {
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
-                ctx.fillStyle = 'rgba(59,130,246,0.9)'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                ctx.fillStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.9)';
+                ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(1) + 'см';
                 ctx.fillText(label, mx, my - 8); ctx.textAlign = 'left';
             }
         }
@@ -1144,6 +1190,13 @@
 
             if (activeTool === 'line') {
                 isDrawing = true; drawStart3D = { ...pt3D };
+            } else if (activeTool === 'pick-depth') {
+                const ep = findSnapPoint(cx, cy, view);
+                const d = ep ? ep[depthAxis(view)] : pt3D[depthAxis(view)];
+                activeDepth = d;
+                document.getElementById('depth-input').value = Math.round(activeDepth * gridScale);
+                setTool('line');
+                redrawAll();
             } else if (activeTool === 'select' || activeTool === 'mirror') {
                 const seg = findNearestSegment(cx, cy, view);
                 if (seg) {
