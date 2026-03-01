@@ -889,7 +889,7 @@
             if (v === 'front' || v === 'back') return 'z';
             if (v === 'top' || v === 'bottom') return 'y';
             if (v === 'right' || v === 'left') return 'x';
-            return null;
+            return 'z'; // General fallback
         }
 
         function fillDepth(p, d, v) {
@@ -945,16 +945,36 @@
                     if (dy < thresh && p.y !== null) { p.y = s.y; axis = 'y'; }
                     if (dz < thresh && p.z !== null) { p.z = s.z; axis = 'z'; }
                 } else {
-                    // 3D view: snap to nearest screen-space projected axis candidate
-                    const t = 18; // px threshold
-                    const dX = Math.hypot(cX.cx - cx, cX.cy - cy);
-                    const dY = Math.hypot(cY.cx - cx, cY.cy - cy);
-                    const dZ = Math.hypot(cZ.cx - cx, cZ.cy - cy);
-                    let minD = t, bestP = null, bestA = null;
-                    if (dX < minD) { minD = dX; bestP = pX; bestA = 'x'; }
-                    if (dY < minD) { minD = dY; bestP = pY; bestA = 'y'; }
-                    if (dZ < minD) { minD = dZ; bestP = pZ; bestA = 'z'; }
-                    if (bestP) { p = bestP; axis = bestA; }
+                    // 3D view: snap to nearest infinite axis line in screen-space
+                    const thresh = 20;
+                    const axes = [
+                        { idx: 0, name: 'x', vec: [1, 0, 0] },
+                        { idx: 1, name: 'y', vec: [0, 1, 0] },
+                        { idx: 2, name: 'z', vec: [0, 0, 1] }
+                    ];
+                    let best = null, minD = thresh;
+                    axes.forEach(a => {
+                        const p1 = { ...s }, p2 = { ...s };
+                        const far = 2000;
+                        if (a.idx === 0) { p1.x -= far; p2.x += far; }
+                        else if (a.idx === 1) { p1.y -= far; p2.y += far; }
+                        else { p1.z -= far; p2.z += far; }
+
+                        const c1 = project3D(p1.x, p1.y, p1.z, v), c2 = project3D(p2.x, p2.y, p2.z, v);
+                        const d = ptToSegDist(cx, cy, c1.cx, c1.cy, c2.cx, c2.cy);
+
+                        if (d < minD) {
+                            minD = d;
+                            // Find projection parameter t on the 2D segment
+                            const dx = c2.cx - c1.cx, dy = c2.cy - c1.cy;
+                            const t = ((cx - c1.cx) * dx + (cy - c1.cy) * dy) / (dx * dx + dy * dy);
+                            const val = (a.idx === 0 ? s.x : (a.idx === 1 ? s.y : s.z)) + (t - 0.5) * 2 * far;
+                            const snapP = { ...s };
+                            if (a.idx === 0) snapP.x = val; else if (a.idx === 1) snapP.y = val; else snapP.z = val;
+                            best = { pt: snapP, axis: a.name };
+                        }
+                    });
+                    if (best) { p = best.pt; axis = best.axis; }
                 }
             }
 
