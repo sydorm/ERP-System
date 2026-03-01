@@ -651,6 +651,8 @@
                     <button class="tool-btn active" id="tool-line" onclick="setTool('line')">✏️ Лінія (сегмент)</button>
                     <button class="tool-btn" id="tool-select" onclick="setTool('select')">🖱 Вибрати / Видалити</button>
                     <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">🔗 Тип з'єднання</button>
+                    <button class="tool-btn" id="tool-mirror" onclick="setTool('mirror')">🪞 Дублювати /
+                        Дзеркало</button>
                 </div>
             </div>
 
@@ -691,6 +693,7 @@
                 <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
                 <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
                 <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+                <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D Огляд</button>
             </div>
 
             <!-- Canvas -->
@@ -766,11 +769,15 @@
         let cellPx = 40;   // pixels per cell
         let offsetX = 0, offsetY = 0;
 
+        // 3D View rotation (degrees)
+        let rotX = -20, rotY = 45;
+
         // Drawing state
         let isDrawing = false;
         let drawStart3D = null;   // full {x,y,z}
         let mousePos = { x: 0, y: 0 };
         let snapPt = null;   // highlighted snap point {x,y,z} or null
+        let selectedSegs = new Set(); // IDs of selected segments for mirroring
 
         // в”Ђв”Ђ Drawer в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         function toggleDrawer(open) {
@@ -785,10 +792,20 @@
         // Project 3D grid point в†’ canvas pixel
         function project3D(x, y, z) {
             let u, v;
-            switch (activeView) {
-                case 'front': u = x; v = y; break;   // X-Y plane
-                case 'side': u = z; v = y; break;   // Z-Y plane
-                case 'top': u = x; v = z; break;   // X-Z plane
+            if (activeView === '3d') {
+                const radX = rotX * Math.PI / 180;
+                const radY = rotY * Math.PI / 180;
+                // Basic rotation
+                let x1 = x * Math.cos(radY) + z * Math.sin(radY);
+                let z1 = z * Math.cos(radY) - x * Math.sin(radY);
+                let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
+                u = x1; v = y1;
+            } else {
+                switch (activeView) {
+                    case 'front': u = x; v = y; break;   // X-Y plane
+                    case 'side': u = z; v = y; break;   // Z-Y plane
+                    case 'top': u = x; v = z; break;   // X-Z plane
+                }
             }
             return { cx: u * cellPx + offsetX, cy: v * cellPx + offsetY };
         }
@@ -870,13 +887,31 @@
             ctx.clearRect(0, 0, W, H);
             ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
             drawGrid(W, H);
+            if (activeView === '3d') drawAxes();
             drawSegments();
             drawJoints();
             if (snapPt) drawSnapIndicator();
-            if (isDrawing && drawStart3D) drawPreview();
+            if (isDrawing && drawStart3D && activeView !== '3d') drawPreview();
+        }
+
+        function drawAxes() {
+            const axes = [
+                { x: 1, y: 0, z: 0, color: '#ef4444', label: 'X' },
+                { x: 0, y: 1, z: 0, color: '#3b82f6', label: 'Y' },
+                { x: 0, y: 0, z: 1, color: '#10b981', label: 'Z' }
+            ];
+            const origin = project3D(0, 0, 0);
+            axes.forEach(a => {
+                const head = project3D(a.x * 2, a.y * 2, a.z * 2);
+                ctx.beginPath(); ctx.moveTo(origin.cx, origin.cy); ctx.lineTo(head.cx, head.cy);
+                ctx.strokeStyle = a.color; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = a.color; ctx.font = 'bold 10px monospace';
+                ctx.fillText(a.label, head.cx + 4, head.cy + 4);
+            });
         }
 
         function drawGrid(W, H) {
+            if (activeView === '3d') return; // Hide standard grid in 3D
             ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
             const startX = Math.floor((0 - offsetX) / cellPx) - 1;
             const endX = Math.ceil((W - offsetX) / cellPx) + 1;
@@ -948,13 +983,15 @@
                     return;
                 }
 
-                ctx.shadowColor = 'rgba(0,0,0,0.15)'; ctx.shadowBlur = 3;
+                const isSelected = selectedSegs.has(seg.id);
+                ctx.shadowColor = isSelected ? 'rgba(59,130,246,0.6)' : 'rgba(0,0,0,0.15)';
+                ctx.shadowBlur = isSelected ? 8 : 3;
                 ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
                 ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 6; ctx.lineCap = 'square'; ctx.stroke();
                 ctx.shadowBlur = 0;
 
                 ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
-                ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.strokeStyle = isSelected ? '#3b82f6' : '#60a5fa'; ctx.lineWidth = 2; ctx.stroke();
 
                 // Length label
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
@@ -1066,8 +1103,13 @@
         });
         canvas.addEventListener('mousemove', e => {
             if (panning) {
-                offsetX = e.clientX - panStart.x;
-                offsetY = e.clientY - panStart.y;
+                if (activeView === '3d') {
+                    rotY += e.movementX * 0.5;
+                    rotX -= e.movementY * 0.5;
+                } else {
+                    offsetX = e.clientX - panStart.x;
+                    offsetY = e.clientY - panStart.y;
+                }
                 redrawAll();
             }
         });
@@ -1080,9 +1122,18 @@
             if (activeTool === 'line') {
                 isDrawing = true;
                 drawStart3D = { ...pt3D };
-            } else if (activeTool === 'select') {
+            } else if (activeTool === 'select' || activeTool === 'mirror') {
                 const seg = findNearestSegment(cx, cy);
-                if (seg) { segments = segments.filter(s => s.id !== seg.id); updateUI(); redrawAll(); }
+                if (seg) {
+                    if (activeTool === 'select') {
+                        segments = segments.filter(s => s.id !== seg.id);
+                        selectedSegs.delete(seg.id);
+                    } else {
+                        if (selectedSegs.has(seg.id)) selectedSegs.delete(seg.id);
+                        else selectedSegs.add(seg.id);
+                    }
+                    updateUI(); redrawAll();
+                }
             } else if (activeTool === 'joint') {
                 // Find existing joint near click
                 let nearKey = null, nearDist = 15;
@@ -1201,8 +1252,14 @@
             const tab = document.getElementById('vtab-' + v);
             if (tab) tab.classList.add('active');
             // Change canvas border color to indicate active view
-            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669' };
+            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669', '3d': '#f59e0b' };
             canvas.style.outline = '3px solid ' + VIEW_COLORS[v];
+
+            // Auto-center in 3D
+            if (v === '3d') {
+                offsetX = canvas.width / 2;
+                offsetY = canvas.height / 2;
+            }
             redrawAll();
         }
 
@@ -1217,10 +1274,48 @@
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function setTool(t) {
             activeTool = t;
-            ['line', 'select', 'joint'].forEach(id => {
+            ['line', 'select', 'joint', 'mirror'].forEach(id => {
                 document.getElementById('tool-' + id)?.classList.toggle('active', id === t);
             });
-            canvas.style.cursor = t === 'select' ? 'default' : 'crosshair';
+            if (t === 'mirror' && selectedSegs.size > 0) {
+                showMirrorDialog();
+            }
+            canvas.style.cursor = (t === 'select' || t === 'mirror') ? 'default' : 'crosshair';
+        }
+
+        function showMirrorDialog() {
+            const ov = document.createElement('div');
+            ov.className = 'tpl-overlay';
+            ov.innerHTML = `<div class="tpl-box">
+                <h4>🪞 Дублювати вибране (${selectedSegs.size})</h4>
+                <label>Офсет по вісі</label>
+                <select id="m-axis"><option value="x">X (Ширина)</option><option value="y">Y (Висота)</option><option value="z" selected>Z (Глибина)</option></select>
+                <label>Відстань (см)</label>
+                <input type="number" id="m-dist" value="100">
+                <div class="tpl-btns">
+                    <button class="tpl-btn-cancel" onclick="this.closest('.tpl-overlay').remove()">Скасувати</button>
+                    <button class="tpl-btn-ok" onclick="applyMirror()">Дублювати</button>
+                </div>
+            </div>`;
+            document.body.appendChild(ov);
+        }
+
+        function applyMirror() {
+            const axis = document.getElementById('m-axis').value;
+            const dist = +document.getElementById('m-dist').value / gridScale;
+            const newSegs = [];
+            segments.forEach(seg => {
+                if (selectedSegs.has(seg.id)) {
+                    const s2 = { ...seg, id: ++segId };
+                    s2[axis + '1'] += dist;
+                    s2[axis + '2'] += dist;
+                    newSegs.push(s2);
+                }
+            });
+            segments.push(...newSegs);
+            document.querySelector('.tpl-overlay').remove();
+            selectedSegs.clear();
+            updateUI(); redrawAll();
         }
 
         function setCutType(t) {
