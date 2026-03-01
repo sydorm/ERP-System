@@ -664,7 +664,7 @@
                 <div style="display:flex;gap:8px;align-items:center">
                     <input type="number" id="depth-input" value="0"
                         style="width:70px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;font-weight:bold"
-                        onchange="activeDepth = +this.value / gridScale; redrawAll()">
+                        oninput="activeDepth = +this.value / gridScale; redrawAll()">
                     <span style="font-size:12px;color:#64748b">см</span>
                     <button class="tool-btn" style="padding:6px 10px;margin:0"
                         onclick="activeDepth = 0; document.getElementById('depth-input').value=0; redrawAll()">Скинути</button>
@@ -926,14 +926,33 @@
 
             // 3. Axis Sniffing / Ortho Lock (if drawing)
             let axis = null;
-            if (isDrawing && drawStart3D && v !== '3d') {
+            if (isDrawing && drawStart3D) {
                 const s = drawStart3D;
-                // current view determine which 2 axis we are moving in
-                const axX = Math.abs(p.x - s.x), axY = Math.abs(p.y - s.y), axZ = Math.abs(p.z - s.z);
-                const thresh = 1.5; // grid units threshold
-                if (axX < thresh && p.x !== null) { p.x = s.x; axis = 'x'; }
-                if (axY < thresh && p.y !== null) { p.y = s.y; axis = 'y'; }
-                if (axZ < thresh && p.z !== null) { p.z = s.z; axis = 'z'; }
+                const candidates = [];
+                // Projected axis candidates
+                const pX = { x: p.x, y: s.y, z: s.z }, cX = project3D(pX.x, pX.y, pX.z, v);
+                const pY = { x: s.x, y: p.y, z: s.z }, cY = project3D(pY.x, pY.y, pY.z, v);
+                const pZ = { x: s.x, y: s.y, z: p.z }, cZ = project3D(pZ.x, pZ.y, pZ.z, v);
+
+                if (v !== '3d') {
+                    // Ortho views: lock based on which component we changed
+                    const thresh = 1.5;
+                    const dx = Math.abs(p.x - s.x), dy = Math.abs(p.y - s.y), dz = Math.abs(p.z - s.z);
+                    if (dx < thresh && p.x !== null) { p.x = s.x; axis = 'x'; }
+                    if (dy < thresh && p.y !== null) { p.y = s.y; axis = 'y'; }
+                    if (dz < thresh && p.z !== null) { p.z = s.z; axis = 'z'; }
+                } else {
+                    // 3D view: snap to nearest screen-space projected axis candidate
+                    const t = 18; // px threshold
+                    const dX = Math.hypot(cX.cx - cx, cY.cy - cy);
+                    const dY = Math.hypot(cY.cx - cx, cY.cy - cy);
+                    const dZ = Math.hypot(cZ.cx - cx, cZ.cy - cy);
+                    let minD = t, bestP = null, bestA = null;
+                    if (dX < minD) { minD = dX; bestP = pX; bestA = 'x'; }
+                    if (dY < minD) { minD = dY; bestP = pY; bestA = 'y'; }
+                    if (dZ < minD) { minD = dZ; bestP = pZ; bestA = 'z'; }
+                    if (bestP) { p = bestP; axis = bestA; }
+                }
             }
 
             // 4. Fill Depth logic
@@ -1007,6 +1026,24 @@
             if (label) {
                 ctx.fillStyle = '#475569'; ctx.font = 'bold 11px Segoe UI';
                 ctx.textAlign = 'left'; ctx.fillText(label, vx + 10, vy + 22);
+            }
+
+            // Active Depth Marker
+            if (view !== '3d') {
+                const d = activeDepth;
+                const ax = depthAxis(view);
+                // Draw a marker in orthogonal views showing where the active depth is
+                ctx.strokeStyle = '#10b981'; ctx.globalAlpha = 0.4; ctx.setLineDash([2, 4]);
+                if (view === 'front' || view === 'back') {
+                    // No depth line to show in front views (it's the parallel plane)
+                } else if (view === 'top' || view === 'bottom') {
+                    const { cy } = project3D(0, 0, d, view);
+                    ctx.beginPath(); ctx.moveTo(vx, cy); ctx.lineTo(vx + vw, cy); ctx.stroke();
+                } else { // right / left
+                    const { cx } = project3D(0, 0, d, view);
+                    ctx.beginPath(); ctx.moveTo(cx, vy); ctx.lineTo(cx, vy + vh); ctx.stroke();
+                }
+                ctx.setLineDash([]); ctx.globalAlpha = 1;
             }
             ctx.restore();
         }
@@ -1351,7 +1388,9 @@
             if (t === 'mirror' && selectedSegs.size > 0) {
                 showMirrorDialog();
             }
-            canvas.style.cursor = (t === 'select' || t === 'mirror') ? 'default' : 'crosshair';
+            if (t === 'select' || t === 'mirror') canvas.style.cursor = 'default';
+            else if (t === 'pick-depth') canvas.style.cursor = 'help';
+            else canvas.style.cursor = 'crosshair';
         }
 
         function showMirrorDialog() {
