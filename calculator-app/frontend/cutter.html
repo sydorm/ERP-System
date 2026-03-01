@@ -637,10 +637,10 @@
                 <div class="panel-section">Масштаб сітки</div>
                 <label>Одна клітинка =</label>
                 <select id="grid-scale">
-                    <option value="5">5 см</option>
-                    <option value="10" selected>10 см</option>
-                    <option value="20">20 см</option>
-                    <option value="50">50 см</option>
+                    <option value="50">5 см (50 мм)</option>
+                    <option value="100" selected>10 см (100 мм)</option>
+                    <option value="200">20 см (200 мм)</option>
+                    <option value="500">50 см (500 мм)</option>
                 </select>
             </div>
 
@@ -665,7 +665,7 @@
                     <input type="number" id="depth-input" value="0"
                         style="width:70px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;font-weight:bold"
                         oninput="activeDepth = +this.value / gridScale; redrawAll()">
-                    <span style="font-size:12px;color:#64748b">см</span>
+                    <span style="font-size:12px;color:#64748b">мм</span>
                     <button class="tool-btn" style="padding:6px 10px;margin:0"
                         onclick="activeDepth = 0; document.getElementById('depth-input').value=0; redrawAll()">Скинути</button>
                 </div>
@@ -780,7 +780,7 @@
         let isQuadView = false;
         let activeTool = 'line';
         let activeCutType = 'straight';
-        let gridScale = 10;
+        let gridScale = 100; // was 10, now in mm
         let cellPx = 40;
         let offsetX = 0, offsetY = 0;
 
@@ -1188,6 +1188,11 @@
 
             const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z, view);
             const p2 = project3D(pt3D.x, pt3D.y, pt3D.z, view);
+            const lenMm = segLengthMm({
+                x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z,
+                x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
+                cut1: 'straight', cut2: 'straight'
+            });
 
             ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
 
@@ -1197,12 +1202,11 @@
             ctx.lineWidth = 4;
             if (!axisHint) ctx.setLineDash([6, 4]);
             ctx.stroke(); ctx.setLineDash([]);
-            if (lenCm > 0) {
+            if (lenMm > 0) {
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 ctx.fillStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.9)';
-                ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(1) + 'см';
-                ctx.fillText(label, mx, my - 8); ctx.textAlign = 'left';
+                ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(Math.round(lenMm) + ' мм', mx, my - 10);
             }
         }
 
@@ -1310,7 +1314,7 @@
             const { pt3D } = getGridPos(e);
 
             document.getElementById('canvas-info').textContent =
-                `X:${Math.round(pt3D.x * gridScale)} Y:${Math.round(pt3D.y * gridScale)} Z:${Math.round(pt3D.z * gridScale)} см | Вид: ${v}`;
+                `X:${Math.round(pt3D.x * gridScale)} Y:${Math.round(pt3D.y * gridScale)} Z:${Math.round(pt3D.z * gridScale)} мм | Вид: ${v}`;
 
             redrawAll();
         }
@@ -1319,17 +1323,20 @@
             panning = false; canvas.style.cursor = 'crosshair';
             if (e.button !== 0 || !isDrawing) return;
             const { pt3D } = getGridPos(e);
-            const start = drawStart3D;
-            isDrawing = false; drawStart3D = null;
 
-            if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) { redrawAll(); return; }
+            const start = drawStart3D;
+            if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) {
+                isDrawing = false; drawStart3D = null;
+                redrawAll(); return;
+            }
 
             segments.push({
                 id: ++segId,
-                x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z,
+                x1: start.x, y1: start.y, z1: start.z,
                 x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
                 cut1: 'straight', cut2: 'straight'
             });
+            isDrawing = false; drawStart3D = null;
             updateUI(); redrawAll();
         }
 
@@ -1536,7 +1543,7 @@
 
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // GRID SCALE + PROFILE LISTENERS
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // в•ђв•ђв••ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         document.getElementById('grid-scale').addEventListener('change', e => {
             gridScale = +e.target.value; updateUI(); redrawAll();
         });
@@ -1548,30 +1555,52 @@
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // UI UPDATE вЂ” grouped by length
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function segLengthMm(seg) {
+            const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1, dz = seg.z2 - seg.z1;
+            let len = Math.sqrt(dx * dx + dy * dy + dz * dz) * gridScale;
+
+            // Smart Deduction Logic
+            const tube = getTubeSize(); // returns {w, h} in mm
+            // If cut is 'straight' (butt joint) or 'T', we deduce the profile width
+            // This is because we draw to axis-lines, but material is shorter.
+            if (seg.cut1 === 'straight' || seg.cut1 === 'T') len -= tube.w;
+            if (seg.cut2 === 'straight' || seg.cut2 === 'T') len -= tube.w;
+
+            return Math.max(0, len);
+        }
+
+        function getTubeSize() {
+            const val = document.getElementById('profile-sel').value;
+            if (val === 'custom') {
+                return {
+                    w: +document.getElementById('custom-w').value,
+                    h: +document.getElementById('custom-h').value
+                };
+            }
+            const parts = val.split('x');
+            return { w: +parts[0], h: +parts[1] };
+        }
+
+        function ptKey(x, y, z) { return `${x},${y},${z}`; }
+
         function updateUI() {
             const list = document.getElementById('seg-list');
-            if (segments.length === 0) {
-                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>';
-                document.getElementById('cut-summary').style.display = 'none';
-                return;
-            }
-
             const groups = {};
-            let totalCm = 0;
+            let totalMm = 0;
             segments.forEach(seg => {
-                const lenCm = segLengthCm(seg);
-                totalCm += lenCm;
-                const lenMm = Math.round(lenCm * 10);
-                if (!groups[lenMm]) groups[lenMm] = { lenCm, segs: [] };
-                groups[lenMm].segs.push(seg);
+                const lenMm = segLengthMm(seg);
+                totalMm += lenMm;
+                const roundedMm = Math.round(lenMm);
+                if (!groups[roundedMm]) groups[roundedMm] = { lenMm, segs: [] };
+                groups[roundedMm].segs.push(seg);
             });
 
             list.innerHTML = '';
             let rowNum = 0;
             Object.values(groups).forEach(group => {
                 const qty = group.segs.length;
-                const lenCm = group.lenCm;
-                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
+                const roundedMm = Math.round(group.lenMm);
+                const lenLabel = roundedMm >= 1000 ? (roundedMm / 1000).toFixed(3) + ' м' : roundedMm + ' мм';
                 const seg0 = group.segs[0];
                 const cut1 = seg0.cut1 || 'straight', cut2 = seg0.cut2 || 'straight';
                 const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
@@ -1593,7 +1622,7 @@
             });
 
             document.getElementById('cut-summary').style.display = 'block';
-            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' м';
+            document.getElementById('total-len').textContent = (totalMm / 1000).toFixed(3) + ' м';
             document.getElementById('summary-profile').textContent = getProfileLabel();
         }
 
@@ -1610,10 +1639,10 @@
             const ov = document.createElement('div');
             ov.className = 'tpl-overlay';
             let fields = '';
-            if (type === 'square') fields = `<label>Сторона (см)</label><input type="number" id="t1" value="50" min="1">`;
-            if (type === 'rect') fields = `<label>Ширина (см)</label><input type="number" id="t1" value="80" min="1"><label>Висота (см)</label><input type="number" id="t2" value="50" min="1">`;
-            if (type === 'trapezoid') fields = `<label>Нижня основа (см)</label><input type="number" id="t1" value="80" min="1"><label>Верхня основа (см)</label><input type="number" id="t2" value="50" min="1"><label>Висота (см)</label><input type="number" id="t3" value="40" min="1">`;
-            if (type === 'triangle') fields = `<label>Основа (см)</label><input type="number" id="t1" value="60" min="1"><label>Висота (см)</label><input type="number" id="t2" value="40" min="1">`;
+            if (type === 'square') fields = `<label>Сторона (мм)</label><input type="number" id="t1" value="500" min="1">`;
+            if (type === 'rect') fields = `<label>Ширина (мм)</label><input type="number" id="t1" value="800" min="1"><label>Висота (мм)</label><input type="number" id="t2" value="500" min="1">`;
+            if (type === 'trapezoid') fields = `<label>Нижня основа (мм)</label><input type="number" id="t1" value="800" min="1"><label>Верхня основа (мм)</label><input type="number" id="t2" value="500" min="1"><label>Висота (мм)</label><input type="number" id="t3" value="400" min="1">`;
+            if (type === 'triangle') fields = `<label>Основа (мм)</label><input type="number" id="t1" value="600" min="1"><label>Висота (мм)</label><input type="number" id="t2" value="400" min="1">`;
             ov.innerHTML = `<div class="tpl-box"><h4>Шаблон: ${TITLES[type]}</h4>${fields}
                 <div class="tpl-btns">
                     <button class="tpl-btn-cancel" id="tpl-cancel">Скасувати</button>
