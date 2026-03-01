@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>рџ”§ Р РѕР·РєСЂС–Р№ РјРµС‚Р°Р»Сѓ вЂ” ERP</title>
+    <title>🔧 Розкрій металу — ERP</title>
     <style>
         *,
         *::before,
@@ -602,10 +602,10 @@
 <body>
 
     <div class="nav">
-        <span class="nav-logo">рџ”© ERP РЎРёСЃС‚РµРјР°</span>
-        <a href="/metal.html">рџ”© РњРµС‚Р°Р»</a>
-        <a href="/cutter.html" class="on">рџ”§ Р РѕР·РєСЂС–Р№</a>
-        <a href="/admin.html">вљ™пёЏ РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ</a>
+        <span class="nav-logo">🔩 ERP Система</span>
+        <a href="/metal.html">🔩 Метал</a>
+        <a href="/cutter.html" class="on">🔧 Розкрій</a>
+        <a href="/admin.html">⚙️ Налаштування</a>
     </div>
 
     <div class="main">
@@ -613,78 +613,74 @@
         <!-- LEFT PANEL -->
         <div class="panel-left">
             <div>
-                <div class="panel-section">РџСЂРѕС„С–Р»СЊ</div>
-                <label>РўРёРї С‚СЂСѓР±Рё</label>
+                <div class="panel-section">Профіль</div>
+                <label>Тип труби</label>
                 <select id="profile-sel">
-                    <option value="20x20">РљРІР°РґСЂР°С‚ 20Г—20</option>
-                    <option value="25x25">РљРІР°РґСЂР°С‚ 25Г—25</option>
-                    <option value="30x30" selected>РљРІР°РґСЂР°С‚ 30Г—30</option>
-                    <option value="40x40">РљРІР°РґСЂР°С‚ 40Г—40</option>
-                    <option value="50x50">РљРІР°РґСЂР°С‚ 50Г—50</option>
-                    <option value="20x40">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 20Г—40</option>
-                    <option value="20x60">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 20Г—60</option>
-                    <option value="40x80">РџСЂСЏРјРѕРєСѓС‚РЅРёРє 40Г—80</option>
-                    <option value="custom">Р’Р»Р°СЃРЅРёР№ СЂРѕР·РјС–СЂ...</option>
+                    <option value="20x20">Квадрат 20×20</option>
+                    <option value="25x25">Квадрат 25×25</option>
+                    <option value="30x30" selected>Квадрат 30×30</option>
+                    <option value="40x40">Квадрат 40×40</option>
+                    <option value="50x50">Квадрат 50×50</option>
+                    <option value="20x40">Прямокутник 20×40</option>
+                    <option value="20x60">Прямокутник 20×60</option>
+                    <option value="40x80">Прямокутник 40×80</option>
+                    <option value="custom">Власний розмір...</option>
                 </select>
                 <div id="custom-profile" style="display:none;margin-top:6px;display:flex;gap:5px;align-items:center">
-                    <input type="number" id="custom-w" value="30" min="5" max="200" style="width:60px"> Г—
-                    <input type="number" id="custom-h" value="30" min="5" max="200" style="width:60px"> РјРј
+                    <input type="number" id="custom-w" value="30" min="5" max="200" style="width:60px"> ×
+                    <input type="number" id="custom-h" value="30" min="5" max="200" style="width:60px"> мм
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">РњР°СЃС€С‚Р°Р± СЃС–С‚РєРё</div>
-                <label>РћРґРЅР° РєР»С–С‚РёРЅРєР° =</label>
+                <div class="panel-section">Масштаб сітки</div>
+                <label>Одна клітинка =</label>
                 <select id="grid-scale">
-                    <option value="5">5 СЃРј</option>
-                    <option value="10" selected>10 СЃРј</option>
-                    <option value="20">20 СЃРј</option>
-                    <option value="50">50 СЃРј</option>
+                    <option value="5">5 см</option>
+                    <option value="10" selected>10 см</option>
+                    <option value="20">20 см</option>
+                    <option value="50">50 см</option>
                 </select>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">Р†РЅСЃС‚СЂСѓРјРµРЅС‚</div>
+                <div class="panel-section">Інструмент</div>
                 <div class="tool-group">
-                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">вњЏпёЏ Р›С–РЅС–СЏ
-                        (СЃРµРіРјРµРЅС‚)</button>
-                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">рџ–± Р’РёР±СЂР°С‚Рё /
-                        Р’РёРґР°Р»РёС‚Рё</button>
-                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">рџ”— РўРёРї
-                        Р·'С”РґРЅР°РЅРЅСЏ</button>
+                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">✏️ Лінія (сегмент)</button>
+                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">🖱 Вибрати / Видалити</button>
+                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">🔗 Тип з'єднання</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div id="joint-panel">
-                <div class="panel-section">РўРёРї СЂС–Р·Сѓ РІ Р·'С”РґРЅР°РЅРЅС–</div>
-                <div style="font-size:11px;color:#64748b;margin-bottom:6px">Р›РљРњ = Р·РјС–РЅРёС‚Рё С‚РёРї<br>РџРљРњ =
-                    РІРёРґР°Р»РёС‚Рё РјС–С‚РєСѓ
+                <div class="panel-section">Тип різу в з'єднанні</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px">ЛКМ = змінити тип<br>ПКМ = видалити мітку
                 </div>
                 <div class="cut-options">
                     <button class="cut-btn active" id="cut-straight"
-                        onclick="setCutType('straight')">90В°<br>РџСЂСЏРјРёР№</button>
-                    <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45В°<br>РџС–Рґ РєСѓС‚</button>
-                    <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>РџСЂРёРјРёРєР°</button>
+                        onclick="setCutType('straight')">90°<br>Прямий</button>
+                    <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45°<br>Під кут</button>
+                    <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>Примика</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <div class="panel-section">РЁР°Р±Р»РѕРЅРё</div>
+                <div class="panel-section">Шаблони</div>
                 <div class="tool-group">
-                    <button class="tool-btn" onclick="insertTemplate('square')">в¬њ РљРІР°РґСЂР°С‚</button>
-                    <button class="tool-btn" onclick="insertTemplate('rect')">в–­ РџСЂСЏРјРѕРєСѓС‚РЅРёРє</button>
-                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">вЏў РўСЂР°РїРµС†С–СЏ</button>
-                    <button class="tool-btn" onclick="insertTemplate('triangle')">в–і РўСЂРёРєСѓС‚РЅРёРє</button>
+                    <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
+                    <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
+                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
+                    <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div>
-                <button class="btn-action btn-danger" onclick="clearAll()">рџ—‘ РћС‡РёСЃС‚РёС‚Рё РІСЃРµ</button>
+                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
             </div>
         </div>
 
@@ -692,20 +688,19 @@
         <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
             <!-- View tab bar -->
             <div class="view-tab-bar">
-                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">рџ“ђ Р¤СЂРѕРЅС‚</button>
-                <button class="view-tab" id="vtab-side" onclick="switchView('side')">в—» Р‘С–С‡РЅРёР№</button>
-                <button class="view-tab" id="vtab-top" onclick="switchView('top')">рџ”І Р—РІРµСЂС…Сѓ</button>
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
+                <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
+                <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
             </div>
 
             <!-- Canvas -->
             <div class="canvas-area" id="canvas-area" style="flex:1">
                 <canvas id="main-canvas"></canvas>
-                <div class="canvas-info" id="canvas-info">РљР»С–РєРЅС–С‚СЊ С‚Р° С‚СЏРіРЅС–С‚СЊ С‰РѕР±
-                    РЅР°РјР°Р»СЋРІР°С‚Рё Р»С–РЅС–СЋ РєР°СЂРєР°СЃСѓ</div>
+                <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
                 <div class="zoom-bar">
-                    <button onclick="zoom(1.2)" title="Р—Р±С–Р»СЊС€РёС‚Рё">+</button>
-                    <button onclick="zoom(0.8)" title="Р—РјРµРЅС€РёС‚Рё">в€’</button>
-                    <button onclick="resetView()" title="РЎРєРёРЅСѓС‚Рё РІРёРґ">вЉ™</button>
+                    <button onclick="zoom(1.2)" title="Збільшити">+</button>
+                    <button onclick="zoom(0.8)" title="Зменшити">−</button>
+                    <button onclick="resetView()" title="Скинути вид">⊙</button>
                 </div>
             </div>
         </div>
@@ -713,24 +708,21 @@
         <!-- RIGHT PANEL -->
         <div class="panel-right">
             <div class="panel-right-header">
-                <h3>рџ“‹ РЎРїРёСЃРѕРє РІС–РґСЂС–Р·РєС–РІ</h3>
+                <h3>📋 Список відрізків</h3>
             </div>
             <div class="panel-right-content" id="seg-list">
-                <div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР±
-                    РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>
+                <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
             </div>
             <div class="panel-bottom">
                 <div class="cut-summary" id="cut-summary" style="display:none">
-                    <div style="margin-bottom:4px"><strong>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°:</strong> <span
-                            id="total-len">0</span> Рј
+                    <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
                     </div>
-                    <div><strong>РџСЂРѕС„С–Р»СЊ:</strong> <span id="summary-profile">вЂ”</span></div>
+                    <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
                 </div>
-                <button class="btn-action btn-green" onclick="generateCutPlan()">рџ“„ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ</button>
-                <button class="btn-action btn-print" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє РєР°СЂС‚Рё</button>
-                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">рџ”—
-                    РќР°РґС–СЃР»Р°С‚Рё РІ
-                    РњРµС‚Р°Р»</button>
+                <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
+                <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
+                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
+                    Метал</button>
             </div>
         </div>
 
@@ -740,15 +732,14 @@
     <div class="cut-plan-drawer" id="cut-plan-drawer">
         <div class="cut-plan-drawer-inner">
             <div class="cut-plan-drawer-header">
-                <h3>рџ“„ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ РјРµС‚Р°Р»Сѓ</h3>
-                <button class="drawer-close" onclick="toggleDrawer(false)" title="Р—Р°РєСЂРёС‚Рё">вњ•</button>
+                <h3>📄 Карта розкрою металу</h3>
+                <button class="drawer-close" onclick="toggleDrawer(false)" title="Закрити">✕</button>
             </div>
             <div class="cut-plan-drawer-body" id="cut-plan-body"></div>
             <div class="cut-plan-drawer-footer">
-                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє
-                    РєР°СЂС‚Рё</button>
+                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">🖨 Друк карти</button>
                 <button class="btn-action btn-danger" style="flex:0;padding:9px 16px"
-                    onclick="toggleDrawer(false)">Р—Р°РєСЂРёС‚Рё</button>
+                    onclick="toggleDrawer(false)">Закрити</button>
             </div>
         </div>
     </div>
@@ -757,13 +748,13 @@
     <div class="print-sheet" id="print-sheet"></div>
 
     <script>
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // ═══════════════════════════════════════════════════════
         // 3D DATA MODEL
-        // Single shared array вЂ” views are projections
+        // Single shared array — views are projections
         // Front: looking along +Z, shows (X, Y)
         // Side:  looking along -X, shows (Z, Y)
         // Top:   looking along +Y, shows (X, Z)
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // ═══════════════════════════════════════════════════════
         let segments = [];   // [{id, x1,y1,z1, x2,y2,z2}]
         let joints = {};   // key="x,y,z" в†’ {type:'straight'|'45'|'T'}
         let segId = 0;
@@ -912,14 +903,14 @@
             for (let gx = startX; gx <= endX; gx++) {
                 if (gx % 5 === 0) {
                     const px = gx * cellPx + offsetX;
-                    ctx.fillText(gx * gridScale + ' СЃРј', px, offsetY - 4 < 12 ? 12 : offsetY - 4);
+                    ctx.fillText(gx * gridScale + ' см', px, offsetY - 4 < 12 ? 12 : offsetY - 4);
                 }
             }
             ctx.textAlign = 'right';
             for (let gy = startY; gy <= endY; gy++) {
                 if (gy % 5 === 0) {
                     const py = gy * cellPx + offsetY;
-                    ctx.fillText(gy * gridScale + ' СЃРј', offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
+                    ctx.fillText(gy * gridScale + ' см', offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
                 }
             }
 
@@ -968,7 +959,7 @@
                 // Length label
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 const lenCm = segLengthCm(seg);
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'Рј' : lenCm.toFixed(0) + 'СЃРј';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
                 ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
                 const tw = ctx.measureText(label).width + 8;
                 ctx.fillRect(mx - tw / 2, my - 9, tw, 16);
@@ -1033,7 +1024,7 @@
             if (lenCm > 0) {
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 ctx.fillStyle = 'rgba(59,130,246,0.9)'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'Рј' : lenCm.toFixed(0) + 'СЃРј';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
                 ctx.fillText(label, mx, my - 8); ctx.textAlign = 'left';
             }
         }
@@ -1126,7 +1117,7 @@
             const d = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
             const full = fillDepth({ x: Math.round(partial.x ?? 0), y: Math.round(partial.y ?? 0), z: Math.round(partial.z ?? 0) }, d);
             document.getElementById('canvas-info').textContent =
-                `X:${full.x * gridScale} Y:${full.y * gridScale} Z:${full.z * gridScale} СЃРј`;
+                `X:${full.x * gridScale} Y:${full.y * gridScale} Z:${full.z * gridScale} см`;
 
             if (panning || (isDrawing && drawStart3D)) redrawAll();
             else if (snapPt !== null || ep !== null) redrawAll();
@@ -1216,7 +1207,7 @@
         }
 
         function clearAll() {
-            if (!confirm('РћС‡РёСЃС‚РёС‚Рё РІРµСЃСЊ РјР°Р»СЋРЅРѕРє?')) return;
+            if (!confirm('Очистити весь малюнок?')) return;
             segments = []; joints = {}; segId = 0;
             updateUI(); redrawAll();
         }
@@ -1247,9 +1238,9 @@
             if (sel === 'custom') {
                 const w = document.getElementById('custom-w').value;
                 const h = document.getElementById('custom-h').value;
-                return `${w}Г—${h} РјРј`;
+                return `${w}×${h} мм`;
             }
-            return sel + ' РјРј';
+            return sel + ' мм';
         }
 
         function getProfileDims() {
@@ -1276,7 +1267,7 @@
         function updateUI() {
             const list = document.getElementById('seg-list');
             if (segments.length === 0) {
-                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР± РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>';
+                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>';
                 document.getElementById('cut-summary').style.display = 'none';
                 return;
             }
@@ -1296,14 +1287,14 @@
             Object.values(groups).forEach(group => {
                 const qty = group.segs.length;
                 const lenCm = group.lenCm;
-                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' Рј' : lenCm.toFixed(0) + ' СЃРј';
+                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
                 const seg0 = group.segs[0];
                 const k1 = ptKey(seg0.x1, seg0.y1, seg0.z1), k2 = ptKey(seg0.x2, seg0.y2, seg0.z2);
                 const cut1 = joints[k1]?.type || 'straight', cut2 = joints[k2]?.type || 'straight';
-                const CUT_L = { straight: '90В°', '45': '45В°', T: 'T' };
-                const cutLabel = `${CUT_L[cut1] || '90В°'} / ${CUT_L[cut2] || '90В°'}`;
+                const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
+                const cutLabel = `${CUT_L[cut1] || '90°'} / ${CUT_L[cut2] || '90°'}`;
                 const qtyBadge = qty > 1
-                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:3px">${qty}Г—</span>`
+                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:3px">${qty}×</span>`
                     : '';
                 rowNum++;
                 const row = document.createElement('div');
@@ -1314,12 +1305,12 @@
         <div class="seg-len">${lenLabel}${qtyBadge}</div>
         <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
       </div>
-      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Р’РёРґР°Р»РёС‚Рё">вњ•</button>`;
+      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Видалити">✕</button>`;
                 list.appendChild(row);
             });
 
             document.getElementById('cut-summary').style.display = 'block';
-            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' Рј';
+            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' м';
             document.getElementById('summary-profile').textContent = getProfileLabel();
         }
 
@@ -1332,18 +1323,18 @@
         // TEMPLATES  (inserts into 3D at Z=0, Y=0 etc.)
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function insertTemplate(type) {
-            const TITLES = { square: 'РљРІР°РґСЂР°С‚', rect: 'РџСЂСЏРјРѕРєСѓС‚РЅРёРє', trapezoid: 'РўСЂР°РїРµС†С–СЏ', triangle: 'РўСЂРёРєСѓС‚РЅРёРє' };
+            const TITLES = { square: 'Квадрат', rect: 'Прямокутник', trapezoid: 'Трапеція', triangle: 'Трикутник' };
             const ov = document.createElement('div');
             ov.className = 'tpl-overlay';
             let fields = '';
-            if (type === 'square') fields = `<label>РЎС‚РѕСЂРѕРЅР° (СЃРј)</label><input type="number" id="t1" value="50" min="1">`;
-            if (type === 'rect') fields = `<label>РЁРёСЂРёРЅР° (СЃРј)</label><input type="number" id="t1" value="80" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t2" value="50" min="1">`;
-            if (type === 'trapezoid') fields = `<label>РќРёР¶РЅСЏ РѕСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t1" value="80" min="1"><label>Р’РµСЂС…РЅСЏ РѕСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t2" value="50" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t3" value="40" min="1">`;
-            if (type === 'triangle') fields = `<label>РћСЃРЅРѕРІР° (СЃРј)</label><input type="number" id="t1" value="60" min="1"><label>Р’РёСЃРѕС‚Р° (СЃРј)</label><input type="number" id="t2" value="40" min="1">`;
-            ov.innerHTML = `<div class="tpl-box"><h4>РЁР°Р±Р»РѕРЅ: ${TITLES[type]}</h4>${fields}
+            if (type === 'square') fields = `<label>Сторона (см)</label><input type="number" id="t1" value="50" min="1">`;
+            if (type === 'rect') fields = `<label>Ширина (см)</label><input type="number" id="t1" value="80" min="1"><label>Висота (см)</label><input type="number" id="t2" value="50" min="1">`;
+            if (type === 'trapezoid') fields = `<label>Нижня основа (см)</label><input type="number" id="t1" value="80" min="1"><label>Верхня основа (см)</label><input type="number" id="t2" value="50" min="1"><label>Висота (см)</label><input type="number" id="t3" value="40" min="1">`;
+            if (type === 'triangle') fields = `<label>Основа (см)</label><input type="number" id="t1" value="60" min="1"><label>Висота (см)</label><input type="number" id="t2" value="40" min="1">`;
+            ov.innerHTML = `<div class="tpl-box"><h4>Шаблон: ${TITLES[type]}</h4>${fields}
                 <div class="tpl-btns">
-                    <button class="tpl-btn-cancel" id="tpl-cancel">РЎРєР°СЃСѓРІР°С‚Рё</button>
-                    <button class="tpl-btn-ok" id="tpl-ok">Р’СЃС‚Р°РІРёС‚Рё</button>
+                    <button class="tpl-btn-cancel" id="tpl-cancel">Скасувати</button>
+                    <button class="tpl-btn-ok" id="tpl-ok">Вставити</button>
                 </div></div>`;
             document.body.appendChild(ov);
             ov.querySelector('#tpl-cancel').onclick = () => ov.remove();
@@ -1397,11 +1388,11 @@
         // CUT PLAN GENERATION
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function generateCutPlan() {
-            if (segments.length === 0) { alert('РќР°РјР°Р»СЋР№С‚Рµ С…РѕС‡Р° Р± РѕРґРЅСѓ Р»С–РЅС–СЋ!'); return; }
+            if (segments.length === 0) { alert('Намалюйте хоча б одну лінію!'); return; }
 
             const imgDataUrl = canvas.toDataURL('image/png');
             const profile = getProfileLabel();
-            const CUT_LABELS = { straight: '90В°', '45': '45В°', T: 'T-РїСЂРёРј.' };
+            const CUT_LABELS = { straight: '90°', '45': '45°', T: 'T-прим.' };
 
             // Group by rounded mm
             const groups = {};
@@ -1423,8 +1414,8 @@
                 const odd = ++rowNum % 2 === 0 ? 'background:#f8fafc' : '';
                 return `<tr style="${odd}">
       <td style="padding:6px 8px;text-align:center;font-weight:800;color:#1e3a8a">${rowNum}</td>
-      <td style="padding:6px 8px;text-align:center;font-weight:700">${g.qty} С€С‚</td>
-      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} РјРј</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:700">${g.qty} шт</td>
+      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} мм</td>
       <td style="padding:6px 8px;text-align:center">${c1} / ${c2}</td>
       <td style="padding:6px 8px;color:#64748b">${profile}</td>
     </tr>`;
@@ -1434,32 +1425,32 @@
     <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:800px;margin:0 auto">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #0f172a;padding-bottom:10px">
         <div>
-          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">рџ”§ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ РјРµС‚Р°Р»Сѓ</h2>
-          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | РџСЂРѕС„С–Р»СЊ: <strong style="color:#0f172a">${profile}</strong></div>
+          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">📄 Карта розкрою металу</h2>
+          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong style="color:#0f172a">${profile}</strong></div>
         </div>
         <div style="text-align:right;font-size:12px;color:#334155">
-          <div>Р’С–РґСЂС–Р·РєС–РІ (РіСЂСѓРї): <strong>${Object.keys(groups).length}</strong></div>
-          <div>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°: <strong style="color:#2563eb">${(totalCm / 100).toFixed(3)} Рј</strong></div>
+          <div>Відрізків (груп): <strong>${Object.keys(groups).length}</strong></div>
+          <div>Загальна довжина: <strong style="color:#2563eb">${(totalCm / 100).toFixed(3)} м</strong></div>
         </div>
       </div>
       <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;text-align:center;padding:10px">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">РњР°Р»СЋРЅРѕРє (РІРёРґ: ${activeView}, РјР°СЃС€С‚Р°Р±: ${gridScale} СЃРј/РєР»С–С‚РёРЅРєР°):</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">Малюнок (вид: ${activeView}, масштаб: ${gridScale} см/клітинка):</div>
         <img src="${imgDataUrl}" style="max-width:100%;max-height:300px;object-fit:contain;border:1px solid #e2e8f0">
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
         <thead><tr style="background:#0f172a;color:#fff">
-          <th style="padding:8px;width:36px">в„–</th><th style="padding:8px;width:60px">Рљ-СЃС‚СЊ</th>
-          <th style="padding:8px">Р”РѕРІР¶РёРЅР°</th><th style="padding:8px">Р С–Р· (РїРѕС‡/РєС–РЅ)</th><th style="padding:8px">РџСЂРѕС„С–Р»СЊ</th>
+          <th style="padding:8px;width:36px">№</th><th style="padding:8px;width:60px">К-сть</th>
+          <th style="padding:8px">Довжина</th><th style="padding:8px">Різ (поч/кін)</th><th style="padding:8px">Профіль</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div style="padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px">
-        <strong>рџ’Ў РџСЂРёРјС–С‚РєРё РґР»СЏ СЂС–Р·С‡РёРєР°:</strong>
+        <strong>💡 Примітки для різчика:</strong>
         <ul style="margin-top:5px;padding-left:16px;color:#475569">
-          <li>Р С–Р· <strong>90В°</strong> = РїСЂСЏРјРёР№ С‚РѕСЂРµС†СЊ</li>
-          <li>Р С–Р· <strong>45В°</strong> = СЃРєС–СЃ РґР»СЏ РєСѓС‚РѕРІРѕРіРѕ Р·'С”РґРЅР°РЅРЅСЏ</li>
-          <li>Р С–Р· <strong>T-РїСЂРёРј.</strong> = РїСЂРёРјРёРєР°РЅРЅСЏ РґРѕ РїРѕРІРµСЂС…РЅС– С‚СЂСѓР±Рё</li>
-          <li>Р’СЃС– СЂРѕР·РјС–СЂРё вЂ” РїРѕ Р·РѕРІРЅС–С€РЅСЊРѕРјСѓ СЂРѕР·РјС–СЂСѓ РґРµС‚Р°Р»С–</li>
+          <li>Різ <strong>90°</strong> = прямий торець</li>
+          <li>Різ <strong>45°</strong> = скіс для кутового з'єднання</li>
+          <li>Різ <strong>T-прим.</strong> = примикання до поверхні труби</li>
+          <li>Всі розміри — по зовнішньому розміру деталі</li>
         </ul>
       </div>
     </div>`;
