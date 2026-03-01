@@ -1,0 +1,1046 @@
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // 3D DATA MODEL
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        let segments = [];   // [{id, x1,y1,z1, x2,y2,z2, cut1, cut2}]
+        let joints = {};     // { "x,y,z": {type} } - Legacy support for manual joints
+        let segId = 0;
+
+        let activeView = 'front';
+        let isQuadView = false;
+        let activeTool = 'line';
+        let activeCutType = 'straight';
+        let gridScale = 100; // was 10, now in mm
+        let cellPx = 40;
+        let offsetX = 0, offsetY = 0;
+
+        // 3D View rotation
+        let rotX = -20, rotY = 45;
+
+        let snapPt = null;
+        let inferencePt = null;
+        let axisSnapLine = null; // { axis: 'x'|'y'|'z', pt: {x,y,z} }
+        let activeDepth = 0; // default Z depth
+        let selectedSegs = new Set();
+        let mousePos = { x: 0, y: 0 };
+        let isDrawing = false;
+        let drawStart3D = null;
+        let snapInc = 10; // default to 10mm (1cm)
+
+        function toggleDrawer(open) {
+            const el = document.getElementById('cut-plan-drawer');
+            if (open === undefined) open = !el.classList.contains('open');
+            el.classList.toggle('open', open);
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // 3D в†’ 2D PROJECTION
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function project3D(x, y, z, vOverride) {
+            let u, v;
+            const view = vOverride || activeView;
+            if (view === '3d') {
+                const radX = rotX * Math.PI / 180, radY = rotY * Math.PI / 180;
+                let xRot = x * Math.cos(radY) + z * Math.sin(radY);
+                let zRot = z * Math.cos(radY) - x * Math.sin(radY);
+                let yRot = y * Math.cos(radX) - zRot * Math.sin(radX);
+                u = xRot; v = yRot;
+            } else {
+                switch (view) {
+                    case 'front': u = x; v = y; break;
+                    case 'back': u = -x; v = y; break;
+                    case 'top': u = x; v = z; break;
+                    case 'bottom': u = x; v = -z; break;
+                    case 'right': u = z; v = y; break;
+                    case 'left': u = -z; v = y; break;
+                    default: u = x; v = y;
+                }
+            }
+
+            let cp = cellPx, ox = offsetX, oy = offsetY;
+            if (isQuadView) {
+                const q = getQuadOffsets(view);
+                ox = q.ox; oy = q.oy; cp = cellPx / 2;
+            }
+            return { cx: u * cp + ox, cy: v * cp + oy };
+        }
+
+        function getQuadOffsets(view) {
+            const w = canvas.width / 2, h = canvas.height / 2;
+            if (view === 'front') return { ox: w / 2, oy: h / 2 };
+            if (view === 'right') return { ox: w * 1.5, oy: h / 2 };
+            if (view === 'top') return { ox: w / 2, oy: h * 1.5 };
+            if (view === 'bottom') return { ox: w * 1.5, oy: h * 1.5 };
+            return { ox: w / 2, oy: h / 2 };
+        }
+
+        function getViewAt(cx, cy) {
+            if (!isQuadView) return activeView;
+            const w2 = canvas.width / 2, h2 = canvas.height / 2;
+            if (cx < w2 && cy < h2) return 'front';
+            if (cx >= w2 && cy < h2) return 'right';
+            if (cx < w2 && cy >= h2) return 'top';
+            return 'bottom';
+        }
+
+        function unproject2D(cx, cy, vOverride) {
+            const v = vOverride || getViewAt(cx, cy);
+            let cp = cellPx, ox = offsetX, oy = offsetY;
+            if (isQuadView) {
+                const q = getQuadOffsets(v);
+                ox = q.ox; oy = q.oy; cp = cellPx / 2;
+            }
+            const u = (cx - ox) / cp, vv = (cy - oy) / cp;
+            switch (v) {
+                case 'front': return { x: u, y: vv, z: null, view: v };
+                case 'back': return { x: -u, y: vv, z: null, view: v };
+                case 'top': return { x: u, y: null, z: vv, view: v };
+                case 'bottom': return { x: u, y: null, z: -vv, view: v };
+                case 'right': return { x: null, y: vv, z: u, view: v };
+                case 'left': return { x: null, y: vv, z: -u, view: v };
+                case '3d': {
+                    const rX = rotX * Math.PI / 180, rY = rotY * Math.PI / 180;
+                    const sX = Math.sin(rX), cX = Math.cos(rX);
+                    const sY = Math.sin(rY), cY = Math.cos(rY);
+                    // Assume z = activeDepth for unprojection
+                    const z = activeDepth;
+                    const x = (u - z * sY) / cY;
+                    const y = (vv + z * cY * sX - x * sY * sX) / cX;
+                    return { x: snap(x), y: snap(y), z: snap(z), view: v };
+                }
+            }
+            return { x: 0, y: 0, z: 0, view: v };
+        }
+
+        function depthAxis(view) {
+            const v = view || activeView;
+            if (v === 'front' || v === 'back') return 'z';
+            if (v === 'top' || v === 'bottom') return 'y';
+            if (v === 'right' || v === 'left') return 'x';
+            return 'z'; // General fallback
+        }
+
+        function fillDepth(p, d, v) {
+            const ax = depthAxis(v || p.view);
+            const res = { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 };
+            if (ax && p[ax] === null) res[ax] = d;
+            return res;
+        }
+
+        // Find nearest existing 3D endpoint within threshold pixels.
+        function findSnapPoint(cx, cy, vOverride, threshPx = 14, excludePt = null) {
+            let best = null, bestD = Infinity;
+            for (const seg of segments) {
+                for (const pt of [{ x: seg.x1, y: seg.y1, z: seg.z1 }, { x: seg.x2, y: seg.y2, z: seg.z2 }]) {
+                    if (excludePt && pt.x === excludePt.x && pt.y === excludePt.y && pt.z === excludePt.z) continue;
+                    const { cx: px, cy: py } = project3D(pt.x, pt.y, pt.z, vOverride);
+                    const d = Math.hypot(cx - px, cy - py);
+                    if (d < threshPx && d < bestD) { bestD = d; best = pt; }
+                }
+            }
+            return best;
+        }
+
+        const snap = v => {
+            const inc = snapInc / gridScale; // convert mm increment back to 'units'
+            return Math.round(v / inc) * inc;
+        };
+
+        function getGridPos(e, excludePt = null) {
+            const r = canvas.getBoundingClientRect();
+            const cx = e.clientX - r.left, cy = e.clientY - r.top;
+            const v = getViewAt(cx, cy);
+            if (!v) return { pt3D: { x: 0, y: 0, z: 0 }, cx, cy, view: 'front' };
+
+            // 1. Hard Endpoint Snap
+            const ep = findSnapPoint(cx, cy, v, 14, excludePt);
+            if (ep) return { pt3D: { ...ep }, snapped: true, cx, cy, view: v };
+
+            // 2. Base unprojection
+            let p = unproject2D(cx, cy, v);
+
+            // 3. Axis Sniffing / Ortho Lock (if drawing)
+            let axis = null;
+            if (isDrawing && drawStart3D) {
+                const s = drawStart3D;
+                const candidates = [];
+                // Projected axis candidates
+                const pX = { x: p.x, y: s.y, z: s.z }, cX = project3D(pX.x, pX.y, pX.z, v);
+                const pY = { x: s.x, y: p.y, z: s.z }, cY = project3D(pY.x, pY.y, pY.z, v);
+                const pZ = { x: s.x, y: s.y, z: p.z }, cZ = project3D(pZ.x, pZ.y, pZ.z, v);
+
+                if (v !== '3d') {
+                    // Ortho views: lock based on which component we changed
+                    const thresh = 1.5;
+                    const dx = Math.abs(p.x - s.x), dy = Math.abs(p.y - s.y), dz = Math.abs(p.z - s.z);
+                    if (dx < thresh && p.x !== null) { p.x = s.x; axis = 'x'; }
+                    if (dy < thresh && p.y !== null) { p.y = s.y; axis = 'y'; }
+                    if (dz < thresh && p.z !== null) { p.z = s.z; axis = 'z'; }
+                } else {
+                    // 3D view: snap to nearest infinite axis line in screen-space
+                    const thresh = 20;
+                    const axes = [
+                        { idx: 0, name: 'x', vec: [1, 0, 0] },
+                        { idx: 1, name: 'y', vec: [0, 1, 0] },
+                        { idx: 2, name: 'z', vec: [0, 0, 1] }
+                    ];
+                    let best = null, minD = thresh;
+                    axes.forEach(a => {
+                        const p1 = { ...s }, p2 = { ...s };
+                        const far = 2000;
+                        if (a.idx === 0) { p1.x -= far; p2.x += far; }
+                        else if (a.idx === 1) { p1.y -= far; p2.y += far; }
+                        else { p1.z -= far; p2.z += far; }
+
+                        const c1 = project3D(p1.x, p1.y, p1.z, v), c2 = project3D(p2.x, p2.y, p2.z, v);
+                        const d = ptToSegDist(cx, cy, c1.cx, c1.cy, c2.cx, c2.cy);
+
+                        if (d < minD) {
+                            minD = d;
+                            // Find projection parameter t on the 2D segment
+                            const dx = c2.cx - c1.cx, dy = c2.cy - c1.cy;
+                            const t = ((cx - c1.cx) * dx + (cy - c1.cy) * dy) / (dx * dx + dy * dy);
+                            const val = (a.idx === 0 ? s.x : (a.idx === 1 ? s.y : s.z)) + (t - 0.5) * 2 * far;
+                            const snapP = { ...s };
+                            if (a.idx === 0) snapP.x = val; else if (a.idx === 1) snapP.y = val; else snapP.z = val;
+                            best = { pt: snapP, axis: a.name };
+                        }
+                    });
+                    if (best) { p = best.pt; axis = best.axis; }
+                }
+            }
+
+            // 4. Fill Depth logic
+            const currentDepthAxis = depthAxis(v);
+            let d = activeDepth;
+            if (isDrawing && drawStart3D) {
+                // If we are drawing, we stay on the same depth plane we started on
+                d = drawStart3D[currentDepthAxis] ?? activeDepth;
+            }
+            const full = fillDepth({ x: snap(p.x ?? 0), y: snap(p.y ?? 0), z: snap(p.z ?? 0), view: v }, d, v);
+            return { pt3D: full, snapped: false, cx, cy, view: v, axisHint: axis };
+        }
+
+        function ptKey(x, y, z) {
+            return `${x},${y},${z}`;
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // CANVAS SETUP
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        const area = document.getElementById('canvas-area');
+
+        function resizeCanvas() {
+            canvas.width = area.clientWidth;
+            canvas.height = area.clientHeight;
+            redrawAll();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // DRAW
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function redrawAll() {
+            const W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
+
+            if (isQuadView) {
+                const w2 = W / 2, h2 = H / 2;
+                drawViewport('front', 0, 0, w2, h2, '📐 Головний (X,Y)');
+                drawViewport('right', w2, 0, w2, h2, '📐 Збоку (Z,Y)');
+                drawViewport('top', 0, h2, w2, h2, '🔲 Зверху (X,Z)');
+                drawViewport('bottom', w2, h2, w2, h2, 'Знизу (X,-Z)');
+
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(w2, 0); ctx.lineTo(w2, H); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, h2); ctx.lineTo(W, h2); ctx.stroke();
+            } else {
+                const labels = {
+                    front: '📐 Головний (X,Y)', back: 'Ззаду (-X,Y)',
+                    top: '🔲 Зверху (X,Z)', bottom: 'Знизу (X,-Z)',
+                    right: '📐 Збоку (Z,Y)', left: 'Ліворуч (-Z,Y)',
+                    '3d': '🧊 3D Огляд'
+                };
+                drawViewport(activeView, 0, 0, W, H, labels[activeView]);
+            }
+        }
+
+        function drawViewport(view, vx, vy, vw, vh, label) {
+            ctx.save();
+            ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
+
+            drawGrid(vw, vh, vx, vy, view);
+            if (view === '3d') drawAxes();
+            drawSegments(view);
+            drawJoints(view);
+
+            if (snapPt && mousePos && getViewAt(mousePos.x, mousePos.y) === view) drawSnapIndicator(view);
+            if (isDrawing && drawStart3D) drawPreview(view);
+
+            if (label) {
+                ctx.fillStyle = '#475569'; ctx.font = 'bold 11px Segoe UI';
+                ctx.textAlign = 'left'; ctx.fillText(label, vx + 10, vy + 22);
+            }
+
+            // Active Depth Marker
+            if (view !== '3d') {
+                const d = activeDepth;
+                const ax = depthAxis(view);
+                // Draw a marker in orthogonal views showing where the active depth is
+                ctx.strokeStyle = '#10b981'; ctx.globalAlpha = 0.4; ctx.setLineDash([2, 4]);
+                if (view === 'front' || view === 'back') {
+                    // No depth line to show in front views (it's the parallel plane)
+                } else if (view === 'top' || view === 'bottom') {
+                    const { cy } = project3D(0, 0, d, view);
+                    ctx.beginPath(); ctx.moveTo(vx, cy); ctx.lineTo(vx + vw, cy); ctx.stroke();
+                } else { // right / left
+                    const { cx } = project3D(0, 0, d, view);
+                    ctx.beginPath(); ctx.moveTo(cx, vy); ctx.lineTo(cx, vy + vh); ctx.stroke();
+                }
+                ctx.setLineDash([]); ctx.globalAlpha = 1;
+            }
+            ctx.restore();
+        }
+
+        function drawAxes() {
+            const axes = [
+                { x: 1, y: 0, z: 0, color: '#ef4444', label: 'X' },
+                { x: 0, y: 1, z: 0, color: '#3b82f6', label: 'Y' },
+                { x: 0, y: 0, z: 1, color: '#10b981', label: 'Z' }
+            ];
+            const origin = project3D(0, 0, 0, '3d');
+            axes.forEach(a => {
+                const head = project3D(a.x * 2, a.y * 2, a.z * 2, '3d');
+                ctx.beginPath(); ctx.moveTo(origin.cx, origin.cy); ctx.lineTo(head.cx, head.cy);
+                ctx.strokeStyle = a.color; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = a.color; ctx.font = 'bold 10px monospace';
+                ctx.fillText(a.label, head.cx + 4, head.cy + 4);
+            });
+        }
+
+        function drawGrid(W, H, vx, vy, vOverride) {
+            const view = vOverride || activeView;
+            if (view === '3d') return;
+            const origin = project3D(0, 0, 0, view);
+            const ox = origin.cx, oy = origin.cy;
+            let cp = cellPx;
+            if (isQuadView) cp = cellPx / 2;
+
+            ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+
+            const startX = Math.floor((vx - ox) / cp);
+            const endX = Math.ceil((vx + W - ox) / cp);
+            const startY = Math.floor((vy - oy) / cp);
+            const endY = Math.ceil((vy + H - oy) / cp);
+
+            for (let i = startX; i <= endX; i++) {
+                const px = ox + i * cp;
+                if (px < vx || px > vx + W) continue;
+                ctx.beginPath(); ctx.moveTo(px, vy); ctx.lineTo(px, vy + H);
+                ctx.globalAlpha = i % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
+            }
+            for (let i = startY; i <= endY; i++) {
+                const py = oy + i * cp;
+                if (py < vy || py > vy + H) continue;
+                ctx.beginPath(); ctx.moveTo(vx, py); ctx.lineTo(vx + W, py);
+                ctx.globalAlpha = i % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+
+            // Highlight origin axes
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+            if (ox >= vx && ox <= vx + W) { ctx.beginPath(); ctx.moveTo(ox, vy); ctx.lineTo(ox, vy + H); ctx.stroke(); }
+            if (oy >= vy && oy <= vy + H) { ctx.beginPath(); ctx.moveTo(vx, oy); ctx.lineTo(vx + W, oy); ctx.stroke(); }
+
+            if (!isQuadView) {
+                ctx.fillStyle = '#94a3b8'; ctx.font = '9px Segoe UI';
+                ctx.textAlign = 'center';
+                const gs = 5; // Grid step for labels (e.g., every 5 units)
+                const minX = Math.floor((vx - ox) / cp) * gs;
+                const maxX = Math.ceil((vx + W - ox) / cp) * gs;
+                const minY = Math.floor((vy - oy) / cp) * gs;
+                const maxY = Math.ceil((vy + H - oy) / cp) * gs;
+
+                // X-axis labels
+                for (let i = startX; i <= endX; i++) {
+                    if (i % gs === 0) {
+                        const px = ox + i * cp;
+                        if (px > vx + 40 && px < vx + W - 40) {
+                            ctx.fillText(Math.round(i * gridScale) + 'мм', px, vy + 15);
+                        }
+                    }
+                }
+
+                // Y-axis labels (assuming Y-axis is vertical in this context)
+                for (let i = startY; i <= endY; i++) {
+                    if (i % gs === 0 && i !== 0) { // Don't label origin twice
+                        const py = oy + i * cp;
+                        if (py > vy + 20 && py < vy + H - 20) {
+                            ctx.fillText(Math.round(-i * gridScale) + 'мм', vx + 15, py + 3); // Negative for Y-up convention
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawSegments(v) {
+            segments.forEach((seg, i) => {
+                const p1 = project3D(seg.x1, seg.y1, seg.z1, v);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2, v);
+
+                const isDot = Math.abs(p1.cx - p2.cx) < 1 && Math.abs(p1.cy - p2.cy) < 1;
+                if (isDot) {
+                    ctx.fillStyle = '#93c5fd';
+                    ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 4, 0, Math.PI * 2); ctx.fill();
+                    return;
+                }
+
+                const isSelected = selectedSegs.has(seg.id);
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+                ctx.strokeStyle = '#1e40af'; ctx.lineWidth = isQuadView ? 4 : 6; ctx.lineCap = 'square'; ctx.stroke();
+
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+                ctx.strokeStyle = isSelected ? '#3b82f6' : '#60a5fa'; ctx.lineWidth = isQuadView ? 1.5 : 2; ctx.stroke();
+
+                if (!isQuadView || v === 'front') {
+                    const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
+                    const lenMm = segLengthMm(seg);
+                    const label = (lenMm >= 1000) ? (lenMm / 1000).toFixed(3) + ' м' : Math.round(lenMm) + ' мм';
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+                    const tw = ctx.measureText(label).width + 6;
+                    ctx.fillRect(mx - tw / 2, my - 8, tw, 14);
+                    ctx.fillStyle = '#1e3a8a'; ctx.fillText(label, mx, my + 3);
+                }
+            });
+        }
+
+        function drawJoints(v) {
+            const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
+            const vertexMap = {}; // { "x,y,z": { type, count } }
+
+            segments.forEach(s => {
+                const k1 = ptKey(s.x1, s.y1, s.z1), k2 = ptKey(s.x2, s.y2, s.z2);
+                if (!vertexMap[k1]) vertexMap[k1] = { type: s.cut1, count: 0 };
+                if (!vertexMap[k2]) vertexMap[k2] = { type: s.cut2, count: 0 };
+                vertexMap[k1].count++;
+                vertexMap[k2].count++;
+            });
+
+            Object.entries(vertexMap).forEach(([key, info]) => {
+                const [gx, gy, gz] = key.split(',').map(Number);
+                const { cx, cy } = project3D(gx, gy, gz, v);
+                ctx.beginPath(); ctx.arc(cx, cy, isQuadView ? 6 : 9, 0, Math.PI * 2);
+                ctx.fillStyle = COLORS[info.type] || '#f59e0b'; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            });
+        }
+
+        function drawSnapIndicator(viewOverride) {
+            const view = viewOverride || activeView;
+            const { cx, cy } = project3D(snapPt.x, snapPt.y, snapPt.z, view);
+            ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+            ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
+            ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        function drawPreview(viewOverride) {
+            if (!drawStart3D || !mousePos) return;
+            const view = viewOverride || activeView;
+            // Get grid position relative to this viewport
+            const r = canvas.getBoundingClientRect();
+            const { pt3D, axisHint } = getGridPos({ clientX: mousePos.x + r.left, clientY: mousePos.y + r.top }, drawStart3D);
+
+            const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z, view);
+            const p2 = project3D(pt3D.x, pt3D.y, pt3D.z, view);
+
+            // Instant "Ghost" Line if snapped point is same as start
+            if (Math.abs(p1.cx - p2.cx) < 2 && Math.abs(p1.cy - p2.cy) < 2) {
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.strokeStyle = 'rgba(59,130,246,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.stroke(); ctx.setLineDash([]);
+            }
+            const lenMm = segLengthMm({
+                x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z,
+                x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
+                cut1: 'straight', cut2: 'straight'
+            });
+
+            ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
+
+            // Axis coloring
+            const AXIS_COLORS = { x: '#ef4444', y: '#3b82f6', z: '#10b981' };
+            ctx.strokeStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.85)';
+            ctx.lineWidth = 4;
+            if (!axisHint) ctx.setLineDash([6, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Draw end-cap dots for preview
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p2.cx, p2.cy, 3, 0, Math.PI * 2); ctx.fill();
+
+            if (lenMm > 0) {
+                const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
+                ctx.fillStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.9)';
+                ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(Math.round(lenMm) + ' мм', mx, my - 10);
+            }
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // MOUSE EVENTS
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mousemove', onMouseMove);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('wheel', onWheel, { passive: false });
+
+        canvas.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (activeTool !== 'joint') return;
+            const { pt3D, cx, cy, view } = getGridPos(e);
+            let nearKey = null, nearDist = 15;
+            Object.keys(joints).forEach(k => {
+                const [jx, jy, jz] = k.split(',').map(Number);
+                const { cx: px, cy: py } = project3D(jx, jy, jz, view);
+                const d = Math.hypot(cx - px, cy - py);
+                if (d < nearDist) { nearDist = d; nearKey = k; }
+            });
+            if (nearKey) { delete joints[nearKey]; redrawAll(); }
+        });
+
+        let panning = false, panStart = null, panButton = 0;
+        canvas.addEventListener('mousedown', e => {
+            if (e.button === 2 || e.button === 1 || (e.button === 0 && e.altKey)) {
+                panning = true;
+                panButton = e.button;
+                panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+                canvas.style.cursor = 'grab'; e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('contextmenu', e => {
+            if (panning || e.button === 2) e.preventDefault();
+        });
+
+        function onMouseDown(e) {
+            if (e.button !== 0 || panning) return;
+            const { pt3D, cx, cy, view } = getGridPos(e);
+
+            if (activeTool === 'line') {
+                isDrawing = true; drawStart3D = { ...pt3D };
+            } else if (activeTool === 'pick-depth') {
+                const ep = findSnapPoint(cx, cy, view);
+                const d = ep ? ep[depthAxis(view)] : pt3D[depthAxis(view)];
+                activeDepth = d;
+                document.getElementById('depth-input').value = Math.round(activeDepth * gridScale);
+                setTool('line');
+                redrawAll();
+            } else if (activeTool === 'joint') {
+                const ep = findSnapPoint(cx, cy, view);
+                if (ep) toggleJointPerSegment(ep.x, ep.y, ep.z);
+            } else if (activeTool === 'select' || activeTool === 'mirror') {
+                const seg = findNearestSegment(cx, cy, view);
+                if (seg) {
+                    if (activeTool === 'select') {
+                        segments = segments.filter(s => s.id !== seg.id);
+                        selectedSegs.delete(seg.id);
+                    } else {
+                        if (selectedSegs.has(seg.id)) selectedSegs.delete(seg.id);
+                        else selectedSegs.add(seg.id);
+                    }
+                    updateUI(); redrawAll();
+                }
+            }
+            redrawAll();
+        }
+
+        function onMouseMove(e) {
+            const r = canvas.getBoundingClientRect();
+            mousePos = { x: e.clientX - r.left, y: e.clientY - r.top };
+            const v = getViewAt(mousePos.x, mousePos.y);
+
+            if (panning) {
+                if (v === '3d' && panButton !== 2) {
+                    rotY += e.movementX * 0.6; rotX -= e.movementY * 0.6;
+                } else {
+                    offsetX = e.clientX - panStart.x;
+                    offsetY = e.clientY - panStart.y;
+                }
+                redrawAll(); return;
+            }
+
+            snapPt = findSnapPoint(mousePos.x, mousePos.y, v, 14, isDrawing ? drawStart3D : null);
+            const { pt3D } = getGridPos(e, isDrawing ? drawStart3D : null);
+
+            document.getElementById('canvas-info').textContent =
+                `X:${Math.round(pt3D.x * gridScale)} Y:${Math.round(pt3D.y * gridScale)} Z:${Math.round(pt3D.z * gridScale)} мм | Вид: ${v}`;
+
+            redrawAll();
+        }
+
+        function onMouseUp(e) {
+            panning = false; canvas.style.cursor = 'crosshair';
+            if (e.button !== 0 || !isDrawing) return;
+            const { pt3D } = getGridPos(e, drawStart3D);
+
+            const start = drawStart3D;
+            if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) {
+                isDrawing = false; drawStart3D = null;
+                redrawAll(); return;
+            }
+
+            segments.push({
+                id: ++segId,
+                x1: start.x, y1: start.y, z1: start.z,
+                x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
+                cut1: 'straight', cut2: 'straight'
+            });
+            isDrawing = false; drawStart3D = null;
+            updateUI(); redrawAll();
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            cellPx = Math.min(Math.max(cellPx * factor, 5), 300);
+            redrawAll();
+        }
+
+        function findNearestSegment(cx, cy, v, threshold = 12) {
+            let best = null, bestD = Infinity;
+            segments.forEach(seg => {
+                const p1 = project3D(seg.x1, seg.y1, seg.z1, v);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2, v);
+                const d = ptToSegDist(cx, cy, p1.cx, p1.cy, p2.cx, p2.cy);
+                if (d < threshold && d < bestD) { bestD = d; best = seg; }
+            });
+            return best;
+        }
+
+        function ptToSegDist(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const len2 = dx * dx + dy * dy;
+            if (len2 === 0) return Math.hypot(px - x1, py - y1);
+            const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2));
+            return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+        }
+
+        function zoom(factor) {
+            cellPx = Math.min(Math.max(cellPx * factor, 5), 300);
+            redrawAll();
+        }
+
+        function resetView() {
+            cellPx = 40; offsetX = canvas.width / 2; offsetY = canvas.height / 2;
+            if (isQuadView) { offsetX = 0; offsetY = 0; }
+            redrawAll();
+        }
+
+        function toggleQuadView() {
+            isQuadView = !isQuadView;
+            document.getElementById('vtab-quad').classList.toggle('active', isQuadView);
+            if (isQuadView) {
+                document.querySelectorAll('.view-tab:not(#vtab-quad)').forEach(b => b.classList.remove('active'));
+                offsetX = 0; offsetY = 0;
+            } else {
+                switchView(activeView);
+                resetView();
+            }
+            redrawAll();
+        }
+
+        function switchView(v) {
+            isQuadView = false;
+            document.getElementById('vtab-quad').classList.remove('active');
+            activeView = v;
+            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+            const tab = document.getElementById('vtab-' + v);
+            if (tab) tab.classList.add('active');
+            if (v === '3d') { rotX = -20; rotY = 45; }
+            resetView();
+        }
+
+        function toggleJointPerSegment(x, y, z) {
+            // Find all segments meeting at this vertex
+            const connected = segments.filter(s =>
+                (s.x1 === x && s.y1 === y && s.z1 === z) ||
+                (s.x2 === x && s.y2 === y && s.z2 === z)
+            );
+            if (connected.length === 0) return;
+
+            // Simple heuristic: if we have more than 2 segments, or it's not a corner, cycle through types
+            // For now, let's just cycle the 'activeCutType' for ALL segments at this vertex
+            // This is a "manual smart" way - the user sets the mode (45 or 90) then clicks the vertex
+            connected.forEach(s => {
+                if (s.x1 === x && s.y1 === y && s.z1 === z) s.cut1 = activeCutType;
+                else s.cut2 = activeCutType;
+            });
+            updateUI(); redrawAll();
+        }
+
+        function autoApplyJoints() {
+            // Heuristic for the whole model:
+            // 1. Group by vertex
+            const vertices = {};
+            segments.forEach(s => {
+                const k1 = `${s.x1},${s.y1},${s.z1}`, k2 = `${s.x2},${s.y2},${s.z2}`;
+                if (!vertices[k1]) vertices[k1] = [];
+                if (!vertices[k2]) vertices[k2] = [];
+                vertices[k1].push({ seg: s, end: 1 });
+                vertices[k2].push({ seg: s, end: 2 });
+            });
+
+            Object.keys(vertices).forEach(k => {
+                const list = vertices[k];
+                if (list.length === 2) {
+                    // It's a simple corner or continuation.
+                    // Check angle. If 90 deg corner -> 45 cut.
+                    const s1 = list[0].seg, s2 = list[1].seg;
+                    // For now, just assume 2-seg vertex = frame corner = 45
+                    list.forEach(item => {
+                        if (item.end === 1) item.seg.cut1 = '45';
+                        else item.seg.cut2 = '45';
+                    });
+                } else if (list.length > 2) {
+                    // Complex junction or T-junction -> use 90/T cuts
+                    list.forEach(item => {
+                        if (item.end === 1) item.seg.cut1 = 'straight';
+                        else item.seg.cut2 = 'straight';
+                    });
+                }
+            });
+            updateUI(); redrawAll();
+        }
+        function clearAll() {
+            if (!confirm('Очистити все?')) return;
+            segments = []; joints = {}; segId = 0;
+            updateUI(); redrawAll();
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // TOOL / CUT TYPE
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function setTool(t) {
+            activeTool = t;
+            ['line', 'select', 'joint', 'mirror', 'pick-depth'].forEach(id => {
+                document.getElementById('tool-' + id)?.classList.toggle('active', id === t);
+            });
+            if (t === 'mirror' && selectedSegs.size > 0) {
+                showMirrorDialog();
+            }
+            if (t === 'select' || t === 'mirror') canvas.style.cursor = 'default';
+            else if (t === 'pick-depth') canvas.style.cursor = 'help';
+            else canvas.style.cursor = 'crosshair';
+        }
+
+        function showMirrorDialog() {
+            const ov = document.createElement('div');
+            ov.className = 'tpl-overlay';
+            ov.innerHTML = `<div class="tpl-box">
+                <h4>🪞 Дублювати вибране (${selectedSegs.size})</h4>
+                <label>Офсет по вісі</label>
+                <select id="m-axis"><option value="x">X (Ширина)</option><option value="y">Y (Висота)</option><option value="z" selected>Z (Глибина)</option></select>
+                <label>Відстань (см)</label>
+                <input type="number" id="m-dist" value="100">
+                <div class="tpl-btns">
+                    <button class="tpl-btn-cancel" onclick="this.closest('.tpl-overlay').remove()">Скасувати</button>
+                    <button class="tpl-btn-ok" onclick="applyMirror()">Дублювати</button>
+                </div>
+            </div>`;
+            document.body.appendChild(ov);
+        }
+
+        function applyMirror() {
+            const axis = document.getElementById('m-axis').value;
+            const dist = +document.getElementById('m-dist').value / gridScale;
+            const newSegs = [];
+            segments.forEach(seg => {
+                if (selectedSegs.has(seg.id)) {
+                    const s2 = { ...seg, id: ++segId };
+                    s2[axis + '1'] += dist;
+                    s2[axis + '2'] += dist;
+                    newSegs.push(s2);
+                }
+            });
+            segments.push(...newSegs);
+            document.querySelector('.tpl-overlay').remove();
+            selectedSegs.clear();
+            updateUI(); redrawAll();
+        }
+
+        function setCutType(t) {
+            activeCutType = t;
+            ['straight', '45', 'T'].forEach(id => {
+                document.getElementById('cut-' + id)?.classList.toggle('active', id === t);
+            });
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // PROFILE HELPERS
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function getProfileLabel() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') {
+                const w = document.getElementById('custom-w').value;
+                const h = document.getElementById('custom-h').value;
+                return `${w}×${h} мм`;
+            }
+            return sel + ' мм';
+        }
+
+        function getProfileDims() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') return { w: +document.getElementById('custom-w').value, h: +document.getElementById('custom-h').value };
+            const [w, h] = sel.split('x').map(Number);
+            return { w, h };
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // GRID SCALE + PROFILE LISTENERS
+        // в•ђв•ђв••ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        document.getElementById('grid-scale').addEventListener('change', e => {
+            gridScale = +e.target.value; updateUI(); redrawAll();
+        });
+        document.getElementById('snap-inc').addEventListener('change', e => {
+            snapInc = +e.target.value; redrawAll();
+        });
+        document.getElementById('profile-sel').addEventListener('change', e => {
+            document.getElementById('custom-profile').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+            updateUI();
+        });
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // UI UPDATE вЂ” grouped by length
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function segLengthMm(seg) {
+            const dx = seg.x2 - seg.x1, dy = seg.y2 - seg.y1, dz = seg.z2 - seg.z1;
+            let len = Math.sqrt(dx * dx + dy * dy + dz * dz) * gridScale;
+
+            // Smart Deduction Logic
+            const tube = getTubeSize(); // returns {w, h} in mm
+            // If cut is 'straight' (butt joint) or 'T', we deduce the profile width
+            // This is because we draw to axis-lines, but material is shorter.
+            if (seg.cut1 === 'straight' || seg.cut1 === 'T') len -= tube.w;
+            if (seg.cut2 === 'straight' || seg.cut2 === 'T') len -= tube.w;
+
+            return Math.max(0, len);
+        }
+
+        function getTubeSize() {
+            const val = document.getElementById('profile-sel').value;
+            if (val === 'custom') {
+                return {
+                    w: +document.getElementById('custom-w').value,
+                    h: +document.getElementById('custom-h').value
+                };
+            }
+            const parts = val.split('x');
+            return { w: +parts[0], h: +parts[1] };
+        }
+
+        
+
+        function updateUI() {
+            const list = document.getElementById('seg-list');
+            const groups = {};
+            let totalMm = 0;
+            segments.forEach(seg => {
+                const lenMm = segLengthMm(seg);
+                totalMm += lenMm;
+                const roundedMm = Math.round(lenMm);
+                if (!groups[roundedMm]) groups[roundedMm] = { lenMm, segs: [] };
+                groups[roundedMm].segs.push(seg);
+            });
+
+            list.innerHTML = '';
+            let rowNum = 0;
+            Object.values(groups).forEach(group => {
+                const qty = group.segs.length;
+                const roundedMm = Math.round(group.lenMm);
+                const lenLabel = roundedMm >= 1000 ? (roundedMm / 1000).toFixed(3) + ' м' : roundedMm + ' мм';
+                const seg0 = group.segs[0];
+                const cut1 = seg0.cut1 || 'straight', cut2 = seg0.cut2 || 'straight';
+                const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
+                const cutLabel = `${CUT_L[cut1] || '90°'} / ${CUT_L[cut2] || '90°'}`;
+                const qtyBadge = qty > 1
+                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:3px">${qty}×</span>`
+                    : '';
+                rowNum++;
+                const row = document.createElement('div');
+                row.className = 'seg-row';
+                row.innerHTML = `
+      <div class="seg-num">${rowNum}</div>
+      <div class="seg-info">
+        <div class="seg-len">${lenLabel}${qtyBadge}</div>
+        <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
+      </div>
+      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Видалити">✕</button>`;
+                list.appendChild(row);
+            });
+
+            document.getElementById('cut-summary').style.display = 'block';
+            document.getElementById('total-len').textContent = (totalMm / 1000).toFixed(3) + ' м';
+            document.getElementById('summary-profile').textContent = getProfileLabel();
+        }
+
+        function removeSeg(id) {
+            segments = segments.filter(s => s.id !== id);
+            updateUI(); redrawAll();
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // TEMPLATES  (inserts into 3D at Z=0, Y=0 etc.)
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function insertTemplate(type) {
+            const TITLES = { square: 'Квадрат', rect: 'Прямокутник', trapezoid: 'Трапеція', triangle: 'Трикутник' };
+            const ov = document.createElement('div');
+            ov.className = 'tpl-overlay';
+            let fields = '';
+            if (type === 'square') fields = `<label>Сторона (мм)</label><input type="number" id="t1" value="500" min="1">`;
+            if (type === 'rect') fields = `<label>Ширина (мм)</label><input type="number" id="t1" value="800" min="1"><label>Висота (мм)</label><input type="number" id="t2" value="500" min="1">`;
+            if (type === 'trapezoid') fields = `<label>Нижня основа (мм)</label><input type="number" id="t1" value="800" min="1"><label>Верхня основа (мм)</label><input type="number" id="t2" value="500" min="1"><label>Висота (мм)</label><input type="number" id="t3" value="400" min="1">`;
+            if (type === 'triangle') fields = `<label>Основа (мм)</label><input type="number" id="t1" value="600" min="1"><label>Висота (мм)</label><input type="number" id="t2" value="400" min="1">`;
+            ov.innerHTML = `<div class="tpl-box"><h4>Шаблон: ${TITLES[type]}</h4>${fields}
+                <div class="tpl-btns">
+                    <button class="tpl-btn-cancel" id="tpl-cancel">Скасувати</button>
+                    <button class="tpl-btn-ok" id="tpl-ok">Вставити</button>
+                </div></div>`;
+            document.body.appendChild(ov);
+            ov.querySelector('#tpl-cancel').onclick = () => ov.remove();
+            ov.querySelector('#tpl-ok').onclick = () => {
+                const v = id => +(ov.querySelector('#' + id)?.value || 0) / gridScale;
+                const segsToAdd = [];
+                const make3D = (u, vv) => {
+                    const ax = depthAxis(); const d = 0;
+                    if (activeView === 'front') return { x: u, y: vv, z: d };
+                    if (activeView === 'back') return { x: -u, y: vv, z: d };
+                    if (activeView === 'top') return { x: u, y: d, z: vv };
+                    if (activeView === 'bottom') return { x: u, y: d, z: -vv };
+                    if (activeView === 'right') return { x: d, y: vv, z: u };
+                    if (activeView === 'left') return { x: d, y: vv, z: -u };
+                    return { x: u, y: vv, z: d };
+                };
+                const addLine = (u1, v1, u2, v2) => {
+                    const a = make3D(u1, v1), b = make3D(u2, v2);
+                    segsToAdd.push([a.x, a.y, a.z, b.x, b.y, b.z]);
+                };
+                if (type === 'square') {
+                    const s = v('t1');
+                    addLine(0, 0, s, 0); addLine(s, 0, s, s); addLine(s, s, 0, s); addLine(0, s, 0, 0);
+                } else if (type === 'rect') {
+                    const w = v('t1'), h = v('t2');
+                    addLine(0, 0, w, 0); addLine(w, 0, w, h); addLine(w, h, 0, h); addLine(0, h, 0, 0);
+                } else if (type === 'trapezoid') {
+                    const bot = v('t1'), top2 = v('t2'), h = v('t3');
+                    const off = (bot - top2) / 2;
+                    addLine(0, h, bot, h); addLine(off, 0, off + top2, 0);
+                    addLine(0, h, off, 0); addLine(bot, h, off + top2, 0);
+                } else if (type === 'triangle') {
+                    const b = v('t1'), h = v('t2');
+                    addLine(0, h, b, h); addLine(0, h, b / 2, 0); addLine(b, h, b / 2, 0);
+                }
+                segsToAdd.forEach(([x1, y1, z1, x2, y2, z2]) => {
+                    segments.push({ id: ++segId, x1: Math.round(x1), y1: Math.round(y1), z1: Math.round(z1), x2: Math.round(x2), y2: Math.round(y2), z2: Math.round(z2) });
+                });
+                ov.remove(); updateUI(); redrawAll();
+            };
+            setTimeout(() => ov.querySelector('input')?.focus(), 50);
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // SEND TO METAL
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function sendToMetal() {
+            const total = segments.reduce((s, seg) => s + segLengthCm(seg), 0);
+            if (total <= 0) { alert('РќРµРјР°С” Р»С–РЅС–Р№ РґР»СЏ РЅР°РґСЃРёР»Р°РЅРЅСЏ!'); return; }
+            window.open(`/metal.html?cut_length=${(total / 100).toFixed(3)}`, '_blank');
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // CUT PLAN GENERATION
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        function generateCutPlan() {
+            if (segments.length === 0) { alert('Намалюйте хоча б одну лінію!'); return; }
+
+            const imgDataUrl = canvas.toDataURL('image/png');
+            const profile = getProfileLabel();
+            const CUT_LABELS = { straight: '90°', '45': '45°', T: 'T-прим.' };
+
+            // Group by rounded mm
+            const groups = {};
+            let totalMm = 0;
+            segments.forEach(seg => {
+                const lenMm = segLengthMm(seg);
+                totalMm += lenMm;
+                const roundedMm = Math.round(lenMm);
+                if (!groups[roundedMm]) groups[roundedMm] = { lenMm: roundedMm, qty: 0, seg };
+                groups[roundedMm].qty++;
+            });
+
+            let rowNum = 0;
+            const rows = Object.values(groups).map(g => {
+                const lenMm = g.lenMm;
+                const c1 = CUT_LABELS[g.seg.cut1 || 'straight'];
+                const c2 = CUT_LABELS[g.seg.cut2 || 'straight'];
+                const odd = ++rowNum % 2 === 0 ? 'background:#f8fafc' : '';
+                return `<tr style="${odd}">
+      <td style="padding:6px 8px;text-align:center;font-weight:800;color:#1e3a8a">${rowNum}</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:700">${g.qty} шт</td>
+      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} мм</td>
+      <td style="padding:6px 8px;text-align:center">${c1} / ${c2}</td>
+      <td style="padding:6px 8px;color:#64748b">${profile}</td>
+    </tr>`;
+            }).join('');
+
+            const html = `
+    <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:800px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #0f172a;padding-bottom:10px">
+        <div>
+          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">📄 Карта розкрою металу</h2>
+          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong style="color:#0f172a">${profile}</strong></div>
+        </div>
+        <div style="text-align:right;font-size:12px;color:#334155">
+          <div>Відрізків (груп): <strong>${Object.keys(groups).length}</strong></div>
+          <div>Загальна довжина: <strong style="color:#2563eb">${(totalMm / 1000).toFixed(3)} м</strong></div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;text-align:center;padding:10px">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">Малюнок (вид: ${activeView}, масштаб: ${gridScale} см/клітинка):</div>
+        <img src="${imgDataUrl}" style="max-width:100%;max-height:300px;object-fit:contain;border:1px solid #e2e8f0">
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr style="background:#0f172a;color:#fff">
+          <th style="padding:8px;width:36px">№</th><th style="padding:8px;width:60px">К-сть</th>
+          <th style="padding:8px">Довжина</th><th style="padding:8px">Різ (поч/кін)</th><th style="padding:8px">Профіль</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px">
+        <strong>💡 Примітки для різчика:</strong>
+        <ul style="margin-top:5px;padding-left:16px;color:#475569">
+          <li>Різ <strong>90°</strong> = прямий торець</li>
+          <li>Різ <strong>45°</strong> = скіс для кутового з'єднання</li>
+          <li>Різ <strong>T-прим.</strong> = примикання до поверхні труби</li>
+          <li>Всі розміри — по зовнішньому розміру деталі</li>
+        </ul>
+      </div>
+    </div>`;
+            document.getElementById('cut-plan-body').innerHTML = html;
+            document.getElementById('print-sheet').innerHTML = html;
+            toggleDrawer(true);
+        }
+
+        function printCutPlan() {
+            if (segments.length === 0) { generateCutPlan(); return; }
+            if (!document.getElementById('print-sheet').innerHTML) { generateCutPlan(); return; }
+            window.print();
+        }
+
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        // INIT
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+        resizeCanvas();
+        resetView();
