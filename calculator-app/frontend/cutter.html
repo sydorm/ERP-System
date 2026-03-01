@@ -687,68 +687,66 @@
                 <button class="btn-action btn-green" style="margin-top:10px;font-size:12px;padding:8px"
                     onclick="autoApplyJoints()">✨ Розумне з'єднання (Auto)</button>
             </div>
-        </div>
-
-        <hr class="divider">
-        <div>
-            <div class="panel-section">Шаблони</div>
-            <div class="tool-group">
-                <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
-                <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
-                <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
-                <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
-            </div>
-        </div>
-
-        <hr class="divider">
-        <div>
-            <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
-        </div>
-    </div>
-
-    <!-- CANVAS -->
-    <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
-        <!-- View tab bar -->
-        <div class="view-tab-bar">
-            <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Головний</button>
-            <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
-            <button class="view-tab" id="vtab-right" onclick="switchView('right')">📐 Збоку</button>
-            <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
-            <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
-        </div>
-
-        <!-- Canvas -->
-        <div class="canvas-area" id="canvas-area" style="flex:1">
-            <canvas id="main-canvas"></canvas>
-            <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
-            <div class="zoom-bar">
-                <button onclick="zoom(1.2)" title="Збільшити">+</button>
-                <button onclick="zoom(0.8)" title="Зменшити">−</button>
-                <button onclick="resetView()" title="Скинути вид">⊙</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="panel-right">
-        <div class="panel-right-header">
-            <h3>📋 Список відрізків</h3>
-        </div>
-        <div class="panel-right-content" id="seg-list">
-            <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
-        </div>
-        <div class="panel-bottom">
-            <div class="cut-summary" id="cut-summary" style="display:none">
-                <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
+            <hr class="divider">
+            <div>
+                <div class="panel-section">Шаблони</div>
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
+                    <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
+                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
+                    <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
                 </div>
-                <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
             </div>
-            <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
-            <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
-            <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
-                Метал</button>
+
+            <hr class="divider">
+            <div>
+                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
+            </div>
         </div>
-    </div>
+
+        <!-- CANVAS -->
+        <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
+            <!-- View tab bar -->
+            <div class="view-tab-bar">
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Головний</button>
+                <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+                <button class="view-tab" id="vtab-right" onclick="switchView('right')">📐 Збоку</button>
+                <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
+                <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-area" id="canvas-area" style="flex:1">
+                <canvas id="main-canvas"></canvas>
+                <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
+                <div class="zoom-bar">
+                    <button onclick="zoom(1.2)" title="Збільшити">+</button>
+                    <button onclick="zoom(0.8)" title="Зменшити">−</button>
+                    <button onclick="resetView()" title="Скинути вид">⊙</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel-right">
+            <div class="panel-right-header">
+                <h3>📋 Список відрізків</h3>
+            </div>
+            <div class="panel-right-content" id="seg-list">
+                <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
+            </div>
+            <div class="panel-bottom">
+                <div class="cut-summary" id="cut-summary" style="display:none">
+                    <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
+                    </div>
+                    <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
+                </div>
+                <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
+                <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
+                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
+                    Метал</button>
+            </div>
+        </div>
 
     </div>
 
