@@ -690,9 +690,12 @@
         <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
             <!-- View tab bar -->
             <div class="view-tab-bar">
-                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
-                <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Спереду</button>
+                <button class="view-tab" id="vtab-back" onclick="switchView('back')">Ззаду</button>
+                <button class="view-tab" id="vtab-right" onclick="switchView('right')">Вправо</button>
+                <button class="view-tab" id="vtab-left" onclick="switchView('left')">Вліво</button>
                 <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+                <button class="view-tab" id="vtab-bottom" onclick="switchView('bottom')">Знизу</button>
                 <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
                 <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
             </div>
@@ -796,9 +799,15 @@
                 let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
                 u = x1; v = y1;
             } else {
-                if (view === 'front') { u = x; v = y; }
-                else if (view === 'side') { u = z; v = y; }
-                else { u = x; v = z; }
+                switch (view) {
+                    case 'front': u = x; v = y; break;
+                    case 'back': u = -x; v = y; break;
+                    case 'top': u = x; v = z; break;
+                    case 'bottom': u = x; v = -z; break;
+                    case 'right': u = z; v = y; break;
+                    case 'left': u = -z; v = y; break;
+                    default: u = x; v = y;
+                }
             }
             let cx = u * cellPx + offsetX, cy = v * cellPx + offsetY;
             if (isQuadView && !vOverride) {
@@ -812,18 +821,19 @@
         function getQuadOffsets(view) {
             const w = canvas.width / 2, h = canvas.height / 2;
             if (view === 'front') return { ox: w / 2, oy: h / 2 };
-            if (view === 'side') return { ox: w * 1.5, oy: h / 2 };
+            if (view === 'right') return { ox: w * 1.5, oy: h / 2 };
             if (view === 'top') return { ox: w / 2, oy: h * 1.5 };
-            return { ox: w * 1.5, oy: h * 1.5 };
+            if (view === 'bottom') return { ox: w * 1.5, oy: h * 1.5 };
+            return { ox: w / 2, oy: h / 2 };
         }
 
         function getViewAt(cx, cy) {
             if (!isQuadView) return activeView;
             const w2 = canvas.width / 2, h2 = canvas.height / 2;
             if (cx < w2 && cy < h2) return 'front';
-            if (cx >= w2 && cy < h2) return 'side';
+            if (cx >= w2 && cy < h2) return 'right';
             if (cx < w2 && cy >= h2) return 'top';
-            return '3d';
+            return 'bottom';
         }
 
         function unproject2D(cx, cy, vOverride) {
@@ -834,20 +844,29 @@
                 ox = q.ox; oy = q.oy; cp = cellPx / 2;
             }
             const u = (cx - ox) / cp, vv = (cy - oy) / cp;
-            if (v === 'front') return { x: u, y: vv, z: null, view: v };
-            if (v === 'side') return { x: null, y: vv, z: u, view: v };
-            if (v === 'top') return { x: u, y: null, z: vv, view: v };
+            switch (v) {
+                case 'front': return { x: u, y: vv, z: null, view: v };
+                case 'back': return { x: -u, y: vv, z: null, view: v };
+                case 'top': return { x: u, y: null, z: vv, view: v };
+                case 'bottom': return { x: u, y: null, z: -vv, view: v };
+                case 'right': return { x: null, y: vv, z: u, view: v };
+                case 'left': return { x: null, y: vv, z: -u, view: v };
+            }
             return { x: 0, y: 0, z: 0, view: v };
         }
 
         function depthAxis(view) {
             const v = view || activeView;
-            return v === 'front' ? 'z' : v === 'side' ? 'x' : 'y';
+            if (v === 'front' || v === 'back') return 'z';
+            if (v === 'top' || v === 'bottom') return 'y';
+            return 'x';
         }
 
         function fillDepth(p, d, v) {
             const ax = depthAxis(v || p.view);
-            return { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0, [ax]: d };
+            const res = { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0 };
+            res[ax] = d;
+            return res;
         }
 
         // Find nearest existing 3D endpoint within threshold pixels.
@@ -904,10 +923,10 @@
 
             if (isQuadView) {
                 const w2 = W / 2, h2 = H / 2;
-                drawViewport('front', 0, 0, w2, h2, 'Фронт (X/Y)');
-                drawViewport('side', w2, 0, w2, h2, 'Бічний (Z/Y)');
-                drawViewport('top', 0, h2, w2, h2, 'Зверху (X/Z)');
-                drawViewport('3d', w2, h2, w2, h2, '3D Огляд');
+                drawViewport('front', 0, 0, w2, h2, 'Спереду (Front)');
+                drawViewport('right', w2, 0, w2, h2, 'Праворуч (Right)');
+                drawViewport('top', 0, h2, w2, h2, 'Зверху (Top)');
+                drawViewport('bottom', w2, h2, w2, h2, 'Знизу (Bottom)');
 
                 ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.moveTo(w2, 0); ctx.lineTo(w2, H); ctx.stroke();
@@ -1420,12 +1439,15 @@
             ov.querySelector('#tpl-ok').onclick = () => {
                 const v = id => +(ov.querySelector('#' + id)?.value || 0) / gridScale;
                 const segsToAdd = [];
-                const ax = depthAxis(); const d = 0; // insert at depth 0 on current view
-                const make3D = (u, v2) => {
-                    // current view maps u в†’ horiz axis, v2 в†’ vertical axis
-                    if (activeView === 'front') return { x: u, y: v2, z: d };
-                    if (activeView === 'side') return { x: d, y: v2, z: u };
-                    return { x: u, y: d, z: v2 };
+                const make3D = (u, vv) => {
+                    const ax = depthAxis(); const d = 0;
+                    if (activeView === 'front') return { x: u, y: vv, z: d };
+                    if (activeView === 'back') return { x: -u, y: vv, z: d };
+                    if (activeView === 'top') return { x: u, y: d, z: vv };
+                    if (activeView === 'bottom') return { x: u, y: d, z: -vv };
+                    if (activeView === 'right') return { x: d, y: vv, z: u };
+                    if (activeView === 'left') return { x: d, y: vv, z: -u };
+                    return { x: u, y: vv, z: d };
                 };
                 const addLine = (u1, v1, u2, v2) => {
                     const a = make3D(u1, v1), b = make3D(u2, v2);
