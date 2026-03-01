@@ -707,12 +707,9 @@
         <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
             <!-- View tab bar -->
             <div class="view-tab-bar">
-                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Спереду</button>
-                <button class="view-tab" id="vtab-back" onclick="switchView('back')">Ззаду</button>
-                <button class="view-tab" id="vtab-right" onclick="switchView('right')">Вправо</button>
-                <button class="view-tab" id="vtab-left" onclick="switchView('left')">Вліво</button>
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Головний</button>
                 <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
-                <button class="view-tab" id="vtab-bottom" onclick="switchView('bottom')">Знизу</button>
+                <button class="view-tab" id="vtab-right" onclick="switchView('right')">📐 Збоку</button>
                 <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
                 <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
             </div>
@@ -1015,8 +1012,8 @@
 
             if (isQuadView) {
                 const w2 = W / 2, h2 = H / 2;
-                drawViewport('front', 0, 0, w2, h2, '📐 Сперед (X,Y)');
-                drawViewport('right', w2, 0, w2, h2, 'Праворуч (Z,Y)');
+                drawViewport('front', 0, 0, w2, h2, '📐 Головний (X,Y)');
+                drawViewport('right', w2, 0, w2, h2, '📐 Збоку (Z,Y)');
                 drawViewport('top', 0, h2, w2, h2, '🔲 Зверху (X,Z)');
                 drawViewport('bottom', w2, h2, w2, h2, 'Знизу (X,-Z)');
 
@@ -1025,9 +1022,9 @@
                 ctx.beginPath(); ctx.moveTo(0, h2); ctx.lineTo(W, h2); ctx.stroke();
             } else {
                 const labels = {
-                    front: '📐 Спед. (X,Y)', back: 'Ззаду (-X,Y)',
+                    front: '📐 Головний (X,Y)', back: 'Ззаду (-X,Y)',
                     top: '🔲 Зверху (X,Z)', bottom: 'Знизу (X,-Z)',
-                    right: 'Праворуч (Z,Y)', left: 'Ліворуч (-Z,Y)',
+                    right: '📐 Збоку (Z,Y)', left: 'Ліворуч (-Z,Y)',
                     '3d': '🧊 3D Огляд'
                 };
                 drawViewport(activeView, 0, 0, W, H, labels[activeView]);
