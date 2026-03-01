@@ -897,10 +897,11 @@
         }
 
         // Find nearest existing 3D endpoint within threshold pixels.
-        function findSnapPoint(cx, cy, vOverride, threshPx = 14) {
+        function findSnapPoint(cx, cy, vOverride, threshPx = 14, excludePt = null) {
             let best = null, bestD = Infinity;
             for (const seg of segments) {
                 for (const pt of [{ x: seg.x1, y: seg.y1, z: seg.z1 }, { x: seg.x2, y: seg.y2, z: seg.z2 }]) {
+                    if (excludePt && pt.x === excludePt.x && pt.y === excludePt.y && pt.z === excludePt.z) continue;
                     const { cx: px, cy: py } = project3D(pt.x, pt.y, pt.z, vOverride);
                     const d = Math.hypot(cx - px, cy - py);
                     if (d < threshPx && d < bestD) { bestD = d; best = pt; }
@@ -911,14 +912,14 @@
 
         const snap = v => Math.round(v * gridScale) / gridScale; // Snap to 1mm increments
 
-        function getGridPos(e) {
+        function getGridPos(e, excludePt = null) {
             const r = canvas.getBoundingClientRect();
             const cx = e.clientX - r.left, cy = e.clientY - r.top;
             const v = getViewAt(cx, cy);
             if (!v) return { pt3D: { x: 0, y: 0, z: 0 }, cx, cy, view: 'front' };
 
             // 1. Hard Endpoint Snap
-            const ep = findSnapPoint(cx, cy, v);
+            const ep = findSnapPoint(cx, cy, v, 14, excludePt);
             if (ep) return { pt3D: { ...ep }, snapped: true, cx, cy, view: v };
 
             // 2. Base unprojection
@@ -1207,10 +1208,17 @@
             const view = viewOverride || activeView;
             // Get grid position relative to this viewport
             const r = canvas.getBoundingClientRect();
-            const { pt3D, axisHint } = getGridPos({ clientX: mousePos.x + r.left, clientY: mousePos.y + r.top });
+            const { pt3D, axisHint } = getGridPos({ clientX: mousePos.x + r.left, clientY: mousePos.y + r.top }, drawStart3D);
 
             const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z, view);
             const p2 = project3D(pt3D.x, pt3D.y, pt3D.z, view);
+
+            // Instant "Ghost" Line if snapped point is same as start
+            if (Math.abs(p1.cx - p2.cx) < 2 && Math.abs(p1.cy - p2.cy) < 2) {
+                ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.strokeStyle = 'rgba(59,130,246,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.stroke(); ctx.setLineDash([]);
+            }
             const lenMm = segLengthMm({
                 x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z,
                 x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
@@ -1322,8 +1330,8 @@
                 redrawAll(); return;
             }
 
-            snapPt = findSnapPoint(mousePos.x, mousePos.y, v);
-            const { pt3D } = getGridPos(e);
+            snapPt = findSnapPoint(mousePos.x, mousePos.y, v, 14, isDrawing ? drawStart3D : null);
+            const { pt3D } = getGridPos(e, isDrawing ? drawStart3D : null);
 
             document.getElementById('canvas-info').textContent =
                 `X:${Math.round(pt3D.x * gridScale)} Y:${Math.round(pt3D.y * gridScale)} Z:${Math.round(pt3D.z * gridScale)} мм | Вид: ${v}`;
@@ -1334,7 +1342,7 @@
         function onMouseUp(e) {
             panning = false; canvas.style.cursor = 'crosshair';
             if (e.button !== 0 || !isDrawing) return;
-            const { pt3D } = getGridPos(e);
+            const { pt3D } = getGridPos(e, drawStart3D);
 
             const start = drawStart3D;
             if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) {
@@ -1376,11 +1384,6 @@
             if (len2 === 0) return Math.hypot(px - x1, py - y1);
             const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2));
             return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
-        }
-
-        function segLengthCm(seg) {
-            const dx = (seg.x2 - seg.x1) * gridScale, dy = (seg.y2 - seg.y1) * gridScale, dz = (seg.z2 - seg.z1) * gridScale;
-            return Math.sqrt(dx * dx + dy * dy + dz * dz);
         }
 
         function zoom(factor) {
