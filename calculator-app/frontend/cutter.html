@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>🔧 Розкрій металу — ERP</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            background: #0f172a;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .nav-logo {
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .nav a {
+            color: #94a3b8;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .nav a:hover {
+            background: rgba(255, 255, 255, .08);
+            color: #fff;
+        }
+
+        .nav a.on {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        /* ── LAYOUT ── */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── LEFT PANEL ── */
+        .panel-left {
+            width: 220px;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .panel-section {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 4px;
+        }
+
+        .panel-left label {
+            font-size: 12px;
+            color: #475569;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .panel-left select,
+        .panel-left input[type=number] {
+            width: 100%;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 6px 9px;
+            font-size: 13px;
+            outline: none;
+            background: #f8fafc;
+        }
+
+        .panel-left select:focus,
+        .panel-left input[type=number]:focus {
+            border-color: #3b82f6;
+        }
+
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tool-btn {
+            padding: 8px 10px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            color: #334155;
+            font-weight: 600;
+            transition: all .15s;
+        }
+
+        .tool-btn:hover {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
+        }
+
+        .tool-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .cut-options {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .cut-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 6px 4px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            background: #f8fafc;
+            cursor: pointer;
+            text-align: center;
+            color: #475569;
+        }
+
+        .cut-btn.active {
+            background: #7c3aed;
+            border-color: #7c3aed;
+            color: #fff;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 9px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .btn-green {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .btn-green:hover {
+            background: #a7f3d0;
+        }
+
+        .btn-print {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        .btn-print:hover {
+            background: #1e293b;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #f1f5f9;
+            margin: 4px 0;
+        }
+
+        /* ── CANVAS AREA ── */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #e8edf2;
+            cursor: crosshair;
+        }
+
+        #main-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .canvas-info {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, .75);
+            color: #e2e8f0;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .zoom-bar {
+            position: absolute;
+            bottom: 10px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .zoom-bar button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 7px;
+            background: rgba(15, 23, 42, .75);
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── RIGHT PANEL ── */
+        .panel-right {
+            width: 260px;
+            background: #fff;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .panel-right-header {
+            padding: 12px 14px 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .panel-right-header h3 {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .panel-right-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+        }
+
+        .seg-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f8fafc;
+            font-size: 12px;
+        }
+
+        .seg-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #fff;
+            font-weight: 800;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .seg-info {
+            flex: 1;
+        }
+
+        .seg-len {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .seg-sub {
+            color: #94a3b8;
+            font-size: 10px;
+        }
+
+        .seg-del {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .seg-del:hover {
+            color: #ef4444;
+        }
+
+        .cut-summary {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cut-summary strong {
+            color: #1e293b;
+        }
+
+        .cut-summary span {
+            color: #64748b;
+        }
+
+        .panel-bottom {
+            padding: 10px 12px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* ── PRINT ── */
+        @media print {
+            body {
+                height: auto;
+                overflow: auto;
+                background: #fff;
+            }
+
+            .nav,
+            .panel-left,
+            .panel-right,
+            .zoom-bar,
+            .canvas-info {
+                display: none !important;
+            }
+
+            .main {
+                display: block;
+                overflow: visible;
+            }
+
+            .canvas-area {
+                overflow: visible;
+                height: auto;
+            }
+
+            #main-canvas {
+                position: static;
+            }
+
+            .print-sheet {
+                display: block !important;
+            }
+        }
+
+        .print-sheet {
+            display: none;
+        }
+
+        /* ── TOOLTIP ── */
+        .tooltip {
+            position: absolute;
+            background: #0f172a;
+            color: #fff;
+            padding: 4px 9px;
+            border-radius: 5px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 50;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav">
+        <span class="nav-logo">🔩 ERP Система</span>
+        <a href="/metal.html">🔩 Метал</a>
+        <a href="/cutter.html" class="on">🔧 Розкрій</a>
+        <a href="/admin.html">⚙️ Налаштування</a>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT PANEL -->
+        <div class="panel-left">
+            <div>
+                <div class="panel-section">Профіль</div>
+                <label>Тип труби</label>
+                <select id="profile-sel">
+                    <option value="20x20">Квадрат 20×20</option>
+                    <option value="25x25">Квадрат 25×25</option>
+                    <option value="30x30" selected>Квадрат 30×30</option>
+                    <option value="40x40">Квадрат 40×40</option>
+                    <option value="50x50">Квадрат 50×50</option>
+                    <option value="20x40">Прямокутник 20×40</option>
+                    <option value="20x60">Прямокутник 20×60</option>
+                    <option value="40x80">Прямокутник 40×80</option>
+                    <option value="custom">Власний розмір...</option>
+                </select>
+                <div id="custom-profile" style="display:none;margin-top:6px;display:flex;gap:5px;align-items:center">
+                    <input type="number" id="custom-w" value="30" min="5" max="200" style="width:60px"> ×
+                    <input type="number" id="custom-h" value="30" min="5" max="200" style="width:60px"> мм
+                </div>
+            </div>
+
+            <hr class="divider">
+            <div>
+                <div class="panel-section">Масштаб сітки</div>
+                <label>Одна клітинка =</label>
+                <select id="grid-scale">
+                    <option value="5">5 см</option>
+                    <option value="10" selected>10 см</option>
+                    <option value="20">20 см</option>
+                    <option value="50">50 см</option>
+                </select>
+            </div>
+
+            <hr class="divider">
+            <div>
+                <div class="panel-section">Інструмент</div>
+                <div class="tool-group">
+                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">✏️ Лінія (сегмент)</button>
+                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">🖱 Вибрати / Видалити</button>
+                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">🔗 Тип з'єднання</button>
+                </div>
+            </div>
+
+            <hr class="divider">
+            <div id="joint-panel">
+                <div class="panel-section">Тип різу в з'єднанні</div>
+                <div class="cut-options">
+                    <button class="cut-btn active" id="cut-straight"
+                        onclick="setCutType('straight')">90°<br>Прямий</button>
+                    <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45°<br>Під кут</button>
+                </div>
+            </div>
+
+            <hr class="divider">
+            <div>
+                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
+            </div>
+        </div>
+
+        <!-- CANVAS -->
+        <div class="canvas-area" id="canvas-area">
+            <canvas id="main-canvas"></canvas>
+            <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
+            <div class="zoom-bar">
+                <button onclick="zoom(1.2)" title="Збільшити">+</button>
+                <button onclick="zoom(0.8)" title="Зменшити">−</button>
+                <button onclick="resetView()" title="Скинути вид">⊙</button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel-right">
+            <div class="panel-right-header">
+                <h3>📋 Список відрізків</h3>
+            </div>
+            <div class="panel-right-content" id="seg-list">
+                <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
+            </div>
+            <div class="panel-bottom">
+                <div class="cut-summary" id="cut-summary" style="display:none">
+                    <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
+                    </div>
+                    <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
+                </div>
+                <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
+                <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PRINT SHEET (hidden, shown on print) -->
+    <div class="print-sheet" id="print-sheet"></div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════
+        // DATA
+        // ═══════════════════════════════════════════════════════
+        let segments = [];    // [{id, x1,y1,x2,y2}]
+        let joints = {};      // key="x,y" val={type:'straight'|'45'}
+        let segId = 0;
+
+        let activeTool = 'line';
+        let activeCutType = 'straight';
+        let gridScale = 10; // cm per cell
+        let cellPx = 40;    // pixels per cell (zoom-dependent)
+        let offsetX = 0, offsetY = 0; // pan offset
+
+        // Drawing state
+        let isDrawing = false;
+        let drawStart = null;
+        let mousePos = { x: 0, y: 0 };
+
+        // ═══════════════════════════════════════════════════════
+        // CANVAS SETUP
+        // ═══════════════════════════════════════════════════════
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        const area = document.getElementById('canvas-area');
+
+        function resizeCanvas() {
+            canvas.width = area.clientWidth;
+            canvas.height = area.clientHeight;
+            redrawAll();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // ═══════════════════════════════════════════════════════
+        // COORDINATE HELPERS
+        // ═══════════════════════════════════════════════════════
+        function toCanvas(gx, gy) {
+            return { x: gx * cellPx + offsetX, y: gy * cellPx + offsetY };
+        }
+        function toGrid(cx, cy) {
+            return { x: (cx - offsetX) / cellPx, y: (cy - offsetY) / cellPx };
+        }
+        function snap(val) { return Math.round(val); }
+
+        function getGridPos(e) {
+            const r = canvas.getBoundingClientRect();
+            const cx = e.clientX - r.left, cy = e.clientY - r.top;
+            const g = toGrid(cx, cy);
+            return { gx: snap(g.x), gy: snap(g.y), cx, cy };
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // DRAW
+        // ═══════════════════════════════════════════════════════
+        function redrawAll() {
+            const W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            // Background
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, W, H);
+
+            drawGrid(W, H);
+            drawSegments();
+            drawJoints();
+            if (isDrawing && drawStart) drawPreview();
+        }
+
+        function drawGrid(W, H) {
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+
+            // Calculate visible grid range
+            const startX = Math.floor((0 - offsetX) / cellPx) - 1;
+            const endX = Math.ceil((W - offsetX) / cellPx) + 1;
+            const startY = Math.floor((0 - offsetY) / cellPx) - 1;
+            const endY = Math.ceil((H - offsetY) / cellPx) + 1;
+
+            for (let gx = startX; gx <= endX; gx++) {
+                const px = gx * cellPx + offsetX;
+                ctx.beginPath();
+                ctx.moveTo(px, 0);
+                ctx.lineTo(px, H);
+                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.25;
+                ctx.stroke();
+            }
+            for (let gy = startY; gy <= endY; gy++) {
+                const py = gy * cellPx + offsetY;
+                ctx.beginPath();
+                ctx.moveTo(0, py);
+                ctx.lineTo(W, py);
+                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.25;
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+
+            // Axis labels (every 5 cells)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px Segoe UI';
+            ctx.textAlign = 'center';
+            for (let gx = startX; gx <= endX; gx++) {
+                if (gx % 5 === 0) {
+                    const px = gx * cellPx + offsetX;
+                    const label = gx * gridScale + ' см';
+                    ctx.fillText(label, px, offsetY - 4 < 12 ? 12 : offsetY - 4);
+                }
+            }
+            ctx.textAlign = 'right';
+            for (let gy = startY; gy <= endY; gy++) {
+                if (gy % 5 === 0) {
+                    const py = gy * cellPx + offsetY;
+                    const label = gy * gridScale + ' см';
+                    ctx.fillText(label, offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
+                }
+            }
+        }
+
+        function drawSegments() {
+            const profile = getProfileLabel();
+            segments.forEach((seg, i) => {
+                const p1 = toCanvas(seg.x1, seg.y1);
+                const p2 = toCanvas(seg.x2, seg.y2);
+
+                // Shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                ctx.shadowBlur = 3;
+
+                // Main line (thick = profile width)
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = '#1e40af';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'square';
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // Inner highlight
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = '#60a5fa';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Length label
+                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+                const lenCm = segLengthCm(seg);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px Segoe UI';
+                ctx.textAlign = 'center';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                const tw = ctx.measureText(label).width + 8;
+                ctx.fillRect(mx - tw / 2, my - 9, tw, 16);
+                ctx.fillStyle = '#1e3a8a';
+                ctx.fillText(label, mx, my + 3);
+
+                // Segment number
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(p1.x, p1.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Segoe UI';
+                ctx.fillText(i + 1, p1.x, p1.y + 3);
+            });
+            ctx.lineWidth = 1;
+            ctx.textAlign = 'left';
+        }
+
+        function drawJoints() {
+            Object.entries(joints).forEach(([key, joint]) => {
+                const [gxStr, gyStr] = key.split(',');
+                const p = toCanvas(+gxStr, +gyStr);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = joint.type === '45' ? '#7c3aed' : '#f59e0b';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 8px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(joint.type === '45' ? '45' : '90', p.x, p.y + 3);
+            });
+            ctx.textAlign = 'left';
+            ctx.lineWidth = 1;
+        }
+
+        function drawPreview() {
+            const p1 = toCanvas(drawStart.gx, drawStart.gy);
+            const g = toGrid(mousePos.x, mousePos.y);
+            const gx2 = snap(g.x), gy2 = snap(g.y);
+            const p2 = toCanvas(gx2, gy2);
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = 'rgba(59,130,246,0.5)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1;
+
+            // Preview length
+            const dx = (gx2 - drawStart.gx) * gridScale;
+            const dy = (gy2 - drawStart.gy) * gridScale;
+            const lenCm = Math.sqrt(dx * dx + dy * dy);
+            if (lenCm > 0) {
+                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+                ctx.fillStyle = 'rgba(59,130,246,0.9)';
+                ctx.font = 'bold 11px Segoe UI';
+                ctx.textAlign = 'center';
+                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                ctx.fillText(label, mx, my - 8);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // MOUSE EVENTS
+        // ═══════════════════════════════════════════════════════
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mousemove', onMouseMove);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('wheel', onWheel, { passive: false });
+
+        // Pan
+        let panning = false, panStart = null;
+        canvas.addEventListener('mousedown', e => {
+            if (e.button === 1 || (e.button === 0 && e.altKey)) {
+                panning = true;
+                panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+                canvas.style.cursor = 'grab';
+                e.preventDefault();
+            }
+        });
+        canvas.addEventListener('mousemove', e => {
+            if (panning) {
+                offsetX = e.clientX - panStart.x;
+                offsetY = e.clientY - panStart.y;
+                redrawAll();
+            }
+        });
+        canvas.addEventListener('mouseup', () => { panning = false; canvas.style.cursor = 'crosshair'; });
+
+        function onMouseDown(e) {
+            if (e.button !== 0 || panning) return;
+            const { gx, gy, cx, cy } = getGridPos(e);
+
+            if (activeTool === 'line') {
+                isDrawing = true;
+                drawStart = { gx, gy };
+            } else if (activeTool === 'select') {
+                // Find nearest segment and remove
+                const seg = findNearestSegment(cx, cy);
+                if (seg) {
+                    segments = segments.filter(s => s.id !== seg.id);
+                    updateUI();
+                    redrawAll();
+                }
+            } else if (activeTool === 'joint') {
+                const key = `${gx},${gy}`;
+                if (joints[key]) {
+                    // Cycle through types
+                    joints[key].type = joints[key].type === 'straight' ? '45' : 'straight';
+                } else {
+                    joints[key] = { type: activeCutType };
+                }
+                redrawAll();
+            }
+        }
+
+        function onMouseMove(e) {
+            const r = canvas.getBoundingClientRect();
+            mousePos = { x: e.clientX - r.left, y: e.clientY - r.top };
+            const { gx, gy } = getGridPos(e);
+
+            // Snap dot
+            if (!panning) {
+                const snapped = toCanvas(gx, gy);
+                ctx.clearRect(snapped.x - 6, snapped.y - 6, 12, 12);
+                redrawAll();
+
+                // Draw snap indicator
+                ctx.beginPath();
+                ctx.arc(snapped.x, snapped.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = activeTool === 'line' ? 'rgba(59,130,246,0.8)' : 'rgba(239,68,68,0.8)';
+                ctx.fill();
+            }
+
+            // Info bar
+            const info = document.getElementById('canvas-info');
+            if (isDrawing) {
+                const g = toGrid(mousePos.x, mousePos.y);
+                const dx = (snap(g.x) - drawStart.gx) * gridScale;
+                const dy = (snap(g.y) - drawStart.gy) * gridScale;
+                const lenCm = Math.sqrt(dx * dx + dy * dy);
+                info.textContent = `Довжина: ${lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см'} | Відпустіть щоб завершити`;
+            } else {
+                info.textContent = `Координати: ${gx * gridScale} × ${gy * gridScale} см`;
+            }
+
+            if (isDrawing) redrawAll();
+        }
+
+        function onMouseUp(e) {
+            if (!isDrawing || panning) return;
+            isDrawing = false;
+            const { gx, gy } = getGridPos(e);
+
+            if (gx === drawStart.gx && gy === drawStart.gy) return; // zero-length
+
+            const dx = gx - drawStart.gx, dy = gy - drawStart.gy;
+            if (dx === 0 && dy === 0) return;
+
+            const seg = { id: ++segId, x1: drawStart.gx, y1: drawStart.gy, x2: gx, y2: gy };
+            segments.push(seg);
+
+            // Auto-add joints at endpoints
+            const k1 = `${seg.x1},${seg.y1}`;
+            const k2 = `${seg.x2},${seg.y2}`;
+            if (!joints[k1]) joints[k1] = { type: activeCutType };
+            if (!joints[k2]) joints[k2] = { type: activeCutType };
+
+            drawStart = null;
+            updateUI();
+            redrawAll();
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.15 : 0.87;
+            const r = canvas.getBoundingClientRect();
+            const mx = e.clientX - r.left, my = e.clientY - r.top;
+            offsetX = mx - (mx - offsetX) * factor;
+            offsetY = my - (my - offsetY) * factor;
+            cellPx = Math.min(Math.max(cellPx * factor, 10), 200);
+            redrawAll();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // HELPERS
+        // ═══════════════════════════════════════════════════════
+        function segLengthCm(seg) {
+            const dx = (seg.x2 - seg.x1) * gridScale;
+            const dy = (seg.y2 - seg.y1) * gridScale;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function findNearestSegment(cx, cy, maxPx = 12) {
+            let best = null, bestD = maxPx;
+            segments.forEach(seg => {
+                const p1 = toCanvas(seg.x1, seg.y1);
+                const p2 = toCanvas(seg.x2, seg.y2);
+                const d = pointToSegmentDist(cx, cy, p1.x, p1.y, p2.x, p2.y);
+                if (d < bestD) { bestD = d; best = seg; }
+            });
+            return best;
+        }
+
+        function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1, dy = y2 - y1;
+            if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
+            const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+            return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+        }
+
+        function getProfileLabel() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') {
+                const w = document.getElementById('custom-w').value;
+                const h = document.getElementById('custom-h').value;
+                return `${w}×${h} мм`;
+            }
+            return sel + ' мм';
+        }
+
+        function getProfileDims() {
+            const sel = document.getElementById('profile-sel').value;
+            if (sel === 'custom') {
+                return { w: +document.getElementById('custom-w').value, h: +document.getElementById('custom-h').value };
+            }
+            const parts = sel.split('x');
+            return { w: +parts[0], h: +parts[1] };
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // TOOL + CONFIG
+        // ═══════════════════════════════════════════════════════
+        function setTool(t) {
+            activeTool = t;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('tool-' + t);
+            if (btn) btn.classList.add('active');
+            canvas.style.cursor = t === 'select' ? 'pointer' : 'crosshair';
+        }
+
+        function setCutType(t) {
+            activeCutType = t;
+            document.querySelectorAll('.cut-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('cut-' + t).classList.add('active');
+        }
+
+        document.getElementById('grid-scale').addEventListener('change', e => {
+            gridScale = +e.target.value;
+            updateUI();
+            redrawAll();
+        });
+
+        document.getElementById('profile-sel').addEventListener('change', e => {
+            const isCustom = e.target.value === 'custom';
+            document.getElementById('custom-profile').style.display = isCustom ? 'flex' : 'none';
+            updateUI();
+        });
+
+        // ═══════════════════════════════════════════════════════
+        // UI UPDATE
+        // ═══════════════════════════════════════════════════════
+        function updateUI() {
+            const list = document.getElementById('seg-list');
+            if (segments.length === 0) {
+                list.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>';
+                document.getElementById('cut-summary').style.display = 'none';
+                return;
+            }
+
+            let totalCm = 0;
+            list.innerHTML = '';
+            segments.forEach((seg, i) => {
+                const lenCm = segLengthCm(seg);
+                totalCm += lenCm;
+                const k1 = `${seg.x1},${seg.y1}`;
+                const k2 = `${seg.x2},${seg.y2}`;
+                const cut1 = joints[k1]?.type || 'straight';
+                const cut2 = joints[k2]?.type || 'straight';
+                const cutLabel = cut1 === '45' || cut2 === '45' ? '45° / 45°' : '90° / 90°';
+                const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
+
+                const row = document.createElement('div');
+                row.className = 'seg-row';
+                row.innerHTML = `
+      <div class="seg-num">${i + 1}</div>
+      <div class="seg-info">
+        <div class="seg-len">${lenLabel}</div>
+        <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
+      </div>
+      <button class="seg-del" onclick="removeSeg(${seg.id})" title="Видалити">✕</button>
+    `;
+                list.appendChild(row);
+            });
+
+            const sumEl = document.getElementById('cut-summary');
+            sumEl.style.display = 'block';
+            document.getElementById('total-len').textContent = (totalCm / 100).toFixed(3) + ' м';
+            document.getElementById('summary-profile').textContent = getProfileLabel();
+        }
+
+        function removeSeg(id) {
+            segments = segments.filter(s => s.id !== id);
+            updateUI();
+            redrawAll();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // ZOOM / PAN
+        // ═══════════════════════════════════════════════════════
+        function zoom(factor) {
+            offsetX = canvas.width / 2 - (canvas.width / 2 - offsetX) * factor;
+            offsetY = canvas.height / 2 - (canvas.height / 2 - offsetY) * factor;
+            cellPx = Math.min(Math.max(cellPx * factor, 10), 200);
+            redrawAll();
+        }
+
+        function resetView() {
+            cellPx = 40;
+            offsetX = canvas.width / 2;
+            offsetY = canvas.height / 2;
+            redrawAll();
+        }
+
+        function clearAll() {
+            if (!confirm('Очистити весь малюнок?')) return;
+            segments = [];
+            joints = {};
+            segId = 0;
+            updateUI();
+            redrawAll();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // CUT PLAN GENERATION
+        // ═══════════════════════════════════════════════════════
+        function generateCutPlan() {
+            if (segments.length === 0) { alert('Намалюйте хоча б одну лінію!'); return; }
+
+            const profile = getProfileLabel();
+            const dims = getProfileDims();
+            let totalCm = 0;
+            const rows = segments.map((seg, i) => {
+                const lenCm = segLengthCm(seg);
+                totalCm += lenCm;
+                const k1 = `${seg.x1},${seg.y1}`;
+                const k2 = `${seg.x2},${seg.y2}`;
+                const cut1 = joints[k1]?.type || 'straight';
+                const cut2 = joints[k2]?.type || 'straight';
+                const c1Label = cut1 === '45' ? '45°' : '90°';
+                const c2Label = cut2 === '45' ? '45°' : '90°';
+                const lenLabel = lenCm >= 100 ? (lenCm / 100 * 1000).toFixed(0) + ' мм' : (lenCm * 10).toFixed(0) + ' мм';
+                return `<tr>
+      <td style="text-align:center;font-weight:800;color:#1e3a8a">${i + 1}</td>
+      <td style="text-align:center">1 шт</td>
+      <td style="font-weight:700;color:#1e293b">${lenLabel}</td>
+      <td style="text-align:center">${c1Label} / ${c2Label}</td>
+      <td style="color:#64748b">${profile}</td>
+    </tr>`;
+            }).join('');
+
+            const html = `
+    <div style="font-family:'Segoe UI',sans-serif;padding:24px;max-width:800px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <h2 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:4px">🔧 Карта розкрою металу</h2>
+          <div style="font-size:13px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong>${profile}</strong></div>
+        </div>
+        <div style="text-align:right;font-size:13px;color:#334155">
+          <div>Сегментів: <strong>${segments.length}</strong></div>
+          <div>Загальна довжина: <strong>${(totalCm / 100).toFixed(3)} м</strong></div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:#0f172a;color:#fff">
+            <th style="padding:8px;width:40px">№</th>
+            <th style="padding:8px;width:60px">К-сть</th>
+            <th style="padding:8px">Довжина</th>
+            <th style="padding:8px">Різ (поч/кін)</th>
+            <th style="padding:8px">Профіль</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div style="margin-top:16px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">
+        <strong>💡 Примітки для різчика:</strong>
+        <ul style="margin-top:6px;padding-left:18px;color:#475569;font-size:12px">
+          <li>Різ <strong>90°</strong> = прямий торець</li>
+          <li>Різ <strong>45°</strong> = скіс під 45° (для куткових з'єднань)</li>
+          <li>Всі розміри вказані по зовнішньому розміру деталі</li>
+        </ul>
+      </div>
+    </div>
+  `;
+            document.getElementById('print-sheet').innerHTML = html;
+            document.getElementById('print-sheet').style.display = 'block';
+            alert('Карту розкрою сформовано! Натисніть "Друк карти" щоб роздрукувати.');
+        }
+
+        function printCutPlan() {
+            if (segments.length === 0) { generateCutPlan(); return; }
+            if (!document.getElementById('print-sheet').innerHTML) { generateCutPlan(); }
+            window.print();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════
+        resizeCanvas();
+        resetView();
+    </script>
+</body>
+
+</html>
