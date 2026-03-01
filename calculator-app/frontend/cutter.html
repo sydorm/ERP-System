@@ -672,8 +672,13 @@
         };
         let activeView = 'front';
 
-        // Working references (point to current view)
+        // Working references (point to current view) — declared first to avoid TDZ
         let segments, joints, segId;
+        let activeTool = 'line';
+        let activeCutType = 'straight';
+        let gridScale = 10; // cm per cell
+        let cellPx = 40;    // pixels per cell
+        let offsetX = 0, offsetY = 0;
 
         function saveViewState() {
             viewStore[activeView].segments = segments;
@@ -704,19 +709,8 @@
             redrawAll();
         }
 
-        // ── initial load ──
+        // ── initial load (all vars already declared above) ──
         loadViewState('front');
-
-        let activeTool = 'line';
-        let activeCutType = 'straight';
-        let gridScale = 10; // cm per cell
-        let cellPx = viewStore.front.cellPx;
-        let offsetX = 0, offsetY = 0;
-
-        // Reload after declaring cellPx/offset (they are now real vars)
-        segments = viewStore.front.segments;
-        joints = viewStore.front.joints;
-        segId = viewStore.front.segId;
 
         // Drawing state
         let isDrawing = false;
