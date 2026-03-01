@@ -648,16 +648,20 @@
             <div>
                 <div class="panel-section">Р†РЅСЃС‚СЂСѓРјРµРЅС‚</div>
                 <div class="tool-group">
-                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">вњЏпёЏ Р›С–РЅС–СЏ (СЃРµРіРјРµРЅС‚)</button>
-                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">рџ–± Р’РёР±СЂР°С‚Рё / Р’РёРґР°Р»РёС‚Рё</button>
-                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">рџ”— РўРёРї Р·'С”РґРЅР°РЅРЅСЏ</button>
+                    <button class="tool-btn active" id="tool-line" onclick="setTool('line')">вњЏпёЏ Р›С–РЅС–СЏ
+                        (СЃРµРіРјРµРЅС‚)</button>
+                    <button class="tool-btn" id="tool-select" onclick="setTool('select')">рџ–± Р’РёР±СЂР°С‚Рё /
+                        Р’РёРґР°Р»РёС‚Рё</button>
+                    <button class="tool-btn" id="tool-joint" onclick="setTool('joint')">рџ”— РўРёРї
+                        Р·'С”РґРЅР°РЅРЅСЏ</button>
                 </div>
             </div>
 
             <hr class="divider">
             <div id="joint-panel">
                 <div class="panel-section">РўРёРї СЂС–Р·Сѓ РІ Р·'С”РґРЅР°РЅРЅС–</div>
-                <div style="font-size:11px;color:#64748b;margin-bottom:6px">Р›РљРњ = Р·РјС–РЅРёС‚Рё С‚РёРї<br>РџРљРњ = РІРёРґР°Р»РёС‚Рё РјС–С‚РєСѓ
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px">Р›РљРњ = Р·РјС–РЅРёС‚Рё С‚РёРї<br>РџРљРњ =
+                    РІРёРґР°Р»РёС‚Рё РјС–С‚РєСѓ
                 </div>
                 <div class="cut-options">
                     <button class="cut-btn active" id="cut-straight"
@@ -696,7 +700,8 @@
             <!-- Canvas -->
             <div class="canvas-area" id="canvas-area" style="flex:1">
                 <canvas id="main-canvas"></canvas>
-                <div class="canvas-info" id="canvas-info">РљР»С–РєРЅС–С‚СЊ С‚Р° С‚СЏРіРЅС–С‚СЊ С‰РѕР± РЅР°РјР°Р»СЋРІР°С‚Рё Р»С–РЅС–СЋ РєР°СЂРєР°СЃСѓ</div>
+                <div class="canvas-info" id="canvas-info">РљР»С–РєРЅС–С‚СЊ С‚Р° С‚СЏРіРЅС–С‚СЊ С‰РѕР±
+                    РЅР°РјР°Р»СЋРІР°С‚Рё Р»С–РЅС–СЋ РєР°СЂРєР°СЃСѓ</div>
                 <div class="zoom-bar">
                     <button onclick="zoom(1.2)" title="Р—Р±С–Р»СЊС€РёС‚Рё">+</button>
                     <button onclick="zoom(0.8)" title="Р—РјРµРЅС€РёС‚Рё">в€’</button>
@@ -711,17 +716,20 @@
                 <h3>рџ“‹ РЎРїРёСЃРѕРє РІС–РґСЂС–Р·РєС–РІ</h3>
             </div>
             <div class="panel-right-content" id="seg-list">
-                <div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР± РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>
+                <div style="color:#94a3b8;font-size:12px;padding:10px 0">РќР°РјР°Р»СЋР№С‚Рµ Р»С–РЅС–С— С‰РѕР±
+                    РїРѕР±Р°С‡РёС‚Рё СЃРїРёСЃРѕРє С‚СѓС‚</div>
             </div>
             <div class="panel-bottom">
                 <div class="cut-summary" id="cut-summary" style="display:none">
-                    <div style="margin-bottom:4px"><strong>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°:</strong> <span id="total-len">0</span> Рј
+                    <div style="margin-bottom:4px"><strong>Р—Р°РіР°Р»СЊРЅР° РґРѕРІР¶РёРЅР°:</strong> <span
+                            id="total-len">0</span> Рј
                     </div>
                     <div><strong>РџСЂРѕС„С–Р»СЊ:</strong> <span id="summary-profile">вЂ”</span></div>
                 </div>
                 <button class="btn-action btn-green" onclick="generateCutPlan()">рџ“„ РљР°СЂС‚Р° СЂРѕР·РєСЂРѕСЋ</button>
                 <button class="btn-action btn-print" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє РєР°СЂС‚Рё</button>
-                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">рџ”— РќР°РґС–СЃР»Р°С‚Рё РІ
+                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">рџ”—
+                    РќР°РґС–СЃР»Р°С‚Рё РІ
                     РњРµС‚Р°Р»</button>
             </div>
         </div>
@@ -737,7 +745,8 @@
             </div>
             <div class="cut-plan-drawer-body" id="cut-plan-body"></div>
             <div class="cut-plan-drawer-footer">
-                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє РєР°СЂС‚Рё</button>
+                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">рџ–Ё Р”СЂСѓРє
+                    РєР°СЂС‚Рё</button>
                 <button class="btn-action btn-danger" style="flex:0;padding:9px 16px"
                     onclick="toggleDrawer(false)">Р—Р°РєСЂРёС‚Рё</button>
             </div>
@@ -914,11 +923,25 @@
                 }
             }
 
-            // View label in corner
-            const VIEW_NAMES = { front: 'Р¤СЂРѕРЅС‚ (X-Y)', side: 'Р‘С–С‡РЅРёР№ (Z-Y)', top: 'Р—РІРµСЂС…Сѓ (X-Z)' };
-            ctx.fillStyle = 'rgba(59,130,246,0.5)'; ctx.font = 'bold 11px Segoe UI';
-            ctx.textAlign = 'left';
-            ctx.fillText(VIEW_NAMES[activeView], 8, 20);
+            // View label in corner — ASCII only to avoid encoding issues
+            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669' };
+            const VIEW_LABELS2 = { front: 'FRONT  (X → / Y ↓)', side: 'SIDE  (Z → / Y ↓)', top: 'TOP  (X → / Z ↓)' };
+            const vColor = VIEW_COLORS[activeView];
+
+            // Canvas border to show active view
+            ctx.strokeStyle = vColor; ctx.lineWidth = 3;
+            ctx.strokeRect(2, 2, W - 4, H - 4);
+
+            // Label pill
+            const labelText = VIEW_LABELS2[activeView];
+            ctx.font = 'bold 12px monospace'; ctx.textAlign = 'left';
+            const lw = ctx.measureText(labelText).width + 16;
+            ctx.fillStyle = vColor; ctx.globalAlpha = 0.92;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(8, 8, lw, 24, 6) : ctx.rect(8, 8, lw, 24);
+            ctx.fill(); ctx.globalAlpha = 1;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(labelText, 16, 25);
         }
 
         function drawSegments() {
@@ -1186,6 +1209,9 @@
             document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
             const tab = document.getElementById('vtab-' + v);
             if (tab) tab.classList.add('active');
+            // Change canvas border color to indicate active view
+            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669' };
+            canvas.style.outline = '3px solid ' + VIEW_COLORS[v];
             redrawAll();
         }
 
