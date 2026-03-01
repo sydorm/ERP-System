@@ -236,6 +236,110 @@
             display: block;
         }
 
+        /* ── VIEW TABS ── */
+        .view-tab-bar {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: rgba(15, 23, 42, .75);
+            backdrop-filter: blur(6px);
+            border-radius: 10px;
+            padding: 4px;
+            z-index: 10;
+        }
+
+        .view-tab {
+            padding: 5px 14px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .view-tab.active {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .view-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
+        }
+
+        /* ── CUT PLAN DRAWER ── */
+        .cut-plan-drawer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .35s cubic-bezier(.4, 0, .2, 1);
+            z-index: 100;
+        }
+
+        .cut-plan-drawer.open {
+            max-height: 60vh;
+        }
+
+        .cut-plan-drawer-inner {
+            background: #fff;
+            border-top: 2px solid #3b82f6;
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, .15);
+            height: 60vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cut-plan-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            flex-shrink: 0;
+        }
+
+        .cut-plan-drawer-header h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 2px 6px;
+        }
+
+        .drawer-close:hover {
+            color: #ef4444;
+        }
+
+        .cut-plan-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 20px;
+        }
+
+        .cut-plan-drawer-footer {
+            border-top: 1px solid #f1f5f9;
+            padding: 10px 16px;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
         .canvas-info {
             position: absolute;
             bottom: 10px;
@@ -386,22 +490,15 @@
             .panel-left,
             .panel-right,
             .zoom-bar,
-            .canvas-info {
+            .canvas-info,
+            .view-tab-bar,
+            .cut-plan-drawer {
                 display: none !important;
             }
 
             .main {
                 display: block;
                 overflow: visible;
-            }
-
-            .canvas-area {
-                overflow: visible;
-                height: auto;
-            }
-
-            #main-canvas {
-                position: static;
             }
 
             .print-sheet {
@@ -503,13 +600,23 @@
         </div>
 
         <!-- CANVAS -->
-        <div class="canvas-area" id="canvas-area">
-            <canvas id="main-canvas"></canvas>
-            <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
-            <div class="zoom-bar">
-                <button onclick="zoom(1.2)" title="Збільшити">+</button>
-                <button onclick="zoom(0.8)" title="Зменшити">−</button>
-                <button onclick="resetView()" title="Скинути вид">⊙</button>
+        <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
+            <!-- View tab bar -->
+            <div class="view-tab-bar">
+                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
+                <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
+                <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-area" id="canvas-area" style="flex:1">
+                <canvas id="main-canvas"></canvas>
+                <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
+                <div class="zoom-bar">
+                    <button onclick="zoom(1.2)" title="Збільшити">+</button>
+                    <button onclick="zoom(0.8)" title="Зменшити">−</button>
+                    <button onclick="resetView()" title="Скинути вид">⊙</button>
+                </div>
             </div>
         </div>
 
@@ -534,27 +641,94 @@
 
     </div>
 
-    <!-- PRINT SHEET (hidden, shown on print) -->
+    <!-- CUT PLAN DRAWER -->
+    <div class="cut-plan-drawer" id="cut-plan-drawer">
+        <div class="cut-plan-drawer-inner">
+            <div class="cut-plan-drawer-header">
+                <h3>📄 Карта розкрою металу</h3>
+                <button class="drawer-close" onclick="toggleDrawer(false)" title="Закрити">✕</button>
+            </div>
+            <div class="cut-plan-drawer-body" id="cut-plan-body"></div>
+            <div class="cut-plan-drawer-footer">
+                <button class="btn-action btn-print" style="flex:1" onclick="printCutPlan()">🖨 Друк карти</button>
+                <button class="btn-action btn-danger" style="flex:0;padding:9px 16px"
+                    onclick="toggleDrawer(false)">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT SHEET -->
     <div class="print-sheet" id="print-sheet"></div>
 
     <script>
         // ═══════════════════════════════════════════════════════
-        // DATA
+        // DATA — multi-view store
         // ═══════════════════════════════════════════════════════
-        let segments = [];    // [{id, x1,y1,x2,y2}]
-        let joints = {};      // key="x,y" val={type:'straight'|'45'}
-        let segId = 0;
+        const VIEW_IDS = ['front', 'side', 'top'];
+        const viewStore = {
+            front: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 },
+            side: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 },
+            top: { segments: [], joints: {}, segId: 0, cellPx: 40, offsetX: 0, offsetY: 0 }
+        };
+        let activeView = 'front';
+
+        // Working references (point to current view)
+        let segments, joints, segId;
+
+        function saveViewState() {
+            viewStore[activeView].segments = segments;
+            viewStore[activeView].joints = joints;
+            viewStore[activeView].segId = segId;
+            viewStore[activeView].cellPx = cellPx;
+            viewStore[activeView].offsetX = offsetX;
+            viewStore[activeView].offsetY = offsetY;
+        }
+
+        function loadViewState(v) {
+            segments = viewStore[v].segments;
+            joints = viewStore[v].joints;
+            segId = viewStore[v].segId;
+            cellPx = viewStore[v].cellPx;
+            offsetX = viewStore[v].offsetX;
+            offsetY = viewStore[v].offsetY || 0;
+        }
+
+        function switchView(v) {
+            saveViewState();
+            activeView = v;
+            loadViewState(v);
+            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+            const tab = document.getElementById('vtab-' + v);
+            if (tab) tab.classList.add('active');
+            updateUI();
+            redrawAll();
+        }
+
+        // ── initial load ──
+        loadViewState('front');
 
         let activeTool = 'line';
         let activeCutType = 'straight';
         let gridScale = 10; // cm per cell
-        let cellPx = 40;    // pixels per cell (zoom-dependent)
-        let offsetX = 0, offsetY = 0; // pan offset
+        let cellPx = viewStore.front.cellPx;
+        let offsetX = 0, offsetY = 0;
+
+        // Reload after declaring cellPx/offset (they are now real vars)
+        segments = viewStore.front.segments;
+        joints = viewStore.front.joints;
+        segId = viewStore.front.segId;
 
         // Drawing state
         let isDrawing = false;
         let drawStart = null;
         let mousePos = { x: 0, y: 0 };
+
+        // ── Drawer ──
+        function toggleDrawer(open) {
+            const el = document.getElementById('cut-plan-drawer');
+            if (open === undefined) open = !el.classList.contains('open');
+            el.classList.toggle('open', open);
+        }
 
         // ═══════════════════════════════════════════════════════
         // CANVAS SETUP
@@ -1133,14 +1307,14 @@
       </div>
     </div>
   `;
+            document.getElementById('cut-plan-body').innerHTML = html;
             document.getElementById('print-sheet').innerHTML = html;
-            document.getElementById('print-sheet').style.display = 'block';
-            alert('Карту розкрою сформовано! Натисніть "Друк карти" щоб роздрукувати.');
+            toggleDrawer(true);
         }
 
         function printCutPlan() {
             if (segments.length === 0) { generateCutPlan(); return; }
-            if (!document.getElementById('print-sheet').innerHTML) { generateCutPlan(); }
+            if (!document.getElementById('print-sheet').innerHTML) { generateCutPlan(); return; }
             window.print();
         }
 
