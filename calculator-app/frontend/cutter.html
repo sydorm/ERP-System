@@ -486,10 +486,13 @@
             <hr class="divider">
             <div id="joint-panel">
                 <div class="panel-section">Тип різу в з'єднанні</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px">ЛКМ = змінити тип<br>ПКМ = видалити мітку
+                </div>
                 <div class="cut-options">
                     <button class="cut-btn active" id="cut-straight"
                         onclick="setCutType('straight')">90°<br>Прямий</button>
                     <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45°<br>Під кут</button>
+                    <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>Примика</button>
                 </div>
             </div>
 
@@ -709,9 +712,12 @@
             Object.entries(joints).forEach(([key, joint]) => {
                 const [gxStr, gyStr] = key.split(',');
                 const p = toCanvas(+gxStr, +gyStr);
+                // color by type
+                const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
+                const LABELS = { straight: '90', '45': '45', T: 'T' };
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-                ctx.fillStyle = joint.type === '45' ? '#7c3aed' : '#f59e0b';
+                ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+                ctx.fillStyle = COLORS[joint.type] || '#f59e0b';
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 2;
@@ -719,7 +725,7 @@
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 8px Segoe UI';
                 ctx.textAlign = 'center';
-                ctx.fillText(joint.type === '45' ? '45' : '90', p.x, p.y + 3);
+                ctx.fillText(LABELS[joint.type] || '90', p.x, p.y + 3);
             });
             ctx.textAlign = 'left';
             ctx.lineWidth = 1;
@@ -764,6 +770,20 @@
         canvas.addEventListener('mouseup', onMouseUp);
         canvas.addEventListener('wheel', onWheel, { passive: false });
 
+        // Right-click: delete joint
+        canvas.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (activeTool !== 'joint') return;
+            const { gx, gy } = getGridPos(e);
+            let nearKey = null, nearDist = 2.5;
+            Object.keys(joints).forEach(k => {
+                const [jx, jy] = k.split(',').map(Number);
+                const d = Math.hypot(gx - jx, gy - jy);
+                if (d < nearDist) { nearDist = d; nearKey = k; }
+            });
+            if (nearKey) { delete joints[nearKey]; redrawAll(); }
+        });
+
         // Pan
         let panning = false, panStart = null;
         canvas.addEventListener('mousedown', e => {
@@ -800,9 +820,20 @@
                 }
             } else if (activeTool === 'joint') {
                 const key = `${gx},${gy}`;
-                if (joints[key]) {
-                    // Cycle through types
-                    joints[key].type = joints[key].type === 'straight' ? '45' : 'straight';
+                // Try to find nearest joint (within 2 cells)
+                let nearKey = null;
+                let nearDist = 2.5;
+                Object.keys(joints).forEach(k => {
+                    const [jx, jy] = k.split(',').map(Number);
+                    const d = Math.hypot(gx - jx, gy - jy);
+                    if (d < nearDist) { nearDist = d; nearKey = k; }
+                });
+                if (nearKey) {
+                    // Cycle type: straight → 45 → T → straight
+                    const ORDER = ['straight', '45', 'T'];
+                    const cur = joints[nearKey].type;
+                    const nextIdx = (ORDER.indexOf(cur) + 1) % ORDER.length;
+                    joints[nearKey].type = ORDER[nextIdx];
                 } else {
                     joints[key] = { type: activeCutType };
                 }
@@ -1033,9 +1064,13 @@
         function generateCutPlan() {
             if (segments.length === 0) { alert('Намалюйте хоча б одну лінію!'); return; }
 
+            // Capture the canvas drawing as a PNG image
+            const imgDataUrl = canvas.toDataURL('image/png');
+
             const profile = getProfileLabel();
-            const dims = getProfileDims();
             let totalCm = 0;
+            const CUT_LABELS = { straight: '90°', '45': '45°', T: 'T-прим.' };
+
             const rows = segments.map((seg, i) => {
                 const lenCm = segLengthCm(seg);
                 totalCm += lenCm;
@@ -1043,50 +1078,57 @@
                 const k2 = `${seg.x2},${seg.y2}`;
                 const cut1 = joints[k1]?.type || 'straight';
                 const cut2 = joints[k2]?.type || 'straight';
-                const c1Label = cut1 === '45' ? '45°' : '90°';
-                const c2Label = cut2 === '45' ? '45°' : '90°';
-                const lenLabel = lenCm >= 100 ? (lenCm / 100 * 1000).toFixed(0) + ' мм' : (lenCm * 10).toFixed(0) + ' мм';
-                return `<tr>
-      <td style="text-align:center;font-weight:800;color:#1e3a8a">${i + 1}</td>
-      <td style="text-align:center">1 шт</td>
-      <td style="font-weight:700;color:#1e293b">${lenLabel}</td>
-      <td style="text-align:center">${c1Label} / ${c2Label}</td>
-      <td style="color:#64748b">${profile}</td>
+                const c1Label = CUT_LABELS[cut1] || '90°';
+                const c2Label = CUT_LABELS[cut2] || '90°';
+                const lenMm = (lenCm * 10).toFixed(0);
+                const oddRow = i % 2 === 1 ? 'background:#f8fafc' : '';
+                return `<tr style="${oddRow}">
+      <td style="padding:6px 8px;text-align:center;font-weight:800;color:#1e3a8a">${i + 1}</td>
+      <td style="padding:6px 8px;text-align:center">1 шт</td>
+      <td style="padding:6px 8px;font-weight:700;color:#1e293b">${lenMm} мм</td>
+      <td style="padding:6px 8px;text-align:center">${c1Label} / ${c2Label}</td>
+      <td style="padding:6px 8px;color:#64748b">${profile}</td>
     </tr>`;
             }).join('');
 
             const html = `
-    <div style="font-family:'Segoe UI',sans-serif;padding:24px;max-width:800px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:800px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #0f172a;padding-bottom:10px">
         <div>
-          <h2 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:4px">🔧 Карта розкрою металу</h2>
-          <div style="font-size:13px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong>${profile}</strong></div>
+          <h2 style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:4px">🔧 Карта розкрою металу</h2>
+          <div style="font-size:12px;color:#64748b">${new Date().toLocaleDateString('uk-UA')} | Профіль: <strong style="color:#0f172a">${profile}</strong></div>
         </div>
-        <div style="text-align:right;font-size:13px;color:#334155">
+        <div style="text-align:right;font-size:12px;color:#334155">
           <div>Сегментів: <strong>${segments.length}</strong></div>
-          <div>Загальна довжина: <strong>${(totalCm / 100).toFixed(3)} м</strong></div>
+          <div>Загальна довжина: <strong style="color:#2563eb">${(totalCm / 100).toFixed(3)} м</strong></div>
         </div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
+
+      <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#f8fafc;text-align:center;padding:10px">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;text-align:left">Малюнок конструкції (масштаб сітки: ${gridScale} см / клітинка):</div>
+        <img src="${imgDataUrl}" style="max-width:100%;max-height:320px;object-fit:contain;border:1px solid #e2e8f0">
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
         <thead>
           <tr style="background:#0f172a;color:#fff">
-            <th style="padding:8px;width:40px">№</th>
+            <th style="padding:8px;width:36px">№</th>
             <th style="padding:8px;width:60px">К-сть</th>
             <th style="padding:8px">Довжина</th>
             <th style="padding:8px">Різ (поч/кін)</th>
             <th style="padding:8px">Профіль</th>
           </tr>
         </thead>
-        <tbody>
-          ${rows}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>
-      <div style="margin-top:16px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px">
+
+      <div style="padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px">
         <strong>💡 Примітки для різчика:</strong>
-        <ul style="margin-top:6px;padding-left:18px;color:#475569;font-size:12px">
+        <ul style="margin-top:5px;padding-left:16px;color:#475569">
           <li>Різ <strong>90°</strong> = прямий торець</li>
-          <li>Різ <strong>45°</strong> = скіс під 45° (для куткових з'єднань)</li>
-          <li>Всі розміри вказані по зовнішньому розміру деталі</li>
+          <li>Різ <strong>45°</strong> = скіс для кутового з'єднання</li>
+          <li>Різ <strong>T-прим.</strong> = примикання до поверхні труби</li>
+          <li>Всі розміри — по зовнішньому розміру деталі</li>
         </ul>
       </div>
     </div>
