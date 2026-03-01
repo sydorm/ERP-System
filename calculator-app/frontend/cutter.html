@@ -875,7 +875,7 @@
                     const z = activeDepth;
                     const x = (u - z * sY) / cY;
                     const y = (vv + z * cY * sX - x * sY * sX) / cX;
-                    return { x: Math.round(x), y: Math.round(y), z: Math.round(z), view: v };
+                    return { x: snap(x), y: snap(y), z: snap(z), view: v };
                 }
             }
             return { x: 0, y: 0, z: 0, view: v };
@@ -909,7 +909,7 @@
             return best;
         }
 
-        const snap = v => Math.round(v);
+        const snap = v => Math.round(v * gridScale) / gridScale; // Snap to 1mm increments
 
         function getGridPos(e) {
             const r = canvas.getBoundingClientRect();
@@ -986,7 +986,10 @@
             return { pt3D: full, snapped: false, cx, cy, view: v, axisHint: axis };
         }
 
-        function ptKey(x, y, z) { return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
+        function ptKey(x, y, z) {
+            // Use mm precision for keys to avoid collisions
+            return `${Math.round(x * gridScale)},${Math.round(y * gridScale)},${Math.round(z * gridScale)}`;
+        }
 
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // CANVAS SETUP
@@ -1119,11 +1122,31 @@
             if (oy >= vy && oy <= vy + H) { ctx.beginPath(); ctx.moveTo(vx, oy); ctx.lineTo(vx + W, oy); ctx.stroke(); }
 
             if (!isQuadView) {
-                ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#94a3b8'; ctx.font = '9px Segoe UI';
+                ctx.textAlign = 'center';
+                const gs = 5; // Grid step for labels (e.g., every 5 units)
+                const minX = Math.floor((vx - ox) / cp) * gs;
+                const maxX = Math.ceil((vx + W - ox) / cp) * gs;
+                const minY = Math.floor((vy - oy) / cp) * gs;
+                const maxY = Math.ceil((vy + H - oy) / cp) * gs;
+
+                // X-axis labels
                 for (let i = startX; i <= endX; i++) {
-                    if (i % 5 === 0) {
+                    if (i % gs === 0) {
                         const px = ox + i * cp;
-                        if (px > vx + 40 && px < vx + W - 40) ctx.fillText(i * gridScale + 'см', px, vy + 15);
+                        if (px > vx + 40 && px < vx + W - 40) {
+                            ctx.fillText(Math.round(i * gridScale) + 'мм', px, vy + 15);
+                        }
+                    }
+                }
+
+                // Y-axis labels (assuming Y-axis is vertical in this context)
+                for (let i = startY; i <= endY; i++) {
+                    if (i % gs === 0 && i !== 0) { // Don't label origin twice
+                        const py = oy + i * cp;
+                        if (py > vy + 20 && py < vy + H - 20) {
+                            ctx.fillText(Math.round(-i * gridScale) + 'мм', vx + 15, py + 3); // Negative for Y-up convention
+                        }
                     }
                 }
             }
@@ -1150,8 +1173,8 @@
 
                 if (!isQuadView || v === 'front') {
                     const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
-                    const lenCm = segLengthCm(seg);
-                    const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                    const lenMm = segLengthMm(seg);
+                    const label = (lenMm >= 1000) ? (lenMm / 1000).toFixed(3) + ' м' : Math.round(lenMm) + ' мм';
                     ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
                     const tw = ctx.measureText(label).width + 6;
                     ctx.fillRect(mx - tw / 2, my - 8, tw, 14);
@@ -1198,10 +1221,16 @@
 
             // Axis coloring
             const AXIS_COLORS = { x: '#ef4444', y: '#3b82f6', z: '#10b981' };
-            ctx.strokeStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.5)';
+            ctx.strokeStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.85)';
             ctx.lineWidth = 4;
             if (!axisHint) ctx.setLineDash([6, 4]);
             ctx.stroke(); ctx.setLineDash([]);
+
+            // Draw end-cap dots for preview
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p2.cx, p2.cy, 3, 0, Math.PI * 2); ctx.fill();
+
             if (lenMm > 0) {
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 ctx.fillStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.9)';
@@ -1261,9 +1290,7 @@
                 redrawAll();
             } else if (activeTool === 'joint') {
                 const ep = findSnapPoint(cx, cy, view);
-                if (ep) {
-                    toggleJointPerSegment(ep.x, ep.y, ep.z);
-                }
+                if (ep) toggleJointPerSegment(ep.x, ep.y, ep.z);
             } else if (activeTool === 'select' || activeTool === 'mirror') {
                 const seg = findNearestSegment(cx, cy, view);
                 if (seg) {
@@ -1276,23 +1303,8 @@
                     }
                     updateUI(); redrawAll();
                 }
-            } else if (activeTool === 'joint') {
-                let nearKey = null, nearDist = 15;
-                Object.keys(joints).forEach(k => {
-                    const [jx, jy, jz] = k.split(',').map(Number);
-                    const { cx: px, cy: py } = project3D(jx, jy, jz, view);
-                    const d = Math.hypot(cx - px, cy - py);
-                    if (d < nearDist) { nearDist = d; nearKey = k; }
-                });
-                if (nearKey) {
-                    const ORDER = ['straight', '45', 'T'];
-                    const cur = joints[nearKey].type;
-                    joints[nearKey].type = ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length];
-                } else {
-                    joints[ptKey(pt3D.x, pt3D.y, pt3D.z)] = { type: activeCutType };
-                }
-                redrawAll();
             }
+            redrawAll();
         }
 
         function onMouseMove(e) {
