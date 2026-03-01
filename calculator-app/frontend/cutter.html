@@ -642,6 +642,14 @@
                     <option value="200">20 см (200 мм)</option>
                     <option value="500">50 см (500 мм)</option>
                 </select>
+                <div style="margin-top:8px">
+                    <label>Крок малювання (Snap):</label>
+                    <select id="snap-inc">
+                        <option value="1">1 мм (точно)</option>
+                        <option value="10" selected>10 мм (1 см)</option>
+                        <option value="50">50 мм (5 см)</option>
+                    </select>
+                </div>
             </div>
 
             <hr class="divider">
@@ -774,6 +782,7 @@
         // 3D DATA MODEL
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         let segments = [];   // [{id, x1,y1,z1, x2,y2,z2, cut1, cut2}]
+        let joints = {};     // { "x,y,z": {type} } - Legacy support for manual joints
         let segId = 0;
 
         let activeView = 'front';
@@ -795,6 +804,7 @@
         let mousePos = { x: 0, y: 0 };
         let isDrawing = false;
         let drawStart3D = null;
+        let snapInc = 10; // default to 10mm (1cm)
 
         function toggleDrawer(open) {
             const el = document.getElementById('cut-plan-drawer');
@@ -910,7 +920,10 @@
             return best;
         }
 
-        const snap = v => Math.round(v * gridScale) / gridScale; // Snap to 1mm increments
+        const snap = v => {
+            const inc = snapInc / gridScale; // convert mm increment back to 'units'
+            return Math.round(v / inc) * inc;
+        };
 
         function getGridPos(e, excludePt = null) {
             const r = canvas.getBoundingClientRect();
@@ -1186,11 +1199,21 @@
 
         function drawJoints(v) {
             const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
-            Object.entries(joints).forEach(([key, joint]) => {
-                const [gx, gy, gz] = key.split(',').map(Number);
+            const vertexMap = {}; // { "x,y,z": { type, count } }
+
+            segments.forEach(s => {
+                const k1 = ptKey(s.x1, s.y1, s.z1), k2 = ptKey(s.x2, s.y2, s.z2);
+                if (!vertexMap[k1]) vertexMap[k1] = { type: s.cut1, count: 0 };
+                if (!vertexMap[k2]) vertexMap[k2] = { type: s.cut2, count: 0 };
+                vertexMap[k1].count++;
+                vertexMap[k2].count++;
+            });
+
+            Object.entries(vertexMap).forEach(([key, info]) => {
+                const [gx, gy, gz] = key.split(',').map(Number).map(v => v / gridScale);
                 const { cx, cy } = project3D(gx, gy, gz, v);
                 ctx.beginPath(); ctx.arc(cx, cy, isQuadView ? 6 : 9, 0, Math.PI * 2);
-                ctx.fillStyle = COLORS[joint.type] || '#f59e0b'; ctx.fill();
+                ctx.fillStyle = COLORS[info.type] || '#f59e0b'; ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
             });
         }
@@ -1561,6 +1584,9 @@
         // в•ђв•ђв••ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         document.getElementById('grid-scale').addEventListener('change', e => {
             gridScale = +e.target.value; updateUI(); redrawAll();
+        });
+        document.getElementById('snap-inc').addEventListener('change', e => {
+            snapInc = +e.target.value; redrawAll();
         });
         document.getElementById('profile-sel').addEventListener('change', e => {
             document.getElementById('custom-profile').style.display = e.target.value === 'custom' ? 'flex' : 'none';
