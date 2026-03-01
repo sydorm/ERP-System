@@ -693,7 +693,8 @@
                 <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Фронт</button>
                 <button class="view-tab" id="vtab-side" onclick="switchView('side')">◻ Бічний</button>
                 <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
-                <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D Огляд</button>
+                <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
+                <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
             </div>
 
             <!-- Canvas -->
@@ -751,35 +752,31 @@
     <div class="print-sheet" id="print-sheet"></div>
 
     <script>
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // 3D DATA MODEL
-        // Single shared array — views are projections
-        // Front: looking along +Z, shows (X, Y)
-        // Side:  looking along -X, shows (Z, Y)
-        // Top:   looking along +Y, shows (X, Z)
-        // ═══════════════════════════════════════════════════════
+        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         let segments = [];   // [{id, x1,y1,z1, x2,y2,z2}]
-        let joints = {};   // key="x,y,z" в†’ {type:'straight'|'45'|'T'}
+        let joints = {};     // key="x,y,z" в†’ {type:'straight'|'45'|'T'}
         let segId = 0;
 
         let activeView = 'front';
+        let isQuadView = false;
         let activeTool = 'line';
         let activeCutType = 'straight';
-        let gridScale = 10;   // cm per grid cell
-        let cellPx = 40;   // pixels per cell
+        let gridScale = 10;
+        let cellPx = 40;
         let offsetX = 0, offsetY = 0;
 
-        // 3D View rotation (degrees)
+        // 3D View rotation
         let rotX = -20, rotY = 45;
 
         // Drawing state
         let isDrawing = false;
-        let drawStart3D = null;   // full {x,y,z}
+        let drawStart3D = null;
         let mousePos = { x: 0, y: 0 };
-        let snapPt = null;   // highlighted snap point {x,y,z} or null
-        let selectedSegs = new Set(); // IDs of selected segments for mirroring
+        let snapPt = null;
+        let selectedSegs = new Set();
 
-        // в”Ђв”Ђ Drawer в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         function toggleDrawer(open) {
             const el = document.getElementById('cut-plan-drawer');
             if (open === undefined) open = !el.classList.contains('open');
@@ -787,57 +784,78 @@
         }
 
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        // 3D в†” 2D PROJECTION
+        // 3D в†’ 2D PROJECTION
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        // Project 3D grid point в†’ canvas pixel
-        function project3D(x, y, z) {
+        function project3D(x, y, z, vOverride) {
             let u, v;
-            if (activeView === '3d') {
-                const radX = rotX * Math.PI / 180;
-                const radY = rotY * Math.PI / 180;
-                // Basic rotation
+            const view = vOverride || activeView;
+            if (view === '3d') {
+                const radX = rotX * Math.PI / 180, radY = rotY * Math.PI / 180;
                 let x1 = x * Math.cos(radY) + z * Math.sin(radY);
                 let z1 = z * Math.cos(radY) - x * Math.sin(radY);
                 let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
                 u = x1; v = y1;
             } else {
-                switch (activeView) {
-                    case 'front': u = x; v = y; break;   // X-Y plane
-                    case 'side': u = z; v = y; break;   // Z-Y plane
-                    case 'top': u = x; v = z; break;   // X-Z plane
-                }
+                if (view === 'front') { u = x; v = y; }
+                else if (view === 'side') { u = z; v = y; }
+                else { u = x; v = z; }
             }
-            return { cx: u * cellPx + offsetX, cy: v * cellPx + offsetY };
-        }
-
-        // Unproject canvas pixel в†’ partial 3D (null = unknown depth axis)
-        function unproject2D(cx, cy) {
-            const u = (cx - offsetX) / cellPx;
-            const v = (cy - offsetY) / cellPx;
-            switch (activeView) {
-                case 'front': return { x: u, y: v, z: null };
-                case 'side': return { x: null, y: v, z: u };
-                case 'top': return { x: u, y: null, z: v };
+            let cx = u * cellPx + offsetX, cy = v * cellPx + offsetY;
+            if (isQuadView && !vOverride) {
+                const q = getQuadOffsets(view);
+                cx = u * (cellPx / 2) + q.ox;
+                cy = v * (cellPx / 2) + q.oy;
             }
+            return { cx, cy };
         }
 
-        // Depth axis name for current view
-        function depthAxis() {
-            return activeView === 'front' ? 'z' : activeView === 'side' ? 'x' : 'y';
+        function getQuadOffsets(view) {
+            const w = canvas.width / 2, h = canvas.height / 2;
+            if (view === 'front') return { ox: w / 2, oy: h / 2 };
+            if (view === 'side') return { ox: w * 1.5, oy: h / 2 };
+            if (view === 'top') return { ox: w / 2, oy: h * 1.5 };
+            return { ox: w * 1.5, oy: h * 1.5 };
         }
 
-        // Fill the unknown depth with a value
-        function fillDepth(partial, d) {
-            return { ...partial, [depthAxis()]: d };
+        function getViewAt(cx, cy) {
+            if (!isQuadView) return activeView;
+            const w2 = canvas.width / 2, h2 = canvas.height / 2;
+            if (cx < w2 && cy < h2) return 'front';
+            if (cx >= w2 && cy < h2) return 'side';
+            if (cx < w2 && cy >= h2) return 'top';
+            return '3d';
+        }
+
+        function unproject2D(cx, cy, vOverride) {
+            const v = vOverride || getViewAt(cx, cy);
+            let cp = cellPx, ox = offsetX, oy = offsetY;
+            if (isQuadView && !vOverride) {
+                const q = getQuadOffsets(v);
+                ox = q.ox; oy = q.oy; cp = cellPx / 2;
+            }
+            const u = (cx - ox) / cp, vv = (cy - oy) / cp;
+            if (v === 'front') return { x: u, y: vv, z: null, view: v };
+            if (v === 'side') return { x: null, y: vv, z: u, view: v };
+            if (v === 'top') return { x: u, y: null, z: vv, view: v };
+            return { x: 0, y: 0, z: 0, view: v };
+        }
+
+        function depthAxis(view) {
+            const v = view || activeView;
+            return v === 'front' ? 'z' : v === 'side' ? 'x' : 'y';
+        }
+
+        function fillDepth(p, d, v) {
+            const ax = depthAxis(v || p.view);
+            return { x: p.x ?? 0, y: p.y ?? 0, z: p.z ?? 0, [ax]: d };
         }
 
         // Find nearest existing 3D endpoint within threshold pixels.
-        // Returns full {x,y,z} or null.
-        function findSnapPoint(cx, cy, threshPx = 14) {
+        function findSnapPoint(cx, cy, vOverride, threshPx = 14) {
             let best = null, bestD = Infinity;
             for (const seg of segments) {
                 for (const pt of [{ x: seg.x1, y: seg.y1, z: seg.z1 }, { x: seg.x2, y: seg.y2, z: seg.z2 }]) {
-                    const { cx: px, cy: py } = project3D(pt.x, pt.y, pt.z);
+                    const { cx: px, cy: py } = project3D(pt.x, pt.y, pt.z, vOverride);
                     const d = Math.hypot(cx - px, cy - py);
                     if (d < threshPx && d < bestD) { bestD = d; best = pt; }
                 }
@@ -845,24 +863,21 @@
             return best;
         }
 
-        // Grid-snap value
-        function snap(val) { return Math.round(val); }
+        const snap = v => Math.round(v);
 
-        // Get grid position from mouse event (snaps to existing endpoint if close)
         function getGridPos(e) {
             const r = canvas.getBoundingClientRect();
             const cx = e.clientX - r.left, cy = e.clientY - r.top;
-            const ep = findSnapPoint(cx, cy);
-            if (ep) return { pt3D: ep, snapped: true, cx, cy };
-            // Grid snap + use drawStart depth if drawing, else 0
-            const partial = unproject2D(cx, cy);
-            const ax = depthAxis();
-            const depthVal = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
-            const full = fillDepth({ x: snap(partial.x ?? 0), y: snap(partial.y ?? 0), z: snap(partial.z ?? 0) }, depthVal);
-            return { pt3D: full, snapped: false, cx, cy };
+            const v = getViewAt(cx, cy);
+            const ep = findSnapPoint(cx, cy, v);
+            if (ep) return { pt3D: ep, snapped: true, cx, cy, view: v };
+            const p = unproject2D(cx, cy, v);
+            const ax = depthAxis(v);
+            const d = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
+            const full = fillDepth({ x: snap(p.x ?? 0), y: snap(p.y ?? 0), z: snap(p.z ?? 0) }, d, v);
+            return { pt3D: full, snapped: false, cx, cy, view: v };
         }
 
-        // Point key for joints
         function ptKey(x, y, z) { return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
 
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
@@ -886,12 +901,47 @@
             const W = canvas.width, H = canvas.height;
             ctx.clearRect(0, 0, W, H);
             ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
-            drawGrid(W, H);
-            if (activeView === '3d') drawAxes();
-            drawSegments();
-            drawJoints();
-            if (snapPt) drawSnapIndicator();
-            if (isDrawing && drawStart3D && activeView !== '3d') drawPreview();
+
+            if (isQuadView) {
+                const w2 = W / 2, h2 = H / 2;
+                drawViewport('front', 0, 0, w2, h2, 'Фронт (X/Y)');
+                drawViewport('side', w2, 0, w2, h2, 'Бічний (Z/Y)');
+                drawViewport('top', 0, h2, w2, h2, 'Зверху (X/Z)');
+                drawViewport('3d', w2, h2, w2, h2, '3D Огляд');
+
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(w2, 0); ctx.lineTo(w2, H); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, h2); ctx.lineTo(W, h2); ctx.stroke();
+            } else {
+                drawViewport(activeView, 0, 0, W, H);
+            }
+        }
+
+        function drawViewport(view, vx, vy, vw, vh, label) {
+            ctx.save();
+            ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
+
+            const oldOX = offsetX, oldOY = offsetY, oldCP = cellPx;
+            if (isQuadView) {
+                const q = getQuadOffsets(view);
+                offsetX = q.ox; offsetY = q.oy; cellPx = oldCP / 2;
+            }
+
+            drawGrid(vw, vh, vx, vy, view);
+            if (view === '3d') drawAxes();
+            drawSegments(view);
+            drawJoints(view);
+
+            if (snapPt && getViewAt(mousePos.x, mousePos.y) === view) drawSnapIndicator(view);
+            if (isDrawing && drawStart3D && view !== '3d') drawPreview(view);
+
+            if (label) {
+                ctx.fillStyle = '#475569'; ctx.font = 'bold 11px Segoe UI';
+                ctx.textAlign = 'left'; ctx.fillText(label, vx + 10, vy + 22);
+            }
+
+            offsetX = oldOX; offsetY = oldOY; cellPx = oldCP;
+            ctx.restore();
         }
 
         function drawAxes() {
@@ -900,9 +950,9 @@
                 { x: 0, y: 1, z: 0, color: '#3b82f6', label: 'Y' },
                 { x: 0, y: 0, z: 1, color: '#10b981', label: 'Z' }
             ];
-            const origin = project3D(0, 0, 0);
+            const origin = project3D(0, 0, 0, '3d');
             axes.forEach(a => {
-                const head = project3D(a.x * 2, a.y * 2, a.z * 2);
+                const head = project3D(a.x * 2, a.y * 2, a.z * 2, '3d');
                 ctx.beginPath(); ctx.moveTo(origin.cx, origin.cy); ctx.lineTo(head.cx, head.cy);
                 ctx.strokeStyle = a.color; ctx.lineWidth = 2; ctx.stroke();
                 ctx.fillStyle = a.color; ctx.font = 'bold 10px monospace';
@@ -910,148 +960,107 @@
             });
         }
 
-        function drawGrid(W, H) {
-            if (activeView === '3d') return; // Hide standard grid in 3D
+        function drawGrid(W, H, vx, vy, vOverride) {
+            const view = vOverride || activeView;
+            if (view === '3d') return;
             ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
-            const startX = Math.floor((0 - offsetX) / cellPx) - 1;
-            const endX = Math.ceil((W - offsetX) / cellPx) + 1;
-            const startY = Math.floor((0 - offsetY) / cellPx) - 1;
-            const endY = Math.ceil((H - offsetY) / cellPx) + 1;
+
+            // Grid lines relative to viewport
+            const startX = Math.floor(-offsetX / cellPx) - 1;
+            const endX = Math.ceil((W) / cellPx) + 1; // W is vw
+            const startY = Math.floor(-offsetY / cellPx) - 1;
+            const endY = Math.ceil((H) / cellPx) + 1;
 
             for (let gx = startX; gx <= endX; gx++) {
                 const px = gx * cellPx + offsetX;
-                ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H);
-                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.22; ctx.stroke();
+                if (px < 0 || px > W) continue;
+                ctx.beginPath(); ctx.moveTo(px + vx, vy); ctx.lineTo(px + vx, vy + H);
+                ctx.globalAlpha = gx % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
             }
             for (let gy = startY; gy <= endY; gy++) {
                 const py = gy * cellPx + offsetY;
-                ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py);
-                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.22; ctx.stroke();
+                if (py < 0 || py > H) continue;
+                ctx.beginPath(); ctx.moveTo(vx, py + vy); ctx.lineTo(vx + W, py + vy);
+                ctx.globalAlpha = gy % 5 === 0 ? 0.5 : 0.2; ctx.stroke();
             }
             ctx.globalAlpha = 1;
 
-            // Axis labels
-            const VIEW_LABELS = { front: ['X', 'Y'], side: ['Z', 'Y'], top: ['X', 'Z'] };
-            const [hL] = VIEW_LABELS[activeView];
-            ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI';
-            ctx.textAlign = 'center';
-            for (let gx = startX; gx <= endX; gx++) {
-                if (gx % 5 === 0) {
-                    const px = gx * cellPx + offsetX;
-                    ctx.fillText(gx * gridScale + ' см', px, offsetY - 4 < 12 ? 12 : offsetY - 4);
+            if (!isQuadView) {
+                // Large labels only in main view
+                ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
+                for (let gx = startX; gx <= endX; gx++) {
+                    if (gx % 5 === 0) {
+                        const px = gx * cellPx + offsetX;
+                        if (px > 40 && px < W - 40) ctx.fillText(gx * gridScale + 'см', px, 15);
+                    }
                 }
             }
-            ctx.textAlign = 'right';
-            for (let gy = startY; gy <= endY; gy++) {
-                if (gy % 5 === 0) {
-                    const py = gy * cellPx + offsetY;
-                    ctx.fillText(gy * gridScale + ' см', offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
-                }
-            }
-
-            // View label in corner — ASCII only to avoid encoding issues
-            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669' };
-            const VIEW_LABELS2 = { front: 'FRONT  (X → / Y ↓)', side: 'SIDE  (Z → / Y ↓)', top: 'TOP  (X → / Z ↓)' };
-            const vColor = VIEW_COLORS[activeView];
-
-            // Canvas border to show active view
-            ctx.strokeStyle = vColor; ctx.lineWidth = 3;
-            ctx.strokeRect(2, 2, W - 4, H - 4);
-
-            // Label pill
-            const labelText = VIEW_LABELS2[activeView];
-            ctx.font = 'bold 12px monospace'; ctx.textAlign = 'left';
-            const lw = ctx.measureText(labelText).width + 16;
-            ctx.fillStyle = vColor; ctx.globalAlpha = 0.92;
-            ctx.beginPath();
-            ctx.roundRect ? ctx.roundRect(8, 8, lw, 24, 6) : ctx.rect(8, 8, lw, 24);
-            ctx.fill(); ctx.globalAlpha = 1;
-            ctx.fillStyle = '#fff';
-            ctx.fillText(labelText, 16, 25);
         }
 
-        function drawSegments() {
+        function drawSegments(v) {
             segments.forEach((seg, i) => {
-                const p1 = project3D(seg.x1, seg.y1, seg.z1);
-                const p2 = project3D(seg.x2, seg.y2, seg.z2);
+                const p1 = project3D(seg.x1, seg.y1, seg.z1, v);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2, v);
 
-                // Dot projection (segment perpendicular to view)
                 const isDot = Math.abs(p1.cx - p2.cx) < 1 && Math.abs(p1.cy - p2.cy) < 1;
                 if (isDot) {
                     ctx.fillStyle = '#93c5fd';
-                    ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 4, 0, Math.PI * 2); ctx.fill();
                     return;
                 }
 
                 const isSelected = selectedSegs.has(seg.id);
-                ctx.shadowColor = isSelected ? 'rgba(59,130,246,0.6)' : 'rgba(0,0,0,0.15)';
-                ctx.shadowBlur = isSelected ? 8 : 3;
                 ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
-                ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 6; ctx.lineCap = 'square'; ctx.stroke();
-                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#1e40af'; ctx.lineWidth = isQuadView ? 4 : 6; ctx.lineCap = 'square'; ctx.stroke();
 
                 ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
-                ctx.strokeStyle = isSelected ? '#3b82f6' : '#60a5fa'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.strokeStyle = isSelected ? '#3b82f6' : '#60a5fa'; ctx.lineWidth = isQuadView ? 1.5 : 2; ctx.stroke();
 
-                // Length label
-                const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
-                const lenCm = segLengthCm(seg);
-                const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
-                const tw = ctx.measureText(label).width + 8;
-                ctx.fillRect(mx - tw / 2, my - 9, tw, 16);
-                ctx.fillStyle = '#1e3a8a'; ctx.fillText(label, mx, my + 3);
-
-                // Number dot
-                ctx.fillStyle = '#3b82f6';
-                ctx.beginPath(); ctx.arc(p1.cx, p1.cy, 7, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Segoe UI';
-                ctx.fillText(i + 1, p1.cx, p1.cy + 3);
+                if (!isQuadView || v === 'front') {
+                    const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
+                    const lenCm = segLengthCm(seg);
+                    const label = lenCm >= 100 ? (lenCm / 100).toFixed(2) + 'м' : lenCm.toFixed(0) + 'см';
+                    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+                    const tw = ctx.measureText(label).width + 6;
+                    ctx.fillRect(mx - tw / 2, my - 8, tw, 14);
+                    ctx.fillStyle = '#1e3a8a'; ctx.fillText(label, mx, my + 3);
+                }
             });
-            ctx.lineWidth = 1; ctx.textAlign = 'left'; ctx.shadowBlur = 0;
         }
 
-        function drawJoints() {
+        function drawJoints(v) {
             const COLORS = { straight: '#f59e0b', '45': '#7c3aed', T: '#ef4444' };
-            const LABELS = { straight: '90', '45': '45', T: 'T' };
             Object.entries(joints).forEach(([key, joint]) => {
                 const [gx, gy, gz] = key.split(',').map(Number);
-                const { cx, cy } = project3D(gx, gy, gz);
-                ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+                const { cx, cy } = project3D(gx, gy, gz, v);
+                ctx.beginPath(); ctx.arc(cx, cy, isQuadView ? 6 : 9, 0, Math.PI * 2);
                 ctx.fillStyle = COLORS[joint.type] || '#f59e0b'; ctx.fill();
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 8px Segoe UI'; ctx.textAlign = 'center';
-                ctx.fillText(LABELS[joint.type] || '90', cx, cy + 3);
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
             });
-            ctx.textAlign = 'left'; ctx.lineWidth = 1;
         }
 
-        function drawSnapIndicator() {
-            const { cx, cy } = project3D(snapPt.x, snapPt.y, snapPt.z);
+        function drawSnapIndicator(viewOverride) {
+            const view = viewOverride || activeView;
+            const { cx, cy } = project3D(snapPt.x, snapPt.y, snapPt.z, view);
             ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2);
             ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
             ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
 
-        function drawPreview() {
+        function drawPreview(viewOverride) {
             if (!drawStart3D || !mousePos) return;
-            const r = canvas.getBoundingClientRect();
-            // Mouse might be in canvas coords already
+            const view = viewOverride || activeView;
             const cx = mousePos.x, cy = mousePos.y;
-            const snap = findSnapPoint(cx, cy);
+            const snap = findSnapPoint(cx, cy, view);
             let endPt;
             if (snap) {
                 endPt = snap;
             } else {
-                const partial = unproject2D(cx, cy);
-                const ax = depthAxis();
-                endPt = fillDepth(
-                    { x: Math.round(partial.x ?? 0), y: Math.round(partial.y ?? 0), z: Math.round(partial.z ?? 0) },
-                    drawStart3D[ax]
-                );
+                const partial = unproject2D(cx, cy, view);
+                endPt = fillDepth(partial, drawStart3D[depthAxis(view)], view);
             }
-            const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z);
-            const p2 = project3D(endPt.x, endPt.y, endPt.z);
+            const p1 = project3D(drawStart3D.x, drawStart3D.y, drawStart3D.z, view);
+            const p2 = project3D(endPt.x, endPt.y, endPt.z, view);
 
             ctx.beginPath(); ctx.moveTo(p1.cx, p1.cy); ctx.lineTo(p2.cx, p2.cy);
             ctx.strokeStyle = 'rgba(59,130,246,0.5)'; ctx.lineWidth = 4;
@@ -1074,25 +1083,20 @@
         canvas.addEventListener('mouseup', onMouseUp);
         canvas.addEventListener('wheel', onWheel, { passive: false });
 
-        // Right-click: delete joint
         canvas.addEventListener('contextmenu', e => {
             e.preventDefault();
             if (activeTool !== 'joint') return;
-            const { pt3D } = getGridPos(e);
-            const key = ptKey(pt3D.x, pt3D.y, pt3D.z);
-            // Also fuzzy-search nearby joints
+            const { pt3D, cx, cy, view } = getGridPos(e);
             let nearKey = null, nearDist = 15;
             Object.keys(joints).forEach(k => {
                 const [jx, jy, jz] = k.split(',').map(Number);
-                const { cx, cy } = project3D(jx, jy, jz);
-                const r = canvas.getBoundingClientRect();
-                const d = Math.hypot((e.clientX - r.left) - cx, (e.clientY - r.top) - cy);
+                const { cx: px, cy: py } = project3D(jx, jy, jz, view);
+                const d = Math.hypot(cx - px, cy - py);
                 if (d < nearDist) { nearDist = d; nearKey = k; }
             });
             if (nearKey) { delete joints[nearKey]; redrawAll(); }
         });
 
-        // Pan
         let panning = false, panStart = null;
         canvas.addEventListener('mousedown', e => {
             if (e.button === 1 || (e.button === 0 && e.altKey)) {
@@ -1101,29 +1105,16 @@
                 canvas.style.cursor = 'grab'; e.preventDefault();
             }
         });
-        canvas.addEventListener('mousemove', e => {
-            if (panning) {
-                if (activeView === '3d') {
-                    rotY += e.movementX * 0.5;
-                    rotX -= e.movementY * 0.5;
-                } else {
-                    offsetX = e.clientX - panStart.x;
-                    offsetY = e.clientY - panStart.y;
-                }
-                redrawAll();
-            }
-        });
-        canvas.addEventListener('mouseup', () => { panning = false; canvas.style.cursor = 'crosshair'; });
 
         function onMouseDown(e) {
             if (e.button !== 0 || panning) return;
-            const { pt3D, snapped, cx, cy } = getGridPos(e);
+            const { pt3D, cx, cy, view } = getGridPos(e);
 
             if (activeTool === 'line') {
-                isDrawing = true;
-                drawStart3D = { ...pt3D };
+                if (view === '3d') return; // Cannot start drawing in 3D yet
+                isDrawing = true; drawStart3D = { ...pt3D };
             } else if (activeTool === 'select' || activeTool === 'mirror') {
-                const seg = findNearestSegment(cx, cy);
+                const seg = findNearestSegment(cx, cy, view);
                 if (seg) {
                     if (activeTool === 'select') {
                         segments = segments.filter(s => s.id !== seg.id);
@@ -1135,11 +1126,10 @@
                     updateUI(); redrawAll();
                 }
             } else if (activeTool === 'joint') {
-                // Find existing joint near click
                 let nearKey = null, nearDist = 15;
                 Object.keys(joints).forEach(k => {
                     const [jx, jy, jz] = k.split(',').map(Number);
-                    const { cx: px, cy: py } = project3D(jx, jy, jz);
+                    const { cx: px, cy: py } = project3D(jx, jy, jz, view);
                     const d = Math.hypot(cx - px, cy - py);
                     if (d < nearDist) { nearDist = d; nearKey = k; }
                 });
@@ -1157,30 +1147,34 @@
         function onMouseMove(e) {
             const r = canvas.getBoundingClientRect();
             mousePos = { x: e.clientX - r.left, y: e.clientY - r.top };
+            const v = getViewAt(mousePos.x, mousePos.y);
 
-            // Update snap indicator
-            const ep = findSnapPoint(mousePos.x, mousePos.y);
-            snapPt = ep;
+            if (panning) {
+                if (v === '3d') {
+                    rotY += e.movementX * 0.6; rotX -= e.movementY * 0.6;
+                } else {
+                    offsetX = e.clientX - panStart.x;
+                    offsetY = e.clientY - panStart.y;
+                }
+                redrawAll(); return;
+            }
 
-            // Update info bar
-            const partial = unproject2D(mousePos.x, mousePos.y);
-            const ax = depthAxis();
-            const d = (isDrawing && drawStart3D) ? drawStart3D[ax] : 0;
-            const full = fillDepth({ x: Math.round(partial.x ?? 0), y: Math.round(partial.y ?? 0), z: Math.round(partial.z ?? 0) }, d);
+            snapPt = findSnapPoint(mousePos.x, mousePos.y, v);
+            const { pt3D } = getGridPos(e);
+
             document.getElementById('canvas-info').textContent =
-                `X:${full.x * gridScale} Y:${full.y * gridScale} Z:${full.z * gridScale} см`;
+                `X:${Math.round(pt3D.x * gridScale)} Y:${Math.round(pt3D.y * gridScale)} Z:${Math.round(pt3D.z * gridScale)} см | Вид: ${v}`;
 
-            if (panning || (isDrawing && drawStart3D)) redrawAll();
-            else if (snapPt !== null || ep !== null) redrawAll();
+            redrawAll();
         }
 
         function onMouseUp(e) {
-            if (e.button !== 0 || !isDrawing || panning) return;
+            panning = false; canvas.style.cursor = 'crosshair';
+            if (e.button !== 0 || !isDrawing) return;
             const { pt3D } = getGridPos(e);
             const start = drawStart3D;
             isDrawing = false; drawStart3D = null;
 
-            // Don't add zero-length segment
             if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) { redrawAll(); return; }
 
             segments.push({ id: ++segId, x1: start.x, y1: start.y, z1: start.z, x2: pt3D.x, y2: pt3D.y, z2: pt3D.z });
@@ -1189,24 +1183,16 @@
 
         function onWheel(e) {
             e.preventDefault();
-            const r = canvas.getBoundingClientRect();
-            const mx = e.clientX - r.left, my = e.clientY - r.top;
-            const factor = e.deltaY < 0 ? 1.12 : 0.88;
-            const newCellPx = Math.min(Math.max(cellPx * factor, 8), 250);
-            offsetX = mx - (mx - offsetX) * (newCellPx / cellPx);
-            offsetY = my - (my - offsetY) * (newCellPx / cellPx);
-            cellPx = newCellPx;
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            cellPx = Math.min(Math.max(cellPx * factor, 5), 300);
             redrawAll();
         }
 
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        // FIND NEAREST SEGMENT (for select tool)
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        function findNearestSegment(cx, cy, threshold = 12) {
+        function findNearestSegment(cx, cy, v, threshold = 12) {
             let best = null, bestD = Infinity;
             segments.forEach(seg => {
-                const p1 = project3D(seg.x1, seg.y1, seg.z1);
-                const p2 = project3D(seg.x2, seg.y2, seg.z2);
+                const p1 = project3D(seg.x1, seg.y1, seg.z1, v);
+                const p2 = project3D(seg.x2, seg.y2, seg.z2, v);
                 const d = ptToSegDist(cx, cy, p1.cx, p1.cy, p2.cx, p2.cy);
                 if (d < threshold && d < bestD) { bestD = d; best = seg; }
             });
@@ -1221,50 +1207,48 @@
             return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
         }
 
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        // SEGMENT LENGTH (true 3D)
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function segLengthCm(seg) {
-            const dx = (seg.x2 - seg.x1) * gridScale;
-            const dy = (seg.y2 - seg.y1) * gridScale;
-            const dz = (seg.z2 - seg.z1) * gridScale;
+            const dx = (seg.x2 - seg.x1) * gridScale, dy = (seg.y2 - seg.y1) * gridScale, dz = (seg.z2 - seg.z1) * gridScale;
             return Math.sqrt(dx * dx + dy * dy + dz * dz);
         }
 
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        // ZOOM / PAN / VIEW
-        // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function zoom(factor) {
-            cellPx = Math.min(Math.max(cellPx * factor, 8), 250);
+            cellPx = Math.min(Math.max(cellPx * factor, 5), 300);
             redrawAll();
         }
 
         function resetView() {
-            cellPx = 40;
-            offsetX = canvas.width / 2;
-            offsetY = canvas.height / 2;
+            cellPx = 40; offsetX = canvas.width / 2; offsetY = canvas.height / 2;
+            if (isQuadView) { offsetX = 0; offsetY = 0; }
             redrawAll();
         }
 
-        function switchView(v) {
-            activeView = v;
-            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
-            const tab = document.getElementById('vtab-' + v);
-            if (tab) tab.classList.add('active');
-            // Change canvas border color to indicate active view
-            const VIEW_COLORS = { front: '#2563eb', side: '#7c3aed', top: '#059669', '3d': '#f59e0b' };
-            canvas.style.outline = '3px solid ' + VIEW_COLORS[v];
-
-            // Auto-center in 3D
-            if (v === '3d') {
-                offsetX = canvas.width / 2;
-                offsetY = canvas.height / 2;
+        function toggleQuadView() {
+            isQuadView = !isQuadView;
+            document.getElementById('vtab-quad').classList.toggle('active', isQuadView);
+            if (isQuadView) {
+                document.querySelectorAll('.view-tab:not(#vtab-quad)').forEach(b => b.classList.remove('active'));
+                offsetX = 0; offsetY = 0;
+            } else {
+                switchView(activeView);
+                resetView();
             }
             redrawAll();
         }
 
+        function switchView(v) {
+            isQuadView = false;
+            document.getElementById('vtab-quad').classList.remove('active');
+            activeView = v;
+            document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+            const tab = document.getElementById('vtab-' + v);
+            if (tab) tab.classList.add('active');
+            if (v === '3d') { rotX = -20; rotY = 45; }
+            resetView();
+        }
+
         function clearAll() {
-            if (!confirm('Очистити весь малюнок?')) return;
+            if (!confirm('Очистити все?')) return;
             segments = []; joints = {}; segId = 0;
             updateUI(); redrawAll();
         }
