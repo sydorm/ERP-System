@@ -522,6 +522,80 @@
             z-index: 50;
             white-space: nowrap;
         }
+
+        /* ── TEMPLATE MODAL ── */
+        .tpl-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tpl-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px 24px;
+            min-width: 260px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, .2);
+        }
+
+        .tpl-box h4 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 14px;
+        }
+
+        .tpl-box label {
+            font-size: 12px;
+            color: #475569;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .tpl-box input[type=number] {
+            width: 100%;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 6px 9px;
+            font-size: 13px;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .tpl-box input:focus {
+            border-color: #3b82f6;
+        }
+
+        .tpl-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .tpl-btn-ok {
+            flex: 1;
+            padding: 9px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .tpl-btn-cancel {
+            padding: 9px 14px;
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -595,6 +669,17 @@
 
             <hr class="divider">
             <div>
+                <div class="panel-section">Шаблони</div>
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
+                    <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
+                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
+                    <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
+                </div>
+            </div>
+
+            <hr class="divider">
+            <div>
                 <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
             </div>
         </div>
@@ -636,6 +721,8 @@
                 </div>
                 <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
                 <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
+                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
+                    Метал</button>
             </div>
         </div>
 
@@ -768,6 +855,7 @@
             ctx.fillRect(0, 0, W, H);
 
             drawGrid(W, H);
+            drawGhostProjections();
             drawSegments();
             drawJoints();
             if (isDrawing && drawStart) drawPreview();
@@ -820,6 +908,31 @@
                     ctx.fillText(label, offsetX - 4 < 28 ? 28 : offsetX - 4, py + 3);
                 }
             }
+        }
+
+        // Ghost projections from other views
+        function drawGhostProjections() {
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6, 5]);
+            ctx.lineCap = 'round';
+
+            Object.entries(viewStore).forEach(([vName, vData]) => {
+                if (vName === activeView) return; // skip current
+                vData.segments.forEach(seg => {
+                    const p1 = toCanvas(seg.x1, seg.y1);
+                    const p2 = toCanvas(seg.x2, seg.y2);
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                });
+            });
+
+            ctx.restore();
+            ctx.setLineDash([]);
         }
 
         function drawSegments() {
@@ -1163,27 +1276,43 @@
                 return;
             }
 
+            // Group by rounded length (mm) for duplicate detection
+            const groups = {};
             let totalCm = 0;
-            list.innerHTML = '';
             segments.forEach((seg, i) => {
                 const lenCm = segLengthCm(seg);
                 totalCm += lenCm;
-                const k1 = `${seg.x1},${seg.y1}`;
-                const k2 = `${seg.x2},${seg.y2}`;
-                const cut1 = joints[k1]?.type || 'straight';
-                const cut2 = joints[k2]?.type || 'straight';
-                const cutLabel = cut1 === '45' || cut2 === '45' ? '45° / 45°' : '90° / 90°';
+                const lenMm = Math.round(lenCm * 10);
+                if (!groups[lenMm]) groups[lenMm] = { lenCm, segs: [] };
+                groups[lenMm].segs.push({ seg, i });
+            });
+
+            list.innerHTML = '';
+            let rowNum = 0;
+            Object.values(groups).forEach(group => {
+                const qty = group.segs.length;
+                const lenCm = group.lenCm;
                 const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
+                // Use first segment's joint data for cut label
+                const seg0 = group.segs[0].seg;
+                const k1 = `${seg0.x1},${seg0.y1}`, k2 = `${seg0.x2},${seg0.y2}`;
+                const cut1 = joints[k1]?.type || 'straight', cut2 = joints[k2]?.type || 'straight';
+                const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
+                const cutLabel = `${CUT_L[cut1] || '90°'} / ${CUT_L[cut2] || '90°'}`;
 
                 const row = document.createElement('div');
                 row.className = 'seg-row';
+                rowNum++;
+                const qtyBadge = qty > 1
+                    ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;border-radius:5px;padding:2px 6px;margin-left:2px">${qty}×</span>`
+                    : '';
                 row.innerHTML = `
-      <div class="seg-num">${i + 1}</div>
+      <div class="seg-num">${rowNum}</div>
       <div class="seg-info">
-        <div class="seg-len">${lenLabel}</div>
+        <div class="seg-len">${lenLabel} ${qtyBadge}</div>
         <div class="seg-sub">${cutLabel} | ${getProfileLabel()}</div>
       </div>
-      <button class="seg-del" onclick="removeSeg(${seg.id})" title="Видалити">✕</button>
+      <button class="seg-del" onclick="removeSeg(${seg0.id})" title="Видалити">✕</button>
     `;
                 list.appendChild(row);
             });
@@ -1196,8 +1325,82 @@
 
         function removeSeg(id) {
             segments = segments.filter(s => s.id !== id);
+            viewStore[activeView].segments = segments;
             updateUI();
             redrawAll();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // TEMPLATES
+        // ═══════════════════════════════════════════════════════
+        function insertTemplate(type) {
+            const TITLES = { square: 'Квадрат', rect: 'Прямокутник', trapezoid: 'Трапеція', triangle: 'Трикутник' };
+            const ov = document.createElement('div');
+            ov.className = 'tpl-overlay';
+
+            let fields = '';
+            if (type === 'square') fields = `<label>Сторона (см)</label><input type="number" id="t1" value="50" min="1">`;
+            if (type === 'rect') fields = `<label>Ширина (см)</label><input type="number" id="t1" value="80" min="1"><label>Висота (см)</label><input type="number" id="t2" value="50" min="1">`;
+            if (type === 'trapezoid') fields = `<label>Нижня основа (см)</label><input type="number" id="t1" value="80" min="1"><label>Верхня основа (см)</label><input type="number" id="t2" value="50" min="1"><label>Висота (см)</label><input type="number" id="t3" value="40" min="1">`;
+            if (type === 'triangle') fields = `<label>Основа (см)</label><input type="number" id="t1" value="60" min="1"><label>Висота (см)</label><input type="number" id="t2" value="40" min="1">`;
+
+            ov.innerHTML = `<div class="tpl-box">
+                <h4>Шаблон: ${TITLES[type]}</h4>
+                ${fields}
+                <div class="tpl-btns">
+                    <button class="tpl-btn-cancel" id="tpl-cancel">Скасувати</button>
+                    <button class="tpl-btn-ok" id="tpl-ok">Вставити</button>
+                </div>
+            </div>`;
+            document.body.appendChild(ov);
+
+            ov.querySelector('#tpl-cancel').onclick = () => ov.remove();
+            ov.querySelector('#tpl-ok').onclick = () => {
+                const v = (id) => +(ov.querySelector('#' + id)?.value || 0) / gridScale; // cm -> grid cells
+                const cx = 0, cy = 0; // insert at origin
+                const segsToAdd = [];
+
+                if (type === 'square') {
+                    const s = v('t1');
+                    segsToAdd.push([cx, cy, cx + s, cy], [cx + s, cy, cx + s, cy + s], [cx + s, cy + s, cx, cy + s], [cx, cy + s, cx, cy]);
+                } else if (type === 'rect') {
+                    const w = v('t1'), h = v('t2');
+                    segsToAdd.push([cx, cy, cx + w, cy], [cx + w, cy, cx + w, cy + h], [cx + w, cy + h, cx, cy + h], [cx, cy + h, cx, cy]);
+                } else if (type === 'trapezoid') {
+                    const bot = v('t1'), top2 = v('t2'), h = v('t3');
+                    const offset = (bot - top2) / 2;
+                    segsToAdd.push([cx, cy + h, cx + bot, cy + h], [cx + offset, cy, cx + offset + top2, cy], [cx, cy + h, cx + offset, cy], [cx + bot, cy + h, cx + offset + top2, cy]);
+                } else if (type === 'triangle') {
+                    const b = v('t1'), h = v('t2');
+                    segsToAdd.push([cx, cy + h, cx + b, cy + h], [cx, cy + h, cx + b / 2, cy], [cx + b, cy + h, cx + b / 2, cy]);
+                }
+
+                segsToAdd.forEach(([x1, y1, x2, y2]) => {
+                    segments.push({ id: ++segId, x1: Math.round(x1), y1: Math.round(y1), x2: Math.round(x2), y2: Math.round(y2) });
+                });
+                viewStore[activeView].segments = segments;
+                viewStore[activeView].segId = segId;
+                ov.remove();
+                updateUI();
+                redrawAll();
+            };
+            // first input focus
+            setTimeout(() => ov.querySelector('input')?.focus(), 50);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // SEND TO METAL
+        // ═══════════════════════════════════════════════════════
+        function sendToMetal() {
+            // Sum all segments across all views
+            let totalCm = 0;
+            saveViewState();
+            Object.values(viewStore).forEach(v => {
+                v.segments.forEach(seg => { totalCm += Math.sqrt(Math.pow((seg.x2 - seg.x1) * gridScale, 2) + Math.pow((seg.y2 - seg.y1) * gridScale, 2)); });
+            });
+            if (totalCm <= 0) { alert('Немає ліній для надсилання!'); return; }
+            const totalM = (totalCm / 100).toFixed(3);
+            window.open(`/metal.html?cut_length=${totalM}`, '_blank');
         }
 
         // ═══════════════════════════════════════════════════════
