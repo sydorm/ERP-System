@@ -2102,7 +2102,14 @@
                 lb.className = 'ruler-label';
                 lb.style.left = (rl.startX + dx / 2) + 'px';
                 lb.style.top = (rl.startY + dy / 2) + 'px';
-                lb.textContent = rl.isReference ? `${rl.meters.toFixed(2)}м (Еталон)` : `${rl.meters.toFixed(3)}м`;
+                const qty = rl.qty || 1;
+                if (rl.isReference) {
+                    lb.textContent = `${rl.meters.toFixed(2)}м (Еталон)`;
+                } else if (qty > 1) {
+                    lb.textContent = `${rl.meters.toFixed(3)}м × ${qty}`;
+                } else {
+                    lb.textContent = `${rl.meters.toFixed(3)}м`;
+                }
                 lb.style.background = rl.color || '#3b82f6';
 
                 lb.onclick = (e) => { e.stopPropagation(); removeRuler(rl.id); };
@@ -2111,30 +2118,48 @@
                 overlay.appendChild(l);
                 overlay.appendChild(lb);
 
-                // List row (reuse weld style)
+                // List row
                 const tr = document.createElement('div');
                 tr.className = 'weld-row';
                 tr.style.justifyContent = 'space-between';
                 tr.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:8px">
+                    <div style="display:flex;align-items:center;gap:8px;flex:1">
                         <div class="weld-num" style="background:${rl.color || '#3b82f6'}">${rl.id}</div>
-                        <span style="font-weight:600">${rl.meters.toFixed(3)} м</span>
-                        ${rl.isReference ? '<span class="type-tag" style="background:#d1fae5;color:#047857">Еталон</span>' : ''}
+                        <span style="font-weight:600;min-width:60px">${rl.meters.toFixed(3)} м</span>
+                        ${rl.isReference ? '<span class="type-tag" style="background:#d1fae5;color:#047857">Еталон</span>' : `
+                        <span style="font-size:11px;color:#64748b">×</span>
+                        <input type="number" min="1" step="1" value="${rl.qty || 1}" data-ruler-id="${rl.id}"
+                            style="width:52px;border:1.5px solid #e2e8f0;border-radius:6px;padding:3px 6px;font-size:13px;font-weight:700;outline:none;text-align:center"
+                            title="Кількість таких ліній">
+                        <span style="font-size:11px;color:#475569;font-weight:600">= ${((rl.qty || 1) * rl.meters).toFixed(3)} м</span>
+                        `}
                     </div>
                     <div>
                         <button class="btn-del" onclick="removeRuler(${rl.id})" title="Видалити" style="padding:2px 6px">✕</button>
                     </div>
                 `;
                 rowsCont.appendChild(tr);
+
+                // Listen for qty change
+                if (!rl.isReference) {
+                    const qtyInp = tr.querySelector(`[data-ruler-id="${rl.id}"]`);
+                    if (qtyInp) {
+                        qtyInp.addEventListener('input', () => {
+                            const v = parseInt(qtyInp.value) || 1;
+                            rl.qty = v;
+                            renderRulers();
+                        });
+                    }
+                }
             });
 
-            const totalM = rulerLines.filter(r => !r.isReference).reduce((s, r) => s + r.meters, 0);
+            const totalM = rulerLines.filter(r => !r.isReference).reduce((s, r) => s + (r.qty || 1) * r.meters, 0);
             const totEl = document.getElementById('ruler-total-m');
             if (totEl) totEl.textContent = totalM.toFixed(3) + ' м';
         }
 
         function applyRulerTotal() {
-            const total = rulerLines.filter(r => !r.isReference).reduce((sum, r) => sum + r.meters, 0);
+            const total = rulerLines.filter(r => !r.isReference).reduce((sum, r) => sum + (r.qty || 1) * r.meters, 0);
             if (total <= 0) return showToast('Немає ліній для додавання', 'err');
             const defProfSel = document.getElementById('weld-default-profile');
             let profId = defProfSel?.value;
