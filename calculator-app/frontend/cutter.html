@@ -872,9 +872,12 @@
                 case 'left': return { x: null, y: vv, z: -u, view: v };
                 case '3d': {
                     const rX = rotX * Math.PI / 180, rY = rotY * Math.PI / 180;
-                    const x = u * Math.cos(rY);
-                    const z = u * Math.sin(rY);
-                    const y = vv / Math.cos(rX);
+                    const sX = Math.sin(rX), cX = Math.cos(rX);
+                    const sY = Math.sin(rY), cY = Math.cos(rY);
+                    // Assume z = activeDepth for unprojection
+                    const z = activeDepth;
+                    const x = (u - z * sY) / cY;
+                    const y = (vv + z * cY * sX - x * sY * sX) / cX;
                     return { x: Math.round(x), y: Math.round(y), z: Math.round(z), view: v };
                 }
             }
@@ -944,7 +947,7 @@
                 } else {
                     // 3D view: snap to nearest screen-space projected axis candidate
                     const t = 18; // px threshold
-                    const dX = Math.hypot(cX.cx - cx, cY.cy - cy);
+                    const dX = Math.hypot(cX.cx - cx, cX.cy - cy);
                     const dY = Math.hypot(cY.cx - cx, cY.cy - cy);
                     const dZ = Math.hypot(cZ.cx - cx, cZ.cy - cy);
                     let minD = t, bestP = null, bestA = null;
