@@ -1116,13 +1116,18 @@
             if (nearKey) { delete joints[nearKey]; redrawAll(); }
         });
 
-        let panning = false, panStart = null;
+        let panning = false, panStart = null, panButton = 0;
         canvas.addEventListener('mousedown', e => {
-            if (e.button === 1 || (e.button === 0 && e.altKey)) {
+            if (e.button === 2 || e.button === 1 || (e.button === 0 && e.altKey)) {
                 panning = true;
+                panButton = e.button;
                 panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
                 canvas.style.cursor = 'grab'; e.preventDefault();
             }
+        });
+
+        canvas.addEventListener('contextmenu', e => {
+            if (panning || e.button === 2) e.preventDefault();
         });
 
         function onMouseDown(e) {
@@ -1130,7 +1135,6 @@
             const { pt3D, cx, cy, view } = getGridPos(e);
 
             if (activeTool === 'line') {
-                if (view === '3d') return; // Cannot start drawing in 3D yet
                 isDrawing = true; drawStart3D = { ...pt3D };
             } else if (activeTool === 'select' || activeTool === 'mirror') {
                 const seg = findNearestSegment(cx, cy, view);
@@ -1169,7 +1173,7 @@
             const v = getViewAt(mousePos.x, mousePos.y);
 
             if (panning) {
-                if (v === '3d') {
+                if (v === '3d' && panButton !== 2) {
                     rotY += e.movementX * 0.6; rotX -= e.movementY * 0.6;
                 } else {
                     offsetX = e.clientX - panStart.x;
