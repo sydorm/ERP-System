@@ -684,68 +684,71 @@
                     <button class="cut-btn" id="cut-45" onclick="setCutType('45')">45°<br>Під кут</button>
                     <button class="cut-btn" id="cut-T" onclick="setCutType('T')">T<br>Примика</button>
                 </div>
-            </div>
-
-            <hr class="divider">
-            <div>
-                <div class="panel-section">Шаблони</div>
-                <div class="tool-group">
-                    <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
-                    <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
-                    <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
-                    <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
-                </div>
-            </div>
-
-            <hr class="divider">
-            <div>
-                <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
+                <button class="btn-action btn-green" style="margin-top:10px;font-size:12px;padding:8px"
+                    onclick="autoApplyJoints()">✨ Розумне з'єднання (Auto)</button>
             </div>
         </div>
 
-        <!-- CANVAS -->
-        <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
-            <!-- View tab bar -->
-            <div class="view-tab-bar">
-                <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Головний</button>
-                <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
-                <button class="view-tab" id="vtab-right" onclick="switchView('right')">📐 Збоку</button>
-                <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
-                <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
-            </div>
-
-            <!-- Canvas -->
-            <div class="canvas-area" id="canvas-area" style="flex:1">
-                <canvas id="main-canvas"></canvas>
-                <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
-                <div class="zoom-bar">
-                    <button onclick="zoom(1.2)" title="Збільшити">+</button>
-                    <button onclick="zoom(0.8)" title="Зменшити">−</button>
-                    <button onclick="resetView()" title="Скинути вид">⊙</button>
-                </div>
+        <hr class="divider">
+        <div>
+            <div class="panel-section">Шаблони</div>
+            <div class="tool-group">
+                <button class="tool-btn" onclick="insertTemplate('square')">⬜ Квадрат</button>
+                <button class="tool-btn" onclick="insertTemplate('rect')">▭ Прямокутник</button>
+                <button class="tool-btn" onclick="insertTemplate('trapezoid')">⏢ Трапеція</button>
+                <button class="tool-btn" onclick="insertTemplate('triangle')">△ Трикутник</button>
             </div>
         </div>
 
-        <!-- RIGHT PANEL -->
-        <div class="panel-right">
-            <div class="panel-right-header">
-                <h3>📋 Список відрізків</h3>
-            </div>
-            <div class="panel-right-content" id="seg-list">
-                <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
-            </div>
-            <div class="panel-bottom">
-                <div class="cut-summary" id="cut-summary" style="display:none">
-                    <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
-                    </div>
-                    <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
-                </div>
-                <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
-                <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
-                <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
-                    Метал</button>
+        <hr class="divider">
+        <div>
+            <button class="btn-action btn-danger" onclick="clearAll()">🗑 Очистити все</button>
+        </div>
+    </div>
+
+    <!-- CANVAS -->
+    <div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden">
+        <!-- View tab bar -->
+        <div class="view-tab-bar">
+            <button class="view-tab active" id="vtab-front" onclick="switchView('front')">📐 Головний</button>
+            <button class="view-tab" id="vtab-top" onclick="switchView('top')">🔲 Зверху</button>
+            <button class="view-tab" id="vtab-right" onclick="switchView('right')">📐 Збоку</button>
+            <button class="view-tab" id="vtab-3d" onclick="switchView('3d')">🧊 3D</button>
+            <button class="view-tab" id="vtab-quad" onclick="toggleQuadView()" title="4 вікна">📍 4 Види</button>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-area" id="canvas-area" style="flex:1">
+            <canvas id="main-canvas"></canvas>
+            <div class="canvas-info" id="canvas-info">Клікніть та тягніть щоб намалювати лінію каркасу</div>
+            <div class="zoom-bar">
+                <button onclick="zoom(1.2)" title="Збільшити">+</button>
+                <button onclick="zoom(0.8)" title="Зменшити">−</button>
+                <button onclick="resetView()" title="Скинути вид">⊙</button>
             </div>
         </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel-right">
+        <div class="panel-right-header">
+            <h3>📋 Список відрізків</h3>
+        </div>
+        <div class="panel-right-content" id="seg-list">
+            <div style="color:#94a3b8;font-size:12px;padding:10px 0">Намалюйте лінії щоб побачити список тут</div>
+        </div>
+        <div class="panel-bottom">
+            <div class="cut-summary" id="cut-summary" style="display:none">
+                <div style="margin-bottom:4px"><strong>Загальна довжина:</strong> <span id="total-len">0</span> м
+                </div>
+                <div><strong>Профіль:</strong> <span id="summary-profile">—</span></div>
+            </div>
+            <button class="btn-action btn-green" onclick="generateCutPlan()">📄 Карта розкрою</button>
+            <button class="btn-action btn-print" onclick="printCutPlan()">🖨 Друк карти</button>
+            <button class="btn-action" style="background:#7c3aed;color:#fff" onclick="sendToMetal()">🔗 Надіслати в
+                Метал</button>
+        </div>
+    </div>
 
     </div>
 
@@ -772,8 +775,7 @@
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         // 3D DATA MODEL
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-        let segments = [];   // [{id, x1,y1,z1, x2,y2,z2}]
-        let joints = {};     // key="x,y,z" в†’ {type:'straight'|'45'|'T'}
+        let segments = [];   // [{id, x1,y1,z1, x2,y2,z2, cut1, cut2}]
         let segId = 0;
 
         let activeView = 'front';
@@ -1196,9 +1198,7 @@
             ctx.strokeStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.5)';
             ctx.lineWidth = 4;
             if (!axisHint) ctx.setLineDash([6, 4]);
-            ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
-
-            const lenCm = segLengthCm({ x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z, x2: pt3D.x, y2: pt3D.y, z2: pt3D.z });
+            ctx.stroke(); ctx.setLineDash([]);
             if (lenCm > 0) {
                 const mx = (p1.cx + p2.cx) / 2, my = (p1.cy + p2.cy) / 2;
                 ctx.fillStyle = axisHint ? AXIS_COLORS[axisHint] : 'rgba(59,130,246,0.9)';
@@ -1257,6 +1257,11 @@
                 document.getElementById('depth-input').value = Math.round(activeDepth * gridScale);
                 setTool('line');
                 redrawAll();
+            } else if (activeTool === 'joint') {
+                const ep = findSnapPoint(cx, cy, view);
+                if (ep) {
+                    toggleJointPerSegment(ep.x, ep.y, ep.z);
+                }
             } else if (activeTool === 'select' || activeTool === 'mirror') {
                 const seg = findNearestSegment(cx, cy, view);
                 if (seg) {
@@ -1321,7 +1326,12 @@
 
             if (start.x === pt3D.x && start.y === pt3D.y && start.z === pt3D.z) { redrawAll(); return; }
 
-            segments.push({ id: ++segId, x1: start.x, y1: start.y, z1: start.z, x2: pt3D.x, y2: pt3D.y, z2: pt3D.z });
+            segments.push({
+                id: ++segId,
+                x1: drawStart3D.x, y1: drawStart3D.y, z1: drawStart3D.z,
+                x2: pt3D.x, y2: pt3D.y, z2: pt3D.z,
+                cut1: 'straight', cut2: 'straight'
+            });
             updateUI(); redrawAll();
         }
 
@@ -1391,6 +1401,57 @@
             resetView();
         }
 
+        function toggleJointPerSegment(x, y, z) {
+            // Find all segments meeting at this vertex
+            const connected = segments.filter(s =>
+                (s.x1 === x && s.y1 === y && s.z1 === z) ||
+                (s.x2 === x && s.y2 === y && s.z2 === z)
+            );
+            if (connected.length === 0) return;
+
+            // Simple heuristic: if we have more than 2 segments, or it's not a corner, cycle through types
+            // For now, let's just cycle the 'activeCutType' for ALL segments at this vertex
+            // This is a "manual smart" way - the user sets the mode (45 or 90) then clicks the vertex
+            connected.forEach(s => {
+                if (s.x1 === x && s.y1 === y && s.z1 === z) s.cut1 = activeCutType;
+                else s.cut2 = activeCutType;
+            });
+            updateUI(); redrawAll();
+        }
+
+        function autoApplyJoints() {
+            // Heuristic for the whole model:
+            // 1. Group by vertex
+            const vertices = {};
+            segments.forEach(s => {
+                const k1 = `${s.x1},${s.y1},${s.z1}`, k2 = `${s.x2},${s.y2},${s.z2}`;
+                if (!vertices[k1]) vertices[k1] = [];
+                if (!vertices[k2]) vertices[k2] = [];
+                vertices[k1].push({ seg: s, end: 1 });
+                vertices[k2].push({ seg: s, end: 2 });
+            });
+
+            Object.keys(vertices).forEach(k => {
+                const list = vertices[k];
+                if (list.length === 2) {
+                    // It's a simple corner or continuation.
+                    // Check angle. If 90 deg corner -> 45 cut.
+                    const s1 = list[0].seg, s2 = list[1].seg;
+                    // For now, just assume 2-seg vertex = frame corner = 45
+                    list.forEach(item => {
+                        if (item.end === 1) item.seg.cut1 = '45';
+                        else item.seg.cut2 = '45';
+                    });
+                } else if (list.length > 2) {
+                    // Complex junction or T-junction -> use 90/T cuts
+                    list.forEach(item => {
+                        if (item.end === 1) item.seg.cut1 = 'straight';
+                        else item.seg.cut2 = 'straight';
+                    });
+                }
+            });
+            updateUI(); redrawAll();
+        }
         function clearAll() {
             if (!confirm('Очистити все?')) return;
             segments = []; joints = {}; segId = 0;
@@ -1514,8 +1575,7 @@
                 const lenCm = group.lenCm;
                 const lenLabel = lenCm >= 100 ? (lenCm / 100).toFixed(3) + ' м' : lenCm.toFixed(0) + ' см';
                 const seg0 = group.segs[0];
-                const k1 = ptKey(seg0.x1, seg0.y1, seg0.z1), k2 = ptKey(seg0.x2, seg0.y2, seg0.z2);
-                const cut1 = joints[k1]?.type || 'straight', cut2 = joints[k2]?.type || 'straight';
+                const cut1 = seg0.cut1 || 'straight', cut2 = seg0.cut2 || 'straight';
                 const CUT_L = { straight: '90°', '45': '45°', T: 'T' };
                 const cutLabel = `${CUT_L[cut1] || '90°'} / ${CUT_L[cut2] || '90°'}`;
                 const qtyBadge = qty > 1
