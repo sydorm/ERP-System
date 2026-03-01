@@ -1342,7 +1342,7 @@
         // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
         function setTool(t) {
             activeTool = t;
-            ['line', 'select', 'joint', 'mirror'].forEach(id => {
+            ['line', 'select', 'joint', 'mirror', 'pick-depth'].forEach(id => {
                 document.getElementById('tool-' + id)?.classList.toggle('active', id === t);
             });
             if (t === 'mirror' && selectedSegs.size > 0) {
