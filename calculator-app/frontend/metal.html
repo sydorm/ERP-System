@@ -1631,7 +1631,9 @@
                 el.innerHTML = '<span style="color:#94a3b8;font-size:12px">Немає шаблонів — збережіть перший розрахунок кнопкою ★ Шаблон</span>';
                 return;
             }
-            el.innerHTML = templates.map(t => `
+            el.innerHTML = `
+                <button onclick="clearForm()" title="Почати новий розрахунок (очистити форму)" style="background:#fff;color:#3b82f6;border:1.5px solid #3b82f6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">➕ Новий</button>
+            ` + templates.map(t => `
                 <div style="display:inline-flex;align-items:center;gap:5px;background:#f0ebff;border:1.5px solid #c4b5fd;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="loadTemplate(${t.id})" title="Завантажити '${t.name}'">
                     <span>★ <strong>${t.name}</strong>${t.total_price ? ' — ' + Math.round(t.total_price) + ' грн' : ''}</span>
                     <button onclick="event.stopPropagation();deleteTemplate(${t.id})" style="background:none;border:none;color:#a78bfa;cursor:pointer;font-size:13px;padding:0;line-height:1" title="Видалити шаблон">×</button>
@@ -1772,6 +1774,66 @@
             await fetch(`${API}/api/metal/templates/${id}`, { method: 'DELETE' });
             loadTemplates();
             showToast('Шаблон видалено', 'ok');
+        }
+
+        function clearForm() {
+            // Unload template tracker
+            loadedTemplateId = null;
+
+            // Clear basic fields
+            document.getElementById('product-name').value = '';
+            document.getElementById('client-name').value = '';
+            document.getElementById('notes').value = '';
+
+            // Reset profile table
+            const tbody = document.getElementById('profile-rows');
+            tbody.innerHTML = '';
+            rowId = 0;
+            addRow();
+
+            // Deselect checkboxes and text input for services
+            const wd = document.getElementById('welder-disp');
+            if (wd) wd.value = 0;
+            const cd = document.getElementById('cuts-disp');
+            if (cd) cd.value = 0;
+            document.getElementById('welder-price-hint').textContent = '';
+
+            // Re-run init checkboxes based on loaded workItems/overheads logic
+            document.querySelectorAll('#work-grid input[type=checkbox]').forEach(cb => {
+                const w = workItems.find(x => x.id === +cb.value);
+                cb.checked = (w && w.pricing_type === 'per_m2');
+                cb.closest('label').classList.toggle('on', cb.checked);
+            });
+            document.querySelectorAll('#overhead-grid input[type=checkbox]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('label').classList.remove('on');
+            });
+
+            // Reset paint
+            const ps = document.getElementById('paint-sel');
+            if (ps.options.length > 0) ps.selectedIndex = 0;
+
+            document.getElementById('with-primer').checked = false;
+            const pr = document.getElementById('primer-sel');
+            if (pr.options.length > 0) pr.selectedIndex = 0;
+            togglePrimer();
+
+            // Hide results
+            document.getElementById('results').classList.remove('show');
+            lastResult = null;
+            lastInp = null;
+
+            // Clear markers
+            weldMarkers = [];
+            renderWeldDots();
+            renderWeldList();
+
+            // Clear ruler
+            rulerLines = [];
+            renderRulerList();
+
+            showToast('Форма готова до нового розрахунку!', 'ok');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // ── Weld Seam Marker Tool ─────────────────────────────────────────────
