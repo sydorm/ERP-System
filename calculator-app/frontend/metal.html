@@ -1641,12 +1641,24 @@
         async function loadTemplate(id) {
             const tpl = templates.find(t => t.id === id);
             if (!tpl) return;
-            const inp = JSON.parse(tpl.input_json);
+
+            let inp;
+            try {
+                inp = typeof tpl.input_json === 'string' ? JSON.parse(tpl.input_json) : tpl.input_json;
+            } catch (e) {
+                console.error("Failed to parse template JSON:", e);
+                return;
+            }
 
             // Fill basic fields
             if (inp.product_name) document.getElementById('product-name').value = inp.product_name;
+            else document.getElementById('product-name').value = '';
+
             if (inp.client_name) document.getElementById('client-name').value = inp.client_name;
+            else document.getElementById('client-name').value = '';
+
             if (inp.notes) document.getElementById('notes').value = inp.notes;
+            else document.getElementById('notes').value = '';
 
             // Fill profile rows
             const tbody = document.getElementById('profile-rows');
@@ -1700,10 +1712,17 @@
             syncWelderHint();
 
             loadedTemplateId = id; // Track loaded template
+
+            // Auto-calculate to show the results immediately
+            calculate();
+
             showToast(`★ Завантажено шаблон "${tpl.name}"`, 'ok');
         }
 
         async function saveAsTemplate() {
+            // Ensure inputs are fresh before saving
+            await calculate();
+
             if (!lastInp) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
 
             let name = document.getElementById('product-name').value || 'Мій виріб';
