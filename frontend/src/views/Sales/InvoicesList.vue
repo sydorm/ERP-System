@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -145,6 +145,11 @@ const getCounterpartyName = (id) => counterparties.value[id]
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(val)
 
 onMounted(fetchInvoices)
+onActivated(() => {
+  if (invoices.value.length > 0) {
+    fetchInvoices()
+  }
+})
 </script>
 
 <style scoped>

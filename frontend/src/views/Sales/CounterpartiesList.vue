@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -157,6 +157,11 @@ const handleRowClick = (row) => {
 }
 
 onMounted(fetchCounterparties)
+onActivated(() => {
+  if (counterparties.value.length > 0) {
+    fetchCounterparties()
+  }
+})
 </script>
 
 <style scoped>

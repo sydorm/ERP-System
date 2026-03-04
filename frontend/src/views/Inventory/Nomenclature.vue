@@ -125,6 +125,7 @@
                     <el-icon :size="40"><Picture /></el-icon>
                   </div>
                 </template>
+              </el-image>
               <div class="product-actions-overlay">
                 <el-button circle :icon="Edit" @click="handleEdit(product)" />
               </div>
@@ -215,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onActivated, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Plus, Search, Edit, Delete, Picture, 
@@ -380,6 +381,13 @@ onMounted(() => {
   fetchDictionaries()
   fetchStatistics()
   fetchProducts()
+})
+
+onActivated(() => {
+  if (products.value.length > 0) {
+    fetchStatistics()
+    fetchProducts()
+  }
 })
 
 // Refresh when category changes might happen from somewhere else

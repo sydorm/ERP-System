@@ -479,7 +479,11 @@ const handleKeydown = (e) => {
   if (e.key === '/') { e.preventDefault(); searchInputRef.value?.focus() }
 }
 onMounted(() => { window.addEventListener('keydown', handleKeydown); fetchOrders() })
-onActivated(fetchOrders)
+onActivated(() => {
+  if (orders.value.length > 0) {
+    fetchOrders()
+  }
+})
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 // ===== HELPERS =====
