@@ -49,7 +49,7 @@
     <!-- === COMPACT INFO CARD === -->
     <div class="order-details-card">
       <div class="info-section-label">Основна інформація</div>
-      <el-form :model="form" label-position="top" size="small" class="details-form">
+      <el-form :model="form" label-position="top" class="details-form">
         <div class="compact-form-grid">
           <!-- Клієнт -->
           <div class="cf-item">
@@ -734,38 +734,38 @@ onMounted(fetchData)
   border-radius: 50%;
 }
 
-/* ===== COMPACT INFO CARD ===== */
+/* ===== MODERN INFO CARD ===== */
 .order-details-card {
-  margin: 12px 20px 0;
+  margin: 16px 24px 0;
   background: #fff;
-  padding: 12px 16px; /* tighter padding */
-  border-radius: 8px; /* sharper corners like 1C */
+  padding: 24px 28px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
   flex-shrink: 0;
 }
 
 .info-section-label {
-  display: none; /* Hide for more compact look if desired, or keep small */
+  display: none;
 }
 
 .compact-form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px 20px; /* very tight gaps like 1c */
+  gap: 20px 24px;
 }
 
 .cf-item {
   display: flex;
   flex-direction: column;
-  gap: 2px; /* almost no gap between label and input */
+  gap: 6px;
 }
 
 .cf-label {
-  font-size: 12px; /* Small dense font */
+  font-size: 13px;
   font-weight: 600;
   color: #475569;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .cf-input {
@@ -773,31 +773,31 @@ onMounted(fetchData)
 }
 .cf-input :deep(.el-input__wrapper),
 .cf-input :deep(.el-select__wrapper) {
-  height: 28px !important; /* very compact inputs */
-  min-height: 28px !important;
-  border-radius: 4px;
+  min-height: 38px !important;
+  border-radius: 8px;
   box-shadow: 0 0 0 1px #cbd5e1 inset;
-  background-color: #fff;
-  padding: 0 8px;
+  background-color: #f8fafc;
+  padding: 0 12px;
 }
 .cf-input :deep(.el-input__inner) {
-  font-size: 12px;
-  height: 28px;
-  line-height: 28px;
+  font-size: 14px;
+  height: 38px;
+  line-height: 38px;
+  color: #1e293b;
 }
 .cf-input :deep(.el-select__wrapper) {
-  line-height: 28px;
+  line-height: 38px;
 }
 .details-form :deep(.el-input__wrapper),
 .details-form :deep(.el-select__wrapper),
 .details-form :deep(.el-date-editor.el-input__wrapper) {
   box-shadow: none !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  background-color: #ffffff !important;
-  transition: all 0.15s ease;
-  min-height: 32px;
-  padding: 0 8px;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s ease;
+  min-height: 38px;
+  padding: 0 12px;
 }
 
 .details-form :deep(.el-input__wrapper:hover),
@@ -817,11 +817,11 @@ onMounted(fetchData)
 
 /* ===== LINES SECTION ===== */
 .lines-section-card {
-  margin: 10px 20px;
+  margin: 20px 24px;
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #f0f0f7;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
   flex: 1;
   overflow-y: auto;
   display: flex;
@@ -832,9 +832,9 @@ onMounted(fetchData)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f8f7ff;
-  background: #fafbff;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
   flex-shrink: 0;
 }
 
@@ -873,27 +873,28 @@ onMounted(fetchData)
 
 /* ===== UNIFORM TABLE HEADERS ===== */
 .lines-table :deep(th.el-table__cell) {
-  background-color: #f8f7ff !important;
-  color: #6366f1;
-  font-size: 10px;
+  background-color: #f8fafc !important;
+  color: #475569;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  border-bottom: 1px solid #ede9fe !important;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 12px 0 !important;
 }
 
 .lines-table :deep(td.el-table__cell) {
-  border-bottom: 1px solid #f4f5f9 !important;
-  padding: 8px 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 14px 12px !important;
 }
 
 .lines-table :deep(.el-input__wrapper),
 .lines-table :deep(.el-select__wrapper) {
   box-shadow: none !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 5px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
   background-color: #fff !important;
-  min-height: 30px;
+  min-height: 36px;
 }
 .lines-table :deep(.el-input__wrapper.is-focus),
 .lines-table :deep(.el-select__wrapper.is-focus) {
@@ -952,10 +953,10 @@ onMounted(fetchData)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 16px 24px;
   background: white;
-  border-top: 1px solid #f0f0f7;
-  box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
   flex-shrink: 0;
   gap: 20px;
 }
@@ -966,12 +967,12 @@ onMounted(fetchData)
 }
 
 .footer-comment-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .comment-input :deep(.el-textarea__inner) {
@@ -999,7 +1000,7 @@ onMounted(fetchData)
 }
 
 .footer-total-amount {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   color: #1e1b4b;
   line-height: 1;
