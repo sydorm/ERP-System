@@ -323,10 +323,20 @@ html.dark .custom-sidebar-menu {
   font-size: 14px;
 }
 
-/* Fix inline submenu background turning black and add tree-lines */
+/* Disable all collapse/expand animations per user request to avoid layout shifts */
 .custom-sidebar-menu :deep(.el-menu--inline) {
   background-color: transparent !important;
   position: relative;
+  transition: none !important;
+}
+
+.custom-sidebar-menu :deep(.el-collapse-transition) {
+  transition: none !important;
+  display: block !important;
+}
+
+.custom-sidebar-menu :deep(.el-sub-menu__title) {
+  transition: none !important;
 }
 
 /* Tree-line left border */
