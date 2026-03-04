@@ -7,12 +7,13 @@
         <h2 v-else>ERP</h2>
       </div>
 
-      <el-menu
-        :default-active="activeMenu"
-        :collapse="isCollapse"
-        :router="true"
-        class="custom-sidebar-menu"
-      >
+      <el-scrollbar class="sidebar-scrollbar">
+        <el-menu
+          :default-active="activeMenu"
+          :collapse="isCollapse"
+          :router="true"
+          class="custom-sidebar-menu"
+        >
         <el-menu-item index="/dashboard">
           <el-icon><HomeFilled /></el-icon>
           <template #title>Головна</template>
@@ -76,7 +77,8 @@
         </el-sub-menu>
 
         <!-- Settings submenu removed as Users moved to profile dropdown -->
-      </el-menu>
+        </el-menu>
+      </el-scrollbar>
     </el-aside>
 
     <!-- Main Content -->
@@ -238,6 +240,13 @@ const handleCommand = (command) => {
   border-right: 1px solid var(--el-border-color-light);
   transition: width 0.3s, background-color 0.3s;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-scrollbar {
+  flex: 1;
+  overflow: hidden;
 }
 
 html.dark .sidebar {
@@ -318,6 +327,9 @@ html.dark .custom-sidebar-menu {
 .custom-sidebar-menu :deep(.el-menu--inline) {
   background-color: transparent !important;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Tree-line left border */
