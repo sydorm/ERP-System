@@ -27,6 +27,18 @@
         </div>
       </div>
       <div class="header-actions">
+        <el-dropdown v-if="isEditMode" trigger="click" @command="handleCreateBasedOn">
+          <el-button type="default">
+            Створити на основі <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="invoice">Видаткова накладна</el-dropdown-item>
+              <el-dropdown-item command="payment">Вхідний платіж</el-dropdown-item>
+              <el-dropdown-item command="purchase_order">Замовлення постачальнику</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button @click="goBack">Записати</el-button>
         <el-button type="primary" :loading="submitting" @click="saveOrder" class="btn-submit">
           Провести
@@ -268,6 +280,23 @@ import VariantSelectorDialog from './VariantSelectorDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+const handleCreateBasedOn = (command) => {
+  const orderId = route.params.id;
+  if (!orderId) return;
+
+  if (command === 'invoice') {
+    // router.push({ path: '/sales/invoices/new', query: { based_on: orderId } })
+    ElMessage.info('Створення Видаткової накладної (в розробці)')
+  } else if (command === 'payment') {
+    // router.push({ path: '/finance/payments/new', query: { based_on: orderId, type: 'incoming' } })
+    ElMessage.info('Створення Вхідного платежу (в розробці)')
+  } else if (command === 'purchase_order') {
+    // router.push({ path: '/purchases/orders/new', query: { based_on: orderId } })
+    ElMessage.info('Створення Замовлення постачальнику (в розробці)')
+  }
+}
+
 
 // State
 const loading = ref(false)
