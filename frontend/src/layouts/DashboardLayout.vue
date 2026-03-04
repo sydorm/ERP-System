@@ -327,9 +327,6 @@ html.dark .custom-sidebar-menu {
 .custom-sidebar-menu :deep(.el-menu--inline) {
   background-color: transparent !important;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 /* Tree-line left border */

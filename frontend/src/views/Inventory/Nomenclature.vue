@@ -125,8 +125,6 @@
                     <el-icon :size="40"><Picture /></el-icon>
                   </div>
                 </template>
-              </el-image>
-              <div class="product-sku">{{ product.sku }}</div>
               <div class="product-actions-overlay">
                 <el-button circle :icon="Edit" @click="handleEdit(product)" />
               </div>
@@ -559,17 +557,6 @@ watch(filterCategory, () => {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   color: #d1d1d1;
-}
-
-.product-sku {
-  position: absolute;
-  top: 12px; left: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #1a1d1f;
 }
 
 .product-actions-overlay {
