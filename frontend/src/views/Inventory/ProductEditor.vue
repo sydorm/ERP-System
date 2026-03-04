@@ -7,6 +7,9 @@
         <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
       </div>
       <div class="header-actions">
+        <el-button v-if="isEditMode" type="danger" @click="confirmDelete" plain>
+          Видалити
+        </el-button>
         <el-button @click="goBack">Скасувати</el-button>
         <el-button type="primary" :loading="submitting" @click="saveProduct" class="btn-save">
           Зберегти
@@ -75,7 +78,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
 // Sub-components
@@ -237,6 +240,26 @@ const saveProduct = async () => {
     } finally {
         submitting.value = false
     }
+}
+
+const confirmDelete = () => {
+  ElMessageBox.confirm(
+    `Ви впевнені, що хочете видалити цей товар?`,
+    'Увага',
+    {
+      confirmButtonText: 'Видалити',
+      cancelButtonText: 'Скасувати',
+      type: 'warning',
+    }
+  ).then(async () => {
+    try {
+      await api.delete(`/api/v1/products/${form.id}`)
+      ElMessage.success('Товар видалено')
+      router.push('/inventory/nomenclature')
+    } catch (error) {
+      ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
+    }
+  })
 }
 
 watch(() => form.category, fetchCategoryAttributes)

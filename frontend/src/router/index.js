@@ -192,6 +192,12 @@ const router = createRouter({
                     name: 'users',
                     component: () => import('@/views/Settings/Users.vue'),
                     meta: { title: 'Користувачі' }
+                },
+                {
+                    path: '/settings/trash-bin',
+                    name: 'trash-bin',
+                    component: () => import('@/views/Admin/TrashBin.vue'),
+                    meta: { title: 'Корзина', requiresAuth: true }
                 }
             ]
         }

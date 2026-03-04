@@ -334,7 +334,7 @@ const handleDelete = (row) => {
       fetchProducts()
       fetchStatistics()
     } catch (error) {
-      ElMessage.error('Помилка видалення')
+      ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
     }
   })
 }

@@ -74,6 +74,7 @@
           <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
           <el-menu-item index="/settings/numbering">Нумерація</el-menu-item>
           <el-menu-item index="/settings/users">Користувачі</el-menu-item>
+          <el-menu-item index="/settings/trash-bin">Корзина</el-menu-item>
         </el-sub-menu>
 
         <!-- Settings submenu removed as Users moved to profile dropdown -->

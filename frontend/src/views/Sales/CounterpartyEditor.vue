@@ -10,6 +10,9 @@
         </div>
       </div>
       <div class="header-actions">
+        <el-button v-if="isEditMode" type="danger" @click="confirmDelete" plain>
+          Видалити
+        </el-button>
         <el-button @click="goBack">Скасувати</el-button>
         <el-button type="primary" :loading="submitting" @click="saveCounterparty">
           Зберегти
@@ -196,7 +199,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Phone, Message, Document } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
 const route = useRoute()
@@ -301,6 +304,26 @@ const saveCounterparty = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+const confirmDelete = () => {
+  ElMessageBox.confirm(
+    `Ви впевнені, що хочете видалити цього контрагента?`,
+    'Увага',
+    {
+      confirmButtonText: 'Видалити',
+      cancelButtonText: 'Скасувати',
+      type: 'warning',
+    }
+  ).then(async () => {
+    try {
+      await api.delete(`/api/v1/counterparties/${form.id}`)
+      ElMessage.success('Контрагента видалено')
+      router.push('/sales/counterparties')
+    } catch (error) {
+      ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
+    }
+  })
 }
 
 // Helpers

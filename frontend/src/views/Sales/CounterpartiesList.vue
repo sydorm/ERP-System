@@ -68,9 +68,10 @@
         <el-table-column prop="phone" label="Телефон" width="150" />
         <el-table-column prop="email" label="Email" min-width="150" />
         
-        <el-table-column label="Дії" width="80" align="right">
+        <el-table-column label="Дії" width="100" align="right">
           <template #default="scope">
             <el-button link type="primary" :icon="Edit" @click.stop="handleEdit(scope.row)" />
+            <el-button link type="danger" :icon="Delete" @click.stop="handleDelete(scope.row)" />
           </template>
         </el-table-column>
       </el-table>
@@ -93,8 +94,8 @@
 <script setup>
 import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Search, Edit } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
 const router = useRouter()
@@ -150,6 +151,26 @@ const handleCreate = () => {
 
 const handleEdit = (row) => {
   router.push(`/sales/counterparties/${row.id}`)
+}
+
+const handleDelete = (row) => {
+  ElMessageBox.confirm(
+    `Ви впевнені, що хочете видалити ${row.name}?`,
+    'Увага',
+    {
+      confirmButtonText: 'Видалити',
+      cancelButtonText: 'Скасувати',
+      type: 'warning',
+    }
+  ).then(async () => {
+    try {
+      await api.delete(`/api/v1/counterparties/${row.id}`)
+      ElMessage.success('Контрагента видалено')
+      fetchCounterparties()
+    } catch (error) {
+      ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
+    }
+  })
 }
 
 const handleRowClick = (row) => {
