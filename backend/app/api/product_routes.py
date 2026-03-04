@@ -69,7 +69,10 @@ async def list_products(
     List products for the current user's company.
     Supports filtering by search term (name/sku) and category.
     """
-    query = db.query(Product).filter(Product.company_id == current_user.company_id)
+    query = db.query(Product).filter(
+        Product.company_id == current_user.company_id,
+        Product.is_deleted == False
+    )
     
     if search:
         search_filter = or_(
@@ -239,6 +242,19 @@ async def delete_product(
             detail="Product not found"
         )
         
-    db.delete(product)
+    # Check if used in orders, invoices, or stock
+    from app.models import OrderLine, PurchaseOrderLine, AccumulationRegister
+    
+    is_used = db.query(OrderLine).filter(OrderLine.product_id == product.id).first() or \
+              db.query(PurchaseOrderLine).filter(PurchaseOrderLine.product_id == product.id).first() or \
+              db.query(AccumulationRegister).filter(AccumulationRegister.product_id == product.id).first()
+              
+    if is_used:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неможливо видалити товар, оскільки він вже використовується в документах бази."
+        )
+        
+    product.is_deleted = True
     db.commit()
     return None

@@ -16,7 +16,8 @@ async def get_warehouses(
     """Get all active warehouses for the company"""
     return db.query(Warehouse).filter(
         Warehouse.company_id == current_user.company_id,
-        Warehouse.is_active == True
+        Warehouse.is_active == True,
+        Warehouse.is_deleted == False
     ).all()
 
 @router.post("/warehouses", response_model=WarehouseResponse, status_code=status.HTTP_201_CREATED)
@@ -49,3 +50,34 @@ async def get_warehouse(
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
     return warehouse
+
+@router.delete("/warehouses/{warehouse_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_warehouse(
+    warehouse_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete (soft) a warehouse"""
+    warehouse = db.query(Warehouse).filter(
+        Warehouse.id == warehouse_id,
+        Warehouse.company_id == current_user.company_id
+    ).first()
+    
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+        
+    # Check references
+    from app.models import Order, PurchaseOrder, AccumulationRegister
+    is_used = db.query(Order).filter(Order.warehouse_id == warehouse.id).first() or \
+              db.query(PurchaseOrder).filter(PurchaseOrder.warehouse_id == warehouse.id).first() or \
+              db.query(AccumulationRegister).filter(AccumulationRegister.warehouse_id == warehouse.id).first()
+              
+    if is_used:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неможливо видалити склад, оскільки на ньому є залишки або він використовується в документах."
+        )
+        
+    warehouse.is_deleted = True
+    db.commit()
+    return None

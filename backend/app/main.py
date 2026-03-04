@@ -125,6 +125,9 @@ app.include_router(warehouse_router, prefix="/api/v1", tags=["Inventory"])
 from app.api.document_sequence_routes import router as document_sequence_router
 app.include_router(document_sequence_router, prefix="/api/v1", tags=["Administration"])
 
+from app.api.trash_routes import router as trash_router
+app.include_router(trash_router, prefix="/api/v1", tags=["Administration"])
+
 from app.api.specification_routes import router as specification_router
 app.include_router(specification_router, prefix="/api/v1")
 

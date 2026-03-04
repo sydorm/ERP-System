@@ -24,7 +24,10 @@ async def list_counterparties(
     """
     List counterparties with filtering.
     """
-    query = db.query(Counterparty).filter(Counterparty.company_id == current_user.company_id)
+    query = db.query(Counterparty).filter(
+        Counterparty.company_id == current_user.company_id,
+        Counterparty.is_deleted == False
+    )
     
     if search:
         query = query.filter(or_(
@@ -119,6 +122,17 @@ async def delete_counterparty(
     if not counterparty:
         raise HTTPException(status_code=404, detail="Counterparty not found")
         
-    db.delete(counterparty)
+    # Check references
+    from app.models import Order, PurchaseOrder
+    is_used = db.query(Order).filter(Order.counterparty_id == counterparty.id).first() or \
+              db.query(PurchaseOrder).filter(PurchaseOrder.supplier_id == counterparty.id).first()
+              
+    if is_used:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Неможливо видалити контрагента, оскільки він має пов'язані замовлення або документи."
+        )
+        
+    counterparty.is_deleted = True
     db.commit()
     return None
