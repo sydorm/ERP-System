@@ -135,7 +135,7 @@ const filteredItems = computed(() => {
 const fetchTrashItems = async () => {
   loading.value = true
   try {
-    const response = await api.get('/trash')
+    const response = await api.get('/api/v1/trash')
     trashData.value = response.data
   } catch (error) {
     ElMessage.error(error.response?.data?.detail || 'Помилка при завантаженні корзини')
@@ -151,7 +151,7 @@ const handleTabClick = () => {
 // Відновлення
 const handleRestore = async (item) => {
   try {
-    await api.post(`/trash/restore/${activeTab.value}/${item.id}`)
+    await api.post(`/api/v1/trash/restore/${activeTab.value}/${item.id}`)
     ElMessage.success(`${item.name} успішно відновлено`)
     // Оновлюємо список
     fetchTrashItems()
@@ -171,7 +171,7 @@ const executeHardDelete = async () => {
   
   deleteLoading.value = true
   try {
-    await api.delete(`/trash/hard_delete/${activeTab.value}/${itemToDelete.value.id}`)
+    await api.delete(`/api/v1/trash/hard_delete/${activeTab.value}/${itemToDelete.value.id}`)
     ElMessage.success('Об\'єкт назавжди видалено')
     deleteDialogVisible.value = false
     fetchTrashItems()
