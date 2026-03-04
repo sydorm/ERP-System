@@ -95,7 +95,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshLeft, Delete, Warning } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import api from '@/utils/api'
+import api from '@/api'
 
 // Стейт
 const loading = ref(false)
