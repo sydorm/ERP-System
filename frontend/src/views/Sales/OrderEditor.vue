@@ -119,7 +119,7 @@
         </el-table-column>
         <el-table-column label="Кількість" width="90">
           <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
+            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
           </template>
         </el-table-column>
         <el-table-column label="В резерв" width="80" align="center">
@@ -129,12 +129,12 @@
         </el-table-column>
         <el-table-column label="Ціна" width="100">
           <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
+            <el-input-number size="small" v-model="scope.row.price" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
           </template>
         </el-table-column>
-        <el-table-column label="Сума" width="100" align="right">
+        <el-table-column label="Сума" width="100">
           <template #default="scope">
-            <span class="erp-cell-text">{{ formatCurrency(scope.row.total) }}</span>
+            <el-input-number size="small" v-model="scope.row.total" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" />
           </template>
         </el-table-column>
         <el-table-column label="Специфікація" min-width="100">
@@ -368,6 +368,12 @@ const removeLine = (index) => {
 
 const updateLineTotal = (line) => {
   line.total = parseFloat((line.quantity * line.price).toFixed(2))
+}
+
+const updateLinePrice = (line) => {
+  if (line.quantity > 0) {
+    line.price = parseFloat((line.total / line.quantity).toFixed(2))
+  }
 }
 
 const handleProductChange = (productId, line) => {
