@@ -161,8 +161,7 @@
       </el-main>
     </el-container>
 
-    <!-- AI Assistant Component -->
-    <AiAssistant />
+
   </el-container>
 </template>
 
@@ -171,7 +170,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDark, useToggle } from '@vueuse/core'
-import AiAssistant from '@/components/AiAssistant.vue'
+
 import TabsBar from '@/components/layout/TabsBar.vue'
 import {
   HomeFilled,

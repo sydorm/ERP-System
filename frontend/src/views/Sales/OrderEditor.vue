@@ -585,10 +585,10 @@ onMounted(fetchData)
 }
 .erp-btn:hover, .erp-btn-icon:hover { background-color: #f5f7fa !important; border-color: #c0c4cc !important; }
 .erp-btn-primary {
-  background-color: #fdf6ec !important; border-color: #e6a23c !important;
-  color: #8a6d3b !important; font-weight: 600 !important;
+  background-color: #eef2ff !important; border-color: #6366f1 !important;
+  color: #4338ca !important; font-weight: 600 !important;
 }
-.erp-btn-primary:hover { background-color: #faecd8 !important; }
+.erp-btn-primary:hover { background-color: #e0e7ff !important; }
 .erp-btn-icon { padding: 0 8px !important; }
 .erp-doc-info { margin-left: 16px; display: flex; align-items: center; }
 .erp-doc-title { font-size: 14px; font-weight: 600; color: #303133; }
@@ -620,13 +620,13 @@ onMounted(fetchData)
 .erp-tabs-section {
   display: flex; flex-direction: column; background-color: #f6f7f9; padding: 0 16px; flex-shrink: 0;
 }
-.erp-tabs { display: flex; border-bottom: 2px solid #e6a23c; margin-bottom: 8px; margin-top: 4px; }
+.erp-tabs { display: flex; border-bottom: 2px solid #6366f1; margin-bottom: 8px; margin-top: 4px; }
 .erp-tab {
   padding: 6px 16px; font-size: 13px; cursor: pointer; color: #606266;
   background-color: #e4e7ed; border: 1px solid #dcdfe6; border-bottom: none;
   border-radius: 4px 4px 0 0; margin-right: 4px;
 }
-.erp-tab.active { background-color: #fdf6ec; border-color: #e6a23c; color: #8a6d3b; font-weight: 600; }
+.erp-tab.active { background-color: #eef2ff; border-color: #6366f1; color: #4338ca; font-weight: 600; }
 .erp-table-toolbar { display: flex; gap: 6px; margin-bottom: 6px; }
 .erp-warehouse-row { margin-bottom: 6px; }
 .warehouse-select { width: 250px; }
