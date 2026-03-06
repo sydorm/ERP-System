@@ -39,8 +39,8 @@
                 <tbody>
                   <tr v-for="(change, field) in log.changes" :key="field">
                     <td class="field-name">{{ formatFieldName(field) }}</td>
-                    <td class="old-value">{{ formatValue(change.old) }}</td>
-                    <td class="new-value">{{ formatValue(change.new) }}</td>
+                    <td class="old-value">{{ formatValue(change.old, field === 'counterparty_id') }}</td>
+                    <td class="new-value">{{ formatValue(change.new, field === 'counterparty_id') }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -76,6 +76,20 @@ const emit = defineEmits(['update:modelValue'])
 const visible = ref(props.modelValue)
 const loading = ref(false)
 const logs = ref([])
+const counterpartiesCache = ref({})
+
+const resolveCounterpartyName = async (id) => {
+  if (!id || id === 'None') return id
+  if (counterpartiesCache.value[id]) return counterpartiesCache.value[id]
+  
+  try {
+    const res = await api.get(`/counterparties/${id}`)
+    counterpartiesCache.value[id] = res.data.name
+    return res.data.name
+  } catch (e) {
+    return id
+  }
+}
 
 watch(() => props.modelValue, (val) => {
   visible.value = val
@@ -92,7 +106,17 @@ const fetchLogs = async () => {
   loading.value = true
   try {
     const response = await api.get(`/api/v1/audit-logs/${props.entityType}/${props.entityId}`)
-    logs.value = response.data
+    
+    // Pre-fetch counterparty names if any changes involve counterparty_id
+    const fetchedLogs = response.data
+    for (const log of fetchedLogs) {
+      if (log.changes?.counterparty_id) {
+        if (log.changes.counterparty_id.old) await resolveCounterpartyName(log.changes.counterparty_id.old)
+        if (log.changes.counterparty_id.new) await resolveCounterpartyName(log.changes.counterparty_id.new)
+      }
+    }
+    
+    logs.value = fetchedLogs
   } catch (error) {
     console.error('Error fetching audit logs:', error)
   } finally {
@@ -168,6 +192,11 @@ const formatValue = (val) => {
        return num.toFixed(2)
     }
   }
+  
+  if (isCounterpartyField) {
+    return counterpartiesCache.value[val] || val
+  }
+  
   return val
 }
 </script>

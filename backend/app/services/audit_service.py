@@ -9,11 +9,12 @@ class AuditService:
     @staticmethod
     def _serialize_for_json(val: Any) -> Any:
         import decimal
+        import datetime as dt
         if isinstance(val, dict):
             return {k: AuditService._serialize_for_json(v) for k, v in val.items()}
         elif isinstance(val, list):
             return [AuditService._serialize_for_json(v) for v in val]
-        elif isinstance(val, (datetime, uuid.UUID, decimal.Decimal)):
+        elif isinstance(val, (datetime, dt.date, uuid.UUID, decimal.Decimal)):
             return str(val)
         return val
 
