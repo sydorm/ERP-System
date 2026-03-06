@@ -134,7 +134,21 @@ const formatValue = (val) => {
   if (val === null || val === undefined || val === 'None') return '—'
   
   if (Array.isArray(val)) {
-    return val.length === 0 ? '[]' : `[ ${val.length} позицій ]`
+    if (val.length === 0) return '[]'
+    // Format each item in the array for order lines or general objects
+    return val.map((item, index) => {
+      // Create a nice string representation for known fields
+      const parts = []
+      if (item.product_id) parts.push(`Товар`)
+      if (item.quantity !== undefined) parts.push(`к-сть: ${item.quantity}`)
+      if (item.price !== undefined) parts.push(`ціна: ${item.price}`)
+      if (item.total !== undefined) parts.push(`сума: ${item.total}`)
+      
+      if (parts.length > 0) return `${index + 1}. ${parts.join(', ')}`
+      
+      // Fallback for simple values or unknown objects
+      return `${index + 1}. ${typeof item === 'object' ? JSON.stringify(item).substring(0, 50) + '...' : String(item)}`
+    }).join('\n')
   }
   
   if (typeof val === 'object') {
@@ -203,10 +217,12 @@ const formatValue = (val) => {
   color: #f56c6c;
   text-decoration: line-through;
   width: 35%;
+  white-space: pre-wrap;
 }
 .new-value {
   color: #67c23a;
   font-weight: 500;
   width: 35%;
+  white-space: pre-wrap;
 }
 </style>
