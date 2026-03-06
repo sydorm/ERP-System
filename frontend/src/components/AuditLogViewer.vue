@@ -119,11 +119,17 @@ const getActionColor = (action) => {
 const fieldNamesDict = {
   'status': 'Статус',
   'total_amount': 'Загальна сума',
-  'order_date': 'Дата замовлення',
+  'order_date': 'Дата документа',
+  'shipping_date': 'Дата відвантаження',
   'order_number': 'Номер',
   'counterparty_id': 'Контрагент',
   'warehouse_id': 'Склад',
-  'comment': 'Коментар'
+  'comment': 'Коментар',
+  'contract': 'Договір',
+  'discount_percent': 'Відсоток знижки',
+  'company_id': 'Компанія',
+  'created_by': 'Автор',
+  'lines': 'Список товарів'
 }
 
 const formatFieldName = (field) => {
