@@ -82,7 +82,7 @@ async def create_order(
     # Audit Log
     AuditService.compare_and_log(
         db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
-        action="CREATE", new_obj=AuditService.get_dict(order)
+        action="CREATE", new_obj=AuditService.get_dict(order, relationships=["lines"])
     )
     
     return order
@@ -124,7 +124,7 @@ async def update_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
         
-    old_obj = AuditService.get_dict(order)
+    old_obj = AuditService.get_dict(order, relationships=["lines"])
     
     update_data = order_in.dict(exclude_unset=True, exclude={"lines"})
     for field, value in update_data.items():
@@ -155,7 +155,7 @@ async def update_order(
     db.commit()
     db.refresh(order)
     
-    new_obj = AuditService.get_dict(order)
+    new_obj = AuditService.get_dict(order, relationships=["lines"])
     AuditService.compare_and_log(
         db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
         action="UPDATE", old_obj=old_obj, new_obj=new_obj
@@ -180,7 +180,7 @@ async def delete_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
         
-    old_obj = AuditService.get_dict(order)
+    old_obj = AuditService.get_dict(order, relationships=["lines"])
     AuditService.compare_and_log(
         db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
         action="DELETE", old_obj=old_obj

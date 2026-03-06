@@ -7,9 +7,19 @@ from app.models.base import BaseModel
 
 class AuditService:
     @staticmethod
-    def get_dict(obj: BaseModel) -> Dict[str, Any]:
-        """Convert SQLAlchemy model to a dictionary safely."""
-        return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    def get_dict(obj: BaseModel, relationships: list = None) -> Dict[str, Any]:
+        """Convert SQLAlchemy model to a dictionary safely, including optional relationships."""
+        data = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+        if relationships:
+            for rel in relationships:
+                rel_val = getattr(obj, rel, None)
+                if isinstance(rel_val, list):
+                    data[rel] = [{c.name: getattr(item, c.name) for c in item.__table__.columns} for item in rel_val]
+                elif rel_val is not None:
+                    data[rel] = {c.name: getattr(rel_val, c.name) for c in rel_val.__table__.columns}
+                else:
+                    data[rel] = None
+        return data
 
     @staticmethod
     def compare_and_log(

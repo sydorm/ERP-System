@@ -132,6 +132,15 @@ const formatFieldName = (field) => {
 
 const formatValue = (val) => {
   if (val === null || val === undefined || val === 'None') return '—'
+  
+  if (Array.isArray(val)) {
+    return val.length === 0 ? '[]' : `[ ${val.length} позицій ]`
+  }
+  
+  if (typeof val === 'object') {
+     return JSON.stringify(val)
+  }
+
   // Try to parse floats to keep it clean if it's a number
   if (!isNaN(val) && val !== '') {
     const num = parseFloat(val)
