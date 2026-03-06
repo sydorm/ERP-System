@@ -10,6 +10,7 @@ from app.schemas.order import OrderCreate, OrderUpdate, OrderResponse
 from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService, PostingEntry
 from app.services.sequence_service import SequenceService
+from app.services.audit_service import AuditService
 
 router = APIRouter()
 
@@ -77,6 +78,13 @@ async def create_order(
     
     db.commit()
     db.refresh(order)
+    
+    # Audit Log
+    AuditService.compare_and_log(
+        db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
+        action="CREATE", new_obj=AuditService.get_dict(order)
+    )
+    
     return order
 
 @router.get("/orders/{id}", response_model=OrderResponse)
@@ -116,6 +124,8 @@ async def update_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
         
+    old_obj = AuditService.get_dict(order)
+    
     update_data = order_in.dict(exclude_unset=True, exclude={"lines"})
     for field, value in update_data.items():
         setattr(order, field, value)
@@ -144,6 +154,13 @@ async def update_order(
 
     db.commit()
     db.refresh(order)
+    
+    new_obj = AuditService.get_dict(order)
+    AuditService.compare_and_log(
+        db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
+        action="UPDATE", old_obj=old_obj, new_obj=new_obj
+    )
+    
     return order
 
 @router.delete("/orders/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -162,6 +179,12 @@ async def delete_order(
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+        
+    old_obj = AuditService.get_dict(order)
+    AuditService.compare_and_log(
+        db=db, entity_type="order", entity_id=order.id, user_id=current_user.id,
+        action="DELETE", old_obj=old_obj
+    )
         
     db.delete(order)
     db.commit()

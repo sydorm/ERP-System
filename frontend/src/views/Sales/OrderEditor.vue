@@ -23,6 +23,7 @@
         
         <div class="erp-doc-info">
             <span class="erp-doc-title">{{ isEditMode ? 'Замовлення покупця ' + form.order_number : 'Замовлення покупця (створення)' }}</span>
+            <el-button v-if="isEditMode" size="small" class="erp-btn-icon" :icon="Timer" title="Історія змін" @click="showAuditLog" style="margin-left: 12px;" />
         </div>
       </div>
     </div>
@@ -215,16 +216,24 @@
       @select="onVariantSelected"
       @clear="clearVirtualVariant(activeLineForSelector)"
     />
+
+    <AuditLogViewer
+      v-if="isEditMode"
+      v-model="auditLogVisible"
+      entity-type="order"
+      :entity-id="route.params.id"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, Timer } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
+import AuditLogViewer from '@/components/AuditLogViewer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -289,6 +298,12 @@ const selectedDialogProduct = ref(null)
 const variantSelectorVisible = ref(false)
 const selectedProductForSelector = ref(null)
 const activeLineForSelector = ref(null)
+
+// Audit Log State
+const auditLogVisible = ref(false)
+const showAuditLog = () => {
+  auditLogVisible.value = true
+}
 
 // Computed
 const subtotal = computed(() => {
