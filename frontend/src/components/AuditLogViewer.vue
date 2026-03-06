@@ -91,7 +91,7 @@ watch(visible, (val) => {
 const fetchLogs = async () => {
   loading.value = true
   try {
-    const response = await api.get(`/audit-logs/${props.entityType}/${props.entityId}`)
+    const response = await api.get(`/api/v1/audit-logs/${props.entityType}/${props.entityId}`)
     logs.value = response.data
   } catch (error) {
     console.error('Error fetching audit logs:', error)

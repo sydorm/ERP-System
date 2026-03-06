@@ -7,6 +7,17 @@ from app.models.base import BaseModel
 
 class AuditService:
     @staticmethod
+    def _serialize_for_json(val: Any) -> Any:
+        import decimal
+        if isinstance(val, dict):
+            return {k: AuditService._serialize_for_json(v) for k, v in val.items()}
+        elif isinstance(val, list):
+            return [AuditService._serialize_for_json(v) for v in val]
+        elif isinstance(val, (datetime, uuid.UUID, decimal.Decimal)):
+            return str(val)
+        return val
+
+    @staticmethod
     def get_dict(obj: BaseModel, relationships: list = None) -> Dict[str, Any]:
         """Convert SQLAlchemy model to a dictionary safely, including optional relationships."""
         data = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
@@ -38,9 +49,9 @@ class AuditService:
         changes = {}
 
         if action in ("CREATE", "POST") and new_obj:
-            changes = {k: {"old": None, "new": str(v)} for k, v in new_obj.items() if k not in ignore_fields and v is not None}
+            changes = {k: {"old": None, "new": AuditService._serialize_for_json(v)} for k, v in new_obj.items() if k not in ignore_fields and v is not None}
         elif action in ("DELETE", "UNPOST") and old_obj:
-            changes = {k: {"old": str(v), "new": None} for k, v in old_obj.items() if k not in ignore_fields and v is not None}
+            changes = {k: {"old": AuditService._serialize_for_json(v), "new": None} for k, v in old_obj.items() if k not in ignore_fields and v is not None}
         elif old_obj and new_obj:
             for key in new_obj.keys():
                 if key in ignore_fields:
@@ -54,8 +65,8 @@ class AuditService:
                 
                 if str_old != str_new:
                     changes[key] = {
-                        "old": old_val,
-                        "new": new_val
+                        "old": AuditService._serialize_for_json(old_val),
+                        "new": AuditService._serialize_for_json(new_val)
                     }
 
         if not changes and action == "UPDATE":
