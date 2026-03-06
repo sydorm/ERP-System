@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.schemas.audit_log import AuditLogResponse
-from app.core.security import get_current_user
+from app.api.dependencies import get_current_user
 
 router = APIRouter(prefix="/audit-logs", tags=["Audit Logs"])
 
