@@ -119,7 +119,7 @@
         </el-table-column>
         <el-table-column label="Кількість" width="90">
           <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
+            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width: 100%" />
           </template>
         </el-table-column>
         <el-table-column label="В резерв" width="80" align="center">
@@ -129,12 +129,12 @@
         </el-table-column>
         <el-table-column label="Ціна" width="100">
           <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.price" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" />
+            <el-input-number size="small" v-model="scope.row.price" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width: 100%" />
           </template>
         </el-table-column>
         <el-table-column label="Сума" width="100">
           <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.total" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" />
+            <el-input-number size="small" v-model="scope.row.total" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width: 100%" />
           </template>
         </el-table-column>
         <el-table-column label="Специфікація" min-width="100">
@@ -646,11 +646,16 @@ onMounted(fetchData)
   padding: 0 !important; border-bottom: 1px solid #ebeef5 !important; border-right: 1px solid #ebeef5 !important;
 }
 .erp-dense-table :deep(.cell) { padding: 0 6px !important; line-height: 24px !important; }
+.erp-cell-input { width: 100%; }
 .erp-cell-input :deep(.el-input__wrapper), .erp-cell-input :deep(.el-select__wrapper) {
-  box-shadow: none !important; border: none !important; background-color: transparent !important;
-  padding: 0 !important; border-radius: 0 !important; min-height: 24px !important; height: 24px !important;
+  box-shadow: none !important; border: 1px solid transparent !important; background-color: transparent !important;
+  padding: 0 4px !important; border-radius: 2px !important; min-height: 24px !important; height: 24px !important;
+  transition: all 0.2s;
 }
-.erp-cell-input :deep(.el-input__inner) { font-size: 13px !important; height: 24px !important; line-height: 24px !important; }
+.erp-cell-input :deep(.el-input__wrapper:focus-within), .erp-cell-input :deep(.el-input__wrapper:hover) {
+  border-color: #dcdfe6 !important; background-color: #fff !important;
+}
+.erp-cell-input :deep(.el-input__inner) { font-size: 13px !important; height: 22px !important; line-height: 22px !important; }
 .erp-cell-input.num :deep(.el-input__inner) { text-align: right !important; }
 .erp-cell-trigger { width: 100%; height: 24px; display: flex; align-items: center; font-size: 13px; cursor: pointer; }
 .erp-cell-text { font-size: 13px; line-height: 24px; }
