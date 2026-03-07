@@ -134,3 +134,29 @@
 - робити auto-posting при створенні
 - змінювати posting rules або структуру AccumulationRegister
 - змінювати назви ключових сутностей (Order/Invoice/Receipt) у публічному API
+- Ти не можеш запускати код ти завжди маєш його писати мені шоб я запускав
+
+---
+
+## 🛠 10. БАЗА ДАНИХ: СПЕЦИФІЧНІ БАГИ ТА ЇХ ВИРІШЕННЯ
+
+### 10.1 Alembic "Multiple head revisions are present"
+**Опис проблеми:** Трапляється, коли на сервері та локально були згенеровані паралельні міграції з різними хешами (наприклад, через помилку автогенерації на сервері).
+**Як вирішувати АГЕНТУ:**
+1. Отримати список файлів у папці міграцій на сервері: `docker-compose exec backend ls alembic/versions/`.
+2. Знайти "зайві" файли міграцій (з однаковими префіксами або ті, що не в коміті).
+3. Використати один із двох варіантів:
+   - **Варіант А (Видалити зайве):** Вказати користувачу точну команду для видалення поламаного файлу, наприклад `docker-compose exec backend rm alembic/versions/0f9e..._name.py`.
+   - **Варіант Б (Об'єднати гілки):** Якщо обидві міграції потрібні, вказати користувачу зробити merge: `docker-compose exec backend alembic merge heads -m "merge_multiple_heads"`.
+4. Вказати користувачу фінальну команду: `docker-compose exec backend alembic upgrade head`.
+
+### 10.2 Docker Compose "docker.errors.ImageNotFound / KeyError: 'ContainerConfig'"
+**Опис проблеми:** Трапляється на сервері Vultr при спробі перезапустити або перезібрати контейнери (`docker-compose up` або `build`). Старий образ був видалений або пошкоджений, а стара версія `docker-compose` намагається знайти його в кеші і падає з помилкою.
+**Як вирішувати АГЕНТУ:**
+Завжди надавати користувачу наступний ланцюжок команд для "чистого" перезбирання без кешу:
+```bash
+docker-compose down --rmi all --remove-orphans
+docker-compose rm -f -s -v
+docker-compose build --no-cache
+docker-compose up -d
+```

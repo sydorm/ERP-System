@@ -1,0 +1,38 @@
+name: Deploy to Vultr
+
+on:
+  push:
+    branches:
+      - main  # або master, залежно від того, яка гілка у вас основна
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vultr via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VULTR_HOST }}
+          username: ${{ secrets.VULTR_USERNAME }}
+          key: ${{ secrets.VULTR_SSH_KEY }}
+          passphrase: ${{ secrets.VULTR_SSH_PASSPHRASE }} # Необов'язково, якщо ключ без пароля
+          script: |
+            # Переходимо в папку проекту
+            cd /path/to/your/project/R1
+            
+            # Оновлюємо код з GitHub
+            git pull origin main
+            
+            # Перезапускаємо контейнери (якщо використовуєте docker-compose)
+            # docker-compose down
+            # docker-compose up -d --build
+            
+            # АБО якщо запускаєте без докера, наприклад Systemd:
+            # sudo systemctl restart your-backend-service
+            # sudo systemctl restart your-frontend-service
+            
+            echo "Deploy successful!"
