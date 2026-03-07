@@ -253,7 +253,7 @@ const currentPage = ref(1)
 
 const searchQuery = ref('')
 const filterCategory = ref('')
-const viewMode = ref('grid') // 'grid' or 'list'
+const viewMode = ref('list') // 'grid' or 'list'
 
 // Dictionaries
 const categoryOptions = ref([])
