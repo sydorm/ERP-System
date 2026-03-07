@@ -1,88 +1,72 @@
 <template>
   <div class="page-container">
+    <!-- ===== FIXED HEADER ===== -->
     <div class="sticky-header-wrapper">
       <div class="page-header">
         <div class="header-left">
           <h2>Номенклатура</h2>
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-            <el-breadcrumb-item>Склад</el-breadcrumb-item>
-            <el-breadcrumb-item>Номенклатура</el-breadcrumb-item>
-          </el-breadcrumb>
+          <p class="page-subtitle">Керуйте вашими товарами та відстежуйте запаси</p>
         </div>
-        <div class="header-right">
-          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-primary">
-            Створити товар
+        <div class="header-actions">
+          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-create">
+            + Створити товар
           </el-button>
         </div>
       </div>
 
-      <!-- Stats Bar -->
-      <div class="stats-container">
-        <el-row :gutter="20">
-          <el-col :xs="12" :sm="6">
-            <div class="stat-card total">
-              <div class="stat-icon"><Box /></div>
-              <div class="stat-info">
-                <span class="stat-label">Всього товарів</span>
-                <span class="stat-value">{{ stats.total_products }}</span>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="12" :sm="6">
-            <div class="stat-card in-stock">
-              <div class="stat-icon"><Coordinate /></div>
-              <div class="stat-info">
-                <span class="stat-label">В наявності</span>
-                <span class="stat-value">{{ stats.in_stock }}</span>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="12" :sm="6">
-            <div class="stat-card low-stock">
-              <div class="stat-icon"><Warning /></div>
-              <div class="stat-info">
-                <span class="stat-label">Закінчуються</span>
-                <span class="stat-value text-warning">{{ stats.low_stock }}</span>
-              </div>
-            </div>
-          </el-col>
-          <el-col :xs="12" :sm="6">
-            <div class="stat-card out-of-stock">
-              <div class="stat-icon"><CircleClose /></div>
-              <div class="stat-info">
-                <span class="stat-label">Немає</span>
-                <span class="stat-value text-danger">{{ stats.out_of_stock }}</span>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
+      <!-- ===== STAT CARDS ===== -->
+      <div class="stats-row">
+        <div class="stat-card total">
+          <div class="stat-icon"><el-icon><Box /></el-icon></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.total_products }}</span>
+            <span class="stat-label">Всього товарів</span>
+          </div>
+          <div class="stat-badge" :style="{background:'rgba(99,102,241,0.1)',color:'#6366f1'}">+0%</div>
+        </div>
+        <div class="stat-card in-stock">
+          <div class="stat-icon"><el-icon><Coordinate /></el-icon></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.in_stock }}</span>
+            <span class="stat-label">В наявності</span>
+          </div>
+          <div class="stat-badge" :style="{background:'rgba(16,185,129,0.1)',color:'#10b981'}">{{ stats.in_stock > 0 ? stats.in_stock + '%' : '0%' }}</div>
+        </div>
+        <div class="stat-card low-stock">
+          <div class="stat-icon"><el-icon><Warning /></el-icon></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.low_stock }}</span>
+            <span class="stat-label">Закінчуються</span>
+          </div>
+        </div>
+        <div class="stat-card out-of-stock">
+          <div class="stat-icon"><el-icon><CircleClose /></el-icon></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.out_of_stock }}</span>
+            <span class="stat-label">Немає</span>
+          </div>
+          <div class="stat-badge negative" v-if="stats.out_of_stock > 0">+{{ stats.out_of_stock }}</div>
+        </div>
       </div>
 
-      <!-- Filters & Search -->
+      <!-- ===== FILTERS TOOLBAR ===== -->
       <div class="filters-toolbar">
-        <div class="search-box">
-          <el-input
-            v-model="searchQuery"
-            placeholder="Пошук товарів..."
-            :prefix-icon="Search"
-            clearable
-            @input="handleSearch"
-            class="search-input"
-          />
-        </div>
+        <el-input
+          v-model="searchQuery"
+          placeholder="Пошук товарів..."
+          :prefix-icon="Search"
+          clearable
+          @input="handleSearch"
+          class="search-input"
+        />
         <div class="category-chips">
-          <div 
-            class="chip" 
-            :class="{ active: filterCategory === '' }" 
-            @click="handleCategorySelect('')"
-          >
+          <div class="chip" :class="{ active: filterCategory === '' }" @click="handleCategorySelect('')">
             Всі
           </div>
-          <div 
-            v-for="cat in categoryOptions" 
-            :key="cat.code" 
-            class="chip" 
+          <div
+            v-for="cat in categoryOptions"
+            :key="cat.code"
+            class="chip"
             :class="{ active: filterCategory === cat.code }"
             @click="handleCategorySelect(cat.code)"
           >
@@ -90,149 +74,168 @@
           </div>
         </div>
         <div class="view-toggle">
-          <el-radio-group v-model="viewMode" size="large">
-            <el-radio-button value="grid">
-              <el-icon><Grid /></el-icon>
-            </el-radio-button>
-            <el-radio-button value="list">
-              <el-icon><Fold /></el-icon>
-            </el-radio-button>
+          <el-radio-group v-model="viewMode" size="small">
+            <el-radio-button value="list"><el-icon><Fold /></el-icon></el-radio-button>
+            <el-radio-button value="grid"><el-icon><Grid /></el-icon></el-radio-button>
           </el-radio-group>
         </div>
       </div>
     </div>
 
-    <!-- Product Grid/List -->
-    <div class="content-container" v-loading="loading">
-      <div v-if="products.length === 0 && !loading" class="empty-state">
-        <el-empty description="Товарів не знайдено" />
-      </div>
-      
+    <!-- ===== CONTENT AREA ===== -->
+    <div class="content-container">
       <!-- Grid View -->
-      <el-row v-if="viewMode === 'grid'" :gutter="20">
-        <el-col 
-          v-for="product in products" 
-          :key="product.id" 
-          :xs="24" :sm="12" :md="8" :lg="6" :xl="4"
-        >
-          <el-card shadow="hover" class="product-card" :body-style="{ padding: '0px' }">
+      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading">
+        <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
+          <el-card class="product-card" shadow="hover">
             <div class="product-image-container">
-              <el-image 
-                :src="product.image_url" 
-                fit="cover" 
-                class="product-image"
-              >
+              <el-image :src="product.image_url" fit="cover" class="product-image">
                 <template #error>
-                  <div class="image-placeholder">
-                    <el-icon :size="40"><Picture /></el-icon>
-                  </div>
+                  <div class="image-placeholder"><el-icon :size="48"><Picture /></el-icon></div>
                 </template>
               </el-image>
               <div class="product-actions-overlay">
-                <el-button circle :icon="Edit" @click="handleEdit(product)" />
+                <el-button circle :icon="Edit" size="small" @click.stop="handleEdit(product)" />
               </div>
             </div>
-            
             <div class="product-details">
               <div class="category-tag">{{ getCategoryName(product.category) }}</div>
-              <h3 class="product-title" @click="handleEdit(product)">{{ product.name }}</h3>
-              
-              <div class="product-price">
+              <h4 class="product-title" @click="handleEdit(product)">{{ product.name }}</h4>
+              <div class="price-row">
                 <span class="price-value">{{ formatCurrency(product.price, product.currency) }}</span>
                 <span class="price-unit">/ {{ product.unit_of_measure }}</span>
               </div>
-
-              <div class="stock-status">
-                <div class="stock-info">
-                  <span class="stock-label">Запас:</span>
-                  <span class="stock-value" :class="getStockClass(product.stock_balance)">
-                    {{ product.stock_balance }} {{ product.unit_of_measure }}
-                  </span>
-                </div>
-                <el-progress 
-                  :percentage="getStockPercentage(product.stock_balance)" 
-                  :status="getStockProgressStatus(product.stock_balance)"
-                  :show-text="false"
-                  class="stock-progress"
-                />
+              <div class="stock-row">
+                <span class="stock-label">Запас:</span>
+                <span class="stock-value" :class="getStockClass(product.stock_balance)">
+                  {{ product.stock_balance }} {{ product.unit_of_measure }}
+                </span>
               </div>
-
-              <!-- Quick actions removed per user request: stock movements will be document-based -->
+              <el-progress
+                :percentage="getStockPercentage(product.stock_balance)"
+                :status="getStockProgressStatus(product.stock_balance)"
+                :show-text="false"
+                style="margin-top: 6px;"
+              />
             </div>
           </el-card>
+        </el-col>
+        <el-col :span="24" v-if="!loading && products.length === 0">
+          <el-empty description="Товарів не знайдено" />
         </el-col>
       </el-row>
 
       <!-- List View -->
-      <div v-else class="list-view-container table-card">
-        <el-table 
-          :data="products" 
-          height="calc(100vh - 230px)"
-          style="width: 100%" 
-          size="small" 
-          @row-click="handleEdit" 
+      <div v-else class="table-wrapper" v-loading="loading">
+        <el-table
+          :data="products"
+          height="calc(100vh - 256px)"
+          style="width: 100%"
+          size="small"
+          class="products-table"
+          @row-click="handleEdit"
           row-class-name="product-row"
         >
-          <el-table-column width="60">
+          <!-- Photo -->
+          <el-table-column width="60" align="center">
+            <template #header><span class="col-header">Фото</span></template>
             <template #default="scope">
-              <el-image :src="scope.row.image_url" class="list-image">
+              <el-image :src="scope.row.image_url" class="list-image" fit="cover">
                 <template #error>
-                  <div class="list-image-placeholder"><Picture /></div>
+                  <div class="list-image-placeholder"><el-icon><Picture /></el-icon></div>
                 </template>
               </el-image>
             </template>
           </el-table-column>
-          <el-table-column prop="sku" label="Артикул" width="120" />
-          <el-table-column prop="name" label="Назва" min-width="200" />
-          <el-table-column label="Категорія" width="180">
+
+          <!-- SKU -->
+          <el-table-column width="130">
+            <template #header><span class="col-header">Артикул</span></template>
             <template #default="scope">
-              {{ getCategoryName(scope.row.category) }}
+              <span class="sku-link" @click.stop="handleEdit(scope.row)">{{ scope.row.sku }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="Запас" width="150" align="right">
+
+          <!-- Name -->
+          <el-table-column min-width="200">
+            <template #header><span class="col-header">Назва</span></template>
             <template #default="scope">
-              <span :class="getStockClass(scope.row.stock_balance)" style="font-weight: bold">
+              <span class="product-name-link" @click.stop="handleEdit(scope.row)">{{ scope.row.name }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- Category -->
+          <el-table-column width="200">
+            <template #header><span class="col-header">Категорія</span></template>
+            <template #default="scope">
+              <span class="category-text">{{ getCategoryName(scope.row.category) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- Stock -->
+          <el-table-column width="120" align="right">
+            <template #header><span class="col-header">Запас</span></template>
+            <template #default="scope">
+              <span :class="['stock-val', getStockClass(scope.row.stock_balance)]">
                 {{ scope.row.stock_balance }} {{ scope.row.unit_of_measure }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="Ціна" width="150" align="right">
+
+          <!-- Price -->
+          <el-table-column width="120" align="right">
+            <template #header><span class="col-header">Ціна</span></template>
             <template #default="scope">
-              {{ formatCurrency(scope.row.price, scope.row.currency) }}
+              <span class="price-val">{{ formatCurrency(scope.row.price, scope.row.currency) }}</span>
             </template>
           </el-table-column>
-          <el-table-column width="100" align="center">
+
+          <!-- Actions -->
+          <el-table-column width="60" align="center">
             <template #default="scope">
-              <el-button :icon="Edit" circle @click.stop="handleEdit(scope.row)" />
+              <el-button :icon="Edit" circle size="small" @click.stop="handleEdit(scope.row)" />
             </template>
           </el-table-column>
         </el-table>
-      </div>
-    </div>
 
-    <!-- Pagination -->
-    <div class="pagination-footer">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="limit"
-        background
-        layout="total, prev, pager, next"
-        :total="total"
-        @current-change="handlePageChange"
-      />
+        <!-- Pagination -->
+        <div class="pagination-bar">
+          <span class="total-hint">Всього {{ total }} товарів</span>
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="limit"
+            :total="total"
+            background
+            layout="prev, pager, next"
+            class="custom-pagination"
+            @current-change="handlePageChange"
+          />
+        </div>
+      </div>
+
+      <!-- Grid pagination -->
+      <div v-if="viewMode === 'grid'" class="pagination-bar">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="limit"
+          :total="total"
+          background
+          layout="total, prev, pager, next"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated, computed, watch } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
-import { 
-  Plus, Search, Edit, Delete, Picture, 
-  Box, Coordinate, Warning, CircleClose,
-  Printer, Minus, Grid, Fold
+import {
+  Plus, Search, Edit, Picture,
+  Box, Coordinate, Warning, CircleClose, Grid, Fold
 } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 
 const router = useRouter()
@@ -240,22 +243,14 @@ const router = useRouter()
 // State
 const loading = ref(false)
 const products = ref([])
-const stats = ref({
-  total_products: 0,
-  in_stock: 0,
-  low_stock: 0,
-  out_of_stock: 0
-})
+const stats = ref({ total_products: 0, in_stock: 0, low_stock: 0, out_of_stock: 0 })
 const total = ref(0)
 const skip = ref(0)
-const limit = ref(12)
+const limit = ref(20)
 const currentPage = ref(1)
-
 const searchQuery = ref('')
 const filterCategory = ref('')
-const viewMode = ref('list') // 'grid' or 'list'
-
-// Dictionaries
+const viewMode = ref('list') // default to list
 const categoryOptions = ref([])
 
 const fetchDictionaries = async () => {
@@ -287,8 +282,6 @@ const fetchProducts = async () => {
     }
     const response = await api.get('/api/v1/products', { params })
     products.value = response.data
-    // Assuming API can provide count in headers or another way, 
-    // for now we use total_products from stats if no filters
     if (!searchQuery.value && !filterCategory.value) {
       total.value = stats.value.total_products
     } else {
@@ -301,10 +294,14 @@ const fetchProducts = async () => {
   }
 }
 
-const handlePageChange = (page) => {
-  currentPage.value = page
-  skip.value = (page - 1) * limit.value
-  fetchProducts()
+let searchTimer = null
+const handleSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    skip.value = 0
+    currentPage.value = 1
+    fetchProducts()
+  }, 400)
 }
 
 const handleCategorySelect = (code) => {
@@ -314,94 +311,55 @@ const handleCategorySelect = (code) => {
   fetchProducts()
 }
 
-let searchTimer = null
-const handleSearch = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    skip.value = 0
-    currentPage.value = 1
-    fetchProducts()
-  }, 300)
+const handlePageChange = (page) => {
+  currentPage.value = page
+  skip.value = (page - 1) * limit.value
+  fetchProducts()
 }
 
-const goToCreate = () => router.push('/inventory/nomenclature/new')
-const handleEdit = (row) => router.push(`/inventory/nomenclature/${row.id}`)
-
-const handleDelete = (row) => {
-  ElMessageBox.confirm(
-    `Ви впевнені, що хочете видалити ${row.name}?`,
-    'Увага',
-    {
-      confirmButtonText: 'Видалити',
-      cancelButtonText: 'Скасувати',
-      type: 'warning',
-    }
-  ).then(async () => {
-    try {
-      await api.delete(`/api/v1/products/${row.id}`)
-      ElMessage.success('Товар видалено')
-      fetchProducts()
-      fetchStatistics()
-    } catch (error) {
-      ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
-    }
-  })
+const handleEdit = (row) => {
+  router.push(`/inventory/nomenclature/${row.id}`)
 }
 
-const handleQuickAdjust = async (product, delta) => {
-  // In a real system, this would create a StockAdjustment document
-  // For now, it's a placeholder message
-  ElMessage.info(`Можливість швидкої корекції (${delta}) в розробці. Створіть накладну.`)
+const goToCreate = () => {
+  router.push('/inventory/nomenclature/new')
 }
 
 // Helpers
 const getCategoryName = (code) => {
-  const cat = categoryOptions.value.find(c => c.code === code)
-  return cat ? cat.name : 'Без категорії'
+  return categoryOptions.value.find(c => c.code === code)?.name || code || '—'
 }
 
-const formatCurrency = (value, currency) => {
-  return new Intl.NumberFormat('uk-UA', { 
-    style: 'currency', 
-    currency: currency || 'UAH',
-    maximumFractionDigits: 0
-  }).format(value)
+const getStockClass = (qty) => {
+  if (qty <= 0) return 'stock-none'
+  if (qty <= 5) return 'stock-low'
+  return 'stock-ok'
 }
 
-const getStockClass = (val) => {
-  if (val > 5) return 'text-success'
-  if (val > 0) return 'text-warning'
-  return 'text-danger'
+const getStockProgressStatus = (qty) => {
+  if (qty <= 0) return 'exception'
+  if (qty <= 5) return 'warning'
+  return 'success'
 }
 
-const getStockPercentage = (val) => {
-  // Mock target of 30 for visualization
-  const target = 30
-  return Math.min(Math.round((val / target) * 100), 100)
+const getStockPercentage = (qty) => {
+  return Math.min(100, Math.round((qty / 100) * 100))
 }
 
-const getStockProgressStatus = (val) => {
-  if (val > 5) return 'success'
-  if (val > 0) return 'warning'
-  return 'exception'
+const formatCurrency = (amount, currency = 'UAH') => {
+  if (amount == null) return '—'
+  const c = currency || 'UAH'
+  const sym = c === 'UAH' ? 'грн' : c === 'USD' ? '$' : c
+  return `${parseFloat(amount).toFixed(0)} ${sym}`
 }
 
 onMounted(() => {
   fetchDictionaries()
-  fetchStatistics()
-  fetchProducts()
+  fetchStatistics().then(() => fetchProducts())
 })
 
 onActivated(() => {
-  if (products.value.length > 0) {
-    fetchStatistics()
-    fetchProducts()
-  }
-})
-
-// Refresh when category changes might happen from somewhere else
-watch(filterCategory, () => {
-    fetchProducts()
+  fetchStatistics().then(() => fetchProducts())
 })
 </script>
 
@@ -414,10 +372,10 @@ watch(filterCategory, () => {
   box-sizing: border-box;
 }
 
-/* ===== FIXED TOP AREA ===== */
+/* ===== STICKY HEADER ===== */
 .sticky-header-wrapper {
   position: sticky;
-  top: -20px;  /* offset to compensate for global view-container padding */
+  top: -20px;
   z-index: 100;
   background: #f4f5f9;
   padding: 16px 20px 10px;
@@ -426,136 +384,114 @@ watch(filterCategory, () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* ===== HEADER ===== */
+/* ===== PAGE HEADER ===== */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
-.page-header h2 {
-  margin: 0 0 4px;
+.header-left h2 {
+  margin: 0 0 2px;
   font-size: 22px;
   font-weight: 800;
   color: #1e1b4b;
   letter-spacing: -0.3px;
 }
-.breadcrumb { margin-top: 2px; }
+.page-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 400;
+}
 .header-actions { display: flex; gap: 10px; }
-
-.btn-primary {
+.btn-create {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border: none;
   border-radius: 9px;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 8px 18px;
   box-shadow: 0 4px 14px rgba(99,102,241,0.35);
   transition: box-shadow 0.2s, transform 0.15s;
 }
-.btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(99,102,241,0.45);
+.btn-create:hover {
+  box-shadow: 0 6px 20px rgba(99,102,241,0.5);
   transform: translateY(-1px);
 }
 
 /* ===== STAT CARDS ===== */
-.stats-container {
-  margin-bottom: 12px;
-}
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  margin-bottom: 0;
+  margin-bottom: 12px;
 }
 .stat-card {
   background: #fff;
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 10px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-  border: 1px solid #e2e8f0;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  border: 1px solid #e4e8f0;
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.15s;
 }
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgba(99,102,241,0.08); 
-  transform: translateY(-1px); 
-}
+.stat-card:hover { box-shadow: 0 4px 14px rgba(99,102,241,0.1); transform: translateY(-1px); }
+
 .stat-icon {
-  width: 32px; height: 32px;
-  border-radius: 8px;
+  width: 36px; height: 36px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
+  font-size: 18px; flex-shrink: 0;
 }
 .total .stat-icon { background: #ede9fe; color: #6366f1; }
 .in-stock .stat-icon { background: #d1fae5; color: #10b981; }
 .low-stock .stat-icon { background: #fef3c7; color: #f59e0b; }
 .out-of-stock .stat-icon { background: #fee2e2; color: #ef4444; }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
+.stat-info { display: flex; flex-direction: column; gap: 1px; }
+.stat-value { font-size: 20px; font-weight: 800; color: #1e1b4b; line-height: 1; }
+.stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.stat-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 20px;
 }
+.stat-badge.negative { background: rgba(239,68,68,0.1); color: #ef4444; }
 
-.stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; }
-.stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-
-.stat-dot {
-  position: absolute; top: 10px; right: 10px;
-  width: 6px; height: 6px; border-radius: 50%;
-}
-.total .stat-dot { background: #6366f1; }
-.in-stock .stat-dot { background: #10b981; }
-.low-stock .stat-dot { background: #f59e0b; }
-.out-of-stock .stat-dot { background: #ef4444; }
-
-.text-warning { color: #f59e0b; }
-.text-danger { color: #ef4444; }
-.text-success { color: #10b981; }
-
-/* ===== FILTER BAR ===== */
+/* ===== FILTERS TOOLBAR ===== */
 .filters-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 0px;
   background: transparent;
-  padding-bottom: 0px;
 }
-
-.search-input {
-  flex: 1;
-  max-width: 320px;
-}
-
+.search-input { width: 220px; flex-shrink: 0; }
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  border: 1px solid #e4e8f0;
   box-shadow: none !important;
   background: #fff;
-  height: 28px;
+  height: 30px;
 }
-
-.search-input :deep(.el-input__inner) {
-  font-size: 12px;
-}
-
 .search-input :deep(.el-input__wrapper.is-focus) {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
 }
-
 .category-chips {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  flex: 1;
 }
-
 .chip {
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
   background: #fff;
@@ -564,156 +500,103 @@ watch(filterCategory, () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
-
 .chip:hover { border-color: #6366f1; color: #6366f1; }
-.chip.active {
-  background: #6366f1;
-  color: #fff;
-  border-color: #6366f1;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.28);
-}
+.chip.active { background: #6366f1; color: #fff; border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,0.28); }
 
-.view-toggle {
-  margin-left: auto;
-}
+.view-toggle { margin-left: auto; }
+.view-toggle :deep(.el-radio-button__inner) { padding: 5px 10px; font-size: 13px; }
 
-.view-toggle :deep(.el-radio-button__inner) {
-  padding: 5px 12px;
-  font-size: 14px;
-}
+/* ===== CONTENT ===== */
+.content-container { padding: 12px 20px 20px; }
 
-/* ===== CONTENT AREA ===== */
-.content-container {
-  padding: 20px;
-}
-
-.product-card {
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 16px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  border-color: #cbd5e1;
-}
-
-.product-image-container {
-  position: relative;
-  height: 140px; /* Reduced to make cards denser */
-  background: #f4f4f4;
-}
-
-.product-image { width: 100%; height: 100%; }
-
-.image-placeholder {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  color: #d1d1d1;
-}
-
-.product-actions-overlay {
-  position: absolute;
-  top: 8px; right: 8px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.product-card:hover .product-actions-overlay { opacity: 1; }
-
-.product-details { padding: 12px; }
-
-.category-tag {
-  font-size: 9px; font-weight: 700;
-  color: #64748b; text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.product-title {
-  margin: 0 0 8px 0;
-  font-size: 13px; font-weight: 600;
-  color: #1e293b; cursor: pointer;
-  line-height: 1.3; height: 34px;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.price-value { font-size: 14px; font-weight: 700; color: #1e293b; }
-.price-unit { font-size: 12px; color: #64748b; margin-left: 2px; }
-
-.stock-status { margin-bottom: 10px; }
-.stock-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
-.stock-label { color: #64748b; font-weight: 500; }
-.stock-value { font-weight: 700; }
-
-/* List View Styles */
-.table-card {
+/* ===== TABLE WRAPPER ===== */
+.table-wrapper {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid #e4e8f0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-  border: 1px solid #e2e8f0;
   overflow: hidden;
-  margin-bottom: 20px;
-  height: calc(100vh - 230px);
 }
 
-.list-view-container {
-  height: 100%;
-}
-
-.list-view-container :deep(.el-table) {
-  height: 100% !important;
-}
-
-.list-view-container :deep(.el-table__inner-wrapper) {
-  height: 100%;
-}
-
-.list-image { width: 32px; height: 32px; border-radius: 6px; }
-.list-image-placeholder {
-  width: 32px; height: 32px;
-  background: #f4f4f4; border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  color: #d1d1d1;
-}
-
-.list-view-container :deep(th.el-table__cell) {
+.products-table :deep(th.el-table__cell) {
   background: #f8fafc !important;
-  color: #64748b;
+  padding: 6px 8px !important;
+  border-bottom: 1px solid #e4e8f0 !important;
+}
+.col-header {
   font-size: 10px;
   font-weight: 700;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border-bottom: 1px solid #e2e8f0 !important;
-  padding: 6px 8px !important;
+  letter-spacing: 0.5px;
 }
-
-.list-view-container :deep(td.el-table__cell) {
-  padding: 4px 8px !important;
-  font-size: 12px;
+.products-table :deep(td.el-table__cell) {
+  padding: 5px 8px !important;
   border-bottom: 1px solid #f1f5f9 !important;
   border-right: none !important;
 }
+.products-table :deep(.el-table__inner-wrapper::before) { display: none; }
+.products-table :deep(.product-row) { cursor: pointer; transition: background 0.12s; }
+.products-table :deep(.product-row:hover > td) { background: #f8f7ff !important; }
 
-.list-view-container :deep(.product-row) { cursor: pointer; transition: background 0.15s; }
-.list-view-container :deep(.product-row:hover > td) { background: #f8fafc !important; }
-.list-view-container :deep(.el-table__inner-wrapper::before) { display: none; }
-
-.pagination-footer {
-  display: flex; justify-content: center;
-  padding: 20px 0;
+/* Table cell styles */
+.list-image { width: 36px; height: 36px; border-radius: 8px; display: block; }
+.list-image-placeholder {
+  width: 36px; height: 36px;
+  background: #f1f5f9; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #94a3b8; font-size: 16px;
 }
+.sku-link { color: #6366f1; font-weight: 600; font-size: 12px; cursor: pointer; }
+.sku-link:hover { text-decoration: underline; }
+.product-name-link { color: #1e293b; font-weight: 500; font-size: 13px; cursor: pointer; }
+.product-name-link:hover { color: #6366f1; }
+.category-text { color: #64748b; font-size: 12px; }
+.stock-val { font-size: 12px; font-weight: 600; }
+.stock-ok { color: #10b981; }
+.stock-low { color: #f59e0b; }
+.stock-none { color: #ef4444; }
+.price-val { font-size: 12px; font-weight: 600; color: #1e293b; }
+
+/* Pagination */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid #f1f5f9;
+}
+.total-hint { font-size: 12px; color: #94a3b8; }
+.custom-pagination :deep(.el-pager li) { border-radius: 6px; min-width: 28px; height: 28px; line-height: 28px; }
+.custom-pagination :deep(.el-pager li.is-active) { background: #6366f1 !important; color: #fff !important; }
+
+/* Grid card */
+.product-card {
+  border-radius: 10px;
+  border: 1px solid #e4e8f0;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.1) !important; border-color: #c7d2fe; }
+.product-image-container { position: relative; height: 150px; background: #f4f5f9; }
+.product-image { width: 100%; height: 100%; }
+.image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d1d5db; }
+.product-actions-overlay { position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
+.product-card:hover .product-actions-overlay { opacity: 1; }
+.product-details { padding: 12px; }
+.category-tag { font-size: 9px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.product-title { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #1e293b; cursor: pointer; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.price-row { margin-bottom: 4px; }
+.price-value { font-size: 14px; font-weight: 700; color: #1e293b; }
+.price-unit { font-size: 12px; color: #94a3b8; }
+.stock-row { display: flex; justify-content: space-between; font-size: 11px; }
+.stock-label { color: #94a3b8; }
 
 @media (max-width: 640px) {
-  .sticky-header-wrapper { padding: 16px 16px 0 16px; }
-  .filters-toolbar { gap: 12px; }
+  .sticky-header-wrapper { padding: 12px 12px 8px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
   .search-input { width: 100%; }
 }
 </style>

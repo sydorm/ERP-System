@@ -3,16 +3,21 @@
     <!-- === TOP BAR === -->
     <div class="page-header">
       <div class="header-left">
-        <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" />
-        <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+        <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" title="Назад" />
+        <div>
+          <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+          <p class="page-subtitle">{{ isEditMode ? `Артикул: ${form.sku}` : 'Створення нової номенклатури' }}</p>
+        </div>
       </div>
       <div class="header-actions">
-        <el-button v-if="isEditMode" type="danger" @click="confirmDelete" plain>
+        <el-button @click="goBack" class="btn-cancel">
+          <el-icon><Close /></el-icon> Скасувати
+        </el-button>
+        <el-button v-if="isEditMode" type="danger" plain @click="confirmDelete" class="btn-delete">
           Видалити
         </el-button>
-        <el-button @click="goBack">Скасувати</el-button>
         <el-button type="primary" :loading="submitting" @click="saveProduct" class="btn-save">
-          Зберегти
+          <el-icon><Check /></el-icon> Зберегти
         </el-button>
       </div>
     </div>
@@ -47,12 +52,12 @@
 
           <el-tab-pane label="Специфікації (BOM)" name="specification">
             <template v-if="form.id">
-               <SpecificationTab :product-id="form.id" />
+              <SpecificationTab :product-id="form.id" />
             </template>
             <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
           </el-tab-pane>
 
-          <el-tab-pane label="Складські запаси" name="inventory">
+          <el-tab-pane label="Складський запас" name="inventory">
             <InventoryTab :stock-levels="stockLevels" />
           </el-tab-pane>
 
@@ -68,6 +73,43 @@
               @update:variants="(val) => form.variants = val"
             />
           </el-tab-pane>
+
+          <el-tab-pane label="Постачальники" name="suppliers">
+            <div class="empty-tab">
+              <el-empty description="Розділ Постачальники буде доступний в наступній версії" />
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="Альтернативи" name="alternatives">
+            <div class="empty-tab">
+              <el-empty description="Розділ Альтернативи буде доступний в наступній версії" />
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="Виробництво" name="manufacturing">
+            <div class="empty-tab">
+              <el-empty description="Розділ Виробництво буде доступний в наступній версії" />
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="Пакування" name="packaging">
+            <div class="empty-tab">
+              <el-empty description="Параметри пакування будуть доступні в наступній версії" />
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="Нотатки" name="notes">
+            <div class="notes-tab">
+              <el-form-item label="Внутрішні нотатки">
+                <el-input
+                  v-model="form.notes"
+                  type="textarea"
+                  :rows="8"
+                  placeholder="Додайте внутрішні нотатки для цього товару..."
+                />
+              </el-form-item>
+            </div>
+          </el-tab-pane>
         </el-tabs>
       </div>
     </div>
@@ -77,7 +119,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Close, Check } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
@@ -111,6 +153,14 @@ const form = reactive({
     currency: 'UAH',
     image_url: '',
     is_active: true,
+    track_inventory: true,
+    barcode: '',
+    internal_code: '',
+    weight_kg: 0,
+    length_cm: 0,
+    width_cm: 0,
+    tags: [],
+    notes: '',
     variants: []
 })
 
@@ -297,10 +347,17 @@ onMounted(() => {
 }
 
 .header-left h2 {
-  margin: 0;
+  margin: 0 0 2px;
   font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: #1e1b4b;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 400;
 }
 
 .header-actions {
@@ -308,11 +365,23 @@ onMounted(() => {
   gap: 10px;
 }
 
+.btn-cancel {
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 500;
+}
+
 .btn-save {
-  background: #2563eb;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border: none;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.btn-save:hover {
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
 }
 
 /* === EDITOR CONTENT === */
@@ -370,5 +439,15 @@ onMounted(() => {
 
 .product-tabs :deep(.el-tabs__content) {
   padding: 0;
+}
+
+.empty-tab {
+  padding: 48px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.notes-tab {
+  padding: 24px;
 }
 </style>
