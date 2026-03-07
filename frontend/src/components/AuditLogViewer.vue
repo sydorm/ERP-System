@@ -39,8 +39,8 @@
                 <tbody>
                   <tr v-for="(change, field) in log.changes" :key="field">
                     <td class="field-name">{{ formatFieldName(field) }}</td>
-                    <td class="old-value">{{ formatValue(change.old, field === 'counterparty_id') }}</td>
-                    <td class="new-value">{{ formatValue(change.new, field === 'counterparty_id') }}</td>
+                    <td class="old-value">{{ formatValue(change.old, field) }}</td>
+                    <td class="new-value">{{ formatValue(change.new, field) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -160,7 +160,15 @@ const formatFieldName = (field) => {
   return fieldNamesDict[field] || field
 }
 
-const formatValue = (val, isCounterpartyField = false) => {
+const statusDict = {
+  'draft': 'Чернетка',
+  'confirmed': 'Підтверджено',
+  'shipped': 'Відвантажено',
+  'completed': 'Завершено',
+  'cancelled': 'Скасовано'
+}
+
+const formatValue = (val, fieldName = null) => {
   if (val === null || val === undefined || val === 'None') return '—'
   
   if (Array.isArray(val)) {
@@ -186,15 +194,19 @@ const formatValue = (val, isCounterpartyField = false) => {
   }
 
   // Try to parse floats to keep it clean if it's a number
-  if (!isNaN(val) && val !== '') {
+  if (typeof val === 'string' && !isNaN(val) && val !== '') {
     const num = parseFloat(val)
     if (!Number.isInteger(num)) {
        return num.toFixed(2)
     }
   }
   
-  if (isCounterpartyField) {
+  if (fieldName === 'counterparty_id') {
     return counterpartiesCache.value[val] || val
+  }
+  
+  if (fieldName === 'status') {
+    return statusDict[val.toLowerCase()] || val
   }
   
   return val
