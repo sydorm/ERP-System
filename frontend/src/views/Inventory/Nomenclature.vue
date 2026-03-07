@@ -11,7 +11,9 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <!-- Buttons removed per user request: nomenclature will be added via documents -->
+          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-primary">
+            Створити товар
+          </el-button>
         </div>
       </div>
 
@@ -163,8 +165,8 @@
 
       <!-- List View -->
       <div v-else class="list-view-container">
-        <el-table :data="products" style="width: 100%" @row-click="handleEdit">
-          <el-table-column width="80">
+        <el-table :data="products" style="width: 100%" size="small" @row-click="handleEdit" row-class-name="product-row">
+          <el-table-column width="60">
             <template #default="scope">
               <el-image :src="scope.row.image_url" class="list-image">
                 <template #error>
@@ -602,13 +604,31 @@ watch(filterCategory, () => {
 .stock-value { font-weight: 700; }
 
 /* List View Styles */
-.list-image { width: 48px; height: 48px; border-radius: 8px; }
+.list-image { width: 32px; height: 32px; border-radius: 6px; }
 .list-image-placeholder {
-  width: 48px; height: 48px;
-  background: #f4f4f4; border-radius: 8px;
+  width: 32px; height: 32px;
+  background: #f4f4f4; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
   color: #d1d1d1;
 }
+
+.list-view-container :deep(th.el-table__cell) {
+  background: #f8fafc !important;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 6px 8px !important;
+}
+
+.list-view-container :deep(td.el-table__cell) {
+  padding: 4px 8px !important;
+  font-size: 12px;
+}
+
+.list-view-container :deep(.product-row) { cursor: pointer; transition: background 0.15s; }
+.list-view-container :deep(.product-row:hover > td) { background: #f8fafc !important; }
 
 .pagination-footer {
   display: flex; justify-content: center;
