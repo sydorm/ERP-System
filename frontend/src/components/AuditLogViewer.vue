@@ -160,7 +160,7 @@ const formatFieldName = (field) => {
   return fieldNamesDict[field] || field
 }
 
-const formatValue = (val) => {
+const formatValue = (val, isCounterpartyField = false) => {
   if (val === null || val === undefined || val === 'None') return '—'
   
   if (Array.isArray(val)) {
