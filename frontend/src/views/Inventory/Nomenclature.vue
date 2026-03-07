@@ -164,8 +164,15 @@
       </el-row>
 
       <!-- List View -->
-      <div v-else class="list-view-container">
-        <el-table :data="products" style="width: 100%" size="small" @row-click="handleEdit" row-class-name="product-row">
+      <div v-else class="list-view-container table-card">
+        <el-table 
+          :data="products" 
+          height="calc(100vh - 230px)"
+          style="width: 100%" 
+          size="small" 
+          @row-click="handleEdit" 
+          row-class-name="product-row"
+        >
           <el-table-column width="60">
             <template #default="scope">
               <el-image :src="scope.row.image_url" class="list-image">
@@ -647,6 +654,15 @@ watch(filterCategory, () => {
 .stock-value { font-weight: 700; }
 
 /* List View Styles */
+.table-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
 .list-image { width: 32px; height: 32px; border-radius: 6px; }
 .list-image-placeholder {
   width: 32px; height: 32px;
@@ -658,20 +674,24 @@ watch(filterCategory, () => {
 .list-view-container :deep(th.el-table__cell) {
   background: #f8fafc !important;
   color: #64748b;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  border-bottom: 1px solid #e2e8f0 !important;
   padding: 6px 8px !important;
 }
 
 .list-view-container :deep(td.el-table__cell) {
   padding: 4px 8px !important;
   font-size: 12px;
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-right: none !important;
 }
 
 .list-view-container :deep(.product-row) { cursor: pointer; transition: background 0.15s; }
 .list-view-container :deep(.product-row:hover > td) { background: #f8fafc !important; }
+.list-view-container :deep(.el-table__inner-wrapper::before) { display: none; }
 
 .pagination-footer {
   display: flex; justify-content: center;
