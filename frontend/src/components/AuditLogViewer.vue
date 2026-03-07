@@ -83,7 +83,7 @@ const resolveCounterpartyName = async (id) => {
   if (counterpartiesCache.value[id]) return counterpartiesCache.value[id]
   
   try {
-    const res = await api.get(`/counterparties/${id}`)
+    const res = await api.get(`/api/v1/counterparties/${id}`)
     counterpartiesCache.value[id] = res.data.name
     return res.data.name
   } catch (e) {
