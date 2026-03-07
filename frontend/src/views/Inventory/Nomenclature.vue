@@ -661,6 +661,24 @@ watch(filterCategory, () => {
   border: 1px solid #e2e8f0;
   overflow: hidden;
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-view-container :deep(.el-table) {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-view-container :deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.list-view-container :deep(.el-table__body-wrapper) {
+  overflow-y: auto;
+  flex: 1;
 }
 
 .list-image { width: 32px; height: 32px; border-radius: 6px; }
