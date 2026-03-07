@@ -571,11 +571,12 @@ const saveOrder = async () => {
     if (isEditMode.value) {
       await api.put(`/api/v1/orders/${route.params.id}`, payload)
       ElMessage.success('Замовлення оновлено')
+      await fetchData()
     } else {
-      await api.post('/api/v1/orders', payload)
+      const res = await api.post('/api/v1/orders', payload)
       ElMessage.success('Замовлення створено')
+      router.push(`/sales/orders/${res.data.id}`)
     }
-    goBack()
   } catch (error) {
     ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
   } finally {
