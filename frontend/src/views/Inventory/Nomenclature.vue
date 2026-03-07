@@ -661,24 +661,19 @@ watch(filterCategory, () => {
   border: 1px solid #e2e8f0;
   overflow: hidden;
   margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
+  height: calc(100vh - 230px);
+}
+
+.list-view-container {
+  height: 100%;
 }
 
 .list-view-container :deep(.el-table) {
-  display: flex;
-  flex-direction: column;
+  height: 100% !important;
 }
 
-.list-view-container :deep(.el-table__header-wrapper) {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.list-view-container :deep(.el-table__body-wrapper) {
-  overflow-y: auto;
-  flex: 1;
+.list-view-container :deep(.el-table__inner-wrapper) {
+  height: 100%;
 }
 
 .list-image { width: 32px; height: 32px; border-radius: 6px; }
