@@ -110,7 +110,8 @@ class PostingService:
         # 1. Total active products
         total_products = db.query(func.count(Product.id)).filter(
             Product.company_id == company_id,
-            Product.is_active == True
+            Product.is_active == True,
+            Product.is_deleted == False
         ).scalar() or 0
 
         # 2. Balances for all products
@@ -123,7 +124,8 @@ class PostingService:
         # We need to consider all active products, even those without register entries (0 balance)
         all_active_product_ids = [str(id[0]) for id in db.query(Product.id).filter(
             Product.company_id == company_id,
-            Product.is_active == True
+            Product.is_active == True,
+            Product.is_deleted == False
         ).all()]
 
         for p_id in all_active_product_ids:
