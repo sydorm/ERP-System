@@ -129,7 +129,6 @@
       <div v-else class="table-wrapper" v-loading="loading">
         <el-table
           :data="products"
-          height="calc(100vh - 256px)"
           style="width: 100%"
           size="small"
           class="products-table"
@@ -368,14 +367,16 @@ onActivated(() => {
 .page-container {
   padding: 0;
   background: #f4f5f9;
-  min-height: 100vh;
+  height: 100vh;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* ===== STICKY HEADER ===== */
+/* ===== HEADER (fixed, non-scrolling) ===== */
 .sticky-header-wrapper {
-  position: sticky;
-  top: -20px;
+  flex-shrink: 0;
   z-index: 100;
   background: #f4f5f9;
   padding: 16px 20px 10px;
@@ -508,7 +509,11 @@ onActivated(() => {
 .view-toggle :deep(.el-radio-button__inner) { padding: 5px 10px; font-size: 13px; }
 
 /* ===== CONTENT ===== */
-.content-container { padding: 12px 20px 20px; }
+.content-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 20px;
+}
 
 /* ===== TABLE WRAPPER ===== */
 .table-wrapper {
