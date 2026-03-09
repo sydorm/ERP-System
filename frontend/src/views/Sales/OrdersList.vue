@@ -1,128 +1,112 @@
 <template>
   <div class="orders-page">
     <div class="fixed-top-area">
+      <el-breadcrumb separator="/" class="kimi-breadcrumb">
+        <el-breadcrumb-item :to="{ path: '/dashboard' }">Продажі</el-breadcrumb-item>
+        <el-breadcrumb-item>Замовлення</el-breadcrumb-item>
+      </el-breadcrumb>
+
       <!-- ===== PAGE HEADER ===== -->
-      <div class="page-header">
-      <div>
-        <h1 class="page-title">Замовлення клієнтів</h1>
-        <el-breadcrumb separator="/" class="breadcrumb">
-          <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-          <el-breadcrumb-item>Продажі</el-breadcrumb-item>
-          <el-breadcrumb-item>Замовлення</el-breadcrumb-item>
-        </el-breadcrumb>
+      <div class="kimi-page-header">
+        <div>
+          <h1 class="kimi-page-title">Замовлення покупців</h1>
+          <p class="kimi-page-subtitle">Керуйте вашими товарами та відстежуйте запаси</p>
+        </div>
       </div>
-      <div class="header-actions">
-        <el-button :icon="Download" @click="handleExportCSV" class="btn-export">
-          Excel
-        </el-button>
-        <el-button type="primary" :icon="Plus" @click="handleCreate" class="btn-create">
-          Створити замовлення
-        </el-button>
-      </div>
-    </div>
 
-    <!-- ===== STAT CARDS ===== -->
-    <div class="stats-row">
-      <!-- Всього замовлень -->
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#ede9fe"><el-icon style="color:#6366f1"><Document /></el-icon></div>
-        <div class="stat-body">
-          <div class="stat-value">{{ orders.length }}</div>
-          <div class="stat-label">Всього замовлень</div>
-        </div>
-        <div class="stat-dot" style="background:#6366f1"></div>
+      <!-- ===== APP TABS (Visual only to match screenshot) ===== -->
+      <div class="kimi-app-tabs">
+        <div class="kimi-app-tab">Головна</div>
+        <div class="kimi-app-tab active">Номенклатура <span class="close-x">×</span></div>
+        <div class="kimi-app-tab">Склади</div>
       </div>
-      <!-- Загальна сума -->
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#d1fae5"><el-icon style="color:#10b981"><Wallet /></el-icon></div>
-        <div class="stat-body">
-          <div class="stat-value stat-value--sum">{{ formatCurrency(orders.reduce((s, o) => s + (+o.total_amount || 0), 0)) }}</div>
-          <div class="stat-label">Загальна сума</div>
-        </div>
-        <div class="stat-dot" style="background:#10b981"></div>
-      </div>
-      <!-- В роботі -->
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fef3c7"><el-icon style="color:#f59e0b"><Clock /></el-icon></div>
-        <div class="stat-body">
-          <div class="stat-value">{{ orders.filter(o => ['confirmed','draft','shipped'].includes(o.status)).length }}</div>
-          <div class="stat-label">В роботі</div>
-        </div>
-        <div class="stat-dot" style="background:#f59e0b"></div>
-      </div>
-      <!-- Виконано -->
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#f0fdf4"><el-icon style="color:#22c55e"><Check /></el-icon></div>
-        <div class="stat-body">
-          <div class="stat-value">{{ orders.filter(o => o.status === 'completed').length }}</div>
-          <div class="stat-label">Виконано</div>
-        </div>
-        <div class="stat-dot" style="background:#22c55e"></div>
-      </div>
-    </div>
 
-    <!-- ===== QUICK FILTER TABS ===== -->
-    <div class="quick-filters">
-      <button
-        class="filter-tab"
-        :class="{ active: activeTab === '' }"
-        @click="setTab('')"
-      >Всі <span class="tab-count">{{ orders.length }}</span></button>
-      <button
-        v-for="s in orderStatuses"
-        :key="s.code"
-        class="filter-tab"
-        :class="{ active: activeTab === s.code }"
-        :style="activeTab === s.code ? { background: getStatusHex(s.color), color: '#fff', borderColor: getStatusHex(s.color) } : {}"
-        @click="setTab(s.code)"
-      >
-        {{ s.name }}
-        <span class="tab-count" :style="activeTab === s.code ? { background: 'rgba(255,255,255,0.25)', color: '#fff' } : {}">
-          {{ orders.filter(o => o.status === s.code).length }}
-        </span>
-      </button>
-    </div>
+      <!-- ===== STAT CARDS ===== -->
+      <div class="kimi-stats-row">
+        <!-- Всього замовлень -->
+        <div class="kimi-stat-card kimi-stat-indigo">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Всього замовлень</p>
+              <p class="kimi-stat-value text-indigo-600">{{ orders.length }}</p>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+              <el-icon><Document /></el-icon>
+            </div>
+          </div>
+        </div>
+        <!-- Загальна сума -->
+        <div class="kimi-stat-card kimi-stat-emerald">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Загальна сума</p>
+              <p class="kimi-stat-value text-emerald-600">{{ formatCurrency(orders.reduce((s, o) => s + (+o.total_amount || 0), 0)) }} ₴</p>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+              <el-icon><Wallet /></el-icon>
+            </div>
+          </div>
+        </div>
+        <!-- В роботі -->
+        <div class="kimi-stat-card kimi-stat-amber">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">В роботі</p>
+              <p class="kimi-stat-value text-amber-600">{{ orders.filter(o => ['confirmed','draft','shipped'].includes(o.status)).length }}</p>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+              <el-icon><Clock /></el-icon>
+            </div>
+          </div>
+        </div>
+        <!-- Виконано -->
+        <div class="kimi-stat-card kimi-stat-blue">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Виконано</p>
+              <p class="kimi-stat-value text-blue-600">{{ orders.filter(o => o.status === 'completed').length }}</p>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
+              <el-icon><Check /></el-icon>
+            </div>
+          </div>
+        </div>
+      </div>
 
     <!-- ===== SEARCH & FILTER BAR ===== -->
-    <div class="filter-bar">
-      <el-input
-        ref="searchInputRef"
-        v-model="searchQuery"
-        placeholder="Пошук за номером або клієнтом або телефоном..."
-        :prefix-icon="Search"
-        clearable
-        @input="handleSearch"
-        class="search-input"
-      />
-      <el-select
-        v-model="activeTab"
-        placeholder="Всі статуси"
-        clearable
-        style="width:155px;flex-shrink:0"
-        @change="(v) => setTab(v || '')"
-        class="status-select"
-      >
-        <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code" />
-      </el-select>
-      <div style="width: 230px; flex-shrink: 0; overflow: hidden;">
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          size="small"
-          style="width: 230px !important"
-          range-separator="—"
-          start-placeholder="Від"
-          end-placeholder="До"
-          format="DD.MM.YYYY"
-          value-format="YYYY-MM-DD"
-          @change="fetchOrders"
-          class="date-picker"
+    <div class="kimi-filter-bar">
+      <div class="kimi-filter-left">
+        <el-input
+          ref="searchInputRef"
+          v-model="searchQuery"
+          placeholder="Пошук за номером, клієнтом або телефоном..."
+          :prefix-icon="Search"
+          clearable
+          @input="handleSearch"
+          class="kimi-search-input"
         />
+        <el-select
+          v-model="activeTab"
+          placeholder="Всі статуси"
+          clearable
+          style="width:160px"
+          @change="(v) => setTab(v || '')"
+          class="kimi-status-select"
+        >
+          <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code" />
+        </el-select>
+        <el-button class="kimi-refresh-btn" @click="fetchOrders" title="Оновити">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+        <el-button link class="reset-btn" @click="handleReset" v-if="searchQuery || dateRange || activeTab">
+          Скинути
+        </el-button>
       </div>
-      <el-button :icon="Refresh" circle @click="fetchOrders" class="refresh-btn" title="Оновити" />
-      <el-button link class="reset-btn" @click="handleReset" v-if="searchQuery || dateRange || activeTab">
-        Скинути фільтри
-      </el-button>
+      <div class="kimi-filter-right">
+        <button class="kimi-primary-btn" @click="handleCreate">
+          <el-icon><Plus /></el-icon> Нове замовлення
+        </button>
+      </div>
     </div>
 
     <!-- ===== BULK ACTION BAR ===== -->
@@ -150,78 +134,86 @@
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange"
         @row-click="handleRowClick"
-        row-class-name="order-row"
+        row-class-name="kimi-row"
+        header-row-class-name="kimi-header-row"
       >
-        <el-table-column type="selection" width="40" />
+        <el-table-column type="selection" width="40" align="center" />
 
         <!-- Row # -->
         <el-table-column label="№" width="46" align="center">
           <template #default="{ $index }">
-            <span class="row-num">{{ (currentPage - 1) * pageSize + $index + 1 }}</span>
+            <span class="kimi-text-xs kimi-text-slate-400">{{ (currentPage - 1) * pageSize + $index + 1 }}</span>
           </template>
         </el-table-column>
 
         <!-- Order number + date combined -->
         <el-table-column label="Номер / Дата" width="160" sortable="custom" prop="order_number">
           <template #default="{ row }">
-            <div class="num-date-cell">
-              <span class="order-num">{{ row.order_number }}</span>
-              <span class="date-sub">{{ formatDate(row.order_date) }}</span>
+            <div>
+              <p class="kimi-text-sm kimi-font-medium kimi-text-indigo-600">{{ row.order_number }}</p>
+              <p class="kimi-text-xxs kimi-text-slate-400">{{ formatDate(row.order_date) }}</p>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column label="Клієнт" min-width="200">
           <template #default="{ row }">
-            <div class="client-cell">
-              <div class="client-avatar">{{ getClientInitials(row.counterparty_id) }}</div>
-              <span>{{ getCounterpartyName(row.counterparty_id) || '—' }}</span>
+            <div>
+              <p class="kimi-text-sm kimi-font-medium">{{ getCounterpartyName(row.counterparty_id) || '—' }}</p>
+              <p class="kimi-text-xxs kimi-text-slate-400">{{ getCounterpartyPhone(row.counterparty_id) || '—' }}</p>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="Статус" width="155">
+        <el-table-column label="Статус" width="155" align="center">
           <template #default="{ row }">
-            <span class="status-badge" :style="getStatusStyle(row.status)">
+            <span class="kimi-badge" :class="getStatusBadgeClass(row.status)">
+              <el-icon class="kimi-badge-icon" v-if="getStatusIcon(row.status)"><component :is="getStatusIcon(row.status)" /></el-icon>
               {{ getStatusLabel(row.status) }}
             </span>
           </template>
         </el-table-column>
 
         <!-- Payment -->
-        <el-table-column label="Оплата" width="155">
+        <el-table-column label="Оплата" width="155" align="center">
           <template #default="{ row }">
-            <div class="payment-cell">
-              <span class="payment-badge" :class="getPaymentClass(row)">{{ getPaymentLabel(row) }}</span>
-              <span class="payment-detail" v-if="row.paid_amount > 0">
-                {{ formatCurrency(row.paid_amount) }} — {{ formatCurrency(row.total_amount) }}
+            <div class="kimi-payment-col">
+              <span class="kimi-badge" :class="getPaymentBadgeClass(row)">
+                {{ getPaymentLabel(row) }}
               </span>
+              <p class="kimi-text-xxs kimi-text-slate-400 kimi-mt-1" v-if="row.paid_amount > 0">
+                {{ formatCurrency(row.paid_amount) }} / {{ formatCurrency(row.total_amount) }} ₴
+              </p>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom">
           <template #default="{ row }">
-            <span class="amount-text">{{ formatCurrency(row.total_amount) }}</span>
+            <div>
+              <p class="kimi-text-sm kimi-font-medium">{{ formatCurrency(row.total_amount) }} ₴</p>
+              <p class="kimi-text-xxs kimi-text-emerald-600" v-if="(row.discount_amount || 0) > 0">
+                - {{ formatCurrency(row.discount_amount) }} ₴
+              </p>
+            </div>
           </template>
         </el-table-column>
 
         <!-- Delivery date -->
         <el-table-column label="Доставка" width="115" align="center">
           <template #default="{ row }">
-            <span class="delivery-date">{{ row.delivery_date ? formatDate(row.delivery_date) : '—' }}</span>
+            <span class="kimi-text-xs" v-if="row.delivery_date">{{ formatDate(row.delivery_date) }}</span>
+            <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="ДЕ" width="76" align="center">
+        <el-table-column label="Дії" width="120" align="center">
           <template #default="{ row }">
-            <div @click.stop class="action-buttons">
-              <el-tooltip content="Переглянути" placement="top">
-                <span class="action-btn" @click.stop="() => { selectedOrder = row; drawerVisible = true }"><el-icon><View /></el-icon></span>
-              </el-tooltip>
-              <el-tooltip content="Редагувати" placement="top">
-                <span class="action-btn" @click.stop="handleEdit(row)"><el-icon><Edit /></el-icon></span>
-              </el-tooltip>
+            <div @click.stop class="kimi-actions-col">
+              <button class="kimi-ghost-btn" @click.stop="() => { selectedOrder = row; drawerVisible = true }" title="Переглянути"><el-icon class="kimi-text-slate-400"><View /></el-icon></button>
+              <button class="kimi-ghost-btn" @click.stop="handleEdit(row)" title="Редагувати"><el-icon class="kimi-text-indigo-400"><Edit /></el-icon></button>
+              <button class="kimi-ghost-btn" @click.stop="() => handlePrint(row)" title="Друк"><el-icon class="kimi-text-slate-400"><Printer /></el-icon></button>
+              <button class="kimi-ghost-btn" @click.stop="handleDelete(row)" title="Видалити"><el-icon class="kimi-text-rose-400"><Delete /></el-icon></button>
             </div>
           </template>
         </el-table-column>
@@ -538,50 +530,66 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 // ===== HELPERS =====
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('uk-UA') : '—'
-const getCounterpartyName = (id) => counterparties.value[id] || ''
+const getCounterpartyName = (id) => counterparties.value[id]?.name || counterparties.value[id] || ''
+const getCounterpartyPhone = (id) => counterparties.value[id]?.phone || ''
+
 const getClientInitials = (id) => {
-  const name = counterparties.value[id] || '?'
+  const name = getCounterpartyName(id) || '?'
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 const formatCurrency = (v) =>
   new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', maximumFractionDigits: 0 }).format(v || 0)
 
-const STATUS_HEX = {
-  blue: '#6366f1', green: '#10b981', red: '#ef4444',
-  orange: '#f59e0b', gray: '#6b7280', purple: '#8b5cf6',
-  teal: '#14b8a6', info: '#6366f1', success: '#10b981',
-  warning: '#f59e0b', danger: '#ef4444'
-}
-const getStatusHex = (color) => STATUS_HEX[color] || '#6366f1'
-
-const getStatusStyle = (code) => {
+const getStatusBadgeClass = (code) => {
   const s = orderStatuses.value.find(i => i.code === code)
-  const hex = getStatusHex(s?.color)
-  return {
-    background: hex + '18',
-    color: hex,
-    borderColor: hex + '40'
+  const color = s?.color || 'gray'
+  const map = {
+    blue: 'kimi-status-blue',
+    green: 'kimi-status-emerald',
+    success: 'kimi-status-emerald',
+    red: 'kimi-status-rose',
+    danger: 'kimi-status-rose',
+    orange: 'kimi-status-amber',
+    warning: 'kimi-status-amber',
+    purple: 'kimi-status-indigo',
+    gray: 'kimi-status-slate'
   }
+  return map[color] || 'kimi-status-slate'
 }
+
+const getStatusIcon = (code) => {
+  const map = {
+    'draft': 'Document',
+    'confirmed': 'Check',
+    'in_production': 'Clock',
+    'ready': 'Box',
+    'shipped': 'Van',
+    'delivered': 'Check',
+    'cancelled': 'Close'
+  }
+  return map[code] || ''
+}
+
 const getStatusLabel = (code) => {
   const s = orderStatuses.value.find(i => i.code === code)
   return s?.name || code || '—'
 }
 
 // ===== PAYMENT HELPERS =====
-const getPaymentClass = (row) => {
-  if (!row.total_amount || row.total_amount <= 0) return 'payment-none'
+const getPaymentBadgeClass = (row) => {
+  if (!row.total_amount || row.total_amount <= 0) return 'kimi-payment-rose'
   const paid = parseFloat(row.paid_amount) || 0
   const total = parseFloat(row.total_amount) || 0
-  if (paid >= total) return 'payment-full'
-  if (paid > 0) return 'payment-partial'
-  return 'payment-none'
+  if (paid >= total) return 'kimi-payment-emerald'
+  if (paid > 0) return 'kimi-payment-amber'
+  return 'kimi-payment-rose'
 }
 
 const getPaymentLabel = (row) => {
+  if (!row.total_amount || row.total_amount <= 0) return 'Не оплачено'
   const paid = parseFloat(row.paid_amount) || 0
   const total = parseFloat(row.total_amount) || 0
-  if (paid >= total && total > 0) return 'Оплачено'
+  if (paid >= total) return 'Оплачено'
   if (paid > 0) return 'Частково'
   return 'Не оплачено'
 }
@@ -987,4 +995,99 @@ const getTimeline = (order) => {
   .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
   .client-avatar { display: none; }
 }
+/* ===== KIMI NEW STYLES ===== */
+.kimi-breadcrumb { font-size: 13px; margin-bottom: 4px; color: #64748b; }
+.kimi-page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.kimi-page-title { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0; line-height: 1.2; }
+.kimi-page-subtitle { font-size: 13px; color: #64748b; margin: 4px 0 0 0; }
+
+.kimi-app-tabs { display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; gap: 20px; }
+.kimi-app-tab { 
+  font-size: 14px; color: #64748b; padding-bottom: 8px; cursor: pointer; position: relative;
+  display: flex; align-items: center; gap: 6px;
+}
+.kimi-app-tab.active { color: #4f46e5; font-weight: 600; }
+.kimi-app-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #4f46e5;
+}
+.kimi-app-tab .close-x { font-size: 16px; font-weight: 400; color: #94a3b8; }
+
+.kimi-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.kimi-stat-card {
+  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;
+}
+.kimi-stat-indigo { background: linear-gradient(to bottom right, #eef2ff, #fff); border-color: #e0e7ff; }
+.kimi-stat-emerald { background: linear-gradient(to bottom right, #ecfdf5, #fff); border-color: #d1fae5; }
+.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); border-color: #fef3c7; }
+.kimi-stat-blue { background: linear-gradient(to bottom right, #eff6ff, #fff); border-color: #dbeafe; }
+
+.kimi-stat-content { display: flex; align-items: center; justify-content: space-between; }
+.kimi-stat-label { font-size: 12px; color: #64748b; margin: 0 0 4px 0; }
+.kimi-stat-value { font-size: 24px; font-weight: 700; margin: 0; line-height: 1; }
+.text-indigo-600 { color: #4f46e5; }
+.text-emerald-600 { color: #059669; }
+.text-amber-600 { color: #d97706; }
+.text-blue-600 { color: #2563eb; }
+
+.kimi-stat-icon-wrapper {
+  width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.bg-indigo-100 { background: #e0e7ff; }
+.bg-emerald-100 { background: #d1fae5; }
+.bg-amber-100 { background: #fef3c7; }
+.bg-blue-100 { background: #dbeafe; }
+
+.kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.kimi-filter-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+.kimi-search-input { max-width: 400px; }
+.kimi-search-input :deep(.el-input__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.kimi-status-select :deep(.el-select__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.kimi-refresh-btn { border-radius: 6px !important; padding: 8px 12px !important; }
+
+.kimi-primary-btn {
+  background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 500;
+  padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.kimi-primary-btn:hover { background: #4338ca; }
+
+/* Kimi Table classes */
+.kimi-header-row th { background: #f8fafc !important; color: #64748b; font-size: 12px; font-weight: 500; border-bottom: 1px solid #e2e8f0 !important; }
+.kimi-row td { padding: 12px 0 !important; border-bottom: 1px solid #f1f5f9 !important; }
+.kimi-row:hover > td { background-color: #f8fafc !important; }
+
+.kimi-text-xs { font-size: 12px; }
+.kimi-text-xxs { font-size: 10px; }
+.kimi-text-sm { font-size: 14px; }
+.kimi-font-medium { font-weight: 500; }
+.kimi-text-slate-400 { color: #94a3b8; }
+.kimi-text-indigo-600 { color: #4f46e5; }
+.kimi-text-indigo-400 { color: #818cf8; }
+.kimi-text-emerald-600 { color: #059669; }
+.kimi-text-rose-400 { color: #fb7185; }
+.kimi-mt-1 { margin-top: 4px; }
+
+.kimi-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500; }
+.kimi-badge-icon { margin-right: 4px; font-size: 12px; }
+
+.kimi-status-slate { background: #f1f5f9; color: #475569; }
+.kimi-status-blue { background: #dbeafe; color: #2563eb; }
+.kimi-status-amber { background: #fef3c7; color: #d97706; }
+.kimi-status-emerald { background: #d1fae5; color: #059669; }
+.kimi-status-indigo { background: #e0e7ff; color: #4f46e5; }
+.kimi-status-rose { background: #ffe4e6; color: #e11d48; }
+
+.kimi-payment-col { display: flex; flex-direction: column; align-items: center; }
+.kimi-payment-emerald { background: #d1fae5; color: #059669; }
+.kimi-payment-amber { background: #fef3c7; color: #d97706; }
+.kimi-payment-rose { background: #ffe4e6; color: #e11d48; }
+
+.kimi-actions-col { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.kimi-ghost-btn {
+  background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+.kimi-ghost-btn:hover { background: #f1f5f9; }
+.kimi-ghost-btn .el-icon { font-size: 16px; }
+
 </style>
