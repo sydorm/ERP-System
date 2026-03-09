@@ -433,7 +433,7 @@ onMounted(() => {
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 20px;
+  padding: 8px 12px;
   background-color: #f4f5f9;
 }
 
@@ -444,8 +444,7 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #eef0f5;
   overflow: hidden;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* === TABS STYLING === */

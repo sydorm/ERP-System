@@ -257,7 +257,7 @@ const handleImageChange = async (event) => {
 }
 
 .product-form {
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
 }
 .compact-form-item { margin-bottom: 8px !important; }
