@@ -183,7 +183,7 @@
           header-row-class-name="kimi-header-row"
         >
           <!-- Photo -->
-          <el-table-column width="70" align="center">
+          <el-table-column width="80" align="center">
             <template #header>ФОТО</template>
             <template #default="scope">
               <div @click.stop>
