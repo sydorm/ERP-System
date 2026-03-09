@@ -20,14 +20,27 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        
         <div class="erp-doc-info">
-            <span class="erp-doc-title">{{ isEditMode ? 'Замовлення покупця ' + form.order_number : 'Замовлення покупця (створення)' }}</span>
-            <el-button v-if="isEditMode" size="small" class="erp-btn-icon" :icon="Timer" title="Історія змін" @click="showAuditLog" style="margin-left: 12px;" />
+          <span class="erp-doc-title">{{ isEditMode ? 'Замовлення покупця ' + form.order_number : 'Замовлення покупця (створення)' }}</span>
         </div>
+      </div>
+      <div class="erp-toolbar-right">
+        <el-button v-if="isEditMode" size="small" class="erp-btn-icon" :icon="Timer" title="Історія змін" @click="showAuditLog" />
+        <el-dropdown trigger="click" size="small">
+          <el-button size="small" class="erp-btn-icon" :icon="MoreFilled" title="Більше дій" />
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="handleCopyOrder"><el-icon><CopyDocument /></el-icon> Копіювати замовлення</el-dropdown-item>
+              <el-dropdown-item @click="handlePrint"><el-icon><Printer /></el-icon> Друк</el-dropdown-item>
+              <el-dropdown-item @click="handleSendEmail" :disabled="!selectedCustomerObj"><el-icon><Promotion /></el-icon> Надіслати email</el-dropdown-item>
+              <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт в Excel</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
+    <!-- Order header fields -->
     <div class="erp-header-fields">
       <div class="erp-field-row">
         <div class="erp-field">
@@ -44,192 +57,319 @@
           <span class="erp-label">від:</span>
           <el-date-picker v-model="form.order_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" />
         </div>
-        <div class="erp-field-links">
-           <a href="javascript:void(0)" class="erp-link">Підписи та інші реквізити</a>
+        <div class="erp-field">
+          <span class="erp-label">Відвантаження:</span>
+          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" />
         </div>
       </div>
       <div class="erp-field-row">
         <div class="erp-field client-field">
           <span class="erp-label req">Покупець:</span>
-          <el-select v-model="form.counterparty_id" filterable size="small" class="erp-input-wrapper" @change="onClientChange">
+          <el-select v-model="form.counterparty_id" filterable size="small" class="erp-input-wrapper client-select" @change="onClientChange">
             <el-option v-for="c in customers" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </div>
       </div>
-      <div class="erp-field-row">
-        <div class="erp-field">
-          <span class="erp-label">Відвантаження:</span>
-          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" />
-        </div>
-        <div class="erp-field">
-           <a href="javascript:void(0)" class="erp-link">+ Калькуляція замовлення</a>
-        </div>
+      <div class="client-info-banner" v-if="selectedCustomerObj">
+        <span class="client-info-item"><el-icon><Phone /></el-icon> {{ selectedCustomerObj.phone || '—' }}</span>
+        <span class="client-info-item"><el-icon><Message /></el-icon> {{ selectedCustomerObj.email || '—' }}</span>
+        <span class="client-info-item"><el-icon><Location /></el-icon> {{ selectedCustomerObj.address || '—' }}</span>
+        <span class="client-info-badge" v-if="selectedCustomerObj.credit_limit">
+          Кредитний ліміт: {{ formatCurrency(selectedCustomerObj.credit_limit) }}
+        </span>
       </div>
     </div>
 
-    <div class="erp-tabs-section">
-      <div class="erp-tabs">
-        <div class="erp-tab active">Товари, послуги</div>
-        <div class="erp-tab">Доставка</div>
-        <div class="erp-tab">Додатково</div>
-      </div>
-      
-      <div class="erp-table-toolbar">
-        <el-button size="small" class="erp-btn" @click="addLine">Додати</el-button>
-        <el-button size="small" class="erp-btn-icon" title="Вгору">↑</el-button>
-        <el-button size="small" class="erp-btn-icon" title="Вниз">↓</el-button>
-        <el-button size="small" class="erp-btn" :icon="Search" @click="openNomenclatureDialog(form.lines.length - 1 || 0)">Підібрати</el-button>
-        <el-button size="small" class="erp-btn-icon" :icon="Setting" title="Налаштування колонок"></el-button>
-      </div>
+    <!-- Main body: tabs + sidebar -->
+    <div class="order-body">
+      <div class="order-main">
+        <el-tabs v-model="activeTab" class="order-tabs">
 
-      <div class="erp-field-row erp-warehouse-row">
-        <div class="erp-field">
-          <span class="erp-label">Склад (резерв): <span class="req">*</span></span>
-          <el-select v-model="form.warehouse_id" size="small" class="erp-input-wrapper warehouse-select">
-            <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-          </el-select>
-        </div>
-      </div>
-    </div>
-
-    <div class="erp-table-wrapper" v-loading="loading">
-      <el-table :data="form.lines" border size="small" class="erp-dense-table" height="100%">
-        <el-table-column type="index" label="N" width="40" align="center" />
-        <el-table-column label="Номенклатура" min-width="200">
-          <template #default="scope">
-            <el-select
-              v-model="scope.row.product_id"
-              filterable
-              size="small"
-              placeholder=""
-              class="erp-cell-input"
-              @change="(val) => handleProductChange(val, scope.row)"
-            >
-              <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-            </el-select>
-          </template>
-        </el-table-column>
-        <el-table-column label="Характеристика" min-width="150" v-if="visibleCols.characteristic">
-          <template #default="scope">
-            <div class="erp-cell-trigger" @click="openVariantSelector(scope.row)">
-              <span class="selection-text" v-if="scope.row.variant_id">{{ getVariantLabelByLine(scope.row) }}</span>
-              <span class="selection-text virtual" v-else-if="scope.row._virtual_label">{{ scope.row._virtual_label }}</span>
-              <span class="placeholder" v-else>...</span>
+          <!-- TAB: Товари -->
+          <el-tab-pane name="items">
+            <template #label><el-icon><Box /></el-icon>&nbsp;Товари <el-badge v-if="form.lines.length" :value="form.lines.length" class="tab-badge" /></template>
+            <div class="tab-toolbar">
+              <el-button size="small" class="erp-btn" @click="addLine">Додати</el-button>
+              <el-button size="small" class="erp-btn" :icon="Search" @click="openNomenclatureDialog(form.lines.length - 1 || 0)">Підібрати</el-button>
+              <el-button size="small" class="erp-btn-icon" :icon="Setting" title="Налаштування колонок" />
+              <div class="tab-toolbar-right">
+                <span class="erp-label">Склад:</span>
+                <el-select v-model="form.warehouse_id" size="small" class="warehouse-select">
+                  <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+                </el-select>
+              </div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="Кількість" width="90">
-          <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width: 100%" />
-          </template>
-        </el-table-column>
-        <el-table-column label="В резерв" width="80" align="center">
-          <template #default="scope">
-            <el-checkbox />
-          </template>
-        </el-table-column>
-        <el-table-column label="Ціна" width="100">
-          <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.price" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width: 100%" />
-          </template>
-        </el-table-column>
-        <el-table-column label="Сума" width="100">
-          <template #default="scope">
-            <el-input-number size="small" v-model="scope.row.total" :min="0" :step="0.01" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width: 100%" />
-          </template>
-        </el-table-column>
-        <el-table-column label="Специфікація" min-width="100">
-           <template #default>
-              <span class="placeholder">...</span>
-           </template>
-        </el-table-column>
-        <el-table-column label="" width="40" align="center" fixed="right">
-          <template #default="scope">
-            <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)" style="padding:0;height:auto;" />
-          </template>
-        </el-table-column>
-      </el-table>
+            <div class="erp-table-wrapper" v-loading="loading">
+              <el-table :data="form.lines" border size="small" class="erp-dense-table" height="100%">
+                <el-table-column type="index" label="N" width="40" align="center" />
+                <el-table-column label="Номенклатура" min-width="200">
+                  <template #default="scope">
+                    <el-select v-model="scope.row.product_id" filterable size="small" placeholder="" class="erp-cell-input" @change="(val) => handleProductChange(val, scope.row)">
+                      <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="Характеристика" min-width="140" v-if="visibleCols.characteristic">
+                  <template #default="scope">
+                    <div class="erp-cell-trigger" @click="openVariantSelector(scope.row)">
+                      <span class="selection-text" v-if="scope.row.variant_id">{{ getVariantLabelByLine(scope.row) }}</span>
+                      <span class="selection-text virtual" v-else-if="scope.row._virtual_label">{{ scope.row._virtual_label }}</span>
+                      <span class="placeholder" v-else>...</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="К-ть" width="90">
+                  <template #default="scope">
+                    <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                  </template>
+                </el-table-column>
+                <el-table-column label="Резерв" width="70" align="center">
+                  <template #default><el-checkbox /></template>
+                </el-table-column>
+                <el-table-column label="Ціна" width="100">
+                  <template #default="scope">
+                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                  </template>
+                </el-table-column>
+                <el-table-column label="Знижка%" width="80" align="center">
+                  <template #default="scope">
+                    <el-input-number size="small" v-model="scope.row.discount" :min="0" :max="100" :precision="0" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                  </template>
+                </el-table-column>
+                <el-table-column label="Сума" width="100">
+                  <template #default="scope">
+                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width:100%" />
+                  </template>
+                </el-table-column>
+                <el-table-column label="Специфікація" min-width="80">
+                  <template #default><span class="placeholder">...</span></template>
+                </el-table-column>
+                <el-table-column label="" width="40" align="center" fixed="right">
+                  <template #default="scope">
+                    <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)" style="padding:0;height:auto;" />
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div class="items-comment">
+              <el-input v-model="form.comment" type="textarea" :autosize="{ minRows: 2, maxRows: 3 }" placeholder="Коментар..." class="erp-comment-input" />
+            </div>
+          </el-tab-pane>
+
+          <!-- TAB: Доставка -->
+          <el-tab-pane name="delivery">
+            <template #label><el-icon><Van /></el-icon>&nbsp;Доставка</template>
+            <div class="tab-content-card">
+              <div class="fields-grid-3">
+                <div class="field-block">
+                  <label class="field-label">Спосіб доставки</label>
+                  <el-select v-model="delivery.method" size="small" style="width:100%">
+                    <el-option value="self" label="Самовивіз" /><el-option value="courier" label="Кур'єр" />
+                    <el-option value="np_branch" label="Нова Пошта (відділення)" /><el-option value="np_courier" label="Нова Пошта (кур'єр)" />
+                    <el-option value="truck" label="Вантажний транспорт" />
+                  </el-select>
+                </div>
+                <div class="field-block">
+                  <label class="field-label">Бажана дата</label>
+                  <el-date-picker v-model="delivery.desired_date" type="date" size="small" value-format="YYYY-MM-DD" style="width:100%" />
+                </div>
+                <div class="field-block">
+                  <label class="field-label">Вартість доставки (₴)</label>
+                  <el-input-number v-model="delivery.cost" :min="0" :precision="2" :controls="false" size="small" style="width:100%" />
+                </div>
+              </div>
+              <div class="fields-grid-2">
+                <div class="field-block">
+                  <label class="field-label">Отримувач</label>
+                  <el-input v-model="delivery.recipient_name" size="small" placeholder="ПІБ отримувача" />
+                </div>
+                <div class="field-block">
+                  <label class="field-label">Телефон отримувача</label>
+                  <el-input v-model="delivery.recipient_phone" size="small" placeholder="+380..." />
+                </div>
+              </div>
+              <div class="field-block">
+                <label class="field-label">Адреса доставки</label>
+                <el-input v-model="delivery.address" type="textarea" :autosize="{ minRows: 2 }" size="small" placeholder="Повна адреса..." />
+              </div>
+              <div class="field-block" v-if="delivery.method === 'np_branch'">
+                <label class="field-label">Номер відділення НП</label>
+                <el-input v-model="delivery.branch_number" size="small" placeholder="№ відділення" style="width:160px" />
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- TAB: Оплата -->
+          <el-tab-pane name="payment">
+            <template #label><el-icon><CreditCard /></el-icon>&nbsp;Оплата</template>
+            <div class="tab-content-card">
+              <div class="fields-grid-3">
+                <div class="field-block">
+                  <label class="field-label">Спосіб оплати</label>
+                  <el-select v-model="payment.method" size="small" style="width:100%">
+                    <el-option value="cash" label="Готівка" /><el-option value="card" label="Картка" />
+                    <el-option value="bank_transfer" label="Банківський переказ" /><el-option value="credit" label="В кредит" />
+                    <el-option value="installment" label="Розстрочка" />
+                  </el-select>
+                </div>
+                <div class="field-block">
+                  <label class="field-label">Оплатити до</label>
+                  <el-date-picker v-model="payment.due_date" type="date" size="small" value-format="YYYY-MM-DD" style="width:100%" />
+                </div>
+                <div class="field-block">
+                  <label class="field-label">Статус оплати</label>
+                  <div class="payment-status-badge" :class="paymentStatusClass">{{ paymentStatusLabel }}</div>
+                </div>
+              </div>
+              <div class="payment-summary-box">
+                <div class="ps-row"><span>Сума замовлення:</span><span>{{ formatCurrency(totalAmount) }}</span></div>
+                <div class="ps-row"><span>Доставка:</span><span>{{ formatCurrency(delivery.cost) }}</span></div>
+                <div class="ps-divider"></div>
+                <div class="ps-row ps-row--bold"><span>Всього до оплати:</span><span>{{ formatCurrency(totalAmount + delivery.cost) }}</span></div>
+                <div class="ps-divider"></div>
+                <div class="ps-row"><span>Сплачено:</span><span class="text-green">{{ formatCurrency(paidAmount) }}</span></div>
+                <div class="ps-row"><span>Залишок:</span><span :class="remainingAmount > 0 ? 'text-red' : 'text-green'">{{ formatCurrency(remainingAmount) }}</span></div>
+              </div>
+              <div v-if="payment.records.length > 0" class="payments-list">
+                <div class="payments-list-title">Історія платежів</div>
+                <el-table :data="payment.records" size="small" border>
+                  <el-table-column prop="date" label="Дата" width="110" />
+                  <el-table-column prop="method_label" label="Спосіб" />
+                  <el-table-column label="Сума" align="right" width="120">
+                    <template #default="s">{{ formatCurrency(s.row.amount) }}</template>
+                  </el-table-column>
+                  <el-table-column label="Статус" width="110" align="center">
+                    <template #default="s">
+                      <el-tag size="small" :type="s.row.status === 'completed' ? 'success' : 'warning'">
+                        {{ s.row.status === 'completed' ? 'Виконано' : 'Очікує' }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <el-button v-if="remainingAmount > 0" size="small" class="erp-btn" :icon="Plus" @click="showAddPaymentDialog = true" style="margin-top:12px">Додати платіж</el-button>
+            </div>
+          </el-tab-pane>
+
+          <!-- TAB: Документи -->
+          <el-tab-pane name="documents">
+            <template #label><el-icon><Document /></el-icon>&nbsp;Документи <el-badge v-if="orderDocs.length" :value="orderDocs.length" class="tab-badge" /></template>
+            <div class="tab-content-card">
+              <div class="docs-actions">
+                <el-button size="small" class="erp-btn" :icon="Document" @click="createInvoice">Рахунок</el-button>
+                <el-button size="small" class="erp-btn" :icon="Van" @click="createWaybill">Накладна</el-button>
+              </div>
+              <div v-if="orderDocs.length === 0" class="empty-state">
+                <el-icon size="40" color="#cbd5e1"><Document /></el-icon>
+                <p>Документи ще не створені</p>
+              </div>
+              <div v-else class="docs-list">
+                <div v-for="doc in orderDocs" :key="doc.id" class="doc-item">
+                  <el-icon size="24" :color="doc.type === 'invoice' ? '#10b981' : '#f59e0b'">
+                    <component :is="doc.type === 'invoice' ? Document : Van" />
+                  </el-icon>
+                  <div class="doc-info">
+                    <span class="doc-name">{{ doc.type === 'invoice' ? 'Рахунок на оплату' : 'Накладна' }}</span>
+                    <span class="doc-meta">№ {{ doc.number }} від {{ doc.date }}</span>
+                  </div>
+                  <el-tag size="small" :type="doc.status === 'issued' ? 'primary' : 'info'">{{ doc.status === 'issued' ? 'Виписано' : 'Чернетка' }}</el-tag>
+                  <el-button size="small" :icon="View" circle class="erp-btn-icon" />
+                  <el-button size="small" :icon="Printer" circle class="erp-btn-icon" />
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- TAB: Виробництво -->
+          <el-tab-pane name="production">
+            <template #label><el-icon><Tools /></el-icon>&nbsp;Виробництво</template>
+            <div class="tab-content-card empty-state">
+              <el-icon size="40" color="#cbd5e1"><Tools /></el-icon>
+              <p>Виробничі завдання (в розробці)</p>
+            </div>
+          </el-tab-pane>
+
+          <!-- TAB: Історія -->
+          <el-tab-pane name="history">
+            <template #label><el-icon><Timer /></el-icon>&nbsp;Історія</template>
+            <div class="tab-content-card" style="padding:0">
+              <div v-if="!isEditMode" class="empty-state"><p>Збережіть замовлення щоб бачити історію</p></div>
+              <AuditLogViewer v-else v-model="auditLogVisible" entity-type="order" :entity-id="route.params.id" :inline="true" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+
+      <!-- RIGHT: sidebar -->
+      <div class="order-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-card-title">Підсумки замовлення</div>
+          <div class="summary-rows">
+            <div class="sum-row"><span>Позицій:</span><span>{{ form.lines.length }}</span></div>
+            <div class="sum-row"><span>К-ть товарів:</span><span>{{ totalQty }} шт</span></div>
+            <div class="sum-row"><span>Знижка:</span><span class="text-red">-{{ formatCurrency(discountAmount) }}</span></div>
+            <div class="sum-row"><span>Доставка:</span><span>{{ formatCurrency(delivery.cost) }}</span></div>
+            <div class="sum-divider"></div>
+            <div class="sum-row"><span>Сума без ПДВ:</span><span>{{ formatCurrency(subtotal - vatTotal) }}</span></div>
+            <div class="sum-row"><span>ПДВ (20%):</span><span>{{ formatCurrency(vatTotal) }}</span></div>
+            <div class="sum-divider"></div>
+            <div class="sum-row sum-row--total"><span>ВСЬОГО:</span><span class="total-value">{{ formatCurrency(totalAmount + delivery.cost) }}</span></div>
+          </div>
+          <div class="discount-field">
+            <span>Знижка %:</span>
+            <el-input-number v-model="form.discount_percent" :min="0" :max="100" :precision="1" :controls="false" size="small" style="width:70px" />
+          </div>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-card-title">Швидкі дії</div>
+          <div class="quick-actions">
+            <el-button size="small" class="qa-btn" @click="activeTab = 'delivery'"><el-icon><Van /></el-icon> Заповнити доставку</el-button>
+            <el-button size="small" class="qa-btn" @click="createInvoice"><el-icon><Document /></el-icon> Виставити рахунок</el-button>
+            <el-button size="small" class="qa-btn" @click="handlePrint"><el-icon><Printer /></el-icon> Друк замовлення</el-button>
+            <el-button size="small" class="qa-btn" @click="handleSendEmail" :disabled="!selectedCustomerObj"><el-icon><Promotion /></el-icon> Надіслати клієнту</el-button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="erp-footer">
-      <div class="erp-footer-left">
-        <el-input
-          v-model="form.comment"
-          type="textarea"
-          :autosize="{ minRows: 2, maxRows: 3 }"
-          placeholder="Коментар..."
-          class="erp-comment-input"
-        />
-      </div>
-      <div class="erp-footer-right">
-        <div class="erp-total-row">
-            <span class="erp-total-label">Знижка руч., %:</span>
-            <el-input-number v-model="form.discount_percent" :min="0" :max="100" :precision="1" :controls="false" size="small" class="erp-total-input" />
-            <span class="erp-total-label ml-4">ПДВ:</span>
-            <span class="erp-total-value">0,00</span>
-        </div>
-        <div class="erp-total-row">
-            <span class="erp-total-label">Знижка руч., Σ:</span>
-            <el-input-number :model-value="discountAmount" disabled :controls="false" size="small" class="erp-total-input" />
-            <span class="erp-total-label ml-4">Всього:</span>
-            <span class="erp-total-value sum">{{ formatCurrency(totalAmount) }}</span>
-        </div>
-      </div>
-    </div>
-
-    <el-dialog
-      v-model="nomenclatureDialogVisible"
-      title="Вибір номенклатури"
-      width="800px"
-      destroy-on-close
-    >
-      <el-input
-        v-model="nomenclatureSearch"
-        placeholder="Пошук за назвою або SKU..."
-        :prefix-icon="Search"
-        clearable
-        style="margin-bottom: 16px"
-      />
-      <el-table
-        :data="filteredProducts" border height="400px" highlight-current-row @current-change="onDialogProductSelect"
-      >
+    <!-- Dialogs -->
+    <el-dialog v-model="nomenclatureDialogVisible" title="Вибір номенклатури" width="800px" destroy-on-close>
+      <el-input v-model="nomenclatureSearch" placeholder="Пошук..." :prefix-icon="Search" clearable style="margin-bottom:16px" />
+      <el-table :data="filteredProducts" border height="400px" highlight-current-row @current-change="onDialogProductSelect">
         <el-table-column property="sku" label="SKU" width="120" />
         <el-table-column property="name" label="Назва" min-width="250" />
         <el-table-column property="category" label="Категорія" width="150" />
         <el-table-column label="Ціна" width="120" align="right">
-          <template #default="scope">
-            {{ formatShort(scope.row.price) }}
-          </template>
+          <template #default="scope">{{ formatShort(scope.row.price) }}</template>
         </el-table-column>
       </el-table>
       <template #footer>
         <el-button @click="nomenclatureDialogVisible = false">Скасувати</el-button>
-        <el-button type="primary" :disabled="!selectedDialogProduct" @click="confirmDialogSelection">
-          Вибрати
-        </el-button>
+        <el-button type="primary" :disabled="!selectedDialogProduct" @click="confirmDialogSelection">Вибрати</el-button>
       </template>
     </el-dialog>
 
-    <VariantSelectorDialog
-      v-model="variantSelectorVisible"
-      :product="selectedProductForSelector"
-      @select="onVariantSelected"
-      @clear="clearVirtualVariant(activeLineForSelector)"
-    />
+    <VariantSelectorDialog v-model="variantSelectorVisible" :product="selectedProductForSelector" @select="onVariantSelected" @clear="clearVirtualVariant(activeLineForSelector)" />
+    <AuditLogViewer v-if="isEditMode" v-model="auditLogVisible" entity-type="order" :entity-id="route.params.id" />
 
-    <AuditLogViewer
-      v-if="isEditMode"
-      v-model="auditLogVisible"
-      entity-type="order"
-      :entity-id="route.params.id"
-    />
+    <el-dialog v-model="showAddPaymentDialog" title="Додати платіж" width="380px">
+      <el-form label-width="130px" size="small">
+        <el-form-item label="Сума платежу">
+          <el-input-number v-model="newPaymentAmount" :min="0" :max="remainingAmount" :precision="2" :controls="false" style="width:100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddPaymentDialog = false">Скасувати</el-button>
+        <el-button type="primary" @click="addPayment">Додати</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, Timer } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
@@ -259,6 +399,30 @@ const handleCreateBasedOn = (command) => {
 const loading = ref(false)
 const submitting = ref(false)
 const isEditMode = computed(() => !!route.params.id)
+const activeTab = ref('items')
+
+// Delivery state
+const delivery = reactive({
+  method: 'self',
+  desired_date: null,
+  cost: 0,
+  recipient_name: '',
+  recipient_phone: '',
+  address: '',
+  branch_number: ''
+})
+
+// Payment state
+const payment = reactive({
+  method: 'bank_transfer',
+  due_date: null,
+  records: []
+})
+const showAddPaymentDialog = ref(false)
+const newPaymentAmount = ref(0)
+
+// Documents state
+const orderDocs = ref([])
 
 const form = reactive({
   order_number: 'Авто',
@@ -334,6 +498,29 @@ const statusType = computed(() => {
   return validTypes.includes(color) ? color : 'info'
 })
 
+// New computed properties
+const selectedCustomerObj = computed(() => customers.value.find(c => c.id === form.counterparty_id) || null)
+
+const totalQty = computed(() => form.lines.reduce((sum, l) => sum + (l.quantity || 0), 0))
+
+const vatTotal = computed(() => form.lines.reduce((sum, l) => sum + ((l.total || 0) * 0.2), 0))
+
+const paidAmount = computed(() => payment.records.filter(r => r.status === 'completed').reduce((sum, r) => sum + r.amount, 0))
+
+const remainingAmount = computed(() => Math.max(0, totalAmount.value + delivery.cost - paidAmount.value))
+
+const paymentStatusClass = computed(() => {
+  if (remainingAmount.value <= 0) return 'ps-badge--green'
+  if (paidAmount.value > 0) return 'ps-badge--amber'
+  return 'ps-badge--red'
+})
+
+const paymentStatusLabel = computed(() => {
+  if (remainingAmount.value <= 0) return 'Оплачено повністю'
+  if (paidAmount.value > 0) return 'Частково оплачено'
+  return 'Не оплачено'
+})
+
 const statusColor = computed(() => {
   const status = orderStatuses.value.find(s => s.code === form.status)
   const c = status?.color || 'gray'
@@ -360,8 +547,50 @@ const statusLabel = computed(() => {
 
 const goBack = () => router.push('/sales/orders')
 
+// New action handlers
+const handleCopyOrder = () => ElMessage.info('Копіювання замовлення (в розробці)')
+const handlePrint = () => ElMessage.info('Друк замовлення (в розробці)')
+const handleSendEmail = () => {
+  const c = selectedCustomerObj.value
+  if (!c?.email) { ElMessage.warning('У клієнта не вказано email'); return }
+  ElMessage.success(`Email надіслано на ${c.email}`)
+}
+const handleExportExcel = () => ElMessage.info('Експорт в Excel (в розробці)')
+
+const createInvoice = () => {
+  const num = `РХ-${form.order_number || Date.now()}`
+  orderDocs.value.push({ id: Date.now(), type: 'invoice', number: num, date: new Date().toISOString().split('T')[0], status: 'issued' })
+  activeTab.value = 'documents'
+  ElMessage.success(`Рахунок ${num} створено`)
+}
+
+const createWaybill = () => {
+  const num = `НВ-${form.order_number || Date.now()}`
+  orderDocs.value.push({ id: Date.now(), type: 'waybill', number: num, date: new Date().toISOString().split('T')[0], status: 'draft' })
+  activeTab.value = 'documents'
+  ElMessage.success(`Накладна ${num} створена`)
+}
+
+const addPayment = () => {
+  if (!newPaymentAmount.value || newPaymentAmount.value <= 0) { ElMessage.error('Введіть суму'); return }
+  const methodLabels = { cash: 'Готівка', card: 'Картка', bank_transfer: 'Банківський переказ', credit: 'В кредит', installment: 'Розстрочка' }
+  payment.records.push({
+    id: Date.now(), date: new Date().toISOString().split('T')[0],
+    amount: newPaymentAmount.value, method_label: methodLabels[payment.method] || payment.method, status: 'completed'
+  })
+  ElMessage.success(`Платіж ${formatCurrency(newPaymentAmount.value)} додано`)
+  newPaymentAmount.value = 0
+  showAddPaymentDialog.value = false
+}
+
 const onClientChange = (clientId) => {
   const client = customers.value.find(c => c.id === clientId)
+  // Auto-fill delivery info from client
+  if (client) {
+    if (client.address && !delivery.address) delivery.address = client.address
+    if (client.phone && !delivery.recipient_phone) delivery.recipient_phone = client.phone
+    if (client.name && !delivery.recipient_name) delivery.recipient_name = client.name
+  }
   if (client && client.default_contract) {
     form.contract = client.default_contract
   }
@@ -596,10 +825,11 @@ onMounted(fetchData)
   background-color: #f6f7f9; font-family: 'Segoe UI', Arial, sans-serif;
 }
 .erp-toolbar {
-  display: flex; align-items: center; padding: 6px 12px;
+  display: flex; align-items: center; justify-content: space-between; padding: 6px 12px;
   background-color: #fcfcfc; border-bottom: 1px solid #dcdfe6; flex-shrink: 0;
 }
 .erp-toolbar-left { display: flex; align-items: center; gap: 8px; }
+.erp-toolbar-right { display: flex; align-items: center; gap: 6px; }
 .erp-btn, .erp-btn-icon, .erp-btn-primary {
   border-radius: 2px !important; font-size: 13px !important; height: 28px !important;
   padding: 0 12px !important; border: 1px solid #dcdfe6 !important;
@@ -614,18 +844,18 @@ onMounted(fetchData)
 .erp-btn-icon { padding: 0 8px !important; }
 .erp-doc-info { margin-left: 16px; display: flex; align-items: center; }
 .erp-doc-title { font-size: 14px; font-weight: 600; color: #303133; }
+
+/* Header fields area */
 .erp-header-fields {
-  background-color: #f6f7f9; padding: 12px 16px 8px 16px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 6px;
+  background-color: #f6f7f9; padding: 10px 16px 8px 16px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #e4e7ed;
 }
 .erp-field-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .erp-field { display: flex; align-items: center; }
-.erp-label {
-  font-size: 13px; color: #606266; width: 105px; text-align: left; padding-right: 8px;
-}
-.erp-label.req { color: #f56c6c; text-decoration: underline dotted #fbc4c4; text-underline-offset: 3px; }
+.erp-label { font-size: 13px; color: #606266; padding-right: 8px; white-space: nowrap; }
+.erp-label.req { color: #f56c6c; }
 .erp-input-wrapper { width: 160px; }
-.client-field .erp-input-wrapper { width: 320px; }
+.client-select { width: 320px; }
 .erp-header-fields :deep(.el-input__wrapper), .erp-header-fields :deep(.el-select__wrapper) {
   border-radius: 2px !important; box-shadow: none !important; border: 1px solid #dcdfe6 !important;
   background-color: #fff !important; min-height: 26px !important; height: 26px !important; padding: 0 8px !important;
@@ -634,25 +864,52 @@ onMounted(fetchData)
   height: 24px !important; line-height: 24px !important; font-size: 13px !important; color: #303133 !important;
 }
 .erp-header-fields :deep(.el-select__wrapper) { min-height: 26px !important; }
-.erp-header-fields :deep(.el-input__wrapper:focus-within), .erp-header-fields :deep(.el-select__wrapper.is-focus) {
-  border-color: #c0c4cc !important; box-shadow: inset 0 0 2px rgba(0,0,0,0.1) !important;
-}
-.erp-link { font-size: 13px; color: #409eff; text-decoration: none; margin-left: 8px; }
+.erp-link { font-size: 13px; color: #409eff; text-decoration: none; }
 .erp-link:hover { text-decoration: underline; }
-.erp-tabs-section {
-  display: flex; flex-direction: column; background-color: #f6f7f9; padding: 0 16px; flex-shrink: 0;
+
+/* Client info banner */
+.client-info-banner {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background-color: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 6px;
+  padding: 6px 12px; font-size: 12px; color: #4338ca; margin-top: 4px;
 }
-.erp-tabs { display: flex; border-bottom: 2px solid #6366f1; margin-bottom: 8px; margin-top: 4px; }
-.erp-tab {
-  padding: 6px 16px; font-size: 13px; cursor: pointer; color: #606266;
-  background-color: #e4e7ed; border: 1px solid #dcdfe6; border-bottom: none;
-  border-radius: 4px 4px 0 0; margin-right: 4px;
+.client-info-item { display: flex; align-items: center; gap: 4px; }
+.client-info-badge {
+  margin-left: auto; background: #6366f1; color: #fff;
+  border-radius: 10px; padding: 2px 10px; font-size: 11px;
 }
-.erp-tab.active { background-color: #eef2ff; border-color: #6366f1; color: #4338ca; font-weight: 600; }
-.erp-table-toolbar { display: flex; gap: 6px; margin-bottom: 6px; }
-.erp-warehouse-row { margin-bottom: 6px; }
-.warehouse-select { width: 250px; }
-.erp-table-wrapper { flex: 1; padding: 0 16px; overflow: hidden; margin-bottom: 12px; }
+
+/* Main body: flex row */
+.order-body {
+  flex: 1; display: flex; overflow: hidden; gap: 0;
+}
+.order-main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+}
+
+/* Tabs */
+.order-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.order-tabs :deep(.el-tabs__header) {
+  margin: 0; background: #fff; padding: 0 12px;
+  border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
+}
+.order-tabs :deep(.el-tabs__item) { font-size: 13px; height: 38px; }
+.order-tabs :deep(.el-tabs__item.is-active) { color: #6366f1; font-weight: 600; }
+.order-tabs :deep(.el-tabs__active-bar) { background-color: #6366f1; }
+.order-tabs :deep(.el-tabs__content) { flex: 1; overflow: auto; padding: 0; }
+.order-tabs :deep(.el-tab-pane) { display: flex; flex-direction: column; height: 100%; }
+.tab-badge { margin-left: 4px; }
+
+/* Tab toolbar for items */
+.tab-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+  background: #f6f7f9; border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
+}
+.tab-toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* Table */
+.erp-table-wrapper { flex: 1; padding: 0; overflow: hidden; }
+.warehouse-select { width: 200px; }
 .erp-dense-table { width: 100%; border: 1px solid #dcdfe6 !important; }
 .erp-dense-table :deep(th.el-table__cell) {
   background-color: #f5f7fa !important; color: #606266; font-size: 12px;
@@ -666,7 +923,6 @@ onMounted(fetchData)
 .erp-cell-input :deep(.el-input__wrapper), .erp-cell-input :deep(.el-select__wrapper) {
   box-shadow: none !important; border: 1px solid transparent !important; background-color: transparent !important;
   padding: 0 4px !important; border-radius: 2px !important; min-height: 24px !important; height: 24px !important;
-  transition: all 0.2s;
 }
 .erp-cell-input :deep(.el-input__wrapper:focus-within), .erp-cell-input :deep(.el-input__wrapper:hover) {
   border-color: #dcdfe6 !important; background-color: #fff !important;
@@ -674,28 +930,90 @@ onMounted(fetchData)
 .erp-cell-input :deep(.el-input__inner) { font-size: 13px !important; height: 22px !important; line-height: 22px !important; }
 .erp-cell-input.num :deep(.el-input__inner) { text-align: right !important; }
 .erp-cell-trigger { width: 100%; height: 24px; display: flex; align-items: center; font-size: 13px; cursor: pointer; }
-.erp-cell-text { font-size: 13px; line-height: 24px; }
 .virtual { color: #67c23a; }
 .placeholder { color: #c0c4cc; }
-.erp-footer {
-  display: flex; justify-content: space-between; padding: 12px 16px;
-  background-color: #f6f7f9; border-top: 1px solid #dcdfe6; flex-shrink: 0; gap: 20px;
-}
-.erp-footer-left { flex: 1; max-width: 500px; }
+.items-comment { padding: 8px 12px; background: #f6f7f9; border-top: 1px solid #e4e7ed; flex-shrink: 0; }
 .erp-comment-input :deep(.el-textarea__inner) {
   border-radius: 2px; border: 1px solid #dcdfe6; font-size: 13px; padding: 6px;
 }
-.erp-footer-right { display: flex; flex-direction: column; gap: 6px; width: 320px; }
-.erp-total-row { display: flex; align-items: center; justify-content: flex-end; }
-.erp-total-label { font-size: 13px; color: #606266; width: 110px; text-align: right; margin-right: 8px; }
-.ml-4 { margin-left: 16px; width: 40px; }
-.erp-total-input { width: 80px; }
-.erp-total-input :deep(.el-input__wrapper) {
-  border-radius: 2px !important; box-shadow: none !important; border: 1px solid #dcdfe6 !important;
-  height: 24px !important; min-height: 24px !important; padding: 0 6px !important;
+
+/* Tab content card */
+.tab-content-card {
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+  max-width: 900px;
 }
-.erp-total-input :deep(.el-input__inner) { font-size: 13px !important; height: 24px !important; text-align: right; }
-.erp-total-value { width: 90px; text-align: right; font-size: 13px; font-weight: 600; color: #303133; }
-.erp-total-value.sum { font-weight: 700; font-size: 15px; }
+
+/* Fields grid */
+.fields-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.fields-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.field-block { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 12px; color: #606266; font-weight: 500; }
+
+/* Payment */
+.payment-status-badge {
+  display: inline-flex; align-items: center; padding: 4px 12px;
+  border-radius: 20px; font-size: 12px; font-weight: 500; margin-top: 4px;
+}
+.ps-badge--green { background: #d1fae5; color: #065f46; }
+.ps-badge--amber { background: #fef3c7; color: #92400e; }
+.ps-badge--red { background: #fee2e2; color: #991b1b; }
+.payment-summary-box {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; max-width: 400px;
+}
+.ps-row { display: flex; justify-content: space-between; font-size: 13px; }
+.ps-row--bold { font-weight: 600; }
+.ps-divider { height: 1px; background: #e2e8f0; margin: 2px 0; }
+.text-green { color: #059669; }
+.text-red { color: #dc2626; }
+.payments-list-title { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+
+/* Documents */
+.docs-actions { display: flex; gap: 8px; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 40px; color: #94a3b8; font-size: 13px;
+}
+.docs-list { display: flex; flex-direction: column; gap: 8px; }
+.doc-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+}
+.doc-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.doc-name { font-size: 13px; font-weight: 500; color: #1e293b; }
+.doc-meta { font-size: 11px; color: #94a3b8; }
+
+/* Sidebar */
+.order-sidebar {
+  width: 280px; flex-shrink: 0; background: #fff; border-left: 1px solid #e4e7ed;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 0;
+}
+.sidebar-card {
+  padding: 14px 16px; border-bottom: 1px solid #f0f2f5;
+}
+.sidebar-card-title {
+  font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid #e4e7ed;
+}
+.summary-rows { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.sum-row { display: flex; justify-content: space-between; font-size: 12px; color: #606266; }
+.sum-row--total { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+.total-value { color: #6366f1; }
+.sum-divider { height: 1px; background: #e4e7ed; margin: 3px 0; }
+.discount-field {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: #606266; margin-top: 6px;
+  padding-top: 6px; border-top: 1px solid #e4e7ed;
+}
+
+/* Quick actions */
+.quick-actions { display: flex; flex-direction: column; gap: 6px; }
+.qa-btn {
+  width: 100%; justify-content: flex-start !important; text-align: left;
+  height: 30px !important; font-size: 12px !important;
+  background: #f8fafc !important; border-color: #e2e8f0 !important; color: #374151 !important;
+}
+.qa-btn:hover { background: #eef2ff !important; border-color: #c7d2fe !important; color: #4338ca !important; }
 .req { color: #f56c6c; }
 </style>
+
