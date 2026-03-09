@@ -157,17 +157,20 @@
         <!-- Grid pagination -->
         <el-col :span="24" v-if="total > 0" style="padding: 10px;">
           <div class="pagination-footer" style="border-top: none; margin-top: 20px;">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="limit"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="total"
-              background
-              layout="sizes, prev, pager, next"
-              class="custom-pagination"
-              @size-change="handleSizeChange"
-              @current-change="handlePageChange"
-            />
+            <div class="custom-pagination-container">
+              <el-select v-model="limit" size="small" class="limit-select" @change="handleSizeChange">
+                <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
+              </el-select>
+              <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="limit"
+                :total="total"
+                background
+                layout="prev, pager, next"
+                class="custom-pagination-numeric"
+                @current-change="handlePageChange"
+              />
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -260,17 +263,20 @@
         </el-table>
 
         <div class="pagination-footer">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="limit"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="total"
-            background
-            layout="sizes, prev, pager, next"
-            class="custom-pagination"
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
+          <div class="custom-pagination-container">
+            <el-select v-model="limit" size="small" class="limit-select" @change="handleSizeChange">
+              <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
+            </el-select>
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="limit"
+              :total="total"
+              background
+              layout="prev, pager, next"
+              class="custom-pagination-numeric"
+              @current-change="handlePageChange"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -587,22 +593,20 @@ onActivated(() => {
   border-top: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0;
 }
 .total-hint { font-size: 13px; color: #64748b; }
-.custom-pagination :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
-.custom-pagination :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
-
-/* Hide "на сторінці" text in sizes select - Just show digits */
-.custom-pagination :deep(.el-pagination__sizes .el-select) {
-  width: 62px !important;
+.custom-pagination-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.custom-pagination :deep(.el-pagination__sizes .el-select__wrapper span) {
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: nowrap;
-  max-width: 22px;
+.limit-select {
+  width: 64px !important;
 }
-.custom-pagination :deep(.el-select__suffix) {
-  margin-left: 2px !important;
+.limit-select :deep(.el-input__wrapper) {
+  border-radius: 6px;
+  background: #ffffff !important;
 }
+.custom-pagination-numeric :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
+.custom-pagination-numeric :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
 
 /* ===== GRID PRODUCT CARD ===== */
 .product-card { border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
