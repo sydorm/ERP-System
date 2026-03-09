@@ -23,15 +23,41 @@
 
     <!-- ===== STAT CARDS ===== -->
     <div class="stats-row">
-      <div class="stat-card" v-for="stat in statCards" :key="stat.label">
-        <div class="stat-icon" :style="{ background: stat.bg }">
-          <el-icon :style="{ color: stat.color }"><component :is="stat.icon" /></el-icon>
-        </div>
+      <!-- Всього замовлень -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe"><el-icon style="color:#6366f1"><Document /></el-icon></div>
         <div class="stat-body">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value">{{ orders.length }}</div>
+          <div class="stat-label">Всього замовлень</div>
         </div>
-        <div class="stat-dot" :style="{ background: stat.color }"></div>
+        <div class="stat-dot" style="background:#6366f1"></div>
+      </div>
+      <!-- Загальна сума -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#d1fae5"><el-icon style="color:#10b981"><Wallet /></el-icon></div>
+        <div class="stat-body">
+          <div class="stat-value stat-value--sum">{{ formatCurrency(orders.reduce((s, o) => s + (+o.total_amount || 0), 0)) }}</div>
+          <div class="stat-label">Загальна сума</div>
+        </div>
+        <div class="stat-dot" style="background:#10b981"></div>
+      </div>
+      <!-- В роботі -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fef3c7"><el-icon style="color:#f59e0b"><Clock /></el-icon></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ orders.filter(o => ['confirmed','draft','shipped'].includes(o.status)).length }}</div>
+          <div class="stat-label">В роботі</div>
+        </div>
+        <div class="stat-dot" style="background:#f59e0b"></div>
+      </div>
+      <!-- Виконано -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f0fdf4"><el-icon style="color:#22c55e"><Check /></el-icon></div>
+        <div class="stat-body">
+          <div class="stat-value">{{ orders.filter(o => o.status === 'completed').length }}</div>
+          <div class="stat-label">Виконано</div>
+        </div>
+        <div class="stat-dot" style="background:#22c55e"></div>
       </div>
     </div>
 
@@ -62,12 +88,22 @@
       <el-input
         ref="searchInputRef"
         v-model="searchQuery"
-        placeholder="Пошук за номером або клієнтом... (/ для фокусу)"
+        placeholder="Пошук за номером або клієнтом або телефоном..."
         :prefix-icon="Search"
         clearable
         @input="handleSearch"
         class="search-input"
       />
+      <el-select
+        v-model="activeTab"
+        placeholder="Всі статуси"
+        clearable
+        style="width:155px;flex-shrink:0"
+        @change="(v) => setTab(v || '')"
+        class="status-select"
+      >
+        <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code" />
+      </el-select>
       <div style="width: 230px; flex-shrink: 0; overflow: hidden;">
         <el-date-picker
           v-model="dateRange"
@@ -83,6 +119,7 @@
           class="date-picker"
         />
       </div>
+      <el-button :icon="Refresh" circle @click="fetchOrders" class="refresh-btn" title="Оновити" />
       <el-button link class="reset-btn" @click="handleReset" v-if="searchQuery || dateRange || activeTab">
         Скинути фільтри
       </el-button>
@@ -115,17 +152,22 @@
         @row-click="handleRowClick"
         row-class-name="order-row"
       >
-        <el-table-column type="selection" width="48" />
+        <el-table-column type="selection" width="40" />
 
-        <el-table-column prop="order_number" label="№ Замовлення" width="170" sortable="custom">
-          <template #default="{ row }">
-            <span class="order-num">{{ row.order_number }}</span>
+        <!-- Row # -->
+        <el-table-column label="№" width="46" align="center">
+          <template #default="{ $index }">
+            <span class="row-num">{{ (currentPage - 1) * pageSize + $index + 1 }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="order_date" label="Дата" width="120" sortable="custom">
+        <!-- Order number + date combined -->
+        <el-table-column label="Номер / Дата" width="160" sortable="custom" prop="order_number">
           <template #default="{ row }">
-            <span class="date-text">{{ formatDate(row.order_date) }}</span>
+            <div class="num-date-cell">
+              <span class="order-num">{{ row.order_number }}</span>
+              <span class="date-sub">{{ formatDate(row.order_date) }}</span>
+            </div>
           </template>
         </el-table-column>
 
@@ -138,19 +180,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Товарів" width="100" align="center">
-          <template #default="{ row }">
-            <span class="lines-badge">{{ row.lines?.length || 0 }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="total_amount" label="Сума" width="160" align="right" sortable="custom">
-          <template #default="{ row }">
-            <span class="amount-text">{{ formatCurrency(row.total_amount) }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="Статус" width="160">
+        <el-table-column label="Статус" width="155">
           <template #default="{ row }">
             <span class="status-badge" :style="getStatusStyle(row.status)">
               {{ getStatusLabel(row.status) }}
@@ -158,21 +188,40 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="" width="60" align="right">
+        <!-- Payment -->
+        <el-table-column label="Оплата" width="155">
           <template #default="{ row }">
-            <div @click.stop>
-              <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
-                <span class="action-btn">
-                  <el-icon><MoreFilled /></el-icon>
-                </span>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="view">Переглянути</el-dropdown-item>
-                    <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
-                    <el-dropdown-item command="delete" divided class="text-danger">Видалити</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+            <div class="payment-cell">
+              <span class="payment-badge" :class="getPaymentClass(row)">{{ getPaymentLabel(row) }}</span>
+              <span class="payment-detail" v-if="row.paid_amount > 0">
+                {{ formatCurrency(row.paid_amount) }} — {{ formatCurrency(row.total_amount) }}
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom">
+          <template #default="{ row }">
+            <span class="amount-text">{{ formatCurrency(row.total_amount) }}</span>
+          </template>
+        </el-table-column>
+
+        <!-- Delivery date -->
+        <el-table-column label="Доставка" width="115" align="center">
+          <template #default="{ row }">
+            <span class="delivery-date">{{ row.delivery_date ? formatDate(row.delivery_date) : '—' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="ДЕ" width="76" align="center">
+          <template #default="{ row }">
+            <div @click.stop class="action-buttons">
+              <el-tooltip content="Переглянути" placement="top">
+                <span class="action-btn" @click.stop="() => { selectedOrder = row; drawerVisible = true }"><el-icon><View /></el-icon></span>
+              </el-tooltip>
+              <el-tooltip content="Редагувати" placement="top">
+                <span class="action-btn" @click.stop="handleEdit(row)"><el-icon><Edit /></el-icon></span>
+              </el-tooltip>
             </div>
           </template>
         </el-table-column>
@@ -261,7 +310,8 @@ import { ref, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus, Search, Download, MoreFilled,
-  Document, Wallet, Check, Close, Select
+  Document, Wallet, Check, Close, Select,
+  Clock, Refresh, View, Edit
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -518,6 +568,24 @@ const getStatusLabel = (code) => {
   return s?.name || code || '—'
 }
 
+// ===== PAYMENT HELPERS =====
+const getPaymentClass = (row) => {
+  if (!row.total_amount || row.total_amount <= 0) return 'payment-none'
+  const paid = parseFloat(row.paid_amount) || 0
+  const total = parseFloat(row.total_amount) || 0
+  if (paid >= total) return 'payment-full'
+  if (paid > 0) return 'payment-partial'
+  return 'payment-none'
+}
+
+const getPaymentLabel = (row) => {
+  const paid = parseFloat(row.paid_amount) || 0
+  const total = parseFloat(row.total_amount) || 0
+  if (paid >= total && total > 0) return 'Оплачено'
+  if (paid > 0) return 'Частково'
+  return 'Не оплачено'
+}
+
 const getTimeline = (order) => {
   const events = []
   events.push({ label: 'Замовлення створено', type: 'success', time: formatDate(order.order_date) })
@@ -754,9 +822,17 @@ const getTimeline = (order) => {
 .orders-table :deep(.order-row:hover > td) { background: #f8fafc !important; }
 .orders-table :deep(.el-table__inner-wrapper::before) { display: none; }
 
-/* Cell styles */
+/* Cell styles — existing */
 .order-num { font-weight: 600; color: #1e293b; font-size: 12px; }
 .date-text { color: #64748b; font-size: 12px; }
+
+/* NEW: combined Номер/Дата cell */
+.num-date-cell { display: flex; flex-direction: column; gap: 1px; }
+.date-sub { color: #94a3b8; font-size: 11px; }
+
+/* Row number */
+.row-num { color: #94a3b8; font-size: 11px; font-weight: 600; }
+
 .client-cell { display: flex; align-items: center; gap: 6px; }
 .client-avatar {
   width: 20px; height: 20px; border-radius: 4px;
@@ -776,6 +852,28 @@ const getTimeline = (order) => {
 }
 .amount-text { font-weight: 600; color: #1e293b; font-size: 12px; }
 
+/* Payment cell */
+.payment-cell { display: flex; flex-direction: column; gap: 2px; }
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  max-width: fit-content;
+}
+.payment-full { background: #d1fae5; color: #059669; }
+.payment-partial { background: #fef3c7; color: #d97706; }
+.payment-none { background: #fee2e2; color: #dc2626; }
+.payment-detail { font-size: 10px; color: #94a3b8; }
+
+/* Delivery */
+.delivery-date { font-size: 12px; color: #475569; }
+
+/* Action buttons in-row */
+.action-buttons { display: flex; gap: 2px; justify-content: center; }
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -786,6 +884,23 @@ const getTimeline = (order) => {
   border: 1px solid;
   white-space: nowrap;
 }
+
+/* Status select in filter bar */
+.status-select :deep(.el-select__wrapper) {
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  box-shadow: none !important;
+  background: #fff;
+  height: 28px;
+}
+
+/* Refresh button */
+.refresh-btn {
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.refresh-btn:hover { color: #6366f1; border-color: #6366f1; }
 
 .action-btn {
   width: 28px; height: 28px;
