@@ -83,17 +83,30 @@
               :value="cat.code"
             />
           </el-select>
+          <el-select
+            v-model="filterStock"
+            placeholder="Наявність"
+            clearable
+            style="width:160px"
+            @change="handleFilterChange"
+            class="kimi-status-select"
+          >
+            <el-option label="Всі товари" value="" />
+            <el-option label="В наявності" value="in_stock" />
+            <el-option label="Закінчуються" value="low_stock" />
+            <el-option label="Немає" value="out_of_stock" />
+          </el-select>
           <el-radio-group v-model="viewMode" size="small" class="kimi-view-toggle">
             <el-radio-button value="list"><el-icon><Fold /></el-icon></el-radio-button>
             <el-radio-button value="grid"><el-icon><Grid /></el-icon></el-radio-button>
           </el-radio-group>
         </div>
-        
-        <button class="kimi-primary-btn" @click="goToCreate">
-          <el-icon><Plus /></el-icon> Створити товар
-        </button>
+        <div class="kimi-filter-right">
+          <button class="kimi-primary-btn" @click="goToCreate">
+            <el-icon><Plus /></el-icon> Створити товар
+          </button>
+        </div>
       </div>
-    </div>
 
     <!-- ===== CONTENT AREA ===== -->
     <div class="table-container">
@@ -169,14 +182,23 @@
           header-row-class-name="kimi-header-row"
         >
           <!-- Photo -->
-          <el-table-column width="60" align="center">
-            <template #header>ФОТ</template>
+          <el-table-column width="70" align="center">
+            <template #header>ФОТО</template>
             <template #default="scope">
-              <el-image :src="scope.row.image_url" class="list-image" fit="cover">
-                <template #error>
-                  <div class="list-image-placeholder"><el-icon><Picture /></el-icon></div>
-                </template>
-              </el-image>
+              <div @click.stop>
+                <el-image 
+                  :src="scope.row.image_url" 
+                  class="list-image" 
+                  fit="cover"
+                  :preview-src-list="scope.row.image_url ? [scope.row.image_url] : []"
+                  :preview-teleported="true"
+                  :hide-on-click-modal="true"
+                >
+                  <template #error>
+                    <div class="list-image-placeholder"><el-icon><Picture /></el-icon></div>
+                  </template>
+                </el-image>
+              </div>
             </template>
           </el-table-column>
 
@@ -274,6 +296,7 @@ const limit = ref(20)
 const currentPage = ref(1)
 const searchQuery = ref('')
 const filterCategory = ref('')
+const filterStock = ref('')
 const viewMode = ref('list') // default to list
 const categoryOptions = ref([])
 
@@ -305,8 +328,21 @@ const fetchProducts = async () => {
       category: filterCategory.value || undefined
     }
     const response = await api.get('/api/v1/products', { params })
-    products.value = response.data
-    if (!searchQuery.value && !filterCategory.value) {
+    let results = response.data
+    
+    // Front-end filter for stock status since backend doesn't support it directly yet
+    if (filterStock.value) {
+      if (filterStock.value === 'in_stock') {
+        results = results.filter(p => p.stock_balance > 0)
+      } else if (filterStock.value === 'low_stock') {
+        results = results.filter(p => p.stock_balance > 0 && p.stock_balance <= 5)
+      } else if (filterStock.value === 'out_of_stock') {
+        results = results.filter(p => p.stock_balance <= 0)
+      }
+    }
+    products.value = results
+
+    if (!searchQuery.value && !filterCategory.value && !filterStock.value) {
       total.value = stats.value.total_products
     } else {
       total.value = products.value.length < limit.value ? skip.value + products.value.length : skip.value + limit.value + 1
@@ -330,6 +366,12 @@ const handleSearch = () => {
 
 const handleCategorySelect = (code) => {
   filterCategory.value = code
+  skip.value = 0
+  currentPage.value = 1
+  fetchProducts()
+}
+
+const handleFilterChange = () => {
   skip.value = 0
   currentPage.value = 1
   fetchProducts()
@@ -507,8 +549,9 @@ onActivated(() => {
 .kimi-text-amber-600 { color: #d97706; }
 .kimi-text-rose-600 { color: #e11d48; }
 
-/* Image placeholder */
-.list-image { width: 40px; height: 40px; border-radius: 8px; display: block; border: 1px solid #f1f5f9; }
+/* Table cell styles */
+.list-image { width: 40px; height: 40px; border-radius: 8px; display: block; border: 1px solid #f1f5f9; cursor: zoom-in; transition: transform 0.2s; }
+.list-image:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .list-image-placeholder {
   width: 40px; height: 40px; background: #f8fafc; border-radius: 8px;
   display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 20px;
