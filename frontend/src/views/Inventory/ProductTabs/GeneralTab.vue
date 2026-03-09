@@ -4,12 +4,14 @@
       <el-row :gutter="40">
         <!-- ===== LEFT COLUMN ===== -->
         <el-col :span="16">
-          <div class="section-divider">Основні дані</div>
-          <!-- Product name -->
-          <el-form-item prop="name">
-            <template #label><span class="field-label">Назва товару</span></template>
-            <el-input v-model="modelValue.name" size="large" placeholder="Введіть назву (напр., Нога стола чорна 710мм)" class="styled-input" />
-          </el-form-item>
+          <div class="compact-section">
+            <div class="section-divider" style="margin-top: 0">Основні дані</div>
+            <!-- Product name -->
+            <el-form-item prop="name" class="compact-form-item">
+              <template #label><span class="field-label">Назва товару</span></template>
+              <el-input v-model="modelValue.name" size="large" placeholder="Введіть назву (напр., Нога стола чорна 710мм)" class="styled-input" />
+            </el-form-item>
+          </div>
 
           <!-- SKU + Category -->
           <el-row :gutter="20">
@@ -250,14 +252,16 @@ const handleImageChange = async (event) => {
 
 <style scoped>
 .general-tab-content {
-  padding: 32px;
+  padding: 12px 24px;
   background: #ffffff;
 }
 
 .product-form {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
+.compact-form-item { margin-bottom: 8px !important; }
+.compact-section { margin-bottom: 8px; }
 
 /* === SECTION DIVIDERS === */
 .section-divider {
@@ -266,7 +270,7 @@ const handleImageChange = async (event) => {
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin: 32px 0 16px;
+  margin: 16px 0 8px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -302,7 +306,7 @@ const handleImageChange = async (event) => {
   border: 1px solid #e2e8f0 !important;
   border-radius: 10px !important;
   background-color: #f8fafc !important;
-  padding: 8px 12px !important;
+  padding: 4px 10px !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -323,26 +327,26 @@ const handleImageChange = async (event) => {
 
 /* Specific for large input */
 .product-form :deep(.el-input--large .el-input__wrapper) {
-  padding: 12px 16px !important;
-  font-size: 16px;
+  padding: 8px 12px !important;
+  font-size: 15px;
   font-weight: 500;
 }
 
 /* Sections spacing */
 .product-form :deep(.el-form-item) {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .product-form :deep(.el-form-item__label) {
-  padding-bottom: 8px !important;
-  line-height: 1.2 !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
 }
 
 /* === IMAGE UPLOAD ZONE === */
 .image-upload-zone {
   width: 100%;
-  aspect-ratio: 16 / 10;
-  border: 2px dashed #e2e8f0;
+  aspect-ratio: 16 / 9;
+  max-height: 140px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;

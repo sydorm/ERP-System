@@ -543,6 +543,10 @@ onActivated(() => {
   border-bottom: 1px solid #e2e8f0 !important; text-transform: uppercase; letter-spacing: 0.4px;
   padding: 6px 8px !important;
 }
+.product-form :deep(.el-form-item__label) {
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
 .kimi-table :deep(td.el-table__cell) { padding: 4px 8px !important; border-bottom: 1px solid #f1f5f9 !important; border-right: none !important; }
 .kimi-table :deep(.el-table__inner-wrapper::before) { display: none; }
 .kimi-table :deep(.kimi-row) { cursor: pointer; transition: background 0.15s; }
@@ -585,6 +589,20 @@ onActivated(() => {
 .total-hint { font-size: 13px; color: #64748b; }
 .custom-pagination :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
 .custom-pagination :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
+
+/* Hide "на сторінці" text in sizes select - Just show digits */
+.custom-pagination :deep(.el-pagination__sizes .el-select) {
+  width: 62px !important;
+}
+.custom-pagination :deep(.el-pagination__sizes .el-select__wrapper span) {
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  max-width: 22px;
+}
+.custom-pagination :deep(.el-select__suffix) {
+  margin-left: 2px !important;
+}
 
 /* ===== GRID PRODUCT CARD ===== */
 .product-card { border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }

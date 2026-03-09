@@ -119,7 +119,7 @@ const markupStatusText = computed(() => {
 
 <style scoped>
 .pricing-tab-content {
-  padding: 32px;
+  padding: 16px 24px;
 }
 
 /* === SECTION DIVIDERS === */
@@ -129,7 +129,7 @@ const markupStatusText = computed(() => {
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin: 0 0 24px;
+  margin: 0 0 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -172,7 +172,7 @@ const markupStatusText = computed(() => {
 }
 
 .pricing-form :deep(.el-form-item) {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .cost-hint {
@@ -188,9 +188,9 @@ const markupStatusText = computed(() => {
 .markup-panel {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 8px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-top: 4px;
 }
 
 .markup-label {

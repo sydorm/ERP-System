@@ -312,14 +312,14 @@ onMounted(async () => {
 
 <style scoped>
 .characteristics-tab-content {
-  padding: 32px;
+  padding: 16px 24px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .section-divider {

@@ -337,12 +337,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   background: #ffffff;
-  padding: 12px 24px;
-  height: 64px;
+  padding: 4px 20px;
+  height: 42px;
   border-bottom: 1px solid #eef0f5;
   flex-shrink: 0;
   z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.04);
 }
 
 .header-left {
@@ -433,7 +433,7 @@ onMounted(() => {
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 12px 20px;
   background-color: #f4f5f9;
 }
 
@@ -452,7 +452,7 @@ onMounted(() => {
 .product-tabs :deep(.el-tabs__header) {
   margin: 0;
   background: #ffffff;
-  padding: 0 32px;
+  padding: 0 24px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -464,9 +464,9 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   color: #94a3b8;
-  height: 56px;
-  line-height: 56px;
-  padding: 0 20px !important;
+  height: 44px;
+  line-height: 44px;
+  padding: 0 16px !important;
   transition: all 0.2s ease;
 }
 
