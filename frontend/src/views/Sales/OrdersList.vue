@@ -1,19 +1,6 @@
 <template>
   <div class="orders-page">
     <div class="fixed-top-area">
-      <el-breadcrumb separator="/" class="kimi-breadcrumb">
-        <el-breadcrumb-item :to="{ path: '/dashboard' }">Продажі</el-breadcrumb-item>
-        <el-breadcrumb-item>Замовлення</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <!-- ===== PAGE HEADER ===== -->
-      <div class="kimi-page-header">
-        <div>
-          <h1 class="kimi-page-title">Замовлення покупців</h1>
-          <p class="kimi-page-subtitle">Керуйте вашими товарами та відстежуйте запаси</p>
-        </div>
-      </div>
-
 
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">

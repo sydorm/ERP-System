@@ -92,12 +92,7 @@
             @click="toggleSidebar"
             circle
           />
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-            <el-breadcrumb-item v-for="item in breadcrumbItems" :key="item.path" :to="item.path !== route.path ? item.path : null">
-              {{ item.title }}
-            </el-breadcrumb-item>
-          </el-breadcrumb>
+          <h2 class="top-page-title">{{ currentRouteTitle }}</h2>
         </div>
 
         <div class="header-right">
@@ -201,13 +196,9 @@ const activeMenu = computed(() => route.path)
 const isDark = useDark()
 const toggleTheme = useToggle(isDark)
 
-const breadcrumbItems = computed(() => {
-  return route.matched
-    .filter(record => record.meta && record.meta.title && record.path !== '' && record.path !== '/' && record.path !== '/dashboard')
-    .map(record => ({
-      path: record.path,
-      title: record.meta.title
-    }))
+const currentRouteTitle = computed(() => {
+  const match = route.matched.slice().reverse().find(r => r.meta && r.meta.title)
+  return match ? match.meta.title : 'Головна'
 })
 
 const toggleSidebar = () => {
@@ -454,6 +445,13 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.top-page-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
 .header-right {
