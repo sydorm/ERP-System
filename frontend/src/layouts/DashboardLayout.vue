@@ -94,8 +94,8 @@
           />
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-            <el-breadcrumb-item v-for="item in breadcrumbItems" :key="item">
-              {{ item }}
+            <el-breadcrumb-item v-for="item in breadcrumbItems" :key="item.path" :to="item.path !== route.path ? item.path : null">
+              {{ item.title }}
             </el-breadcrumb-item>
           </el-breadcrumb>
         </div>
@@ -202,8 +202,12 @@ const isDark = useDark()
 const toggleTheme = useToggle(isDark)
 
 const breadcrumbItems = computed(() => {
-  const pathArray = route.path.split('/').filter(item => item)
-  return pathArray.slice(1) // Remove first item (already in breadcrumb)
+  return route.matched
+    .filter(record => record.meta && record.meta.title && record.path !== '' && record.path !== '/' && record.path !== '/dashboard')
+    .map(record => ({
+      path: record.path,
+      title: record.meta.title
+    }))
 })
 
 const toggleSidebar = () => {

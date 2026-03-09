@@ -14,12 +14,6 @@
         </div>
       </div>
 
-      <!-- ===== APP TABS (Visual only to match screenshot) ===== -->
-      <div class="kimi-app-tabs">
-        <div class="kimi-app-tab">Головна</div>
-        <div class="kimi-app-tab active">Номенклатура <span class="close-x">×</span></div>
-        <div class="kimi-app-tab">Склади</div>
-      </div>
 
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">
