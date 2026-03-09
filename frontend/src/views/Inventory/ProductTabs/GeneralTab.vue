@@ -105,7 +105,7 @@
           <!-- Image upload -->
           <el-form-item>
             <template #label><span class="field-label">Зображення</span></template>
-            <div class="image-upload-zone" @click="triggerImageUpload">
+            <div class="image-upload-zone" @click="triggerImageUpload" v-loading="uploading">
               <el-image v-if="modelValue.image_url" :src="modelValue.image_url" fit="cover" class="preview-image" />
               <div v-else class="upload-placeholder">
                 <el-icon :size="32" class="upload-icon"><Picture /></el-icon>
@@ -182,6 +182,8 @@
 <script setup>
 import { ref } from 'vue'
 import { Picture, DataLine } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import api from '@/api'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -190,21 +192,50 @@ const props = defineProps({
 })
 
 const fileInput = ref(null)
+const uploading = ref(false)
 
 const commonTags = ref(['Меблі', 'Дерево', 'Метал', 'Пластик', 'Вироби'])
 
 const triggerImageUpload = () => {
-  if (!props.modelValue.image_url) {
+  if (!props.modelValue.image_url && !uploading.value) {
     fileInput.value?.click()
   }
 }
 
-const handleImageChange = (event) => {
+const handleImageChange = async (event) => {
   const file = event.target.files?.[0]
-  if (file) {
-    // In a real app, you'd upload to a server. For now, create a local URL.
-    const url = URL.createObjectURL(file)
-    props.modelValue.image_url = url
+  if (!file) return
+  
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('Будь ласка, оберіть файл зображення')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('Розмір файлу не повинен перевищувати 5MB')
+    return
+  }
+
+  uploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const res = await api.post('/api/v1/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    // The backend returns a relative URL like `/api/v1/uploads/...`
+    // which Vite proxies, or can be used directly as image source.
+    props.modelValue.image_url = res.data.url
+    ElMessage.success('Зображення завантажено')
+  } catch (error) {
+    console.error('Upload failed', error)
+    ElMessage.error('Помилка завантаження зображення')
+  } finally {
+    uploading.value = false
+    if (fileInput.value) fileInput.value.value = ''
   }
 }
 </script>

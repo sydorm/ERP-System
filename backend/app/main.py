@@ -137,6 +137,11 @@ app.include_router(calculator_router)
 from app.api.audit_log_routes import router as audit_log_router
 app.include_router(audit_log_router, prefix="/api/v1")
 
-# from app.api.v1.api import api_router
+from app.api.upload_routes import router as upload_router
+app.include_router(upload_router, prefix="/api/v1/upload", tags=["Uploads"])
 
-# app.include_router(api_router, prefix="/api/v1")
+# Ensure uploads directory exists and mount it for static file serving
+import os
+from fastapi.staticfiles import StaticFiles
+os.makedirs("uploads", exist_ok=True)
+app.mount("/api/v1/uploads", StaticFiles(directory="uploads"), name="uploads")
