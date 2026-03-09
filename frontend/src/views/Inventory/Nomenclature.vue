@@ -68,20 +68,21 @@
             @input="handleSearch"
             class="kimi-search-input"
           />
-          <div class="kimi-category-chips">
-            <div class="kimi-chip" :class="{ active: filterCategory === '' }" @click="handleCategorySelect('')">
-              Всі
-            </div>
-            <div
+          <el-select
+            v-model="filterCategory"
+            placeholder="Всі категорії"
+            clearable
+            style="width:200px"
+            @change="handleCategorySelect"
+            class="kimi-status-select"
+          >
+            <el-option
               v-for="cat in categoryOptions"
               :key="cat.code"
-              class="kimi-chip"
-              :class="{ active: filterCategory === cat.code }"
-              @click="handleCategorySelect(cat.code)"
-            >
-              {{ cat.name }}
-            </div>
-          </div>
+              :label="cat.name"
+              :value="cat.code"
+            />
+          </el-select>
           <el-radio-group v-model="viewMode" size="small" class="kimi-view-toggle">
             <el-radio-button value="list"><el-icon><Fold /></el-icon></el-radio-button>
             <el-radio-button value="grid"><el-icon><Grid /></el-icon></el-radio-button>
@@ -457,13 +458,13 @@ onActivated(() => {
   box-shadow: 0 0 0 2px rgba(99,102,241,0.2) !important;
 }
 
-.kimi-category-chips { display: flex; gap: 8px; align-items: center; overflow-x: auto; flex: 1; padding-bottom: 2px; }
-.kimi-category-chips::-webkit-scrollbar { display: none; }
-.kimi-chip { 
-  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; color: #64748b; background: #fff; border: 1px solid #e2e8f0; transition: all 0.2s; white-space: nowrap;
+.kimi-status-select :deep(.el-input__wrapper) {
+  border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); height: 36px;
+  border: 1px solid #e2e8f0;
 }
-.kimi-chip:hover { border-color: #4f46e5; color: #4f46e5; }
-.kimi-chip.active { background: #4f46e5; color: #fff; border-color: #4f46e5; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3); }
+.kimi-status-select :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.2) !important;
+}
 
 .kimi-view-toggle { margin-left: auto; flex-shrink: 0; }
 
