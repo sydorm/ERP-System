@@ -107,6 +107,7 @@
           </button>
         </div>
       </div>
+    </div>
 
     <!-- ===== CONTENT AREA ===== -->
     <div class="table-container">
