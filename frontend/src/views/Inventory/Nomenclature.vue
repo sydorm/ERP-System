@@ -157,14 +157,13 @@
         <!-- Grid pagination -->
         <el-col :span="24" v-if="total > 0" style="padding: 10px;">
           <div class="pagination-footer" style="border-top: none; margin-top: 20px;">
-            <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
             <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="limit"
               :page-sizes="[10, 20, 50, 100]"
               :total="total"
               background
-              layout="sizes, prev, pager, next"
+              layout="prev, pager, next"
               class="custom-pagination"
               @size-change="handleSizeChange"
               @current-change="handlePageChange"
@@ -261,14 +260,13 @@
         </el-table>
 
         <div class="pagination-footer">
-          <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="limit"
             :page-sizes="[10, 20, 50, 100]"
             :total="total"
             background
-            layout="sizes, prev, pager, next"
+            layout="prev, pager, next"
             class="custom-pagination"
             @size-change="handleSizeChange"
             @current-change="handlePageChange"
