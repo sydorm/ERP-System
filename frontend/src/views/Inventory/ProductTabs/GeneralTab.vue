@@ -4,6 +4,7 @@
       <el-row :gutter="40">
         <!-- ===== LEFT COLUMN ===== -->
         <el-col :span="16">
+          <div class="section-divider">Основні дані</div>
           <!-- Product name -->
           <el-form-item prop="name">
             <template #label><span class="field-label">Назва товару</span></template>
@@ -28,6 +29,7 @@
             </el-col>
           </el-row>
 
+          <div class="section-divider">Додатково</div>
           <!-- Description -->
           <el-form-item>
             <template #label><span class="field-label">Опис товару</span></template>
@@ -102,15 +104,16 @@
 
         <!-- ===== RIGHT COLUMN ===== -->
         <el-col :span="8">
+          <div class="section-divider">Медіа</div>
           <!-- Image upload -->
           <el-form-item>
-            <template #label><span class="field-label">Зображення</span></template>
+            <template #label><span class="field-label">Зображення товару</span></template>
             <div class="image-upload-zone" @click="triggerImageUpload" v-loading="uploading">
               <el-image v-if="modelValue.image_url" :src="modelValue.image_url" fit="cover" class="preview-image" />
               <div v-else class="upload-placeholder">
                 <el-icon :size="32" class="upload-icon"><Picture /></el-icon>
-                <span class="upload-text">Натисніть для завантаження</span>
-                <span class="upload-hint">PNG, JPG до 5MB</span>
+                <span class="upload-text">Завантажити фото</span>
+                <span class="upload-hint">Перетягніть або натисніть</span>
               </div>
               <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageChange" />
             </div>
@@ -119,6 +122,7 @@
             </div>
           </el-form-item>
 
+          <div class="section-divider">Параметри</div>
           <!-- Unit of measure -->
           <el-form-item>
             <template #label><span class="field-label">Одиниця виміру</span></template>
@@ -128,38 +132,42 @@
           </el-form-item>
 
           <!-- Status toggle -->
-          <el-form-item>
-            <template #label><span class="field-label">Статус товару</span></template>
+          <div class="toggle-card">
             <div class="toggle-row">
+              <div class="toggle-info">
+                <span class="toggle-title">Статус товару</span>
+                <span class="toggle-status-text" :class="modelValue.is_active ? 'active' : 'inactive'">
+                  {{ modelValue.is_active ? 'Активний' : 'В архіві' }}
+                </span>
+              </div>
               <el-switch
                 v-model="modelValue.is_active"
-                :active-color="'#6366f1'"
-                :inactive-color="'#e2e8f0'"
+                active-color="#6366f1"
+                inactive-color="#e2e8f0"
               />
-              <span class="toggle-label" :class="modelValue.is_active ? 'active' : 'inactive'">
-                {{ modelValue.is_active ? 'Активний' : 'Архівний' }}
-              </span>
             </div>
-          </el-form-item>
+          </div>
 
           <!-- Track inventory toggle -->
-          <el-form-item>
-            <template #label><span class="field-label">Облік запасу</span></template>
+          <div class="toggle-card">
             <div class="toggle-row">
+              <div class="toggle-info">
+                <span class="toggle-title">Облік запасів</span>
+                <span class="toggle-status-text" :class="modelValue.track_inventory ? 'active' : 'inactive'">
+                  {{ modelValue.track_inventory ? 'Ведеться' : 'Не ведеться' }}
+                </span>
+              </div>
               <el-switch
                 v-model="modelValue.track_inventory"
-                :active-color="'#6366f1'"
-                :inactive-color="'#e2e8f0'"
+                active-color="#6366f1"
+                inactive-color="#e2e8f0"
               />
-              <span class="toggle-label" :class="modelValue.track_inventory ? 'active' : 'inactive'">
-                {{ modelValue.track_inventory ? 'Вести облік' : 'Без обліку' }}
-              </span>
             </div>
-          </el-form-item>
+          </div>
 
           <!-- Tags -->
-          <el-form-item>
-            <template #label><span class="field-label">Теги</span></template>
+          <el-form-item style="margin-top: 16px;">
+            <template #label><span class="field-label">Теги / Мітки</span></template>
             <el-select
               v-model="modelValue.tags"
               multiple
@@ -242,99 +250,212 @@ const handleImageChange = async (event) => {
 
 <style scoped>
 .general-tab-content {
-  padding: 24px;
+  padding: 32px;
+  background: #ffffff;
 }
 
+.product-form {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* === SECTION DIVIDERS === */
 .section-divider {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 4px 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f1f5f9;
+  letter-spacing: 1px;
+  margin: 32px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* Field labels */
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #f1f5f9;
+}
+
+/* === FIELD LABELS === */
 .field-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.req { color: #ef4444; }
 
-/* Inputs */
+.req {
+  color: #f43f5e;
+  margin-left: 2px;
+}
+
+/* === INPUT STYLING === */
 .product-form :deep(.el-input__wrapper),
 .product-form :deep(.el-select__wrapper),
 .product-form :deep(.el-textarea__inner) {
   box-shadow: none !important;
   border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  background: #f8fafc !important;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border-radius: 10px !important;
+  background-color: #f8fafc !important;
+  padding: 8px 12px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .product-form :deep(.el-input__wrapper:hover),
 .product-form :deep(.el-select__wrapper:hover),
 .product-form :deep(.el-textarea__inner:hover) {
-  border-color: #94a3b8 !important;
-  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
 }
 
 .product-form :deep(.el-input__wrapper.is-focus),
 .product-form :deep(.el-select__wrapper.is-focused),
 .product-form :deep(.el-textarea__inner:focus) {
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-  background: #fff !important;
-  outline: none;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
 }
 
-.product-form :deep(.el-form-item) { margin-bottom: 18px; }
-.product-form :deep(.el-form-item__label) { padding-bottom: 4px !important; line-height: normal !important; }
-
-/* Number input */
-.styled-number :deep(.el-input__wrapper) {
-  box-shadow: none !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  background: #f8fafc !important;
-}
-.styled-number :deep(.el-input__wrapper.is-focus) {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+/* Specific for large input */
+.product-form :deep(.el-input--large .el-input__wrapper) {
+  padding: 12px 16px !important;
+  font-size: 16px;
+  font-weight: 500;
 }
 
-/* Image upload zone */
+/* Sections spacing */
+.product-form :deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+
+.product-form :deep(.el-form-item__label) {
+  padding-bottom: 8px !important;
+  line-height: 1.2 !important;
+}
+
+/* === IMAGE UPLOAD ZONE === */
 .image-upload-zone {
   width: 100%;
-  height: 180px;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
+  aspect-ratio: 16 / 10;
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   background: #f8fafc;
-  transition: border-color 0.2s, background 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
   overflow: hidden;
 }
-.image-upload-zone:hover { border-color: #6366f1; background: #f5f3ff; }
 
-.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-.upload-icon { color: #94a3b8; transition: color 0.2s; }
-.image-upload-zone:hover .upload-icon { color: #6366f1; }
-.upload-text { font-size: 12px; font-weight: 500; color: #64748b; }
-.upload-hint { font-size: 10px; color: #94a3b8; }
-.preview-image { width: 100%; height: 100%; border-radius: 10px; }
+.image-upload-zone:hover {
+  border-color: #6366f1;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1);
+}
 
-.image-url-field { margin-top: 8px; }
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 20px;
+}
 
-/* Toggles */
-.toggle-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
-.toggle-label { font-size: 13px; font-weight: 500; }
-.toggle-label.active { color: #16a34a; }
-.toggle-label.inactive { color: #94a3b8; }
+.upload-icon {
+  color: #94a3b8;
+  transition: color 0.3s ease;
+}
+
+.image-upload-zone:hover .upload-icon {
+  color: #6366f1;
+}
+
+.upload-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.upload-hint {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.image-upload-zone:hover .preview-image {
+  transform: scale(1.05);
+}
+
+/* === TOGGLE SWITCHES === */
+.toggle-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.toggle-card:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.toggle-status-text {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.toggle-status-text.active { color: #10b981; }
+.toggle-status-text.inactive { color: #94a3b8; }
+
+/* === NUMBER INPUTS === */
+.styled-number :deep(.el-input__wrapper) {
+  background: #f8fafc !important;
+}
+
+/* === TAGS SELECT === */
+.product-form :deep(.el-tag) {
+  border-radius: 6px;
+  background-color: #eef2ff;
+  border-color: #e0e7ff;
+  color: #6366f1;
+  font-weight: 500;
+}
 </style>
+

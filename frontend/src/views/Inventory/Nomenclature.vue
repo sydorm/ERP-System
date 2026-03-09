@@ -163,7 +163,7 @@
               :page-sizes="[10, 20, 50, 100]"
               :total="total"
               background
-              layout="prev, pager, next"
+              layout="sizes, prev, pager, next"
               class="custom-pagination"
               @size-change="handleSizeChange"
               @current-change="handlePageChange"
@@ -266,7 +266,7 @@
             :page-sizes="[10, 20, 50, 100]"
             :total="total"
             background
-            layout="prev, pager, next"
+            layout="sizes, prev, pager, next"
             class="custom-pagination"
             @size-change="handleSizeChange"
             @current-change="handlePageChange"

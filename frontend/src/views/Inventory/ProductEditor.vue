@@ -323,13 +323,11 @@ onMounted(() => {
 <style scoped>
 .page-container {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  background-color: #f4f6f8;
+  background-color: #f4f5f9;
+  z-index: 100;
   overflow: hidden;
 }
 
@@ -340,119 +338,163 @@ onMounted(() => {
   align-items: center;
   background: #ffffff;
   padding: 12px 24px;
-  border-bottom: 1px solid #f0f3f6;
+  height: 64px;
+  border-bottom: 1px solid #eef0f5;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  z-index: 10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+}
+
+.back-btn {
+  border: 1px solid #eef2f7;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background-color: #f8fafc;
+  color: #6366f1;
+  border-color: #6366f1;
+  transform: translateX(-2px);
 }
 
 .header-left h2 {
-  margin: 0 0 2px;
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #1e1b4b;
+  color: #1e293b;
+  letter-spacing: -0.01em;
 }
 
 .page-subtitle {
   margin: 0;
   font-size: 11px;
+  font-weight: 500;
   color: #94a3b8;
-  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
 
 .btn-cancel {
   border: 1px solid #e2e8f0;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 10px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.btn-delete {
+  font-weight: 600;
 }
 
 .btn-save {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border: none;
-  font-weight: 600;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-  transition: box-shadow 0.2s, transform 0.15s;
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 8px 20px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-save:hover {
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
   transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.btn-save:active {
+  transform: translateY(0);
 }
 
 /* === EDITOR CONTENT === */
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 24px;
+  background-color: #f4f5f9;
 }
 
 /* === CONTENT CARD === */
 .content-card {
   background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f0f3f6;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #eef0f5;
   overflow: hidden;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* === TABS === */
+/* === TABS STYLING === */
 .product-tabs :deep(.el-tabs__header) {
+  margin: 0;
   background: #ffffff;
-  padding: 0 20px;
-  margin-bottom: 0;
+  padding: 0 32px;
   border-bottom: 1px solid #f1f5f9;
 }
 
 .product-tabs :deep(.el-tabs__nav-wrap::after) {
-  display: none; /* remove default bottom line */
+  display: none;
 }
 
 .product-tabs :deep(.el-tabs__item) {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #94a3b8;
-  padding: 0 16px;
-  height: 44px;
-  line-height: 44px;
-  transition: color 0.2s;
+  height: 56px;
+  line-height: 56px;
+  padding: 0 20px !important;
+  transition: all 0.2s ease;
 }
 
 .product-tabs :deep(.el-tabs__item:hover) {
-  color: #2563eb;
+  color: #6366f1;
 }
 
 .product-tabs :deep(.el-tabs__item.is-active) {
-  color: #2563eb;
-  font-weight: 600;
+  color: #6366f1;
 }
 
 .product-tabs :deep(.el-tabs__active-bar) {
-  background-color: #2563eb;
-  height: 2px;
-  border-radius: 2px;
+  background-color: #6366f1;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
 }
 
 .product-tabs :deep(.el-tabs__content) {
   padding: 0;
 }
 
+/* Specialized tab areas */
 .empty-tab {
-  padding: 48px 24px;
-  display: flex;
-  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
 }
 
 .notes-tab {
-  padding: 24px;
+  padding: 32px;
 }
 </style>
