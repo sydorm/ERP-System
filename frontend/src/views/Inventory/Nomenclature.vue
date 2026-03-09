@@ -1,91 +1,103 @@
 <template>
-  <div class="page-container">
-    <!-- ===== FIXED HEADER ===== -->
-    <div class="sticky-header-wrapper">
-      <div class="page-header">
-        <div class="header-left">
-          <h2>Номенклатура</h2>
-          <p class="page-subtitle">Керуйте вашими товарами та відстежуйте запаси</p>
-        </div>
-        <div class="header-actions">
-          <el-button type="primary" :icon="Plus" @click="goToCreate" class="btn-create">
-            + Створити товар
-          </el-button>
-        </div>
-      </div>
+  <div class="orders-page">
+    <div class="fixed-top-area">
 
       <!-- ===== STAT CARDS ===== -->
-      <div class="stats-row">
-        <div class="stat-card total">
-          <div class="stat-icon"><el-icon><Box /></el-icon></div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.total_products }}</span>
-            <span class="stat-label">Всього товарів</span>
-          </div>
-          <div class="stat-badge" :style="{background:'rgba(99,102,241,0.1)',color:'#6366f1'}">+0%</div>
-        </div>
-        <div class="stat-card in-stock">
-          <div class="stat-icon"><el-icon><Coordinate /></el-icon></div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.in_stock }}</span>
-            <span class="stat-label">В наявності</span>
-          </div>
-          <div class="stat-badge" :style="{background:'rgba(16,185,129,0.1)',color:'#10b981'}">{{ stats.in_stock > 0 ? stats.in_stock + '%' : '0%' }}</div>
-        </div>
-        <div class="stat-card low-stock">
-          <div class="stat-icon"><el-icon><Warning /></el-icon></div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.low_stock }}</span>
-            <span class="stat-label">Закінчуються</span>
+      <div class="kimi-stats-row">
+        <!-- Всього товарів -->
+        <div class="kimi-stat-card kimi-stat-indigo">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Всього товарів</p>
+              <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+              <el-icon><Box /></el-icon>
+            </div>
           </div>
         </div>
-        <div class="stat-card out-of-stock">
-          <div class="stat-icon"><el-icon><CircleClose /></el-icon></div>
-          <div class="stat-info">
-            <span class="stat-value">{{ stats.out_of_stock }}</span>
-            <span class="stat-label">Немає</span>
+
+        <!-- В наявності -->
+        <div class="kimi-stat-card kimi-stat-emerald">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">В наявності</p>
+              <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+              <el-icon><Coordinate /></el-icon>
+            </div>
           </div>
-          <div class="stat-badge negative" v-if="stats.out_of_stock > 0">+{{ stats.out_of_stock }}</div>
+        </div>
+
+        <!-- Закінчуються -->
+        <div class="kimi-stat-card kimi-stat-amber">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Закінчуються</p>
+              <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+              <el-icon><Warning /></el-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Немає -->
+        <div class="kimi-stat-card kimi-stat-rose">
+          <div class="kimi-stat-content">
+            <div>
+              <p class="kimi-stat-label">Немає</p>
+              <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
+            </div>
+            <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
+              <el-icon><CircleClose /></el-icon>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- ===== FILTERS TOOLBAR ===== -->
-      <div class="filters-toolbar">
-        <el-input
-          v-model="searchQuery"
-          placeholder="Пошук товарів..."
-          :prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          class="search-input"
-        />
-        <div class="category-chips">
-          <div class="chip" :class="{ active: filterCategory === '' }" @click="handleCategorySelect('')">
-            Всі
+      <div class="kimi-filter-bar">
+        <div class="kimi-filter-left">
+          <el-input
+            v-model="searchQuery"
+            placeholder="Пошук товарів..."
+            :prefix-icon="Search"
+            clearable
+            @input="handleSearch"
+            class="kimi-search-input"
+          />
+          <div class="kimi-category-chips">
+            <div class="kimi-chip" :class="{ active: filterCategory === '' }" @click="handleCategorySelect('')">
+              Всі
+            </div>
+            <div
+              v-for="cat in categoryOptions"
+              :key="cat.code"
+              class="kimi-chip"
+              :class="{ active: filterCategory === cat.code }"
+              @click="handleCategorySelect(cat.code)"
+            >
+              {{ cat.name }}
+            </div>
           </div>
-          <div
-            v-for="cat in categoryOptions"
-            :key="cat.code"
-            class="chip"
-            :class="{ active: filterCategory === cat.code }"
-            @click="handleCategorySelect(cat.code)"
-          >
-            {{ cat.name }}
-          </div>
-        </div>
-        <div class="view-toggle">
-          <el-radio-group v-model="viewMode" size="small">
+          <el-radio-group v-model="viewMode" size="small" class="kimi-view-toggle">
             <el-radio-button value="list"><el-icon><Fold /></el-icon></el-radio-button>
             <el-radio-button value="grid"><el-icon><Grid /></el-icon></el-radio-button>
           </el-radio-group>
         </div>
+        
+        <button class="kimi-primary-btn" @click="goToCreate">
+          <el-icon><Plus /></el-icon> Створити товар
+        </button>
       </div>
     </div>
 
     <!-- ===== CONTENT AREA ===== -->
-    <div class="content-container">
+    <div class="table-container">
       <!-- Grid View -->
-      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading">
+      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading" style="padding: 16px; overflow-y: auto;">
         <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
           <el-card class="product-card" shadow="hover">
             <div class="product-image-container">
@@ -123,6 +135,22 @@
         <el-col :span="24" v-if="!loading && products.length === 0">
           <el-empty description="Товарів не знайдено" />
         </el-col>
+        
+        <!-- Grid pagination -->
+        <el-col :span="24" v-if="total > 0">
+          <div class="pagination-footer" style="border-top: none; margin-top: 20px;">
+            <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
+            <el-pagination
+              v-model:current-page="currentPage"
+              :page-size="limit"
+              :total="total"
+              background
+              layout="prev, pager, next"
+              class="custom-pagination"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </el-col>
       </el-row>
 
       <!-- List View -->
@@ -130,15 +158,15 @@
         <el-table
           :data="products"
           height="100%"
-          style="width: 100%; flex: 1"
-          size="small"
-          class="products-table"
+          style="width: 100%"
+          class="kimi-table"
           @row-click="handleEdit"
-          row-class-name="product-row"
+          row-class-name="kimi-row"
+          header-row-class-name="kimi-header-row"
         >
           <!-- Photo -->
           <el-table-column width="60" align="center">
-            <template #header><span class="col-header">Фото</span></template>
+            <template #header>ФОТ</template>
             <template #default="scope">
               <el-image :src="scope.row.image_url" class="list-image" fit="cover">
                 <template #error>
@@ -150,33 +178,33 @@
 
           <!-- SKU -->
           <el-table-column width="130">
-            <template #header><span class="col-header">Артикул</span></template>
+            <template #header>АРТИКУЛ</template>
             <template #default="scope">
-              <span class="sku-link" @click.stop="handleEdit(scope.row)">{{ scope.row.sku }}</span>
+              <span class="kimi-text-indigo-600 kimi-font-medium kimi-text-sm">{{ scope.row.sku }}</span>
             </template>
           </el-table-column>
 
           <!-- Name -->
           <el-table-column min-width="200">
-            <template #header><span class="col-header">Назва</span></template>
+            <template #header>НАЗВА</template>
             <template #default="scope">
-              <span class="product-name-link" @click.stop="handleEdit(scope.row)">{{ scope.row.name }}</span>
+              <span class="kimi-text-sm kimi-font-medium">{{ scope.row.name }}</span>
             </template>
           </el-table-column>
 
           <!-- Category -->
           <el-table-column width="200">
-            <template #header><span class="col-header">Категорія</span></template>
+            <template #header>КАТЕГОРІЯ</template>
             <template #default="scope">
-              <span class="category-text">{{ getCategoryName(scope.row.category) }}</span>
+              <span class="kimi-text-slate-400 kimi-text-sm">{{ getCategoryName(scope.row.category) }}</span>
             </template>
           </el-table-column>
 
           <!-- Stock -->
-          <el-table-column width="120" align="right">
-            <template #header><span class="col-header">Запас</span></template>
+          <el-table-column width="140" align="right">
+            <template #header>ЗАПАС</template>
             <template #default="scope">
-              <span :class="['stock-val', getStockClass(scope.row.stock_balance)]">
+              <span :class="['kimi-text-sm kimi-font-medium', getStockColorClass(scope.row.stock_balance)]">
                 {{ scope.row.stock_balance }} {{ scope.row.unit_of_measure }}
               </span>
             </template>
@@ -184,23 +212,27 @@
 
           <!-- Price -->
           <el-table-column width="120" align="right">
-            <template #header><span class="col-header">Ціна</span></template>
+            <template #header>ЦІНА</template>
             <template #default="scope">
-              <span class="price-val">{{ formatCurrency(scope.row.price, scope.row.currency) }}</span>
+              <span class="kimi-text-sm kimi-font-medium">{{ formatCurrency(scope.row.price, scope.row.currency) }}</span>
             </template>
           </el-table-column>
 
           <!-- Actions -->
-          <el-table-column width="60" align="center">
+          <el-table-column width="80" align="center">
+            <template #header>ДІЇ</template>
             <template #default="scope">
-              <el-button :icon="Edit" circle size="small" @click.stop="handleEdit(scope.row)" />
+              <div class="kimi-actions-col">
+                <button class="kimi-ghost-btn" @click.stop="handleEdit(scope.row)">
+                  <el-icon><Edit /></el-icon>
+                </button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
 
-        <!-- Pagination -->
-        <div class="pagination-bar">
-          <span class="total-hint">Всього {{ total }} товарів</span>
+        <div class="pagination-footer">
+          <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
           <el-pagination
             v-model:current-page="currentPage"
             :page-size="limit"
@@ -211,18 +243,6 @@
             @current-change="handlePageChange"
           />
         </div>
-      </div>
-
-      <!-- Grid pagination -->
-      <div v-if="viewMode === 'grid'" class="pagination-bar">
-        <el-pagination
-          v-model:current-page="currentPage"
-          :page-size="limit"
-          :total="total"
-          background
-          layout="total, prev, pager, next"
-          @current-change="handlePageChange"
-        />
       </div>
     </div>
   </div>
@@ -336,6 +356,12 @@ const getStockClass = (qty) => {
   return 'stock-ok'
 }
 
+const getStockColorClass = (qty) => {
+  if (qty <= 0) return 'text-rose-600'
+  if (qty <= 5) return 'text-amber-600'
+  return 'text-emerald-600'
+}
+
 const getStockProgressStatus = (qty) => {
   if (qty <= 0) return 'exception'
   if (qty <= 5) return 'warning'
@@ -365,7 +391,7 @@ onActivated(() => {
 
 <style scoped>
 /* ===== PAGE ===== */
-.page-container {
+.orders-page {
   padding: 0;
   background: #f4f5f9;
   height: 100vh;
@@ -376,239 +402,158 @@ onActivated(() => {
 }
 
 /* ===== HEADER (fixed, non-scrolling) ===== */
-.sticky-header-wrapper {
+.fixed-top-area {
   flex-shrink: 0;
   z-index: 100;
   background: #f4f5f9;
-  padding: 16px 20px 10px;
+  padding: 16px 20px 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-/* ===== PAGE HEADER ===== */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 14px;
-}
-.header-left h2 {
-  margin: 0 0 2px;
-  font-size: 22px;
-  font-weight: 800;
-  color: #1e1b4b;
-  letter-spacing: -0.3px;
-}
-.page-subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 400;
-}
-.header-actions { display: flex; gap: 10px; }
-.btn-create {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border: none;
-  border-radius: 9px;
-  font-weight: 600;
-  padding: 8px 18px;
-  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
-  transition: box-shadow 0.2s, transform 0.15s;
-}
-.btn-create:hover {
-  box-shadow: 0 6px 20px rgba(99,102,241,0.5);
-  transform: translateY(-1px);
 }
 
 /* ===== STAT CARDS ===== */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
+.kimi-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.kimi-stat-card {
+  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.stat-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  border: 1px solid #e4e8f0;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.15s;
-}
-.stat-card:hover { box-shadow: 0 4px 14px rgba(99,102,241,0.1); transform: translateY(-1px); }
+.kimi-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-.stat-icon {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-}
-.total .stat-icon { background: #ede9fe; color: #6366f1; }
-.in-stock .stat-icon { background: #d1fae5; color: #10b981; }
-.low-stock .stat-icon { background: #fef3c7; color: #f59e0b; }
-.out-of-stock .stat-icon { background: #fee2e2; color: #ef4444; }
+.kimi-stat-indigo { background: linear-gradient(to bottom right, #f5f7ff, #fff); border-color: #e0e7ff; }
+.kimi-stat-emerald { background: linear-gradient(to bottom right, #f0fdf4, #fff); border-color: #d1fae5; }
+.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); border-color: #fef3c7; }
+.kimi-stat-rose { background: linear-gradient(to bottom right, #fff1f2, #fff); border-color: #ffe4e6; }
 
-.stat-info { display: flex; flex-direction: column; gap: 1px; }
-.stat-value { font-size: 20px; font-weight: 800; color: #1e1b4b; line-height: 1; }
-.stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.kimi-stat-content { display: flex; align-items: center; justify-content: space-between; }
+.kimi-stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin: 0 0 4px 0; }
+.kimi-stat-value { font-size: 24px; font-weight: 800; margin: 0; line-height: 1; }
 
-.stat-badge {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 20px;
+.text-indigo-600 { color: #4f46e5; }
+.text-emerald-600 { color: #059669; }
+.text-amber-600 { color: #d97706; }
+.text-rose-600 { color: #e11d48; }
+
+.kimi-stat-icon-wrapper {
+  width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;
 }
-.stat-badge.negative { background: rgba(239,68,68,0.1); color: #ef4444; }
+.bg-indigo-100 { background: #e0e7ff; }
+.bg-emerald-100 { background: #d1fae5; }
+.bg-amber-100 { background: #fef3c7; }
+.bg-rose-100 { background: #ffe4e6; }
 
 /* ===== FILTERS TOOLBAR ===== */
-.filters-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: transparent;
+.kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.kimi-filter-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.kimi-search-input { width: 300px; max-width: 100%; flex-shrink: 0; margin-right: 12px; }
+.kimi-search-input :deep(.el-input__wrapper) { 
+  border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); height: 36px;
+  border: 1px solid #e2e8f0;
 }
-.search-input { width: 220px; flex-shrink: 0; }
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 8px;
-  border: 1px solid #e4e8f0;
-  box-shadow: none !important;
-  background: #fff;
-  height: 30px;
+.kimi-search-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.2) !important;
 }
-.search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99,102,241,0.1) !important;
-}
-.category-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-.chip {
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-.chip:hover { border-color: #6366f1; color: #6366f1; }
-.chip.active { background: #6366f1; color: #fff; border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,0.28); }
 
-.view-toggle { margin-left: auto; }
-.view-toggle :deep(.el-radio-button__inner) { padding: 5px 10px; font-size: 13px; }
+.kimi-category-chips { display: flex; gap: 8px; align-items: center; overflow-x: auto; flex: 1; padding-bottom: 2px; }
+.kimi-category-chips::-webkit-scrollbar { display: none; }
+.kimi-chip { 
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; color: #64748b; background: #fff; border: 1px solid #e2e8f0; transition: all 0.2s; white-space: nowrap;
+}
+.kimi-chip:hover { border-color: #4f46e5; color: #4f46e5; }
+.kimi-chip.active { background: #4f46e5; color: #fff; border-color: #4f46e5; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3); }
+
+.kimi-view-toggle { margin-left: auto; flex-shrink: 0; }
+
+.kimi-primary-btn {
+  background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500;
+  padding: 0 20px; height: 36px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3); transition: background 0.2s, transform 0.1s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.kimi-primary-btn:hover { background: #4338ca; transform: translateY(-1px); }
 
 /* ===== CONTENT ===== */
-.content-container {
-  flex: 1;
-  overflow: hidden;
-  padding: 12px 20px 0;
-  display: flex;
-  flex-direction: column;
+.table-container {
+  flex: 1; background: #fff; border-top-left-radius: 12px; border-top-right-radius: 12px;
+  display: flex; flex-direction: column; margin: 0 20px; border: 1px solid #e2e8f0; border-bottom: none;
+  overflow: hidden; box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
 }
 
-/* ===== TABLE WRAPPER ===== */
-.table-wrapper {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e4e8f0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-  overflow: hidden;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 12px;
-}
+.table-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-.products-table :deep(th.el-table__cell) {
-  background: #f8fafc !important;
-  padding: 6px 8px !important;
-  border-bottom: 1px solid #e4e8f0 !important;
+/* Kimi Table classes */
+.kimi-table :deep(th.el-table__cell) { 
+  background: #f8fafc !important; color: #64748b; font-size: 11px; font-weight: 700; 
+  border-bottom: 1px solid #e2e8f0 !important; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 10px 8px !important;
 }
-.col-header {
-  font-size: 10px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.products-table :deep(td.el-table__cell) {
-  padding: 5px 8px !important;
-  border-bottom: 1px solid #f1f5f9 !important;
-  border-right: none !important;
-}
-.products-table :deep(.el-table__inner-wrapper::before) { display: none; }
-.products-table :deep(.product-row) { cursor: pointer; transition: background 0.12s; }
-.products-table :deep(.product-row:hover > td) { background: #f8f7ff !important; }
+.kimi-table :deep(td.el-table__cell) { padding: 8px !important; border-bottom: 1px solid #f1f5f9 !important; border-right: none !important; }
+.kimi-table :deep(.el-table__inner-wrapper::before) { display: none; }
+.kimi-table :deep(.kimi-row) { cursor: pointer; transition: background 0.15s; }
+.kimi-table :deep(.kimi-row:hover > td) { background-color: #f8fafc !important; }
 
-/* Table cell styles */
-.list-image { width: 36px; height: 36px; border-radius: 8px; display: block; }
+/* Typography */
+.kimi-text-sm { font-size: 13px; }
+.kimi-text-xs { font-size: 12px; }
+.kimi-font-medium { font-weight: 600; color: #1e293b; }
+.kimi-text-slate-400 { color: #64748b; }
+.kimi-text-indigo-600 { color: #4f46e5; }
+.kimi-text-emerald-600 { color: #059669; }
+.kimi-text-amber-600 { color: #d97706; }
+.kimi-text-rose-600 { color: #e11d48; }
+
+/* Image placeholder */
+.list-image { width: 40px; height: 40px; border-radius: 8px; display: block; border: 1px solid #f1f5f9; }
 .list-image-placeholder {
-  width: 36px; height: 36px;
-  background: #f1f5f9; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  color: #94a3b8; font-size: 16px;
+  width: 40px; height: 40px; background: #f8fafc; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 20px;
+  border: 1px solid #f1f5f9;
 }
-.sku-link { color: #6366f1; font-weight: 600; font-size: 12px; cursor: pointer; }
-.sku-link:hover { text-decoration: underline; }
-.product-name-link { color: #1e293b; font-weight: 500; font-size: 13px; cursor: pointer; }
-.product-name-link:hover { color: #6366f1; }
-.category-text { color: #64748b; font-size: 12px; }
-.stock-val { font-size: 12px; font-weight: 600; }
-.stock-ok { color: #10b981; }
-.stock-low { color: #f59e0b; }
-.stock-none { color: #ef4444; }
-.price-val { font-size: 12px; font-weight: 600; color: #1e293b; }
 
-/* Pagination */
-.pagination-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-top: 1px solid #f1f5f9;
+/* Actions */
+.kimi-actions-col { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.kimi-ghost-btn {
+  background: none; border: none; cursor: pointer; width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; color: #94a3b8; transition: all 0.2s;
 }
-.total-hint { font-size: 12px; color: #94a3b8; }
-.custom-pagination :deep(.el-pager li) { border-radius: 6px; min-width: 28px; height: 28px; line-height: 28px; }
-.custom-pagination :deep(.el-pager li.is-active) { background: #6366f1 !important; color: #fff !important; }
+.kimi-ghost-btn:hover { background: #f1f5f9; color: #4f46e5; }
+.kimi-ghost-btn .el-icon { font-size: 16px; }
 
-/* Grid card */
-.product-card {
-  border-radius: 10px;
-  border: 1px solid #e4e8f0;
-  margin-bottom: 16px;
-  overflow: hidden;
-  transition: all 0.2s;
+/* ===== PAGINATION ===== */
+.pagination-footer {
+  display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+  border-top: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0;
 }
-.product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.1) !important; border-color: #c7d2fe; }
-.product-image-container { position: relative; height: 150px; background: #f4f5f9; }
+.total-hint { font-size: 13px; color: #64748b; }
+.custom-pagination :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
+.custom-pagination :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
+
+/* ===== GRID PRODUCT CARD ===== */
+.product-card { border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; border-color: #c7d2fe; }
+.product-image-container { position: relative; height: 160px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
 .product-image { width: 100%; height: 100%; }
-.image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d1d5db; }
-.product-actions-overlay { position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
+.image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #cbd5e1; }
+.product-actions-overlay { position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.2s; }
 .product-card:hover .product-actions-overlay { opacity: 1; }
-.product-details { padding: 12px; }
-.category-tag { font-size: 9px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-.product-title { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #1e293b; cursor: pointer; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.price-row { margin-bottom: 4px; }
-.price-value { font-size: 14px; font-weight: 700; color: #1e293b; }
+.product-details { padding: 14px; background: #fff; }
+.category-tag { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: inline-block; padding: 2px 6px; background: #f1f5f9; border-radius: 4px; }
+.product-title { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #1e293b; cursor: pointer; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-title:hover { color: #4f46e5; }
+.price-row { margin-bottom: 8px; }
+.price-value { font-size: 16px; font-weight: 700; color: #1e293b; }
 .price-unit { font-size: 12px; color: #94a3b8; }
-.stock-row { display: flex; justify-content: space-between; font-size: 11px; }
-.stock-label { color: #94a3b8; }
+.stock-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.stock-label { color: #64748b; }
+.stock-value { font-weight: 600; }
 
-@media (max-width: 640px) {
-  .sticky-header-wrapper { padding: 12px 12px 8px; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .search-input { width: 100%; }
+@media (max-width: 768px) {
+  .kimi-stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+  .kimi-filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .kimi-filter-left { flex-direction: column; align-items: stretch; gap: 12px; }
+  .kimi-search-input { width: 100%; margin: 0; }
+  .kimi-category-chips { padding-bottom: 8px; }
+  .kimi-primary-btn { width: 100%; justify-content: center; }
+  .table-container { margin: 0 12px; }
 }
 </style>
