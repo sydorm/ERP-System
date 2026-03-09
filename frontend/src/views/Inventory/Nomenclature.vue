@@ -97,8 +97,9 @@
     <!-- ===== CONTENT AREA ===== -->
     <div class="table-container">
       <!-- Grid View -->
-      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading" style="padding: 16px; overflow-y: auto;">
-        <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
+      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading" style="padding: 16px; overflow-y: auto; flex: 1; margin: 0; display: block; height: 100%;">
+        <div style="display: flex; flex-wrap: wrap; margin: -10px;">
+        <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6" style="padding: 10px;">
           <el-card class="product-card" shadow="hover">
             <div class="product-image-container">
               <el-image :src="product.image_url" fit="cover" class="product-image">
@@ -136,8 +137,10 @@
           <el-empty description="Товарів не знайдено" />
         </el-col>
         
+        </div>
+        
         <!-- Grid pagination -->
-        <el-col :span="24" v-if="total > 0">
+        <el-col :span="24" v-if="total > 0" style="padding: 10px;">
           <div class="pagination-footer" style="border-top: none; margin-top: 20px;">
             <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
             <el-pagination
@@ -392,10 +395,10 @@ onActivated(() => {
 <style scoped>
 /* ===== PAGE ===== */
 .orders-page {
-  padding: 0;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: #f4f5f9;
-  height: 100vh;
-  box-sizing: border-box;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   overflow: hidden;

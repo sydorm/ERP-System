@@ -595,22 +595,23 @@ const getTimeline = (order) => {
 <style scoped>
 /* ===== PAGE ===== */
 .orders-page {
-  padding: 0;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: #f4f5f9;
-  min-height: 100%;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
 }
 
 /* ===== FIXED TOP AREA ===== */
 .fixed-top-area {
-  position: sticky;
-  top: -20px;  /* offset to compensate for parent .view-container padding: 20px */
+  flex-shrink: 0;
   z-index: 100;
   background: #f4f5f9;
-  padding: 16px 20px 10px;
+  padding: 16px 20px 0px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 /* ===== HEADER ===== */

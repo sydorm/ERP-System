@@ -494,6 +494,9 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
 .view-container {
   padding: 20px;
   flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
 }
 </style>
