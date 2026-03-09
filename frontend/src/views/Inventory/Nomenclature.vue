@@ -160,11 +160,13 @@
             <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
             <el-pagination
               v-model:current-page="currentPage"
-              :page-size="limit"
+              v-model:page-size="limit"
+              :page-sizes="[10, 20, 50, 100]"
               :total="total"
               background
-              layout="prev, pager, next"
+              layout="sizes, prev, pager, next"
               class="custom-pagination"
+              @size-change="handleSizeChange"
               @current-change="handlePageChange"
             />
           </div>
@@ -262,11 +264,13 @@
           <span class="total-hint">Показано {{ Math.min(limit, products.length) }} з {{ total }}</span>
           <el-pagination
             v-model:current-page="currentPage"
-            :page-size="limit"
+            v-model:page-size="limit"
+            :page-sizes="[10, 20, 50, 100]"
             :total="total"
             background
-            layout="prev, pager, next"
+            layout="sizes, prev, pager, next"
             class="custom-pagination"
+            @size-change="handleSizeChange"
             @current-change="handlePageChange"
           />
         </div>
@@ -373,6 +377,13 @@ const handleCategorySelect = (code) => {
 }
 
 const handleFilterChange = () => {
+  skip.value = 0
+  currentPage.value = 1
+  fetchProducts()
+}
+
+const handleSizeChange = (size) => {
+  limit.value = size
   skip.value = 0
   currentPage.value = 1
   fetchProducts()
