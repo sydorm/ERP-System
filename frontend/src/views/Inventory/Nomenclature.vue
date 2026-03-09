@@ -129,7 +129,8 @@
       <div v-else class="table-wrapper" v-loading="loading">
         <el-table
           :data="products"
-          style="width: 100%"
+          height="100%"
+          style="width: 100%; flex: 1"
           size="small"
           class="products-table"
           @row-click="handleEdit"
@@ -511,8 +512,10 @@ onActivated(() => {
 /* ===== CONTENT ===== */
 .content-container {
   flex: 1;
-  overflow-y: auto;
-  padding: 12px 20px 20px;
+  overflow: hidden;
+  padding: 12px 20px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== TABLE WRAPPER ===== */
@@ -522,6 +525,10 @@ onActivated(() => {
   border: 1px solid #e4e8f0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.02);
   overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
 }
 
 .products-table :deep(th.el-table__cell) {
