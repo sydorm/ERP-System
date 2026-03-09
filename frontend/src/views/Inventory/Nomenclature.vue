@@ -487,19 +487,20 @@ onActivated(() => {
 
 /* Kimi Table classes */
 .kimi-table :deep(th.el-table__cell) { 
-  background: #f8fafc !important; color: #64748b; font-size: 11px; font-weight: 700; 
-  border-bottom: 1px solid #e2e8f0 !important; text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 10px 8px !important;
+  background: #f8fafc !important; color: #64748b; font-size: 10px; font-weight: 700; 
+  border-bottom: 1px solid #e2e8f0 !important; text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 6px 8px !important;
 }
-.kimi-table :deep(td.el-table__cell) { padding: 8px !important; border-bottom: 1px solid #f1f5f9 !important; border-right: none !important; }
+.kimi-table :deep(td.el-table__cell) { padding: 4px 8px !important; border-bottom: 1px solid #f1f5f9 !important; border-right: none !important; }
 .kimi-table :deep(.el-table__inner-wrapper::before) { display: none; }
 .kimi-table :deep(.kimi-row) { cursor: pointer; transition: background 0.15s; }
 .kimi-table :deep(.kimi-row:hover > td) { background-color: #f8fafc !important; }
 
 /* Typography */
-.kimi-text-sm { font-size: 13px; }
+.kimi-text-sm { font-size: 14px; }
 .kimi-text-xs { font-size: 12px; }
-.kimi-font-medium { font-weight: 600; color: #1e293b; }
+.kimi-text-xxs { font-size: 10px; }
+.kimi-font-medium { font-weight: 500; color: #1e293b; }
 .kimi-text-slate-400 { color: #64748b; }
 .kimi-text-indigo-600 { color: #4f46e5; }
 .kimi-text-emerald-600 { color: #059669; }
