@@ -1525,8 +1525,31 @@
             const coeff = parseFloat(document.getElementById('markup-coeff').value) || 1;
             
             let mItems = lastResult.metal_lines.map(l => ({ name: l.name, qty: l.qty, unit: 'м.п.', price: l.price_unit * coeff, total: l.total * coeff }));
-            let hItems = lastResult.hardware_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff, total: l.total * coeff }));
-            
+            let rawHardware = lastResult.hardware_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff, total: l.total * coeff }));
+            let hItems = [];
+            let hiddenHardwareTotal = 0;
+
+            // Extract small hardware (rivets, couplings) to hide
+            rawHardware = rawHardware.filter(item => {
+                let n = item.name.toLowerCase();
+                if (n.includes('заклепк') || n.includes('муфт')) {
+                    hiddenHardwareTotal += item.total;
+                    return false;
+                }
+                return true;
+            });
+
+            // Distribute hidden hardware cost into the first available hardware item, or add it as a general item if empty
+            if (hiddenHardwareTotal > 0) {
+                if (rawHardware.length > 0) {
+                    rawHardware[0].total += hiddenHardwareTotal;
+                    rawHardware[0].price = rawHardware[0].total / (rawHardware[0].qty || 1);
+                } else {
+                    rawHardware.push({ name: 'Монтажний комплект (кріплення)', qty: 1, unit: 'компл', price: hiddenHardwareTotal, total: hiddenHardwareTotal });
+                }
+            }
+            hItems = rawHardware;
+
             let rawServices = [
                 ...lastResult.work_lines,
                 ...lastResult.coating_lines,
@@ -1536,11 +1559,17 @@
 
             let sItems = [];
             let ovenTotal = 0;
+            let overheadTotal = 0;
             
-            // Extract oven total so we can merge it
+            // Extract oven and overheads so we can merge them
             rawServices = rawServices.filter(item => {
-                if (item.name.toLowerCase().includes('піч (порошкове покриття)')) {
+                let n = item.name.toLowerCase();
+                if (n.includes('піч (порошкове покриття)')) {
                     ovenTotal += item.total;
+                    return false;
+                }
+                if (n.includes('оренда / світло')) {
+                    overheadTotal += item.total;
                     return false;
                 }
                 return true;
@@ -1561,12 +1590,24 @@
                         ovenTotal = 0; 
                     }
                 }
+                // Merge overhead into metal prep or weld cleaning
+                if (n.includes('підготовка металу') || n.includes('зачистка')) {
+                    if (overheadTotal > 0) {
+                        item.total += overheadTotal;
+                        item.price = item.total / (item.qty || 1);
+                        overheadTotal = 0;
+                    }
+                }
                 sItems.push(item);
             });
 
-            // If no painting work was found but oven was used, just add it independently
+            // If no painting work was found but oven was used
             if (ovenTotal > 0) {
                 sItems.push({ name: 'Запікання в печі', qty: 1, unit: 'послуга', price: ovenTotal, total: ovenTotal });
+            }
+            // If no prep work was found but overhead was used
+            if (overheadTotal > 0) {
+                sItems.push({ name: 'Організація виробничого процесу', qty: 1, unit: 'послуга', price: overheadTotal, total: overheadTotal });
             }
 
             const total = Math.round(lastResult.grand_total * coeff);
