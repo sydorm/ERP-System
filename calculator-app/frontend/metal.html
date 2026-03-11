@@ -1083,6 +1083,7 @@
                         <th>Метри (м)</th>
                         <th>К-сть</th>
                         <th style="width:80px">М²</th>
+                        <th style="width:70px">Отвори</th>
                         <th style="width:30px"></th>
                     </tr>
                 </thead>
@@ -1107,22 +1108,6 @@
             <button class="btn-add-row" onclick="addHardwareRow()">+ Додати фурнітуру</button>
         </div>
 
-        <!-- ── ROW 2.6: Отвори ── -->
-        <div class="card" style="margin-bottom:14px">
-            <div class="card-title"><span class="step">1.6</span> Отвори</div>
-            <table class="prof-table">
-                <thead>
-                    <tr>
-                        <th style="width:50%">Тип/Назва отвору</th>
-                        <th>Кількість</th>
-                        <th>Ціна за отвір</th>
-                        <th style="width:30px"></th>
-                    </tr>
-                </thead>
-                <tbody id="hole-rows"></tbody>
-            </table>
-            <button class="btn-add-row" onclick="addHoleRow()">+ Додати отвір</button>
-        </div>
 
         <!-- ── ROW 3: Photo Annotator ── -->
         <div class="card" style="margin-bottom:14px">
@@ -1232,13 +1217,25 @@
             <div class="res-grid" id="res-grid"></div>
             <div class="grand">
                 <div>
-                    <div class="grand-lbl">ЗАГАЛЬНА ВАРТІСТЬ</div>
-                    <div style="font-size:12px;color:#93c5fd" id="r-sub"></div>
+                    <div class="grand-lbl">ЗАГАЛЬНА СОБІВАРТІСТЬ</div>
+                    <div style="font-size:12px;color:#93c5fd;margin-bottom:10px" id="r-sub"></div>
+                    
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;background:rgba(255,255,255,0.08);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1)">
+                        <div style="flex:1">
+                            <div style="font-size:11px;color:#93c5fd;text-transform:uppercase;margin-bottom:4px">Коефіцієнт націнки</div>
+                            <input type="number" id="markup-coeff" value="1.5" step="0.1" min="1" 
+                                   style="width:70px;background:#fff;border:none;border-radius:6px;padding:4px 8px;font-weight:800;font-size:14px;color:#1e3a8a;outline:none"
+                                   oninput="updateClientTotal()">
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:11px;color:#93c5fd;text-transform:uppercase;margin-bottom:4px">Ціна для клієнта</div>
+                            <div id="client-total" style="font-size:20px;font-weight:900;color:#fff;text-shadow:0 0 10px rgba(59,130,246,0.5)">0 грн</div>
+                        </div>
+                    </div>
+
                     <div class="grand-acts">
                         <button class="gsave" onclick="saveQuote()">💾 Зберегти</button>
-                        <button class="gprint" onclick="window.print()">🖨️ Друк</button>
-                        <button class="gsave" style="background:#8b5cf6" onclick="lockResult()">📌 До
-                            загального</button>
+                        <button class="gprint" onclick="openClientQuote()">📑 Рахунок клієнту</button>
                         <button class="gsave" style="background:#7c3aed" onclick="saveAsTemplate()">★ Шаблон</button>
                     </div>
                 </div>
@@ -1348,6 +1345,7 @@
     <td><input type="text" id="len-${id}" value="1" style="width:160px" placeholder="м або =0.3*4+0.8*6" title="Введіть число або формулу: =0.3*4+0.8*6" oninput="recalcRow(${id})" onblur="evalFormula(this)"></td>
     <td><input type="number" id="qty-${id}" value="1" min="1" style="width:60px" oninput="recalcRow(${id})"></td>
     <td><div class="m2-badge" id="m2-${id}">—</div></td>
+    <td><input type="number" id="holes-${id}" value="0" min="0" style="width:60px" title="Кількість отворів у цьому профілі"></td>
     <td><button class="btn-del" onclick="delRow(${id})" title="Видалити">✕</button></td>`;
             document.getElementById('profile-rows').appendChild(tr);
             recalcRow(id);
@@ -1429,7 +1427,8 @@
                 return {
                     profile_id: +tr.querySelector('select').value,
                     length_m: +(document.getElementById(`len-${id}`)?.value || 1),
-                    quantity: +(document.getElementById(`qty-${id}`)?.value || 1)
+                    quantity: +(document.getElementById(`qty-${id}`)?.value || 1),
+                    holes_qty: +(document.getElementById(`holes-${id}`)?.value || 0)
                 };
             }).filter(r => r.profile_id && r.length_m > 0);
             const paintId = document.getElementById('paint-sel').value;
@@ -1438,8 +1437,8 @@
             const wIds = [...document.querySelectorAll('#work-grid input:checked')].map(c => +c.value);
             const oIds = [...document.querySelectorAll('#overhead-grid input:checked')].map(c => +c.value);
             // Read decimals directly from inputs
-            const welderMeters = parseFloat(document.getElementById('welder-disp')?.value) || 0;
-            const cutsQty = parseFloat(document.getElementById('cuts-disp')?.value) || 0;
+            const welderMeters = +document.getElementById('welder-disp').value || 0;
+            const cutsQty = +document.getElementById('cuts-disp').value || 0;
             const inp = {
                 product_name: document.getElementById('product-name').value || null,
                 client_name: document.getElementById('client-name').value || null,
@@ -1453,14 +1452,6 @@
                         quantity: +document.getElementById(`h-qty-${id}`).value
                     };
                 }),
-                hole_rows: [...document.querySelectorAll('#hole-rows tr')].map(tr => {
-                    const id = tr.id.replace('holerow-', '');
-                    return {
-                        name: document.getElementById(`hole-name-${id}`).value,
-                        quantity: +document.getElementById(`hole-qty-${id}`).value,
-                        price_per_hole: +document.getElementById(`hole-price-${id}`).value
-                    };
-                }),
                 welder_qty: welderMeters, cuts_qty: cutsQty,
                 notes: document.getElementById('notes').value || null
             };
@@ -1468,7 +1459,6 @@
                 const r = await fetch(`${API}/api/metal/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp) });
                 if (!r.ok) {
                     const body = await r.json();
-                    // FastAPI validation errors have detail as an array
                     const msg = Array.isArray(body.detail)
                         ? body.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join('; ')
                         : (typeof body.detail === 'string' ? body.detail : JSON.stringify(body));
@@ -1476,6 +1466,8 @@
                 }
                 lastResult = await r.json(); lastInp = inp;
                 renderResults(lastResult);
+                showToast('Розраховано', 'ok');
+                updateClientTotal();
             } catch (e) { showToast('Помилка: ' + e.message, 'err'); console.error(e); }
             finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати вартість'; }
         }
@@ -1518,6 +1510,105 @@
                 });
                 showToast('Розрахунок збережено!', 'ok');
             } catch { showToast('Не вдалося зберегти', 'err'); }
+        }
+
+        function updateClientTotal() {
+            if (!lastResult) return;
+            const coeff = parseFloat(document.getElementById('markup-coeff').value) || 1;
+            const total = (lastResult.grand_total || 0) * coeff;
+            document.getElementById('client-total').textContent = Math.round(total).toLocaleString() + ' грн';
+        }
+
+        function openClientQuote() {
+            if (!lastResult) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
+            const coeff = parseFloat(document.getElementById('markup-coeff').value) || 1;
+            
+            // Simplified view for client
+            const win = window.open('', '_blank');
+            const items = [
+                ...lastResult.metal_lines.map(l => ({ name: l.name, qty: l.qty, unit: 'м.п.', price: l.price_unit * coeff })),
+                ...lastResult.hardware_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff })),
+                ...lastResult.work_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff }))
+            ];
+            
+            const total = Math.round(lastResult.grand_total * coeff);
+            const date = new Date().toLocaleDateString();
+            const client = lastInp.client_name || 'Шановний клієнт';
+            const product = lastInp.product_name || 'Металоконструкція';
+
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Рахунок - ${product}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+                        .hdr { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 40px; }
+                        h1 { margin: 0; color: #0f172a; font-size: 24px; }
+                        .meta { text-align: right; font-size: 14px; color: #64748b; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                        th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+                        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 15px; }
+                        .num { text-align: right; }
+                        .total-box { margin-left: auto; width: 300px; background: #f8fafc; padding: 20px; border-radius: 10px; }
+                        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #0f172a; }
+                        .footer { margin-top: 60px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                        @media print { .no-print { display: none; } }
+                        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+                    </style>
+                </head>
+                <body>
+                    <div class="no-print" style="margin-bottom:20px; text-align:right;">
+                        <button class="btn" onclick="window.print()">🖨️ Друкувати PDF</button>
+                    </div>
+                    <div class="hdr">
+                        <div>
+                            <h1>КОМЕРЦІЙНА ПРОПОЗИЦІЯ</h1>
+                            <div style="margin-top:8px"><strong>Для:</strong> ${client}</div>
+                            <div><strong>Виріб:</strong> ${product}</div>
+                        </div>
+                        <div class="meta">
+                            <div>Дата: ${date}</div>
+                            <div>Номер: ${Math.floor(Math.random() * 9000) + 1000}</div>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Найменування</th>
+                                <th class="num">К-сть</th>
+                                <th>Од.</th>
+                                <th class="num">Ціна</th>
+                                <th class="num">Сума</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(i => `
+                                <tr>
+                                    <td>${i.name}</td>
+                                    <td class="num">${i.qty.toFixed(2)}</td>
+                                    <td>${i.unit}</td>
+                                    <td class="num">${Math.round(i.price).toLocaleString()} грн</td>
+                                    <td class="num">${Math.round(i.qty * i.price).toLocaleString()} грн</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div class="total-box">
+                        <div class="total-row">
+                            <span>РАЗОМ ДО ОПЛАТИ:</span>
+                            <span>${total.toLocaleString()} грн</span>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        Дякуємо за звернення! Пропозиція дійсна протягом 5 банківських днів.
+                    </div>
+                </body>
+                </html>
+            `);
+            win.document.close();
         }
 
         function showToast(msg, type = 'ok') {
@@ -1765,6 +1856,7 @@
                 }
                 document.getElementById(`len-${rowId}`).value = row.length_m;
                 document.getElementById(`qty-${rowId}`).value = row.quantity;
+                document.getElementById(`holes-${rowId}`).value = row.holes_qty;
                 recalcRow(rowId);
             });
 
@@ -1975,7 +2067,7 @@
             if (!sel) return;
             const curVal = sel.value;
             sel.innerHTML = '';
-            document.querySelectorAll('.prof-table tbody tr').forEach((tr, i) => {
+            document.querySelectorAll('#profile-rows tr').forEach((tr, i) => {
                 const id = tr.id.replace('row-', '');
                 const ps = tr.querySelector('select');
                 if (ps) {

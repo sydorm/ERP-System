@@ -527,6 +527,7 @@ class MetalProfileRow(BaseModel):
     profile_id: int
     length_m: float        # linear metres
     quantity: int = 1      # pieces
+    holes_qty: float = 0.0 # holes for this profile row
 
 class MetalHardwareRow(BaseModel):
     hardware_id: int
@@ -547,7 +548,6 @@ class MetalCalcInput(BaseModel):
     work_item_ids: Optional[List[int]] = []   # selected work items
     overhead_ids: Optional[List[int]] = []    # selected overhead items
     hardware_rows: Optional[List[MetalHardwareRow]] = []
-    hole_rows: Optional[List[MetalHoleRow]] = []
     welder_qty: float = 0.0                     # metres of weld seam (decimal)
     cuts_qty: float = 0.0                        # number of cuts (can be decimal)
     holes_qty: float = 0.0                       # legacy: total number of holes
@@ -735,7 +735,8 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         if cuts_item:
             checked_ids.add(cuts_item.id)
 
-    if inp.holes_qty > 0:
+    total_holes_qty = sum(r.holes_qty or 0.0 for r in inp.rows) + (inp.holes_qty or 0.0)
+    if total_holes_qty > 0:
         holes_item = db.query(MetalWorkItem).filter(
             MetalWorkItem.name.ilike("%отвір%"),
             MetalWorkItem.is_active == True
@@ -743,22 +744,9 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         if holes_item:
             checked_ids.add(holes_item.id)
     
-    # ── Holes (Refined table-based) ───────────────────────────────────────────
+    # Hole lines and subtotal (removed legacy separate table)
     hole_lines = []
     hole_subtotal = 0.0
-
-    if inp.hole_rows:
-        for hr in inp.hole_rows:
-            if hr.quantity > 0:
-                cost = round(hr.quantity * float(hr.price_per_hole), 2)
-                hole_lines.append(MetalResultLine(
-                    name=hr.name or "Отвори",
-                    qty=float(hr.quantity),
-                    unit="отв",
-                    price_unit=float(hr.price_per_hole),
-                    total=cost
-                ))
-                hole_subtotal += cost
 
     if checked_ids:
         items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(checked_ids)).all()
@@ -772,7 +760,10 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
                 unit = "м²"
             elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts or is_holes:
                 # Use metres of weld seam for welder, cuts count for cuts, holes count for holes
-                if is_cuts:
+                if is_holes:
+                    qty = total_holes_qty
+                    unit = "шт"
+                elif is_cuts:
                     unit_count = inp.cuts_qty
                     unit = wi.unit or "різ"
                 elif is_holes:
