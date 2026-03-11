@@ -1422,7 +1422,7 @@
         async function calculate() {
             const btn = document.getElementById('btn-calc');
             btn.disabled = true; btn.textContent = '🔄 Рахую...';
-            const rows = [...document.querySelectorAll('.prof-table tbody tr')].map(tr => {
+            const rows = [...document.querySelectorAll('#profile-rows tr')].map(tr => {
                 const id = tr.id.replace('row-', '');
                 return {
                     profile_id: +tr.querySelector('select').value,
