@@ -1468,7 +1468,8 @@
                 renderResults(lastResult);
                 showToast('Розраховано', 'ok');
                 updateClientTotal();
-            } catch (e) { showToast('Помилка: ' + e.message, 'err'); console.error(e); }
+                return true;
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); console.error(e); return false; }
             finally { btn.disabled = false; btn.textContent = '🔩 Розрахувати вартість'; }
         }
 
@@ -1854,9 +1855,9 @@
                 for (let i = 0; i < sel.options.length; i++) {
                     if (+sel.options[i].value === row.profile_id) { sel.selectedIndex = i; break; }
                 }
-                document.getElementById(`len-${rowId}`).value = row.length_m;
-                document.getElementById(`qty-${rowId}`).value = row.quantity;
-                document.getElementById(`holes-${rowId}`).value = row.holes_qty;
+                document.getElementById(`len-${rowId}`).value = row.length_m || 0;
+                document.getElementById(`qty-${rowId}`).value = row.quantity || 1;
+                document.getElementById(`holes-${rowId}`).value = row.holes_qty || 0;
                 recalcRow(rowId);
             });
 
@@ -1933,10 +1934,12 @@
         }
 
         async function saveAsTemplate() {
-            // Ensure inputs are fresh before saving
-            await calculate();
-
-            if (!lastInp) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
+            // Ensure inputs are fresh and valid before saving
+            const calcSuccess = await calculate();
+            if (!calcSuccess || !lastInp) { 
+                showToast('Помилка! Перевірте правильність заповнення форми', 'err'); 
+                return; 
+            }
 
             let name = document.getElementById('product-name').value || 'Мій виріб';
             let isOverwrite = false;
