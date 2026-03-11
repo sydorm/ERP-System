@@ -1977,20 +1977,6 @@
                 if (qtyInp) qtyInp.value = row.quantity;
             });
 
-            // Hole rows
-            const holeTbody = document.getElementById('hole-rows');
-            holeTbody.innerHTML = '';
-            holeRowId = 0;
-            (inp.hole_rows || []).forEach(row => {
-                addHoleRow();
-                const nameInp = document.getElementById(`hole-name-${holeRowId}`);
-                const qtyInp = document.getElementById(`hole-qty-${holeRowId}`);
-                const priceInp = document.getElementById(`hole-price-${holeRowId}`);
-                if (nameInp) nameInp.value = row.name;
-                if (qtyInp) qtyInp.value = row.quantity;
-                if (priceInp) priceInp.value = row.price_per_hole;
-            });
-
             loadedTemplateId = id; // Track loaded template
 
             // Auto-calculate to show the results immediately
