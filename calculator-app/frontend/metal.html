@@ -1524,87 +1524,153 @@
             if (!lastResult) { showToast('Спочатку зробіть розрахунок', 'err'); return; }
             const coeff = parseFloat(document.getElementById('markup-coeff').value) || 1;
             
-            // Simplified view for client
-            const win = window.open('', '_blank');
-            const items = [
-                ...lastResult.metal_lines.map(l => ({ name: l.name, qty: l.qty, unit: 'м.п.', price: l.price_unit * coeff })),
-                ...lastResult.hardware_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff })),
-                ...lastResult.work_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff }))
-            ];
+            let mItems = lastResult.metal_lines.map(l => ({ name: l.name, qty: l.qty, unit: 'м.п.', price: l.price_unit * coeff, total: l.total * coeff }));
+            let hItems = lastResult.hardware_lines.map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff, total: l.total * coeff }));
             
+            let rawServices = [
+                ...lastResult.work_lines,
+                ...lastResult.coating_lines,
+                ...lastResult.hole_lines,
+                ...lastResult.overhead_lines
+            ].map(l => ({ name: l.name, qty: l.qty, unit: l.unit, price: l.price_unit * coeff, total: l.total * coeff }));
+
+            let sItems = [];
+            let ovenTotal = 0;
+            
+            // Extract oven total so we can merge it
+            rawServices = rawServices.filter(item => {
+                if (item.name.toLowerCase().includes('піч (порошкове покриття)')) {
+                    ovenTotal += item.total;
+                    return false;
+                }
+                return true;
+            });
+
+            rawServices.forEach(item => {
+                let n = item.name.toLowerCase();
+                // Rename consumables
+                if (n.includes('розхідник')) {
+                    item.name = 'Витратні матеріали металообробки';
+                }
+                // Merge oven into painting work
+                if (n.includes('робота покраски') || n.includes('послуги фарбування')) {
+                    item.name = 'Порошкове фарбування (нанесення та запікання)';
+                    if (ovenTotal > 0) {
+                        item.total += ovenTotal;
+                        item.price = item.total / (item.qty || 1);
+                        ovenTotal = 0; 
+                    }
+                }
+                sItems.push(item);
+            });
+
+            // If no painting work was found but oven was used, just add it independently
+            if (ovenTotal > 0) {
+                sItems.push({ name: 'Запікання в печі', qty: 1, unit: 'послуга', price: ovenTotal, total: ovenTotal });
+            }
+
             const total = Math.round(lastResult.grand_total * coeff);
             const date = new Date().toLocaleDateString();
             const client = lastInp.client_name || 'Шановний клієнт';
             const product = lastInp.product_name || 'Металоконструкція';
 
+            const renderRows = (items) => {
+                if(!items.length) return '';
+                return items.map((i, idx) => `
+                    <tr>
+                        <td style="color:#94a3b8;font-size:12px;text-align:center">${idx + 1}</td>
+                        <td>${i.name}</td>
+                        <td class="num">${Math.round(i.qty * 100) / 100}</td>
+                        <td>${i.unit}</td>
+                        <td class="num">${Math.round(i.price).toLocaleString()} грн</td>
+                        <td class="num"><strong>${Math.round(i.total).toLocaleString()} грн</strong></td>
+                    </tr>
+                `).join('');
+            };
+
+            const renderBlock = (title, items) => {
+                if(!items.length) return '';
+                return `
+                    <tr class="block-hdr">
+                        <td colspan="6">${title}</td>
+                    </tr>
+                    ${renderRows(items)}
+                `;
+            };
+
+            const win = window.open('', '_blank');
             win.document.write(`
                 <html>
                 <head>
-                    <title>Рахунок - ${product}</title>
+                    <title>Комерційна пропозиція - ${product}</title>
                     <style>
-                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
-                        .hdr { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 40px; }
-                        h1 { margin: 0; color: #0f172a; font-size: 24px; }
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; background: #f8fafc; }
+                        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+                        .hdr { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+                        h1 { margin: 0; color: #0f172a; font-size: 24px; text-transform: uppercase; letter-spacing: 0.05em; }
                         .meta { text-align: right; font-size: 14px; color: #64748b; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                        th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
-                        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 15px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
+                        th { background: #f1f5f9; text-align: left; padding: 10px 12px; border-bottom: 2px solid #cbd5e1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; }
+                        td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
                         .num { text-align: right; }
-                        .total-box { margin-left: auto; width: 300px; background: #f8fafc; padding: 20px; border-radius: 10px; }
+                        .block-hdr td { background: #f8fafc; font-weight: 700; color: #334155; font-size: 12px; text-transform: uppercase; padding: 16px 12px 8px; border-bottom: 2px solid #e2e8f0; letter-spacing: 0.02em; }
+                        .total-box { margin-left: auto; width: 320px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
                         .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #0f172a; }
-                        .footer { margin-top: 60px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-                        @media print { .no-print { display: none; } }
-                        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+                        .footer { margin-top: 40px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                        @media print { 
+                            body { background: #fff; padding: 0; } 
+                            .container { box-shadow: none; padding: 0; max-width: 100%; }
+                            .no-print { display: none; } 
+                        }
+                        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit; font-size: 14px; transition: .2s; }
+                        .btn:hover { background: #2563eb; }
                     </style>
                 </head>
                 <body>
                     <div class="no-print" style="margin-bottom:20px; text-align:right;">
-                        <button class="btn" onclick="window.print()">🖨️ Друкувати PDF</button>
+                        <button class="btn" onclick="window.print()">🖨️ Друкувати комерційну пропозицію</button>
                     </div>
-                    <div class="hdr">
-                        <div>
-                            <h1>КОМЕРЦІЙНА ПРОПОЗИЦІЯ</h1>
-                            <div style="margin-top:8px"><strong>Для:</strong> ${client}</div>
-                            <div><strong>Виріб:</strong> ${product}</div>
+                    <div class="container">
+                        <div class="hdr">
+                            <div>
+                                <h1>Комерційна пропозиція</h1>
+                                <div style="margin-top:12px; font-size:15px"><strong>Для:</strong> ${client}</div>
+                                <div style="font-size:15px"><strong>Виріб:</strong> ${product}</div>
+                            </div>
+                            <div class="meta">
+                                <div>Дата: <strong>${date}</strong></div>
+                                <div>Номер: <strong>${Math.floor(Math.random() * 9000) + 1000}</strong></div>
+                            </div>
                         </div>
-                        <div class="meta">
-                            <div>Дата: ${date}</div>
-                            <div>Номер: ${Math.floor(Math.random() * 9000) + 1000}</div>
-                        </div>
-                    </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Найменування</th>
-                                <th class="num">К-сть</th>
-                                <th>Од.</th>
-                                <th class="num">Ціна</th>
-                                <th class="num">Сума</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(i => `
+                        
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>${i.name}</td>
-                                    <td class="num">${i.qty.toFixed(2)}</td>
-                                    <td>${i.unit}</td>
-                                    <td class="num">${Math.round(i.price).toLocaleString()} грн</td>
-                                    <td class="num">${Math.round(i.qty * i.price).toLocaleString()} грн</td>
+                                    <th style="width:30px;text-align:center">№</th>
+                                    <th>Найменування</th>
+                                    <th class="num">К-сть</th>
+                                    <th>Од.</th>
+                                    <th class="num">Ціна</th>
+                                    <th class="num">Сума</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                ${renderBlock('Матеріали та металопрокат', mItems)}
+                                ${renderBlock('Фурнітура та комплектуючі', hItems)}
+                                ${renderBlock('Послуги та роботи', sItems)}
+                            </tbody>
+                        </table>
 
-                    <div class="total-box">
-                        <div class="total-row">
-                            <span>РАЗОМ ДО ОПЛАТИ:</span>
-                            <span>${total.toLocaleString()} грн</span>
+                        <div class="total-box">
+                            <div class="total-row">
+                                <span>Всього до сплати:</span>
+                                <span>${total.toLocaleString()} грн</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="footer">
-                        Дякуємо за звернення! Пропозиція дійсна протягом 5 банківських днів.
+                        <div class="footer">
+                            Дякуємо за звернення! Пропозиція дійсна протягом 5 банківських днів.
+                        </div>
                     </div>
                 </body>
                 </html>
