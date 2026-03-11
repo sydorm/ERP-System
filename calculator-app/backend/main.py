@@ -113,6 +113,16 @@ class MetalOverhead(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class MetalHardware(Base):
+    """Accessory items: legs, caps, etc. — per unit price"""
+    __tablename__ = "metal_hardware"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    price_per_unit = Column(Numeric(12, 2), nullable=False, default=0)
+    unit = Column(String(20), nullable=False, default="шт")
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 class MetalQuote(Base):
     __tablename__ = "metal_quotes"
     id = Column(Integer, primary_key=True, index=True)
@@ -206,6 +216,16 @@ def seed_metal_data(db: Session):
             MetalOverhead(name="Маркетинг", price=50),
             MetalOverhead(name="Оренда / Світло", price=170),
         ])
+    if db.query(MetalHardware).count() == 0:
+        db.add_all([
+            MetalHardware(name="Ніжка регульована М8", price_per_unit=25),
+            MetalHardware(name="Ніжка регульована М10", price_per_unit=35),
+            MetalHardware(name="Заглушка 20×20", price_per_unit=5),
+            MetalHardware(name="Заглушка 40×40", price_per_unit=12),
+        ])
+    # Ensure "Отвори" exists in MetalWorkItem
+    if not db.query(MetalWorkItem).filter(MetalWorkItem.name.ilike("%отвір%")).first():
+        db.add(MetalWorkItem(name="Отвори", pricing_type="per_unit", price=8, unit="отв"))
     db.commit()
 
 Base.metadata.create_all(bind=engine)
@@ -492,11 +512,25 @@ class MetalOverheadCreate(BaseModel):
 class MetalOverheadUpdate(BaseModel):
     name: Optional[str]=None; price: Optional[float]=None; is_active: Optional[bool]=None
 
+class MetalHardwareOut(BaseModel):
+    id: int; name: str; price_per_unit: float; unit: str; is_active: bool
+    class Config: from_attributes = True
+
+class MetalHardwareCreate(BaseModel):
+    name: str; price_per_unit: float; unit: str = "шт"
+
+class MetalHardwareUpdate(BaseModel):
+    name: Optional[str]=None; price_per_unit: Optional[float]=None; unit: Optional[str]=None; is_active: Optional[bool]=None
+
 # Input for metal calculation
 class MetalProfileRow(BaseModel):
     profile_id: int
     length_m: float        # linear metres
     quantity: int = 1      # pieces
+
+class MetalHardwareRow(BaseModel):
+    hardware_id: int
+    quantity: int = 1
 
 class MetalCalcInput(BaseModel):
     product_name: Optional[str] = None
@@ -507,8 +541,10 @@ class MetalCalcInput(BaseModel):
     primer_id: Optional[int] = None
     work_item_ids: Optional[List[int]] = []   # selected work items
     overhead_ids: Optional[List[int]] = []    # selected overhead items
+    hardware_rows: Optional[List[MetalHardwareRow]] = []
     welder_qty: float = 0.0                     # metres of weld seam (decimal)
     cuts_qty: float = 0.0                        # number of cuts (can be decimal)
+    holes_qty: float = 0.0                       # number of holes
     notes: Optional[str] = None
 
 class MetalResultLine(BaseModel):
@@ -521,10 +557,12 @@ class MetalCalcResult(BaseModel):
     coating_lines: List[MetalResultLine]
     work_lines: List[MetalResultLine]
     overhead_lines: List[MetalResultLine]
+    hardware_lines: List[MetalResultLine] = []
     metal_subtotal: float
     coating_subtotal: float
     work_subtotal: float
     overhead_subtotal: float
+    hardware_subtotal: float = 0.0
     grand_total: float
 
 # ── Metal CRUD ────────────────────────────────────────────────────────────────
@@ -596,6 +634,23 @@ def upd_overhead(id: int, data: MetalOverheadUpdate, db: Session=Depends(get_db)
     for k,v in data.model_dump(exclude_unset=True).items(): setattr(o,k,v)
     db.commit(); db.refresh(o); return o
 
+@app.get("/api/metal/hardware", response_model=List[MetalHardwareOut])
+def get_hardware_metal(active_only: bool=True, db: Session=Depends(get_db)):
+    q = db.query(MetalHardware)
+    if active_only: q = q.filter(MetalHardware.is_active==True)
+    return q.order_by(MetalHardware.name).all()
+
+@app.post("/api/metal/hardware", response_model=MetalHardwareOut)
+def add_hardware_metal(data: MetalHardwareCreate, db: Session=Depends(get_db)):
+    h=MetalHardware(**data.model_dump()); db.add(h); db.commit(); db.refresh(h); return h
+
+@app.patch("/api/metal/hardware/{id}", response_model=MetalHardwareOut)
+def upd_hardware_metal(id: int, data: MetalHardwareUpdate, db: Session=Depends(get_db)):
+    h=db.get(MetalHardware,id)
+    if not h: raise HTTPException(404,"Not found")
+    for k,v in data.model_dump(exclude_unset=True).items(): setattr(h,k,v)
+    db.commit(); db.refresh(h); return h
+
 # ── Metal Calculate ───────────────────────────────────────────────────────────
 @app.post("/api/metal/calculate", response_model=MetalCalcResult)
 def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
@@ -655,7 +710,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
     # Checked items from UI
     checked_ids = set(inp.work_item_ids or [])
 
-    # Auto-include welder/cuts items when qty > 0 (even if not checked)
+    # Auto-include welder/cuts/holes items when qty > 0 (even if not checked)
     if inp.welder_qty > 0:
         welder_item = db.query(MetalWorkItem).filter(
             MetalWorkItem.name.ilike("%зварюваль%"),
@@ -672,20 +727,32 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         if cuts_item:
             checked_ids.add(cuts_item.id)
 
+    if inp.holes_qty > 0:
+        holes_item = db.query(MetalWorkItem).filter(
+            MetalWorkItem.name.ilike("%отвір%"),
+            MetalWorkItem.is_active == True
+        ).first()
+        if holes_item:
+            checked_ids.add(holes_item.id)
+
     if checked_ids:
         items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(checked_ids)).all()
         for wi in items:
             is_welder = "зварюваль" in wi.name.lower()
             is_cuts   = "різан" in wi.name.lower()
+            is_holes  = "отвір" in wi.name.lower()
             if wi.pricing_type == "per_m2":
                 cost = round(total_m2 * float(wi.price), 2)
                 qty  = total_m2
                 unit = "м²"
-            elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts:
-                # Use metres of weld seam for welder, cuts count for cuts
+            elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts or is_holes:
+                # Use metres of weld seam for welder, cuts count for cuts, holes count for holes
                 if is_cuts:
                     unit_count = inp.cuts_qty
                     unit = wi.unit or "різ"
+                elif is_holes:
+                    unit_count = inp.holes_qty
+                    unit = wi.unit or "отв"
                 else:
                     unit_count = inp.welder_qty
                     unit = wi.unit or "м шва"
@@ -702,6 +769,21 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
             work_subtotal += cost
     work_subtotal = round(work_subtotal, 2)
 
+    # ── Hardware ──────────────────────────────────────────────────────────────
+    hardware_lines = []
+    hardware_subtotal = 0.0
+    if inp.hardware_rows:
+        for hr in inp.hardware_rows:
+            h = db.get(MetalHardware, hr.hardware_id)
+            if not h: continue
+            cost = round(hr.quantity * float(h.price_per_unit), 2)
+            hardware_lines.append(MetalResultLine(
+                name=h.name, qty=float(hr.quantity), unit=h.unit or "шт",
+                price_unit=float(h.price_per_unit), total=cost
+            ))
+            hardware_subtotal += cost
+    hardware_subtotal = round(hardware_subtotal, 2)
+
     # ── Overhead ───────────────────────────────────────────────────────────────
     overhead_lines = []
     overhead_subtotal = 0.0
@@ -715,7 +797,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
             overhead_subtotal += float(o.price)
     overhead_subtotal = round(overhead_subtotal, 2)
 
-    grand = round(metal_subtotal + coating_subtotal + work_subtotal + overhead_subtotal, 2)
+    grand = round(metal_subtotal + coating_subtotal + work_subtotal + overhead_subtotal + hardware_subtotal, 2)
 
     return MetalCalcResult(
         product_name=inp.product_name,
@@ -724,10 +806,12 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         coating_lines=coating_lines,
         work_lines=work_lines,
         overhead_lines=overhead_lines,
+        hardware_lines=hardware_lines,
         metal_subtotal=metal_subtotal,
         coating_subtotal=coating_subtotal,
         work_subtotal=work_subtotal,
         overhead_subtotal=overhead_subtotal,
+        hardware_subtotal=hardware_subtotal,
         grand_total=grand
     )
 

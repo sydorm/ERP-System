@@ -1066,6 +1066,16 @@
                         </div>
                     </div>
                 </div>
+                <div class="ctr-row" style="margin-top:8px">
+                    <div class="ctr-block"><label>Отвори</label>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input type="number" id="holes-disp" value="0" min="0"
+                                style="width:90px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:700;color:#1e293b;outline:none"
+                                title="Кількість отворів">
+                            <span style="font-size:12px;color:#64748b">шт</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="f" style="margin-top:12px"><label>Накладні витрати</label>
                     <div class="chk-grid" id="overhead-grid"></div>
                 </div>
@@ -1088,6 +1098,22 @@
                 <tbody id="profile-rows"></tbody>
             </table>
             <button class="btn-add-row" onclick="addRow()">+ Додати профіль</button>
+        </div>
+
+        <!-- ── ROW 2.5: Фурнітура та аксесуари ── -->
+        <div class="card" style="margin-bottom:14px">
+            <div class="card-title"><span class="step">1.5</span> Фурнітура та аксесуари</div>
+            <table class="prof-table">
+                <thead>
+                    <tr>
+                        <th style="width:70%">Назва фурнітури</th>
+                        <th>Кількість</th>
+                        <th style="width:30px"></th>
+                    </tr>
+                </thead>
+                <tbody id="hardware-rows"></tbody>
+            </table>
+            <button class="btn-add-row" onclick="addHardwareRow()">+ Додати фурнітуру</button>
         </div>
 
         <!-- ── ROW 3: Photo Annotator ── -->
@@ -1230,18 +1256,19 @@
 
     <script>
         const API = '';
-        let profiles = [], paints = [], workItems = [], overheads = [];
+        let profiles = [], paints = [], workItems = [], overheads = [], hardware_metal = [];
         let form = { welder: 1, cuts: 0 };
-        let lastResult = null, lastInp = null, rowId = 0, loadedTemplateId = null;
+        let lastResult = null, lastInp = null, rowId = 0, hRowId = 0, loadedTemplateId = null;
 
         async function init() {
-            const [p, pa, w, o] = await Promise.all([
+            const [p, pa, w, o, hm] = await Promise.all([
                 fetch(`${API}/api/metal/profiles`).then(r => r.json()),
                 fetch(`${API}/api/metal/paints`).then(r => r.json()),
                 fetch(`${API}/api/metal/work-items`).then(r => r.json()),
                 fetch(`${API}/api/metal/overhead`).then(r => r.json()),
+                fetch(`${API}/api/metal/hardware`).then(r => r.json()),
             ]);
-            profiles = p; paints = pa; workItems = w; overheads = o;
+            profiles = p; paints = pa; workItems = w; overheads = o; hardware_metal = hm;
 
             const ps = document.getElementById('paint-sel'), pr = document.getElementById('primer-sel');
             paints.filter(x => x.paint_type === 'фарба').forEach(x => ps.add(new Option(`${x.name}  (${x.price_per_kg} грн/кг)`, x.id)));
@@ -1337,6 +1364,22 @@
             if (el) el.textContent = len === 0 && lenVal.startsWith('=') ? '...' : m2.toFixed(4) + ' м²';
         }
 
+        function addHardwareRow() {
+            const id = ++hRowId;
+            const opts = hardware_metal.map(h => `<option value="${h.id}">${h.name} — ${h.price_per_unit} грн/${h.unit}</option>`).join('');
+            const tr = document.createElement('tr');
+            tr.id = `hrow-${id}`;
+            tr.innerHTML = `
+                <td><select id="h-sel-${id}">${opts}</select></td>
+                <td><input type="number" id="h-qty-${id}" value="1" min="1" style="width:80px"></td>
+                <td><button class="btn-del" onclick="delHardwareRow(${id})" title="Видалити">✕</button></td>`;
+            document.getElementById('hardware-rows').appendChild(tr);
+        }
+
+        function delHardwareRow(id) {
+            document.getElementById(`hrow-${id}`).remove();
+        }
+
         function togglePrimer() { document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked); }
 
         // ── Welder/Cuts hint (live cost preview) ──────────────────────────────
@@ -1379,7 +1422,15 @@
                 rows, paint_id: paintId ? +paintId : null,
                 with_primer: withPrimer, primer_id: primerId && withPrimer ? +primerId : null,
                 work_item_ids: wIds, overhead_ids: oIds,
+                hardware_rows: [...document.querySelectorAll('#hardware-rows tr')].map(tr => {
+                    const id = tr.id.replace('hrow-', '');
+                    return {
+                        hardware_id: +document.getElementById(`h-sel-${id}`).value,
+                        quantity: +document.getElementById(`h-qty-${id}`).value
+                    };
+                }),
                 welder_qty: welderMeters, cuts_qty: cutsQty,
+                holes_qty: parseFloat(document.getElementById('holes-disp')?.value) || 0,
                 notes: document.getElementById('notes').value || null
             };
             try {
@@ -1418,6 +1469,7 @@
                 sec('🔩', 'Прорахунок метал', res.metal_subtotal, makeTable(res.metal_lines)) +
                 sec('🎨', 'Фарбування', res.coating_subtotal, makeTable(res.coating_lines)) +
                 sec('⚙️', 'Послуги виробництва', res.work_subtotal, makeTable(res.work_lines)) +
+                sec('🔩', 'Фурнітура та аксесуари', res.hardware_subtotal, makeTable(res.hardware_lines)) +
                 sec('📊', 'Накладні витрати', res.overhead_subtotal, makeTable(res.overhead_lines));
             const el = document.getElementById('results');
             el.classList.add('show');
@@ -1714,9 +1766,27 @@
             // Counters — now decimal inputs
             const wd = document.getElementById('welder-disp');
             const cd = document.getElementById('cuts-disp');
+            const hd = document.getElementById('holes-disp');
             if (wd && inp.welder_qty != null) wd.value = inp.welder_qty;
             if (cd && inp.cuts_qty != null) cd.value = inp.cuts_qty;
+            if (hd && inp.holes_qty != null) hd.value = inp.holes_qty;
             syncWelderHint();
+
+            // Hardware rows
+            const hTbody = document.getElementById('hardware-rows');
+            hTbody.innerHTML = '';
+            hRowId = 0;
+            (inp.hardware_rows || []).forEach(row => {
+                addHardwareRow();
+                const sel = document.getElementById(`h-sel-${hRowId}`);
+                if (sel) {
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (+sel.options[i].value === row.hardware_id) { sel.selectedIndex = i; break; }
+                    }
+                }
+                const qtyInp = document.getElementById(`h-qty-${hRowId}`);
+                if (qtyInp) qtyInp.value = row.quantity;
+            });
 
             loadedTemplateId = id; // Track loaded template
 
@@ -1822,6 +1892,12 @@
             const pr = document.getElementById('primer-sel');
             if (pr.options.length > 0) pr.selectedIndex = 0;
             togglePrimer();
+
+            // Reset hardware
+            document.getElementById('hardware-rows').innerHTML = '';
+            hRowId = 0;
+            const hd = document.getElementById('holes-disp');
+            if (hd) hd.value = 0;
 
             // Hide results
             document.getElementById('results').classList.remove('show');
