@@ -532,6 +532,11 @@ class MetalHardwareRow(BaseModel):
     hardware_id: int
     quantity: int = 1
 
+class MetalHoleRow(BaseModel):
+    name: str
+    quantity: int = 1
+    price_per_hole: float = 0.0
+
 class MetalCalcInput(BaseModel):
     product_name: Optional[str] = None
     client_name: Optional[str] = None
@@ -542,9 +547,10 @@ class MetalCalcInput(BaseModel):
     work_item_ids: Optional[List[int]] = []   # selected work items
     overhead_ids: Optional[List[int]] = []    # selected overhead items
     hardware_rows: Optional[List[MetalHardwareRow]] = []
+    hole_rows: Optional[List[MetalHoleRow]] = []
     welder_qty: float = 0.0                     # metres of weld seam (decimal)
     cuts_qty: float = 0.0                        # number of cuts (can be decimal)
-    holes_qty: float = 0.0                       # number of holes
+    holes_qty: float = 0.0                       # legacy: total number of holes
     notes: Optional[str] = None
 
 class MetalResultLine(BaseModel):
@@ -558,11 +564,13 @@ class MetalCalcResult(BaseModel):
     work_lines: List[MetalResultLine]
     overhead_lines: List[MetalResultLine]
     hardware_lines: List[MetalResultLine] = []
+    hole_lines: List[MetalResultLine] = []
     metal_subtotal: float
     coating_subtotal: float
     work_subtotal: float
     overhead_subtotal: float
     hardware_subtotal: float = 0.0
+    hole_subtotal: float = 0.0
     grand_total: float
 
 # ── Metal CRUD ────────────────────────────────────────────────────────────────
@@ -734,6 +742,23 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         ).first()
         if holes_item:
             checked_ids.add(holes_item.id)
+    
+    # ── Holes (Refined table-based) ───────────────────────────────────────────
+    hole_lines = []
+    hole_subtotal = 0.0
+
+    if inp.hole_rows:
+        for hr in inp.hole_rows:
+            if hr.quantity > 0:
+                cost = round(hr.quantity * float(hr.price_per_hole), 2)
+                hole_lines.append(MetalResultLine(
+                    name=hr.name or "Отвори",
+                    qty=float(hr.quantity),
+                    unit="отв",
+                    price_unit=float(hr.price_per_hole),
+                    total=cost
+                ))
+                hole_subtotal += cost
 
     if checked_ids:
         items = db.query(MetalWorkItem).filter(MetalWorkItem.id.in_(checked_ids)).all()
@@ -797,7 +822,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
             overhead_subtotal += float(o.price)
     overhead_subtotal = round(overhead_subtotal, 2)
 
-    grand = round(metal_subtotal + coating_subtotal + work_subtotal + overhead_subtotal + hardware_subtotal, 2)
+    grand = round(metal_subtotal + coating_subtotal + work_subtotal + overhead_subtotal + hardware_subtotal + hole_subtotal, 2)
 
     return MetalCalcResult(
         product_name=inp.product_name,
@@ -807,11 +832,13 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         work_lines=work_lines,
         overhead_lines=overhead_lines,
         hardware_lines=hardware_lines,
+        hole_lines=hole_lines,
         metal_subtotal=metal_subtotal,
         coating_subtotal=coating_subtotal,
         work_subtotal=work_subtotal,
         overhead_subtotal=overhead_subtotal,
         hardware_subtotal=hardware_subtotal,
+        hole_subtotal=hole_subtotal,
         grand_total=grand
     )
 

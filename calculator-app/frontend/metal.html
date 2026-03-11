@@ -1066,16 +1066,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="ctr-row" style="margin-top:8px">
-                    <div class="ctr-block"><label>Отвори</label>
-                        <div style="display:flex;align-items:center;gap:6px">
-                            <input type="number" id="holes-disp" value="0" min="0"
-                                style="width:90px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:700;color:#1e293b;outline:none"
-                                title="Кількість отворів">
-                            <span style="font-size:12px;color:#64748b">шт</span>
-                        </div>
-                    </div>
-                </div>
+                <!-- holes-disp moved to a dynamic table card below -->
                 <div class="f" style="margin-top:12px"><label>Накладні витрати</label>
                     <div class="chk-grid" id="overhead-grid"></div>
                 </div>
@@ -1114,6 +1105,23 @@
                 <tbody id="hardware-rows"></tbody>
             </table>
             <button class="btn-add-row" onclick="addHardwareRow()">+ Додати фурнітуру</button>
+        </div>
+
+        <!-- ── ROW 2.6: Отвори ── -->
+        <div class="card" style="margin-bottom:14px">
+            <div class="card-title"><span class="step">1.6</span> Отвори</div>
+            <table class="prof-table">
+                <thead>
+                    <tr>
+                        <th style="width:50%">Тип/Назва отвору</th>
+                        <th>Кількість</th>
+                        <th>Ціна за отвір</th>
+                        <th style="width:30px"></th>
+                    </tr>
+                </thead>
+                <tbody id="hole-rows"></tbody>
+            </table>
+            <button class="btn-add-row" onclick="addHoleRow()">+ Додати отвір</button>
         </div>
 
         <!-- ── ROW 3: Photo Annotator ── -->
@@ -1258,7 +1266,7 @@
         const API = '';
         let profiles = [], paints = [], workItems = [], overheads = [], hardware_metal = [];
         let form = { welder: 1, cuts: 0 };
-        let lastResult = null, lastInp = null, rowId = 0, hRowId = 0, loadedTemplateId = null;
+        let lastResult = null, lastInp = null, rowId = 0, hRowId = 0, holeRowId = 0, loadedTemplateId = null;
 
         async function init() {
             const [p, pa, w, o, hm] = await Promise.all([
@@ -1380,6 +1388,22 @@
             document.getElementById(`hrow-${id}`).remove();
         }
 
+        function addHoleRow() {
+            const id = ++holeRowId;
+            const tr = document.createElement('tr');
+            tr.id = `holerow-${id}`;
+            tr.innerHTML = `
+                <td><input type="text" id="hole-name-${id}" placeholder="напр. Отвір 10мм" style="width:100%"></td>
+                <td><input type="number" id="hole-qty-${id}" value="1" min="1" style="width:80px"></td>
+                <td><input type="number" id="hole-price-${id}" value="5" min="0" step="0.01" style="width:80px"></td>
+                <td><button class="btn-del" onclick="delHoleRow(${id})" title="Видалити">✕</button></td>`;
+            document.getElementById('hole-rows').appendChild(tr);
+        }
+
+        function delHoleRow(id) {
+            document.getElementById(`holerow-${id}`).remove();
+        }
+
         function togglePrimer() { document.getElementById('primer-row').classList.toggle('show', document.getElementById('with-primer').checked); }
 
         // ── Welder/Cuts hint (live cost preview) ──────────────────────────────
@@ -1429,8 +1453,15 @@
                         quantity: +document.getElementById(`h-qty-${id}`).value
                     };
                 }),
+                hole_rows: [...document.querySelectorAll('#hole-rows tr')].map(tr => {
+                    const id = tr.id.replace('holerow-', '');
+                    return {
+                        name: document.getElementById(`hole-name-${id}`).value,
+                        quantity: +document.getElementById(`hole-qty-${id}`).value,
+                        price_per_hole: +document.getElementById(`hole-price-${id}`).value
+                    };
+                }),
                 welder_qty: welderMeters, cuts_qty: cutsQty,
-                holes_qty: parseFloat(document.getElementById('holes-disp')?.value) || 0,
                 notes: document.getElementById('notes').value || null
             };
             try {
@@ -1469,6 +1500,7 @@
                 sec('🔩', 'Прорахунок метал', res.metal_subtotal, makeTable(res.metal_lines)) +
                 sec('🎨', 'Фарбування', res.coating_subtotal, makeTable(res.coating_lines)) +
                 sec('⚙️', 'Послуги виробництва', res.work_subtotal, makeTable(res.work_lines)) +
+                sec('🕳️', 'Отвори', res.hole_subtotal, makeTable(res.hole_lines)) +
                 sec('🔩', 'Фурнітура та аксесуари', res.hardware_subtotal, makeTable(res.hardware_lines)) +
                 sec('📊', 'Накладні витрати', res.overhead_subtotal, makeTable(res.overhead_lines));
             const el = document.getElementById('results');
@@ -1766,10 +1798,8 @@
             // Counters — now decimal inputs
             const wd = document.getElementById('welder-disp');
             const cd = document.getElementById('cuts-disp');
-            const hd = document.getElementById('holes-disp');
             if (wd && inp.welder_qty != null) wd.value = inp.welder_qty;
             if (cd && inp.cuts_qty != null) cd.value = inp.cuts_qty;
-            if (hd && inp.holes_qty != null) hd.value = inp.holes_qty;
             syncWelderHint();
 
             // Hardware rows
@@ -1786,6 +1816,20 @@
                 }
                 const qtyInp = document.getElementById(`h-qty-${hRowId}`);
                 if (qtyInp) qtyInp.value = row.quantity;
+            });
+
+            // Hole rows
+            const holeTbody = document.getElementById('hole-rows');
+            holeTbody.innerHTML = '';
+            holeRowId = 0;
+            (inp.hole_rows || []).forEach(row => {
+                addHoleRow();
+                const nameInp = document.getElementById(`hole-name-${holeRowId}`);
+                const qtyInp = document.getElementById(`hole-qty-${holeRowId}`);
+                const priceInp = document.getElementById(`hole-price-${holeRowId}`);
+                if (nameInp) nameInp.value = row.name;
+                if (qtyInp) qtyInp.value = row.quantity;
+                if (priceInp) priceInp.value = row.price_per_hole;
             });
 
             loadedTemplateId = id; // Track loaded template
@@ -1896,8 +1940,9 @@
             // Reset hardware
             document.getElementById('hardware-rows').innerHTML = '';
             hRowId = 0;
-            const hd = document.getElementById('holes-disp');
-            if (hd) hd.value = 0;
+            // Reset holes
+            document.getElementById('hole-rows').innerHTML = '';
+            holeRowId = 0;
 
             // Hide results
             document.getElementById('results').classList.remove('show');
