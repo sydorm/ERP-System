@@ -66,7 +66,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="type" label="Тип" width="150">
+        <el-table-column prop="type" label="Тип" width="130">
           <template #default="{ row }">
             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="getTypeClass(row.type)">
               {{ getTypeName(row.type) }}
@@ -74,9 +74,23 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="description" label="Опис" min-width="200">
+        <el-table-column label="Категорії" min-width="180">
           <template #default="{ row }">
-            <span class="text-xs text-slate-500">{{ row.description || '—' }}</span>
+            <div class="flex flex-wrap gap-1">
+              <el-tag v-if="!row.category_codes || row.category_codes.length === 0" size="small" type="info">Всі</el-tag>
+              <el-tag v-else v-for="code in row.category_codes.slice(0, 3)" :key="code" size="small" class="mb-1">
+                {{ getCategoryName(code) }}
+              </el-tag>
+              <el-tooltip v-if="row.category_codes && row.category_codes.length > 3" :content="getCategoryNames(row.category_codes)" placement="top">
+                <el-tag size="small" type="info" class="mb-1">+{{ row.category_codes.length - 3 }}</el-tag>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="description" label="Опис" min-width="150">
+          <template #default="{ row }">
+            <span class="text-xs text-slate-500 truncate block max-w-xs" :title="row.description || ''">{{ row.description || '—' }}</span>
           </template>
         </el-table-column>
 
@@ -88,6 +102,7 @@
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
                   <el-dropdown-item v-if="row.type === 'SELECT' || row.type === 'COLOR'" command="add_option">
                      Додати значення
                   </el-dropdown-item>
@@ -100,8 +115,8 @@
       </el-table>
     </div>
 
-    <!-- Modal: Add Attribute -->
-    <el-dialog v-model="attrModalVisible" title="Створити характеристику" width="500px">
+    <!-- Modal: Add/Edit Attribute -->
+    <el-dialog v-model="attrModalVisible" :title="isEditMode ? 'Редагувати характеристику' : 'Створити характеристику'" width="500px">
       <el-form ref="attrFormRef" :model="attrForm" :rules="attrRules" label-position="top">
         <el-form-item label="Назва (напр. Колір, Розмір)" prop="name">
           <el-input v-model="attrForm.name" placeholder="Введіть назву" />
@@ -116,8 +131,14 @@
             <el-option label="Так / Ні" value="BOOLEAN" />
           </el-select>
           <div class="text-xs text-slate-400 mt-1">
-            Для 'Списку' і 'Кольору' ви зможете додати варіанти значень після сворення.
+            Для 'Списку' і 'Кольору' ви зможете додати варіанти значень після збереження.
           </div>
+        </el-form-item>
+
+        <el-form-item label="Категорії">
+          <el-select v-model="attrForm.category_codes" multiple filterable placeholder="Всюди (якщо пусто)" class="w-full">
+             <el-option v-for="cat in categories" :key="cat.code" :label="cat.name" :value="cat.code" />
+          </el-select>
         </el-form-item>
 
         <el-form-item label="Опис (опціонально)">
@@ -128,7 +149,7 @@
       <template #footer>
         <div class="flex justify-end gap-3">
           <el-button @click="attrModalVisible = false">Скасувати</el-button>
-          <el-button color="#4f46e5" @click="submitAttrForm" :loading="submitting">Створити</el-button>
+          <el-button color="#4f46e5" @click="submitAttrForm" :loading="submitting">{{ isEditMode ? 'Зберегти' : 'Створити' }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -165,13 +186,17 @@ import { Plus, Search, MoreFilled, Menu, Collection } from '@element-plus/icons-
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
+const query = ref('')
+
 const attributes = ref([])
+const categories = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const expandedRows = ref(new Set())
 
 // Modals state
 const attrModalVisible = ref(false)
+const isEditMode = ref(false)
 const submitting = ref(false)
 const attrFormRef = ref(null)
 
@@ -182,9 +207,11 @@ const activeAttrForOpt = ref(null)
 
 // Forms
 const attrForm = reactive({
+  id: null,
   name: '',
   type: 'SELECT',
-  description: ''
+  description: '',
+  category_codes: []
 })
 
 const optForm = reactive({
@@ -211,10 +238,29 @@ const filteredAttributes = computed(() => {
 
 // Lifecycle
 onMounted(() => {
+  fetchCategories()
   fetchAttributes()
 })
 
 // Methods
+const fetchCategories = async () => {
+    try {
+        const res = await api.get('/api/v1/dictionaries/PRODUCT_CATEGORY')
+        categories.value = res.data
+    } catch (e) {
+        console.error("Failed to load categories", e)
+    }
+}
+
+const getCategoryName = (code) => {
+    const cat = categories.value.find(c => c.code === code)
+    return cat ? cat.name : code
+}
+
+const getCategoryNames = (codes) => {
+    return codes.map(c => getCategoryName(c)).join(', ')
+}
+
 const fetchAttributes = async () => {
   loading.value = true
   try {
@@ -240,9 +286,12 @@ const fetchAttributes = async () => {
 
 // Attribute Modal
 const openAddAttrModal = () => {
+  isEditMode.value = false
+  attrForm.id = null
   attrForm.name = ''
   attrForm.type = 'SELECT'
   attrForm.description = ''
+  attrForm.category_codes = []
   attrModalVisible.value = true
 }
 
@@ -255,12 +304,18 @@ const submitAttrForm = async () => {
         let icon = 'Menu'
         if (attrForm.type === 'COLOR') icon = 'Collection'
         
-        await api.post('/api/v1/attributes', { ...attrForm, icon })
-        ElMessage.success('Характеристику створено')
+        if (isEditMode.value) {
+            await api.put(`/api/v1/attributes/${attrForm.id}`, { ...attrForm, icon })
+            ElMessage.success('Характеристику оновлено')
+        } else {
+            await api.post('/api/v1/attributes', { ...attrForm, icon })
+            ElMessage.success('Характеристику створено')
+        }
+        
         attrModalVisible.value = false
         fetchAttributes()
       } catch (e) {
-        ElMessage.error('Помилка при створенні')
+        ElMessage.error('Помилка збереження')
       } finally {
         submitting.value = false
       }
@@ -334,6 +389,11 @@ const handleExpand = async (row, expandedRowsArr) => {
 const handleCommand = (cmd, row) => {
   if (cmd === 'add_option') {
     openAddOptionModal(row)
+  } else if (cmd === 'edit') {
+    isEditMode.value = true
+    Object.assign(attrForm, row)
+    if (!attrForm.category_codes) attrForm.category_codes = []
+    attrModalVisible.value = true
   } else if (cmd === 'delete') {
     ElMessageBox.confirm('Ви впевнені, що хочете видалити характеристику і всі її значення?', 'Видалити', { type: 'warning' })
       .then(async () => {

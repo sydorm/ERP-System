@@ -7,7 +7,7 @@ from app.api.dependencies import get_db, get_current_user
 from app.models.attribute import Attribute, AttributeOption, CategoryAttribute
 from app.models.variant import ProductVariant, VariantValue
 from app.models.user import User
-from app.schemas.attribute import AttributeCreate, AttributeResponse, CategoryAttributeBase, CategoryAttributeResponse, AttributeOptionCreate, AttributeOptionResponse
+from app.schemas.attribute import AttributeCreate, AttributeUpdate, AttributeResponse, CategoryAttributeBase, CategoryAttributeResponse, AttributeOptionCreate, AttributeOptionResponse
 from app.schemas.variant import ProductVariantCreate, ProductVariantResponse
 
 router = APIRouter(prefix="/attributes", tags=["Product Attributes"])
@@ -26,7 +26,7 @@ async def create_attribute(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    attr_data = attr_in.dict(exclude={"options"})
+    attr_data = attr_in.dict(exclude={"options", "category_codes"})
     db_attr = Attribute(**attr_data, company_id=current_user.company_id)
     db.add(db_attr)
     db.flush()
@@ -36,9 +36,40 @@ async def create_attribute(
             db_opt = AttributeOption(**opt.dict(), attribute_id=db_attr.id)
             db.add(db_opt)
             
+    if attr_in.category_codes is not None:
+        for code in attr_in.category_codes:
+            db_cat_attr = CategoryAttribute(category_code=code, attribute_id=db_attr.id)
+            db.add(db_cat_attr)
+            
     db.commit()
     db.refresh(db_attr)
     return db_attr
+
+@router.put("/{attribute_id}", response_model=AttributeResponse)
+async def update_attribute(
+    attribute_id: UUID,
+    attr_in: AttributeUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    attr = db.query(Attribute).filter(Attribute.id == attribute_id, Attribute.company_id == current_user.company_id).first()
+    if not attr:
+        raise HTTPException(status_code=404, detail="Attribute not found")
+        
+    update_data = attr_in.dict(exclude_unset=True, exclude={"category_codes"})
+    for field, value in update_data.items():
+        setattr(attr, field, value)
+        
+    if attr_in.category_codes is not None:
+        # Replace existing category links
+        db.query(CategoryAttribute).filter(CategoryAttribute.attribute_id == attribute_id).delete()
+        for code in set(attr_in.category_codes):
+            db_cat_attr = CategoryAttribute(category_code=code, attribute_id=attribute_id)
+            db.add(db_cat_attr)
+            
+    db.commit()
+    db.refresh(attr)
+    return attr
 
 @router.patch("/{attribute_id}/archive", response_model=AttributeResponse)
 async def archive_attribute(

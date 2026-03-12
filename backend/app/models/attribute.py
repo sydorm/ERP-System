@@ -29,6 +29,10 @@ class Attribute(BaseModel):
     options = relationship("AttributeOption", back_populates="attribute", cascade="all, delete-orphan")
     categories = relationship("CategoryAttribute", back_populates="attribute", cascade="all, delete-orphan")
 
+    @property
+    def category_codes(self):
+        return [c.category_code for c in self.categories]
+
 class AttributeOption(BaseModel):
     """
     Predefined values for SELECT or COLOR attributes

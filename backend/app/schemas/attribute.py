@@ -35,11 +35,21 @@ class AttributeBase(BaseModel):
 
 class AttributeCreate(AttributeBase):
     options: Optional[List[AttributeOptionCreate]] = None
+    category_codes: Optional[List[str]] = None
+
+class AttributeUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[AttributeType] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+    is_archived: Optional[bool] = None
+    category_codes: Optional[List[str]] = None
 
 class AttributeResponse(AttributeBase):
     id: UUID4
     company_id: UUID4
     options: List[AttributeOptionResponse] = []
+    category_codes: List[str] = []
 
     class Config:
         from_attributes = True
