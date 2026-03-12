@@ -146,14 +146,28 @@ watch(() => props.modelValue, (newVal) => {
 // Computed: attributes already used in the current list
 const usedAttributeIds = computed(() => localCharacteristics.value.map(c => c.attribute_id).filter(Boolean))
 
-// Attributes available for a new row (not already used)
+// Attributes available for a new row (not already used) AND matching current category or global
 const availableAttributesForAdd = computed(() => {
-  return allAttributes.value.filter(a => !usedAttributeIds.value.includes(a.id))
+  return allAttributes.value.filter(a => {
+    // Already added? Skip
+    if (usedAttributeIds.value.includes(a.id)) return false
+    
+    // If it has no specific categories, it's global -> keep
+    if (!a.category_codes || a.category_codes.length === 0) return true
+    
+    // If it has specific categories, check if our current category matches
+    return a.category_codes.includes(props.categoryCode)
+  })
 })
 
 // For a specific row – show its own attribute + available ones
 const getAvailableForRow = (char) => {
-  return allAttributes.value.filter(a => a.id === char.attribute_id || !usedAttributeIds.value.includes(a.id))
+  return allAttributes.value.filter(a => {
+    if (a.id === char.attribute_id) return true
+    if (usedAttributeIds.value.includes(a.id)) return false
+    if (!a.category_codes || a.category_codes.length === 0) return true
+    return a.category_codes.includes(props.categoryCode)
+  })
 }
 
 const getAttributeName = (attrId) => {
