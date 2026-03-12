@@ -1455,6 +1455,18 @@
                 welder_qty: welderMeters, cuts_qty: cutsQty,
                 notes: document.getElementById('notes').value || null
             };
+            
+            // --- Capturing Image State ---
+            const bgImg = document.getElementById('bg-photo');
+            if (bgImg && bgImg.src && bgImg.src.startsWith('data:image')) {
+                inp.bg_photo = bgImg.src;
+                const aCanvas = document.getElementById('anno-canvas');
+                if (aCanvas) inp.anno_photo = aCanvas.toDataURL('image/png');
+                if (typeof weldMarkers !== 'undefined') inp.weldMarkers = weldMarkers;
+                if (typeof rulerLines !== 'undefined') inp.rulerLines = rulerLines;
+                if (typeof pxPerMeter !== 'undefined') inp.pxPerMeter = pxPerMeter;
+                if (typeof rulerSeq !== 'undefined') inp.rulerSeq = rulerSeq;
+            }
             try {
                 const r = await fetch(`${API}/api/metal/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inp) });
                 if (!r.ok) {
@@ -1732,19 +1744,34 @@
             if (!file || !file.type.startsWith('image/')) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const img = document.getElementById('bg-photo');
-                img.onload = () => {
-                    // Show photo and canvas
-                    document.getElementById('photo-empty').style.display = 'none';
-                    img.style.display = 'block';
-                    const canvas = document.getElementById('anno-canvas');
-                    canvas.style.display = 'block';
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    document.getElementById('canvas-toolbar').style.display = 'flex';
-                    setupCanvasEvents(canvas);
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    let w = tempImg.width, h = tempImg.height;
+                    const max = 1200;
+                    if (w > max || h > max) {
+                        if (w > h) { h = Math.round((h * max) / w); w = max; }
+                        else       { w = Math.round((w * max) / h); h = max; }
+                    }
+                    const cvs = document.createElement('canvas');
+                    cvs.width = w; cvs.height = h;
+                    cvs.getContext('2d').drawImage(tempImg, 0, 0, w, h);
+                    const resizedDataUrl = cvs.toDataURL('image/jpeg', 0.82);
+
+                    const img = document.getElementById('bg-photo');
+                    img.onload = () => {
+                        // Show photo and canvas
+                        document.getElementById('photo-empty').style.display = 'none';
+                        img.style.display = 'block';
+                        const canvas = document.getElementById('anno-canvas');
+                        canvas.style.display = 'block';
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        document.getElementById('canvas-toolbar').style.display = 'flex';
+                        setupCanvasEvents(canvas);
+                    };
+                    img.src = resizedDataUrl;
                 };
-                img.src = e.target.result;
+                tempImg.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -2018,11 +2045,60 @@
                 if (qtyInp) qtyInp.value = row.quantity;
             });
 
+            // --- Restore Photo State ---
+            const bgImg = document.getElementById('bg-photo');
+            const aCanvas = document.getElementById('anno-canvas');
+            const emptyHint = document.getElementById('photo-empty');
+            const toolbar = document.getElementById('canvas-toolbar');
+            
+            // Clear existing
+            if (bgImg) { bgImg.style.display = 'none'; bgImg.src = ''; }
+            if (aCanvas) {
+                aCanvas.style.display = 'none';
+                const ctx = aCanvas.getContext('2d');
+                if(ctx) ctx.clearRect(0,0, aCanvas.width, aCanvas.height);
+            }
+            if (emptyHint) emptyHint.style.display = 'block';
+            if (toolbar) toolbar.style.display = 'none';
+            if (typeof weldMarkers !== 'undefined') weldMarkers = [];
+            if (typeof rulerLines !== 'undefined') rulerLines = [];
+            if (typeof pxPerMeter !== 'undefined') pxPerMeter = null;
+            if (typeof rulerSeq !== 'undefined') rulerSeq = 0;
+            if (typeof renderWeldDots === 'function') renderWeldDots();
+            if (typeof renderWeldList === 'function') renderWeldList();
+            if (typeof renderRulers === 'function') renderRulers();
+
+            if (inp.bg_photo) {
+                bgImg.onload = () => {
+                    emptyHint.style.display = 'none';
+                    bgImg.style.display = 'block';
+                    aCanvas.style.display = 'block';
+                    aCanvas.width = bgImg.naturalWidth;
+                    aCanvas.height = bgImg.naturalHeight;
+                    toolbar.style.display = 'flex';
+                    setupCanvasEvents(aCanvas);
+                    
+                    if (inp.anno_photo) {
+                        const annoImg = new Image();
+                        annoImg.onload = () => { aCanvas.getContext('2d').drawImage(annoImg, 0, 0); };
+                        annoImg.src = inp.anno_photo;
+                    }
+
+                    if (inp.weldMarkers) { weldMarkers = inp.weldMarkers; renderWeldDots(); renderWeldList(); }
+                    if (inp.rulerLines) {
+                        rulerLines = inp.rulerLines;
+                        if (inp.pxPerMeter) pxPerMeter = inp.pxPerMeter;
+                        if (inp.rulerSeq) rulerSeq = inp.rulerSeq;
+                        renderRulers();
+                    }
+                    bgImg.onload = null; // Prevent re-trigger
+                };
+                bgImg.src = inp.bg_photo;
+            }
+
             loadedTemplateId = id; // Track loaded template
 
-            // Auto-calculate to show the results immediately
             calculate();
-
             showToast(`★ Завантажено шаблон "${tpl.name}"`, 'ok');
         }
 
