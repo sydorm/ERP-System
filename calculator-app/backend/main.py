@@ -642,6 +642,37 @@ def upd_overhead(id: int, data: MetalOverheadUpdate, db: Session=Depends(get_db)
     for k,v in data.model_dump(exclude_unset=True).items(): setattr(o,k,v)
     db.commit(); db.refresh(o); return o
 
+@app.delete("/api/metal/profiles/{id}")
+def delete_profile(id: int, db: Session=Depends(get_db)):
+    p = db.get(MetalProfile, id)
+    if not p: raise HTTPException(404, "Not found")
+    db.delete(p); db.commit(); return {"status": "ok"}
+
+@app.delete("/api/metal/paints/{id}")
+def delete_paint(id: int, db: Session=Depends(get_db)):
+    p = db.get(MetalPaint, id)
+    if not p: raise HTTPException(404, "Not found")
+    db.delete(p); db.commit(); return {"status": "ok"}
+
+@app.delete("/api/metal/work-items/{id}")
+def delete_work_item(id: int, db: Session=Depends(get_db)):
+    w = db.get(MetalWorkItem, id)
+    if not w: raise HTTPException(404, "Not found")
+    db.delete(w); db.commit(); return {"status": "ok"}
+
+@app.delete("/api/metal/overhead/{id}")
+def delete_overhead(id: int, db: Session=Depends(get_db)):
+    o = db.get(MetalOverhead, id)
+    if not o: raise HTTPException(404, "Not found")
+    db.delete(o); db.commit(); return {"status": "ok"}
+
+@app.delete("/api/metal/hardware/{id}")
+def delete_hardware(id: int, db: Session=Depends(get_db)):
+    h = db.get(MetalHardware, id)
+    if not h: raise HTTPException(404, "Not found")
+    db.delete(h); db.commit(); return {"status": "ok"}
+
+
 @app.get("/api/metal/hardware", response_model=List[MetalHardwareOut])
 def get_hardware_metal(active_only: bool=True, db: Session=Depends(get_db)):
     q = db.query(MetalHardware)
@@ -738,7 +769,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
     total_holes_qty = sum(r.holes_qty or 0.0 for r in inp.rows) + (inp.holes_qty or 0.0)
     if total_holes_qty > 0:
         holes_item = db.query(MetalWorkItem).filter(
-            MetalWorkItem.name.ilike("%отвір%"),
+            MetalWorkItem.name.ilike("%твор%"),
             MetalWorkItem.is_active == True
         ).first()
         if holes_item:
@@ -753,7 +784,7 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         for wi in items:
             is_welder = "зварюваль" in wi.name.lower()
             is_cuts   = "різан" in wi.name.lower()
-            is_holes  = "отвір" in wi.name.lower()
+            is_holes  = "твор" in wi.name.lower()
             if wi.pricing_type == "per_m2":
                 cost = round(total_m2 * float(wi.price), 2)
                 qty  = total_m2
@@ -761,14 +792,11 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
             elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts or is_holes:
                 # Use metres of weld seam for welder, cuts count for cuts, holes count for holes
                 if is_holes:
-                    qty = total_holes_qty
-                    unit = "шт"
+                    unit_count = total_holes_qty
+                    unit = wi.unit or "шт"
                 elif is_cuts:
                     unit_count = inp.cuts_qty
                     unit = wi.unit or "різ"
-                elif is_holes:
-                    unit_count = inp.holes_qty
-                    unit = wi.unit or "отв"
                 else:
                     unit_count = inp.welder_qty
                     unit = wi.unit or "м шва"

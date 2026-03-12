@@ -766,7 +766,8 @@
       <td class="price-amber">${p.price_per_meter} грн/м</td>
       <td><span class="badge ${p.is_active ? 'on' : 'off'}">${p.is_active ? 'Активний' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(p)})'>✏️</button>
-        <button class="bt" onclick="toggle('m-profiles',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+        <button class="bt" onclick="toggle('m-profiles',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button>
+        <button class="bt" onclick="delItem('m-profiles',${p.id})" title="Видалити назавжди">🗑️</button></td></tr>`).join('');
             } else if (t === 'm-paints') {
                 tb.innerHTML = data.map(p => `<tr>
       <td>${p.name}</td>
@@ -775,7 +776,8 @@
       <td>${p.consumption_kg_per_m2} кг/м²</td>
       <td><span class="badge ${p.is_active ? 'on' : 'off'}">${p.is_active ? 'Активна' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(p)})'>✏️</button>
-        <button class="bt" onclick="toggle('m-paints',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+        <button class="bt" onclick="toggle('m-paints',${p.id},${p.is_active})">${p.is_active ? '🔴' : '🟢'}</button>
+        <button class="bt" onclick="delItem('m-paints',${p.id})" title="Видалити назавжди">🗑️</button></td></tr>`).join('');
             } else if (t === 'm-work') {
                 const typeLabel = { 'per_m2': 'За м²', 'fixed': 'Фіксована', 'per_unit': 'За одиницю', 'per_linear_m': 'За м.п.' };
                 tb.innerHTML = data.map(w => `<tr>
@@ -785,7 +787,8 @@
       <td>${w.unit}</td>
       <td><span class="badge ${w.is_active ? 'on' : 'off'}">${w.is_active ? 'Активна' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(w)})'>✏️</button>
-        <button class="bt" onclick="toggle('m-work',${w.id},${w.is_active})">${w.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+        <button class="bt" onclick="toggle('m-work',${w.id},${w.is_active})">${w.is_active ? '🔴' : '🟢'}</button>
+        <button class="bt" onclick="delItem('m-work',${w.id})" title="Видалити назавжди">🗑️</button></td></tr>`).join('');
             } else if (t === 'm-hardware') {
                 tb.innerHTML = data.map(h => `<tr>
       <td>${h.name}</td>
@@ -793,14 +796,16 @@
       <td>${h.unit}</td>
       <td><span class="badge ${h.is_active ? 'on' : 'off'}">${h.is_active ? 'Активна' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(h)})'>✏️</button>
-        <button class="bt" onclick="toggle('m-hardware',${h.id},${h.is_active})">${h.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+        <button class="bt" onclick="toggle('m-hardware',${h.id},${h.is_active})">${h.is_active ? '🔴' : '🟢'}</button>
+        <button class="bt" onclick="delItem('m-hardware',${h.id})" title="Видалити назавжди">🗑️</button></td></tr>`).join('');
             } else if (t === 'm-overhead') {
                 tb.innerHTML = data.map(o => `<tr>
       <td>${o.name}</td>
       <td class="price-amber">${o.price} грн</td>
       <td><span class="badge ${o.is_active ? 'on' : 'off'}">${o.is_active ? 'Активна' : 'Вимк.'}</span></td>
       <td class="acts"><button class="be" onclick='openEdit(${JSON.stringify(o)})'>✏️</button>
-        <button class="bt" onclick="toggle('m-overhead',${o.id},${o.is_active})">${o.is_active ? '🔴' : '🟢'}</button></td></tr>`).join('');
+        <button class="bt" onclick="toggle('m-overhead',${o.id},${o.is_active})">${o.is_active ? '🔴' : '🟢'}</button>
+        <button class="bt" onclick="delItem('m-overhead',${o.id})" title="Видалити назавжди">🗑️</button></td></tr>`).join('');
             } else if (t === 'm-templates') {
                 const tb2 = document.getElementById('tb-m-templates');
                 if (!tb2) return;
@@ -927,6 +932,16 @@
                 headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !cur })
             });
             loadTab(type); showToast(cur ? 'Вимкнено' : 'Увімкнено', 'ok');
+        }
+
+        async function delItem(type, id) {
+            if(!confirm('Видалити цей елемент назавжди?')) return;
+            try {
+                const r = await fetch(`${API}${apiPath(type)}/${id}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error('Помилка сервера');
+                showToast('Видалено успішно', 'ok');
+                loadTab(type);
+            } catch (e) { showToast('Помилка: ' + e.message, 'err'); }
         }
 
         async function editTpl(id, oldName, oldDesc) {
