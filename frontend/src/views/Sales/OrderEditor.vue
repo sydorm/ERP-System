@@ -3,11 +3,11 @@
     <div class="erp-toolbar">
       <div class="erp-toolbar-left">
         <el-button size="small" :icon="ArrowLeft" @click="goBack" class="erp-btn-icon" title="Назад" />
-        <el-button type="warning" size="small" :loading="submitting" @click="saveOrder" class="erp-btn-primary">
+        <el-button type="warning" size="small" :loading="submitting" @click="saveOrder('post_close')" class="erp-btn-primary">
           Провести та закрити
         </el-button>
-        <el-button size="small" @click="saveOrder" class="erp-btn">Записати</el-button>
-        <el-button size="small" @click="saveOrder" class="erp-btn">Провести</el-button>
+        <el-button size="small" @click="saveOrder('save')" class="erp-btn" :loading="submitting">Записати</el-button>
+        <el-button size="small" @click="saveOrder('post')" class="erp-btn" :loading="submitting">Провести</el-button>
         <el-dropdown v-if="isEditMode" trigger="click" @command="handleCreateBasedOn" size="small">
           <el-button size="small" class="erp-btn">
             Створити на підставі <el-icon class="el-icon--right"><ArrowDown /></el-icon>
@@ -42,27 +42,32 @@
 
     <!-- Order header fields -->
     <div class="erp-header-fields">
-      <div class="erp-field-row">
-        <div class="erp-field">
-          <span class="erp-label">Стан:</span>
-          <el-select v-model="form.status" size="small" class="erp-input-wrapper status-select" :class="'status-' + form.status">
-            <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code" />
-          </el-select>
-        </div>
+      <div class="erp-field-row justify-between">
         <div class="erp-field">
           <span class="erp-label">Номер:</span>
-          <el-input v-model="form.order_number" size="small" class="erp-input-wrapper" disabled />
+          <el-input v-model="form.order_number" size="small" class="erp-input-wrapper" disabled style="width:120px" />
         </div>
         <div class="erp-field">
           <span class="erp-label">від:</span>
-          <el-date-picker v-model="form.order_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" />
+          <el-date-picker v-model="form.order_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" style="width:130px" />
         </div>
         <div class="erp-field">
           <span class="erp-label">Відвантаження:</span>
-          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" />
+          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" style="width:130px" />
+        </div>
+        <div class="erp-badges-group ml-auto flex gap-2">
+            <el-select v-model="form.status" size="small" class="erp-status-select" :class="statusType" style="width:140px">
+              <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code">
+                <span class="flex items-center gap-2">
+                   <span class="w-2 h-2 rounded-full" :style="{backgroundColor: s.color || '#ccc'}"></span>
+                   {{ s.name }}
+                </span>
+              </el-option>
+            </el-select>
+            <div class="payment-status-badge" :class="paymentStatusClass" style="margin-top:0">{{ paymentStatusLabel }}</div>
         </div>
       </div>
-      <div class="erp-field-row">
+      <div class="erp-field-row mt-1">
         <div class="erp-field client-field">
           <span class="erp-label req">Покупець:</span>
           <el-select v-model="form.counterparty_id" filterable size="small" class="erp-input-wrapper client-select" @change="onClientChange">
@@ -766,10 +771,10 @@ const fetchData = async () => {
   }
 }
 
-const handleStatusChange = async (command) => {
-  if (form.status === command) return
+const handleStatusChange = async (newStatus) => {
+  if (form.status === newStatus) return
   const oldStatus = form.status
-  form.status = command
+  form.status = newStatus
   try {
     const res = await api.put(`/api/v1/orders/${route.params.id}`, form)
     ElMessage.success('Статус оновлено')
@@ -780,10 +785,21 @@ const handleStatusChange = async (command) => {
   }
 }
 
-const saveOrder = async () => {
+const saveOrder = async (action = 'save') => {
   if (!form.counterparty_id || !form.warehouse_id || form.lines.length === 0) {
-    ElMessage.warning("Заповніть обов'язкові поля та додайте товари")
+    ElMessage.warning("Заповніть обов'язкові поля та додайте товари (мінімум 1 рядок)")
     return
+  }
+  
+  // Logic for buttons
+  // - "save" (Записати): always saves. If new, stays draft. 
+  // - "post" (Провести): changes status to 'processing' if it is 'draft', saves.
+  // - "post_close" (Провести та закрити): same as 'post', but goes back to list.
+  
+  if (action === 'post' || action === 'post_close') {
+      if (form.status === 'draft') {
+          form.status = 'processing' // Default active status
+      }
   }
 
   const payload = {
@@ -800,11 +816,19 @@ const saveOrder = async () => {
     if (isEditMode.value) {
       await api.put(`/api/v1/orders/${route.params.id}`, payload)
       ElMessage.success('Замовлення оновлено')
-      await fetchData()
+      if (action === 'post_close') {
+          router.push('/sales/orders')
+      } else {
+          await fetchData()
+      }
     } else {
       const res = await api.post('/api/v1/orders', payload)
       ElMessage.success('Замовлення створено')
-      router.push(`/sales/orders/${res.data.id}`)
+      if (action === 'post_close') {
+          router.push('/sales/orders')
+      } else {
+          router.push(`/sales/orders/${res.data.id}`)
+      }
     }
   } catch (error) {
     ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
@@ -866,6 +890,25 @@ onMounted(fetchData)
 .erp-header-fields :deep(.el-select__wrapper) { min-height: 26px !important; }
 .erp-link { font-size: 13px; color: #409eff; text-decoration: none; }
 .erp-link:hover { text-decoration: underline; }
+
+.erp-badges-group { display: flex; align-items: center; gap: 8px; }
+
+/* Status Select Badge Styling */
+.erp-status-select.success :deep(.el-select__wrapper) { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; font-weight: 600; }
+.erp-status-select.success :deep(.el-select__placeholder) { color: #065f46 !important; }
+
+.erp-status-select.primary :deep(.el-select__wrapper) { background-color: #dbeafe !important; border-color: #3b82f6 !important; color: #1e40af !important; font-weight: 600; }
+.erp-status-select.primary :deep(.el-select__placeholder) { color: #1e40af !important; }
+
+.erp-status-select.warning :deep(.el-select__wrapper) { background-color: #fef3c7 !important; border-color: #f59e0b !important; color: #92400e !important; font-weight: 600; }
+.erp-status-select.warning :deep(.el-select__placeholder) { color: #92400e !important; }
+
+.erp-status-select.danger :deep(.el-select__wrapper) { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; font-weight: 600; }
+.erp-status-select.danger :deep(.el-select__placeholder) { color: #991b1b !important; }
+
+.erp-status-select.info :deep(.el-select__wrapper) { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #475569 !important; font-weight: 600; }
+.erp-status-select.info :deep(.el-select__placeholder) { color: #475569 !important; }
+
 
 /* Client info banner */
 .client-info-banner {
