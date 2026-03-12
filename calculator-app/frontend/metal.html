@@ -2362,10 +2362,9 @@
             const total = recalcWeldTotal();
             const wd = document.getElementById('welder-disp');
             if (wd) {
-                const cur = parseFloat(wd.value) || 0;
-                wd.value = parseFloat((cur + total).toFixed(3));
+                wd.value = parseFloat(total.toFixed(3));
                 syncWelderHint();
-                showToast(`🔩 +${total.toFixed(3)} м шва додано до поля зварювальника`, 'ok');
+                showToast(`🔩 Значення ${total.toFixed(3)} м встановлено у поле зварювальника`, 'ok');
             }
         }
 
