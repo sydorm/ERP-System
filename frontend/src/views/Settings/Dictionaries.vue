@@ -57,12 +57,18 @@
 
       <!-- Main Content Area -->
       <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-        <!-- Toolbar -->
-        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">{{ currentDictionary?.name }}</h2>
-            <p class="text-xs text-slate-500 mt-1">{{ currentDictionary?.description }}</p>
-          </div>
+        
+        <!-- CUSTOM COMPONENT FOR ATTRIBUTES -->
+        <ProductAttributesManager v-if="activeDictionary === 'PRODUCT_ATTRIBUTES'" />
+
+        <!-- STANDARD DICTIONARY UI -->
+        <template v-else>
+          <!-- Toolbar -->
+          <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">{{ currentDictionary?.name }}</h2>
+              <p class="text-xs text-slate-500 mt-1">{{ currentDictionary?.description }}</p>
+            </div>
           <div class="flex gap-3">
             <el-input 
               v-model="searchQuery" 
@@ -131,6 +137,7 @@
             </el-table-column>
           </el-table>
         </div>
+        </template>
       </div>
     </div>
 
@@ -187,6 +194,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Plus, Search, MoreFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import ProductAttributesManager from './ProductAttributesManager.vue'
 
 // Foundation Structure
 const sections = [
