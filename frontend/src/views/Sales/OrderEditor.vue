@@ -25,6 +25,7 @@
         </div>
       </div>
       <div class="erp-toolbar-right">
+        <el-button size="small" class="erp-btn-icon" :icon="isHeaderExpanded ? ArrowUp : ArrowDown" :title="isHeaderExpanded ? 'Згорнути шапку' : 'Розгорнути шапку'" @click="isHeaderExpanded = !isHeaderExpanded" />
         <el-button v-if="isEditMode" size="small" class="erp-btn-icon" :icon="Timer" title="Історія змін" @click="showAuditLog" />
         <el-dropdown trigger="click" size="small">
           <el-button size="small" class="erp-btn-icon" :icon="MoreFilled" title="Більше дій" />
@@ -41,7 +42,8 @@
     </div>
 
     <!-- Order header fields -->
-    <div class="erp-header-fields">
+    <el-collapse-transition>
+      <div class="erp-header-fields" v-show="isHeaderExpanded">
       <div class="erp-field-row justify-between">
         <div class="erp-field">
           <span class="erp-label">Номер:</span>
@@ -84,6 +86,7 @@
         </span>
       </div>
     </div>
+    </el-collapse-transition>
 
     <!-- Main body: tabs + sidebar -->
     <div class="order-body">
@@ -374,7 +377,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, ArrowUp, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
@@ -405,6 +408,7 @@ const loading = ref(false)
 const submitting = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 const activeTab = ref('items')
+const isHeaderExpanded = ref(true)
 
 // Delivery state
 const delivery = reactive({
@@ -771,6 +775,11 @@ const fetchData = async () => {
   }
 }
 
+const getStatusLabel = (code) => {
+  const s = orderStatuses.value.find(i => i.code === code)
+  return s?.name || code || '—'
+}
+
 const handleStatusChange = async (newStatus) => {
   if (form.status === newStatus) return
   const oldStatus = form.status
@@ -798,7 +807,8 @@ const saveOrder = async (action = 'save') => {
   
   if (action === 'post' || action === 'post_close') {
       if (form.status === 'draft') {
-          form.status = 'processing' // Default active status
+          const firstActive = orderStatuses.value.find(s => s.code !== 'draft')
+          form.status = firstActive ? firstActive.code : 'processing' // Safe fallback
       }
   }
 
@@ -876,19 +886,19 @@ onMounted(fetchData)
 }
 .erp-field-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .erp-field { display: flex; align-items: center; }
-.erp-label { font-size: 13px; color: #606266; padding-right: 8px; white-space: nowrap; }
+.erp-label { font-size: 15px; color: #374151; padding-right: 8px; white-space: nowrap; font-weight: 500; }
 .erp-label.req { color: #f56c6c; }
 .erp-input-wrapper { width: 160px; }
 .client-select { width: 320px; }
 .erp-header-fields :deep(.el-input__wrapper), .erp-header-fields :deep(.el-select__wrapper) {
-  border-radius: 2px !important; box-shadow: none !important; border: 1px solid #dcdfe6 !important;
-  background-color: #fff !important; min-height: 26px !important; height: 26px !important; padding: 0 8px !important;
+  border-radius: 4px !important; box-shadow: none !important; border: 1px solid #d1d5db !important;
+  background-color: #fff !important; min-height: 30px !important; height: 30px !important; padding: 0 10px !important;
 }
 .erp-header-fields :deep(.el-input__inner) {
-  height: 24px !important; line-height: 24px !important; font-size: 13px !important; color: #303133 !important;
+  height: 28px !important; line-height: 28px !important; font-size: 15px !important; color: #111827 !important;
 }
-.erp-header-fields :deep(.el-select__wrapper) { min-height: 26px !important; }
-.erp-link { font-size: 13px; color: #409eff; text-decoration: none; }
+.erp-header-fields :deep(.el-select__wrapper) { min-height: 30px !important; }
+.erp-link { font-size: 15px; color: #409eff; text-decoration: none; }
 .erp-link:hover { text-decoration: underline; }
 
 .erp-badges-group { display: flex; align-items: center; gap: 8px; }
