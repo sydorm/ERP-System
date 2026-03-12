@@ -766,16 +766,10 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         if cuts_item:
             checked_ids.add(cuts_item.id)
 
+    # Force include "Отвори" if there are any, regardless of `is_active` status in DB
     total_holes_qty = sum(r.holes_qty or 0.0 for r in inp.rows) + (inp.holes_qty or 0.0)
-    if total_holes_qty > 0:
-        holes_item = db.query(MetalWorkItem).filter(
-            MetalWorkItem.name.ilike("%твор%"),
-            MetalWorkItem.is_active == True
-        ).first()
-        if holes_item:
-            checked_ids.add(holes_item.id)
     
-    # Hole lines and subtotal (removed legacy separate table)
+    # We no longer use a separate hole_lines table, we just append to work_lines
     hole_lines = []
     hole_subtotal = 0.0
 
@@ -784,17 +778,12 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
         for wi in items:
             is_welder = "зварюваль" in wi.name.lower()
             is_cuts   = "різан" in wi.name.lower()
-            is_holes  = "твор" in wi.name.lower()
             if wi.pricing_type == "per_m2":
                 cost = round(total_m2 * float(wi.price), 2)
                 qty  = total_m2
                 unit = "м²"
-            elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts or is_holes:
-                # Use metres of weld seam for welder, cuts count for cuts, holes count for holes
-                if is_holes:
-                    unit_count = total_holes_qty
-                    unit = wi.unit or "шт"
-                elif is_cuts:
+            elif wi.pricing_type in ("per_unit", "per_linear_m") or is_welder or is_cuts:
+                if is_cuts:
                     unit_count = inp.cuts_qty
                     unit = wi.unit or "різ"
                 else:
@@ -811,6 +800,20 @@ def metal_calculate(inp: MetalCalcInput, db: Session=Depends(get_db)):
                 price_unit=float(wi.price), total=cost
             ))
             work_subtotal += cost
+
+    # Explicitly calculate and append Holes to work_lines
+    if total_holes_qty > 0:
+        holes_item = db.query(MetalWorkItem).filter(MetalWorkItem.name.ilike("%твор%")).first()
+        holes_price = float(holes_item.price) if holes_item else 8.0
+        holes_name = holes_item.name if holes_item else "Отвори"
+        holes_cost = round(total_holes_qty * holes_price, 2)
+        
+        work_lines.append(MetalResultLine(
+            name=holes_name, qty=float(total_holes_qty), unit="отв",
+            price_unit=holes_price, total=holes_cost
+        ))
+        work_subtotal += holes_cost
+
     work_subtotal = round(work_subtotal, 2)
 
     # ── Hardware ──────────────────────────────────────────────────────────────
