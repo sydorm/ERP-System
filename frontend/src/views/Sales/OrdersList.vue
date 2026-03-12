@@ -203,14 +203,20 @@
       <!-- PAGINATION -->
       <div class="pagination-footer">
         <span class="total-hint">Показано {{ filteredOrders.length }} з {{ orders.length }}</span>
-        <el-pagination
-          v-model:current-page="currentPage"
-          :page-size="pageSize"
-          layout="prev, pager, next"
-          :total="totalCount"
-          @current-change="handlePageChange"
-          class="custom-pagination"
-        />
+        <div class="custom-pagination-container">
+          <el-select v-model="pageSize" size="small" class="limit-select" @change="handleSizeChange">
+            <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
+          </el-select>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="totalCount"
+            background
+            layout="prev, pager, next"
+            class="custom-pagination-numeric"
+            @current-change="handlePageChange"
+          />
+        </div>
       </div>
     </div>
 
@@ -421,6 +427,10 @@ const handleSortChange = ({ prop, order }) => {
 
 const handleSelectionChange = (rows) => { selected.value = rows }
 const handlePageChange = (p) => { currentPage.value = p }
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+}
 
 const handleRowClick = (row) => {
   selectedOrder.value = row
@@ -904,19 +914,24 @@ const getTimeline = (order) => {
 
 /* ===== PAGINATION ===== */
 .pagination-footer {
+  display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+  border-top: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0;
+}
+.total-hint { font-size: 13px; color: #64748b; }
+.custom-pagination-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  border-top: 1px solid #f4f5f9;
+  gap: 12px;
 }
-.total-hint { font-size: 13px; color: #9ca3af; }
-.custom-pagination :deep(.el-pager li) {
-  border-radius: 7px; min-width: 30px; height: 30px; line-height: 30px;
+.limit-select {
+  width: 64px !important;
 }
-.custom-pagination :deep(.el-pager li.is-active) {
-  background: #6366f1 !important; color: #fff !important;
+.limit-select :deep(.el-input__wrapper) {
+  border-radius: 6px;
+  background: #ffffff !important;
 }
+.custom-pagination-numeric :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
+.custom-pagination-numeric :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
 
 /* ===== DRAWER ===== */
 .order-drawer :deep(.el-drawer__header) {

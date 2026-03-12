@@ -34,7 +34,7 @@
     <el-card shadow="never" class="content-card">
       <el-table 
         v-loading="loading" 
-        :data="invoices" 
+        :data="paginatedInvoices" 
         stripe 
         style="width: 100%"
         class="custom-table"
@@ -69,12 +69,31 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- PAGINATION -->
+      <div class="pagination-footer">
+        <span class="total-hint">Показано {{ paginatedInvoices.length }} з {{ filteredInvoices.length }}</span>
+        <div class="custom-pagination-container">
+          <el-select v-model="pageSize" size="small" class="limit-select" @change="handleSizeChange">
+            <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
+          </el-select>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="filteredInvoices.length"
+            background
+            layout="prev, pager, next"
+            class="custom-pagination-numeric"
+            @current-change="handlePageChange"
+          />
+        </div>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -87,6 +106,26 @@ const loading = ref(false)
 const invoices = ref([])
 const counterparties = ref({})
 const searchQuery = ref('')
+
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const filteredInvoices = computed(() => {
+  let list = [...invoices.value]
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(i => 
+      i.invoice_number?.toLowerCase().includes(q) ||
+      getCounterpartyName(i.counterparty_id)?.toLowerCase().includes(q)
+    )
+  }
+  return list
+})
+
+const paginatedInvoices = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredInvoices.value.slice(start, start + pageSize.value)
+})
 
 const fetchInvoices = async () => {
   loading.value = true
@@ -112,12 +151,17 @@ const fetchInvoices = async () => {
 }
 
 const handleSearch = () => {
-    // Basic local filtering if needed or server-side
-    // For now, let's just refetch if we hit enter or search button
+  currentPage.value = 1
 }
 
 const handleCreate = () => router.push('/sales/invoices/new')
 const handleEdit = (row) => router.push(`/sales/invoices/${row.id}`)
+
+const handlePageChange = (p) => { currentPage.value = p }
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+}
 
 const handleDelete = (row) => {
   ElMessageBox.confirm(
@@ -192,4 +236,26 @@ onActivated(() => {
   border: none;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
+
+/* ===== PAGINATION ===== */
+.pagination-footer {
+  display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+  border-top: 1px solid #e2e8f0; background: #fff; flex-shrink: 0;
+  border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+}
+.total-hint { font-size: 13px; color: #64748b; }
+.custom-pagination-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.limit-select {
+  width: 64px !important;
+}
+.limit-select :deep(.el-input__wrapper) {
+  border-radius: 6px;
+  background: #ffffff !important;
+}
+.custom-pagination-numeric :deep(.el-pager li) { border-radius: 6px; min-width: 30px; height: 30px; line-height: 30px; font-weight: 500; }
+.custom-pagination-numeric :deep(.el-pager li.is-active) { background: #4f46e5 !important; color: #fff !important; }
 </style>
