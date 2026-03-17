@@ -59,10 +59,7 @@
             clearable
             class="kimi-search-input"
           />
-          <el-button class="kimi-refresh-btn" @click="fetchUsers" title="Оновити">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </div>
+      </div>
         <div class="kimi-filter-right">
           <button class="kimi-primary-btn" @click="openCreateModal">
             <el-icon><Plus /></el-icon> Новий користувач

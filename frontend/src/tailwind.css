@@ -24,10 +24,7 @@
 }
 
 @layer base {
-  body {
-    @apply bg-[var(--kimi-bg)] text-[var(--kimi-text-main)] font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
+  /* Keep base styles minimal to avoid interfering with existing layout */
 }
 
 @layer components {
