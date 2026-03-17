@@ -292,9 +292,10 @@ html.dark .custom-sidebar-menu {
   line-height: normal;
   display: flex !important;
   align-items: center;
+  justify-content: flex-start !important;
   font-size: 15px;
   font-weight: 500;
-  padding-right: 36px !important;
+  padding: 0 16px !important;
   position: relative;
   box-sizing: border-box;
 }
@@ -307,6 +308,8 @@ html.dark .custom-sidebar-menu {
   white-space: nowrap;
   flex: 1;
   min-width: 0;
+  text-align: left !important;
+  margin-left: 12px;
 }
 
 /* Fix submenu arrow (chevron) alignment */
