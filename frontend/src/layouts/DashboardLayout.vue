@@ -72,8 +72,6 @@
           </template>
           <el-menu-item index="/settings/company">Організація</el-menu-item>
           <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
-          <el-menu-item index="/settings/numbering">Нумерація</el-menu-item>
-          <el-menu-item index="/settings/trash-bin">Корзина</el-menu-item>
           <el-menu-item index="/settings/trash-bin">Корзина</el-menu-item>
         </el-sub-menu>
 
