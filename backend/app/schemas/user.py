@@ -65,6 +65,7 @@ class UserResponse(UserBase):
     role: str
     company_id: UUID
     created_at: datetime
+    temp_password: Optional[str] = None
     
     class Config:
         from_attributes = True  # For SQLAlchemy models

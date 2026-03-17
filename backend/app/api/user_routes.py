@@ -14,6 +14,10 @@ from app.schemas import (
 )
 from app.core.security import get_password_hash
 from app.api.dependencies import get_current_admin_user
+from app.services.mail_service import send_new_password_email
+from app.services.audit_service import create_audit_log
+import secrets
+import string
 
 router = APIRouter()
 
@@ -64,6 +68,17 @@ async def create_user(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Log action
+    create_audit_log(
+        db, 
+        user_id=current_user.id,
+        action="CREATE",
+        entity_type="user",
+        entity_id=user.id,
+        changes=user_in.dict(exclude={"password"})
+    )
+
     return user
 
 
@@ -104,6 +119,17 @@ async def update_user(
         
     db.commit()
     db.refresh(user)
+
+    # Log action
+    create_audit_log(
+        db, 
+        user_id=current_user.id,
+        action="UPDATE",
+        entity_type="user",
+        entity_id=user.id,
+        changes=user_in.dict(exclude_unset=True)
+    )
+
     return user
 
 
@@ -137,24 +163,44 @@ async def delete_user(
     return user
 
 
-@router.post("/users/{user_id}/password", response_model=UserResponse)
-async def reset_password(
+@router.post("/users/{user_id}/password-reset", response_model=UserResponse)
+async def reset_user_password(
     user_id: UUID,
-    password: str,
+    send_email: bool = False,
     current_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
     """
-    Reset user password (Admin only)
+    Reset user password to a random one and optionally send via email
     """
     user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
     if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
         
-    user.hashed_password = get_password_hash(password)
+    # Generate random password
+    alphabet = string.ascii_letters + string.digits
+    new_password = ''.join(secrets.choice(alphabet) for i in range(10))
+    
+    user.hashed_password = get_password_hash(new_password)
     db.commit()
     db.refresh(user)
+    
+    # Send email if requested
+    email_sent = False
+    if send_email and user.email:
+        email_sent = await send_new_password_email(user.email, new_password, user.first_name)
+    
+    # Log action
+    create_audit_log(
+        db, 
+        user_id=current_user.id,
+        action="RESET_PASSWORD",
+        entity_type="user",
+        entity_id=user.id,
+        changes={"method": "random_gen", "email_sent": email_sent}
+    )
+    
+    # We return the user object, but also we can add a custom header or detail if needed.
+    # For now, let's just return the user. The password will be shown in the UI once after reset.
+    user.temp_password = new_password # Temporal property for response (not in DB)
     return user

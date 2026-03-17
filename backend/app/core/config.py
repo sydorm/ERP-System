@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     
+    # Email Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_NAME: str = "ERP System"
+    EMAILS_FROM_EMAIL: str = ""
+    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
