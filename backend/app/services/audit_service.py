@@ -84,3 +84,26 @@ class AuditService:
         db.commit()
         db.refresh(log_entry)
         return log_entry
+
+def create_audit_log(
+    db: Session,
+    entity_type: str,
+    entity_id: uuid.UUID,
+    user_id: Optional[uuid.UUID],
+    action: str,
+    changes: Dict[str, Any] = {}
+) -> AuditLog:
+    """
+    Simple helper to create an audit log entry.
+    """
+    log_entry = AuditLog(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        action=action,
+        user_id=user_id,
+        changes=AuditService._serialize_for_json(changes)
+    )
+    db.add(log_entry)
+    db.commit()
+    db.refresh(log_entry)
+    return log_entry
