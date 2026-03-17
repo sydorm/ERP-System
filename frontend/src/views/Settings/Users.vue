@@ -511,133 +511,76 @@ onMounted(fetchUsers)
 <style scoped>
 /* ===== PAGE ===== */
 .users-page {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: #f4f5f9;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  @apply absolute inset-0 bg-slate-50 flex flex-col overflow-hidden;
 }
 
 /* ===== FIXED TOP AREA ===== */
 .fixed-top-area {
-  flex-shrink: 0;
-  background: #f4f5f9;
-  padding: 16px 20px 0px;
-  display: flex;
-  flex-direction: column;
+  @apply flex-shrink-0 bg-slate-50 px-5 pt-4 flex flex-col;
 }
 
 /* ===== TABLE CARD ===== */
 .table-card {
-  background: #fff;
-  border-radius: 8px;
-  margin: 16px 20px 20px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  @apply bg-white rounded-xl border border-slate-200 m-5 flex-1 flex flex-col overflow-hidden shadow-sm;
 }
 
 .scrollable-table-area {
-  overflow: auto;
+  @apply overflow-auto;
 }
 
 /* ===== USER CELL ===== */
 .user-info-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  @apply flex items-center gap-3;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-sm border border-white/20;
 }
 
 .user-details p {
-  margin: 0;
-  line-height: 1.2;
+  @apply m-0 leading-tight;
 }
 
 /* ===== STATUS CELL ===== */
 .status-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @apply flex items-center gap-2;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #cbd5e1;
+  @apply w-2 h-2 rounded-full bg-slate-300;
 }
 
 .status-dot.is-active {
-  background-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  @apply bg-emerald-500 ring-4 ring-emerald-500/20;
 }
 
 /* ===== PASSWORD RESET ===== */
 .password-box {
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
-  padding: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
+  @apply bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3 flex justify-between items-center mt-2;
 }
 
 .password-text {
-  font-family: monospace;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e1b4b;
-  letter-spacing: 1px;
+  @apply font-mono text-lg font-bold text-slate-900 tracking-wider;
 }
 
 /* ===== PERMISSIONS ===== */
 .permissions-container {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  padding: 10px;
-  max-height: 300px;
-  overflow-y: auto;
+  @apply border border-slate-100 rounded-lg p-3 max-h-[300px] overflow-y-auto bg-slate-50/50;
 }
 
 .permission-group {
-  margin-bottom: 15px;
+  @apply mb-4;
 }
 
 .group-header {
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  margin-bottom: 8px;
-  padding-bottom: 4px;
+  @apply border-b border-slate-100 mb-2 pb-1;
 }
 
 .group-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 20px;
-  padding-left: 10px;
+  @apply flex flex-wrap gap-x-5 gap-y-2.5 pl-2;
 }
 
-.kimi-actions-col {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+.nimi-actions-col {
+  @apply flex justify-center gap-2;
 }
 </style>

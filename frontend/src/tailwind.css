@@ -2,6 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --kimi-bg: #f8fafc;
+  --kimi-sidebar-bg: #ffffff;
+  --kimi-primary: #6366f1;
+  --kimi-primary-light: #818cf8;
+  --kimi-primary-dark: #4f46e5;
+  
+  --kimi-card-bg: rgba(255, 255, 255, 0.8);
+  --kimi-card-border: rgba(226, 232, 240, 0.8);
+  --kimi-glass-bg: rgba(255, 255, 255, 0.7);
+  --kimi-glass-border: rgba(255, 255, 255, 0.3);
+  
+  --kimi-text-main: #1e293b;
+  --kimi-text-muted: #64748b;
+  
+  --kimi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --kimi-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --kimi-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --kimi-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--kimi-bg)] text-[var(--kimi-text-main)] font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* ===== KIMI GLASS CARDS ===== */
+  .kimi-glass-card {
+    @apply bg-[var(--kimi-glass-bg)] border border-[var(--kimi-glass-border)] rounded-xl backdrop-blur-md shadow-sm transition-all duration-300;
+  }
+  
+  .kimi-glass-card:hover {
+    @apply shadow-md translate-y-[-2px];
+  }
+
+  /* ===== STAT CARDS ===== */
+  .kimi-stats-row {
+    @apply flex flex-wrap gap-4 mb-6;
+  }
+
+  .kimi-stat-card {
+    @apply flex-1 min-w-[200px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all duration-300 flex items-center justify-between;
+  }
+
+  .kimi-stat-card:hover {
+    @apply shadow-md border-indigo-100 translate-y-[-2px];
+  }
+
+  .kimi-stat-label {
+    @apply text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1;
+  }
+
+  .kimi-stat-value {
+    @apply text-2xl font-bold text-slate-800;
+  }
+
+  .kimi-stat-icon-wrapper {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center text-xl;
+  }
+
+  /* ===== BUTTONS ===== */
+  .kimi-primary-btn {
+    @apply bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-indigo-700 active:scale-95 transition-all shadow-sm;
+  }
+
+  .kimi-ghost-btn {
+    @apply p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-all active:scale-90;
+  }
+
+  .kimi-refresh-btn {
+    @apply p-2 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all;
+  }
+
+  /* ===== TABLE STYLING ===== */
+  .kimi-table-container {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden;
+  }
+
+  .kimi-table .el-table__header-wrapper th {
+    @apply bg-slate-50 text-slate-500 font-semibold py-4;
+  }
+
+  .kimi-table .el-table__row td {
+    @apply py-3 border-b border-slate-50;
+  }
+
+  .kimi-table .el-table__row:hover td {
+    @apply bg-slate-50/50;
+  }
+
+  /* ===== BADGES ===== */
+  .kimi-badge {
+    @apply px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight;
+  }
+
+  .kimi-status-rose { @apply bg-rose-50 text-rose-600 border border-rose-100; }
+  .kimi-status-amber { @apply bg-amber-50 text-amber-600 border border-amber-100; }
+  .kimi-status-emerald { @apply bg-emerald-50 text-emerald-600 border border-emerald-100; }
+  .kimi-status-blue { @apply bg-blue-50 text-blue-600 border border-blue-100; }
+  .kimi-status-slate { @apply bg-slate-50 text-slate-600 border border-slate-100; }
+
+  /* ===== FILTERS ===== */
+  .kimi-filter-bar {
+    @apply flex items-center justify-between gap-4 mb-4 bg-white/50 p-2 rounded-xl backdrop-blur-sm border border-white/50;
+  }
+
+  .kimi-search-input .el-input__wrapper {
+    @apply rounded-lg border-none shadow-none bg-white hover:bg-slate-50 transition-all px-4 h-10;
+  }
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-all;
+}
+
 /* Custom ERP styles */
 body {
   margin: 0;
