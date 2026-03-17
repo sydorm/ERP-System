@@ -6,50 +6,42 @@
       <div class="kimi-stats-row">
         <!-- Всього замовлень -->
         <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Всього замовлень</p>
-              <p class="kimi-stat-value text-indigo-600">{{ orders.length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
-              <el-icon><Document /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Всього замовлень</p>
+            <p class="kimi-stat-value text-indigo-600">{{ orders.length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+            <el-icon><Document /></el-icon>
           </div>
         </div>
         <!-- Загальна сума -->
         <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Загальна сума</p>
-              <p class="kimi-stat-value text-emerald-600">{{ formatCurrency(orders.reduce((s, o) => s + (+o.total_amount || 0), 0)) }} ₴</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
-              <el-icon><Wallet /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Загальна сума</p>
+            <p class="kimi-stat-value text-emerald-600">{{ formatCurrency(orders.reduce((s, o) => s + (+o.total_amount || 0), 0)) }} ₴</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+            <el-icon><Wallet /></el-icon>
           </div>
         </div>
         <!-- В роботі -->
         <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">В роботі</p>
-              <p class="kimi-stat-value text-amber-600">{{ orders.filter(o => ['confirmed','draft','shipped'].includes(o.status)).length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
-              <el-icon><Clock /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">В роботі</p>
+            <p class="kimi-stat-value text-amber-600">{{ orders.filter(o => ['confirmed','draft','shipped'].includes(o.status)).length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+            <el-icon><Clock /></el-icon>
           </div>
         </div>
         <!-- Виконано -->
         <div class="kimi-stat-card kimi-stat-blue">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Виконано</p>
-              <p class="kimi-stat-value text-blue-600">{{ orders.filter(o => o.status === 'completed').length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
-              <el-icon><Check /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Виконано</p>
+            <p class="kimi-stat-value text-blue-600">{{ orders.filter(o => o.status === 'completed').length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
+            <el-icon><Check /></el-icon>
           </div>
         </div>
       </div>
@@ -1009,18 +1001,11 @@ const getTimeline = (order) => {
 }
 .kimi-app-tab .close-x { font-size: 16px; font-weight: 400; color: #94a3b8; }
 
-.kimi-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-.kimi-stat-card {
-  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;
-}
-.kimi-stat-indigo { background: linear-gradient(to bottom right, #eef2ff, #fff); border-color: #e0e7ff; }
-.kimi-stat-emerald { background: linear-gradient(to bottom right, #ecfdf5, #fff); border-color: #d1fae5; }
-.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); border-color: #fef3c7; }
-.kimi-stat-blue { background: linear-gradient(to bottom right, #eff6ff, #fff); border-color: #dbeafe; }
-
-.kimi-stat-content { display: flex; align-items: center; justify-content: space-between; }
-.kimi-stat-label { font-size: 12px; color: #64748b; margin: 0 0 4px 0; }
-.kimi-stat-value { font-size: 24px; font-weight: 700; margin: 0; line-height: 1; }
+/* ===== STAT CARDS (using global classes from tailwind.css) ===== */
+.kimi-stat-indigo { background: linear-gradient(to bottom right, #eef2ff, #fff); }
+.kimi-stat-emerald { background: linear-gradient(to bottom right, #ecfdf5, #fff); }
+.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); }
+.kimi-stat-blue { background: linear-gradient(to bottom right, #eff6ff, #fff); }
 .text-indigo-600 { color: #4f46e5; }
 .text-emerald-600 { color: #059669; }
 .text-amber-600 { color: #d97706; }

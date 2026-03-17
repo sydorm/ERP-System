@@ -4,47 +4,39 @@
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">
         <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Всього користувачів</p>
-              <p class="kimi-stat-value text-indigo-600">{{ users.length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
-              <el-icon><User /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Всього користувачів</p>
+            <p class="kimi-stat-value text-indigo-600">{{ users.length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+            <el-icon><User /></el-icon>
           </div>
         </div>
         <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Адміністратори</p>
-              <p class="kimi-stat-value text-emerald-600">{{ users.filter(u => u.role === 'admin').length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
-              <el-icon><Key /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Адміністратори</p>
+            <p class="kimi-stat-value text-emerald-600">{{ users.filter(u => u.role === 'admin').length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+            <el-icon><Key /></el-icon>
           </div>
         </div>
         <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Менеджери</p>
-              <p class="kimi-stat-value text-amber-600">{{ users.filter(u => u.role === 'manager').length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
-              <el-icon><Avatar /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Менеджери</p>
+            <p class="kimi-stat-value text-amber-600">{{ users.filter(u => u.role === 'manager').length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+            <el-icon><Avatar /></el-icon>
           </div>
         </div>
         <div class="kimi-stat-card kimi-stat-blue">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Активні зараз</p>
-              <p class="kimi-stat-value text-blue-600">{{ users.filter(u => u.is_active).length }}</p>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
-              <el-icon><Monitor /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Активні зараз</p>
+            <p class="kimi-stat-value text-blue-600">{{ users.filter(u => u.is_active).length }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
+            <el-icon><Monitor /></el-icon>
           </div>
         </div>
       </div>

@@ -1,63 +1,47 @@
 <template>
   <div class="dashboard-home">
-    <el-row :gutter="20">
+    <div class="kimi-stats-row mb-6">
       <!-- Statistics Cards -->
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #409eff">
-              <el-icon :size="30"><ShoppingCart /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">Замовлення</div>
-              <div class="stat-value">24</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+      <div class="kimi-stat-card kimi-stat-blue">
+        <div class="kimi-stat-info">
+          <p class="kimi-stat-label">Замовлення</p>
+          <p class="kimi-stat-value text-blue-600">24</p>
+        </div>
+        <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
+          <el-icon><ShoppingCart /></el-icon>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #67c23a">
-              <el-icon :size="30"><Wallet /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">Дохід</div>
-              <div class="stat-value">₴45,230</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+      <div class="kimi-stat-card kimi-stat-emerald">
+        <div class="kimi-stat-info">
+          <p class="kimi-stat-label">Дохід</p>
+          <p class="kimi-stat-value text-emerald-600">₴45,230</p>
+        </div>
+        <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+          <el-icon><Wallet /></el-icon>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #e6a23c">
-              <el-icon :size="30"><Box /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">Товарів на складі</div>
-              <div class="stat-value">156</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+      <div class="kimi-stat-card kimi-stat-amber">
+        <div class="kimi-stat-info">
+          <p class="kimi-stat-label">Товарів на складі</p>
+          <p class="kimi-stat-value text-amber-600">156</p>
+        </div>
+        <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+          <el-icon><Box /></el-icon>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #f56c6c">
-              <el-icon :size="30"><User /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">Контрагенти</div>
-              <div class="stat-value">48</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <div class="kimi-stat-card kimi-stat-rose">
+        <div class="kimi-stat-info">
+          <p class="kimi-stat-label">Контрагенти</p>
+          <p class="kimi-stat-value text-rose-600">48</p>
+        </div>
+        <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
+          <el-icon><User /></el-icon>
+        </div>
+      </div>
+    </div>
 
     <!-- Charts Row -->
     <el-row :gutter="20" style="margin-top: 20px">
@@ -142,44 +126,18 @@ const getStatusType = (status) => {
 
 <style scoped>
 .dashboard-home {
-  width: 100%;
+  width: 100%; padding: 20px;
 }
 
-.stat-card {
-  margin-bottom: 20px;
-}
+.text-blue-600 { color: #2563eb; }
+.text-emerald-600 { color: #059669; }
+.text-amber-600 { color: #d97706; }
+.text-rose-600 { color: #e11d48; }
 
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-title {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-}
+.bg-blue-100 { background: #dbeafe; }
+.bg-emerald-100 { background: #d1fae5; }
+.bg-amber-100 { background: #fef3c7; }
+.bg-rose-100 { background: #ffe4e6; }
 
 .card-header {
   font-weight: 600;

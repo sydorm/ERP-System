@@ -6,53 +6,45 @@
       <div class="kimi-stats-row">
         <!-- Всього товарів -->
         <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Всього товарів</p>
-              <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
-              <el-icon><Box /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Всього товарів</p>
+            <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+            <el-icon><Box /></el-icon>
           </div>
         </div>
 
         <!-- В наявності -->
         <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">В наявності</p>
-              <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
-              <el-icon><Coordinate /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">В наявності</p>
+            <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+            <el-icon><Coordinate /></el-icon>
           </div>
         </div>
 
         <!-- Закінчуються -->
         <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Закінчуються</p>
-              <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
-              <el-icon><Warning /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Закінчуються</p>
+            <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+            <el-icon><Warning /></el-icon>
           </div>
         </div>
 
         <!-- Немає -->
         <div class="kimi-stat-card kimi-stat-rose">
-          <div class="kimi-stat-content">
-            <div>
-              <p class="kimi-stat-label">Немає</p>
-              <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
-            </div>
-            <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
-              <el-icon><CircleClose /></el-icon>
-            </div>
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Немає</p>
+            <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
+            <el-icon><CircleClose /></el-icon>
           </div>
         </div>
       </div>
@@ -475,34 +467,11 @@ onActivated(() => {
 
 /* ===== STAT CARDS ===== */
 .kimi-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-.kimi-stat-card {
-  background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.kimi-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-
-.kimi-stat-indigo { background: linear-gradient(to bottom right, #f5f7ff, #fff); border-color: #e0e7ff; }
-.kimi-stat-emerald { background: linear-gradient(to bottom right, #f0fdf4, #fff); border-color: #d1fae5; }
-.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); border-color: #fef3c7; }
-.kimi-stat-rose { background: linear-gradient(to bottom right, #fff1f2, #fff); border-color: #ffe4e6; }
-
-.kimi-stat-content { display: flex; align-items: center; justify-content: space-between; }
-.kimi-stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin: 0 0 4px 0; }
-.kimi-stat-value { font-size: 24px; font-weight: 800; margin: 0; line-height: 1; }
-
-.text-indigo-600 { color: #4f46e5; }
-.text-emerald-600 { color: #059669; }
-.text-amber-600 { color: #d97706; }
-.text-rose-600 { color: #e11d48; }
-
-.kimi-stat-icon-wrapper {
-  width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px;
-}
-.bg-indigo-100 { background: #e0e7ff; }
-.bg-emerald-100 { background: #d1fae5; }
-.bg-amber-100 { background: #fef3c7; }
-.bg-rose-100 { background: #ffe4e6; }
+/* ===== STAT CARDS (using global classes from tailwind.css) ===== */
+.kimi-stat-indigo { background: linear-gradient(to bottom right, #f5f7ff, #fff); }
+.kimi-stat-emerald { background: linear-gradient(to bottom right, #f0fdf4, #fff); }
+.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); }
+.kimi-stat-rose { background: linear-gradient(to bottom right, #fff1f2, #fff); }
 
 /* ===== FILTERS TOOLBAR ===== */
 .kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
