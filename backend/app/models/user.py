@@ -1,7 +1,7 @@
 """
 User model - represents system users
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
@@ -26,6 +26,7 @@ class User(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     role = Column(String(50), default="worker", nullable=False)  # admin, manager, worker
+    permissions = Column(JSON, default={}, nullable=False)
     
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)

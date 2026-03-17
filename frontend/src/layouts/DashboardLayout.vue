@@ -19,53 +19,53 @@
           <template #title>Головна</template>
         </el-menu-item>
 
-        <el-sub-menu index="inventory">
+        <el-sub-menu index="inventory" v-if="userStore.hasPermission('inventory.view')">
           <template #title>
             <el-icon><Box /></el-icon>
             <span>Склад</span>
           </template>
-          <el-menu-item index="/inventory/nomenclature">Номенклатура</el-menu-item>
-          <el-menu-item index="/inventory/warehouses">Склади</el-menu-item>
-          <el-menu-item index="/inventory/stock">Залишки</el-menu-item>
+          <el-menu-item index="/inventory/nomenclature" v-if="userStore.hasPermission('inventory.nomenclature.view')">Номенклатура</el-menu-item>
+          <el-menu-item index="/inventory/warehouses" v-if="userStore.hasPermission('inventory.warehouses.view')">Склади</el-menu-item>
+          <el-menu-item index="/inventory/stock" v-if="userStore.hasPermission('inventory.stock.view')">Залишки</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="sales">
+        <el-sub-menu index="sales" v-if="userStore.hasPermission('sales.view')">
           <template #title>
             <el-icon><ShoppingCart /></el-icon>
             <span>Продажі</span>
           </template>
-          <el-menu-item index="/sales/counterparties">Контрагенти</el-menu-item>
-          <el-menu-item index="/sales/orders">Замовлення</el-menu-item>
-          <el-menu-item index="/sales/invoices">Рахунки</el-menu-item>
+          <el-menu-item index="/sales/counterparties" v-if="userStore.hasPermission('sales.counterparties.view')">Контрагенти</el-menu-item>
+          <el-menu-item index="/sales/orders" v-if="userStore.hasPermission('sales.orders.view')">Замовлення</el-menu-item>
+          <el-menu-item index="/sales/invoices" v-if="userStore.hasPermission('sales.invoices.view')">Рахунки</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="purchases">
+        <el-sub-menu index="purchases" v-if="userStore.hasPermission('purchases.view')">
           <template #title>
             <el-icon><Briefcase /></el-icon>
             <span>Закупівлі</span>
           </template>
-          <el-menu-item index="/purchases/orders">Замовлення</el-menu-item>
-          <el-menu-item index="/purchases/receipts">Прибуткові накладні</el-menu-item>
+          <el-menu-item index="/purchases/orders" v-if="userStore.hasPermission('purchases.orders.view')">Замовлення</el-menu-item>
+          <el-menu-item index="/purchases/receipts" v-if="userStore.hasPermission('purchases.receipts.view')">Прибуткові накладні</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="finance">
+        <el-sub-menu index="finance" v-if="userStore.hasPermission('finance.view')">
           <template #title>
             <el-icon><Wallet /></el-icon>
             <span>Фінанси</span>
           </template>
-          <el-menu-item index="/finance/cash">Каса</el-menu-item>
-          <el-menu-item index="/finance/bank">Банк</el-menu-item>
-          <el-menu-item index="/finance/payments">Платежі</el-menu-item>
+          <el-menu-item index="/finance/cash" v-if="userStore.hasPermission('finance.cash.view')">Каса</el-menu-item>
+          <el-menu-item index="/finance/bank" v-if="userStore.hasPermission('finance.bank.view')">Банк</el-menu-item>
+          <el-menu-item index="/finance/payments" v-if="userStore.hasPermission('finance.payments.view')">Платежі</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/reports">
+        <el-menu-item index="/reports" v-if="userStore.hasPermission('reports.view')">
           <el-icon><DataAnalysis /></el-icon>
           <template #title>Звіти</template>
         </el-menu-item>
 
         <!-- Previews removed -->
         <!-- Administration Section -->
-        <el-sub-menu index="admin" v-if="userStore.user?.role === 'admin'">
+        <el-sub-menu index="admin" v-if="userStore.hasPermission('settings.view')">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>Адміністрування</span>
@@ -125,7 +125,7 @@
                   <el-icon><User /></el-icon>
                   Профіль
                 </el-dropdown-item>
-                <el-dropdown-item v-if="userStore.user?.role === 'admin'" command="users">
+                <el-dropdown-item v-if="userStore.hasPermission('settings.users.view')" command="users">
                   <el-icon><UserFilled /></el-icon>
                   Користувачі
                 </el-dropdown-item>

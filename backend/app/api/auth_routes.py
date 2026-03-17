@@ -104,6 +104,7 @@ async def register_company(reg_data: CompanyRegistrationRequest, db: Session = D
             last_name=reg_data.admin.lastName,
             company_id=new_company.id,
             role="admin", # Explicitly set as admin
+            permissions={}, # Admin has all perms by default via role check
             is_active=True,
             is_superuser=True # First user is superuser/admin
         )

@@ -56,6 +56,7 @@ async def create_user(
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         role=user_in.role or "worker",
+        permissions=user_in.permissions or {},
         company_id=current_user.company_id, # Link to admin's company
         is_active=True,
         is_superuser=False
@@ -98,6 +99,8 @@ async def update_user(
         user.last_name = user_in.last_name
     if user_in.role:
         user.role = user_in.role
+    if user_in.permissions is not None:
+        user.permissions = user_in.permissions
         
     db.commit()
     db.refresh(user)

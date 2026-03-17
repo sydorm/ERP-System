@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     role: str = Field("worker", pattern="^(admin|manager|worker)$")
+    permissions: dict = Field(default_factory=dict)
 
 
 class UserCreate(UserBase):
@@ -40,6 +41,7 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     role: Optional[str] = Field(None, pattern="^(admin|manager|worker)$")
     email: Optional[EmailStr] = None
+    permissions: Optional[dict] = None
 
 
 class UserPasswordUpdate(BaseModel):

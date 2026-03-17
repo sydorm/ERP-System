@@ -66,6 +66,30 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="Доступи" v-if="form.role !== 'admin'">
+          <div class="permissions-container">
+            <div v-for="group in permissionGroups" :key="group.key" class="permission-group">
+              <div class="group-header">
+                <el-checkbox 
+                  v-model="group.all" 
+                  @change="(val) => handleGroupAllChange(group, val)"
+                >
+                  <strong>{{ group.label }}</strong>
+                </el-checkbox>
+              </div>
+              <div class="group-items">
+                <el-checkbox 
+                  v-for="perm in group.items" 
+                  :key="perm.key"
+                  v-model="form.permissions[perm.key]"
+                >
+                  {{ perm.label }}
+                </el-checkbox>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+
         <el-form-item v-if="!isEditing" label="Пароль" prop="password">
           <el-input v-model="form.password" type="password" show-password />
         </el-form-item>
@@ -126,8 +150,60 @@ const form = reactive({
   last_name: '',
   email: '',
   role: 'worker',
-  password: ''
+  password: '',
+  permissions: {}
 })
+
+const permissionGroups = ref([
+  {
+    label: 'Склад',
+    key: 'inventory',
+    all: false,
+    items: [
+      { label: 'Перегляд', key: 'inventory.view' },
+      { label: 'Номенклатура', key: 'inventory.nomenclature.view' },
+      { label: 'Склади', key: 'inventory.warehouses.view' },
+      { label: 'Залишки', key: 'inventory.stock.view' }
+    ]
+  },
+  {
+    label: 'Продажі',
+    key: 'sales',
+    all: false,
+    items: [
+      { label: 'Перегляд', key: 'sales.view' },
+      { label: 'Контрагенти', key: 'sales.counterparties.view' },
+      { label: 'Замовлення', key: 'sales.orders.view' },
+      { label: 'Рахунки', key: 'sales.invoices.view' }
+    ]
+  },
+  {
+    label: 'Закупівлі',
+    key: 'purchases',
+    all: false,
+    items: [
+      { label: 'Перегляд', key: 'purchases.view' },
+      { label: 'Замовлення', key: 'purchases.orders.view' },
+      { label: 'Прибуткові накладні', key: 'purchases.receipts.view' }
+    ]
+  },
+  {
+    label: 'Фінанси',
+    key: 'finance',
+    all: false,
+    items: [
+      { label: 'Перегляд', key: 'finance.view' },
+      { label: 'Каса', key: 'finance.cash.view' },
+      { label: 'Банк', key: 'finance.bank.view' }
+    ]
+  }
+])
+
+const handleGroupAllChange = (group, val) => {
+  group.items.forEach(item => {
+    form.permissions[item.key] = val
+  })
+}
 
 const passwordForm = reactive({
   id: null,
@@ -187,6 +263,8 @@ const openCreateModal = () => {
   form.email = ''
   form.role = 'worker'
   form.password = ''
+  form.permissions = {}
+  permissionGroups.value.forEach(g => g.all = false)
   dialogVisible.value = true
 }
 
@@ -197,6 +275,13 @@ const openEditModal = (row) => {
   form.last_name = row.last_name
   form.email = row.email
   form.role = row.role
+  form.permissions = { ...(row.permissions || {}) }
+  
+  // Update group 'all' markers
+  permissionGroups.value.forEach(group => {
+    group.all = group.items.every(item => form.permissions[item.key])
+  })
+  
   dialogVisible.value = true
 }
 
@@ -218,7 +303,8 @@ const submitForm = async () => {
             first_name: form.first_name,
             last_name: form.last_name,
             email: form.email,
-            role: form.role
+            role: form.role,
+            permissions: form.permissions
           })
           ElMessage.success('Користувача оновлено')
         } else {
@@ -227,6 +313,7 @@ const submitForm = async () => {
             last_name: form.last_name,
             email: form.email,
             role: form.role,
+            permissions: form.permissions,
             password: form.password,
             company_id: userStore.user?.companyId
           })
@@ -294,5 +381,30 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.permissions-container {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.permission-group {
+  margin-bottom: 15px;
+}
+
+.group-header {
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding-left: 10px;
 }
 </style>

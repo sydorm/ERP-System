@@ -109,3 +109,26 @@ async def get_current_admin_user(
             detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+class PermissionChecker:
+    def __init__(self, required_permissions: list[str]):
+        self.required_permissions = required_permissions
+
+    def __call__(self, current_user: User = Depends(get_current_active_user)):
+        # Superusers and Admins have all permissions
+        if current_user.is_superuser or current_user.role == "admin":
+            return current_user
+        
+        user_permissions = current_user.permissions or {}
+        
+        for perm in self.required_permissions:
+            # Check for exact permission or module-level permission
+            module = perm.split('.')[0]
+            if not user_permissions.get(perm) and not user_permissions.get(f"{module}.all"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Missing required permission: {perm}"
+                )
+        
+        return current_user

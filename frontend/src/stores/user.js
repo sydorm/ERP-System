@@ -25,6 +25,20 @@ export const useUserStore = defineStore('user', () => {
         return !!token.value
     }
 
+    const hasPermission = (permission) => {
+        if (!user.value) return false
+        if (user.value.is_superuser || user.value.role === 'admin') return true
+        
+        const perms = user.value.permissions || {}
+        if (perms[permission]) return true
+        
+        // Check for module-level permission
+        const module = permission.split('.')[0]
+        if (perms[`${module}.all`]) return true
+        
+        return false
+    }
+
     const fetchUser = async () => {
         try {
             const response = await api.get('/auth/me')
@@ -42,6 +56,7 @@ export const useUserStore = defineStore('user', () => {
         setToken,
         logout,
         isAuthenticated,
+        hasPermission,
         fetchUser
     }
 })

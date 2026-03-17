@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +52,12 @@ const router = createRouter({
                     meta: { title: 'Профіль' }
                 },
                 {
+                    path: '/settings/numbering',
+                    name: 'system-numbering',
+                    component: () => import('@/views/Settings/DocumentSequences.vue'),
+                    meta: { requiresAuth: true, title: 'Нумерація документів', permission: 'admin.all' }
+                },
+                {
                     path: '/settings/dictionaries',
                     name: 'dictionaries',
                     component: () => import('@/views/Settings/Dictionaries.vue'),
@@ -60,20 +67,14 @@ const router = createRouter({
                     path: '/settings/company',
                     name: 'company-settings',
                     component: () => import('@/views/Settings/CompanySettings.vue'),
-                    meta: { requiresAuth: true, title: 'Організація' }
-                },
-                {
-                    path: '/settings/numbering',
-                    name: 'system-numbering',
-                    component: () => import('@/views/Settings/DocumentSequences.vue'),
-                    meta: { requiresAuth: true, title: 'Нумерація документів' }
+                    meta: { requiresAuth: true, title: 'Організація', permission: 'admin.all' }
                 },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',
                     name: 'nomenclature',
                     component: () => import('@/views/Inventory/Nomenclature.vue'),
-                    meta: { title: 'Номенклатура' }
+                    meta: { title: 'Номенклатура', permission: 'inventory.nomenclature.view' }
                 },
                 {
                     path: '/inventory/nomenclature/new',
@@ -116,7 +117,7 @@ const router = createRouter({
                     path: '/sales/orders',
                     name: 'sales-orders',
                     component: () => import('@/views/Sales/OrdersList.vue'),
-                    meta: { title: 'Замовлення (Продаж)' }
+                    meta: { title: 'Замовлення (Продаж)', permission: 'sales.orders.view' }
                 },
                 {
                     path: '/sales/orders/new',
@@ -146,7 +147,7 @@ const router = createRouter({
                     path: '/sales/invoices/:id',
                     name: 'sales-invoice-edit',
                     component: () => import('@/views/Sales/InvoiceEditor.vue'),
-                    meta: { title: 'Редагування накладної' }
+                    meta: { title: 'Редагування накладної', permission: 'sales.invoices.view' }
                 },
                 // Purchase routes
                 {
@@ -191,14 +192,8 @@ const router = createRouter({
                     path: '/settings/users',
                     name: 'users',
                     component: () => import('@/views/Settings/Users.vue'),
-                    meta: { title: 'Користувачі' }
+                    meta: { title: 'Користувачі', permission: 'settings.users.view' }
                 },
-                {
-                    path: '/settings/trash-bin',
-                    name: 'trash-bin',
-                    component: () => import('@/views/Admin/TrashBin.vue'),
-                    meta: { title: 'Корзина', requiresAuth: true }
-                }
             ]
         }
     ]
@@ -221,7 +216,14 @@ router.beforeEach(async (to, from, next) => {
         if (!requiresAuth && (to.path === '/login' || to.path === '/signup')) {
             next('/dashboard')
         } else {
-            next()
+            // Check granular permissions
+            const requiredPermission = to.meta.permission
+            if (requiredPermission && !userStore.hasPermission(requiredPermission)) {
+                ElMessage.error('Доступ заборонено')
+                next('/dashboard')
+            } else {
+                next()
+            }
         }
     } else {
         next()
