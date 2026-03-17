@@ -43,7 +43,7 @@
   }
 
   .kimi-stat-card {
-    @apply flex-1 min-w-[200px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all duration-300 flex items-center justify-between;
+    @apply flex-1 min-w-[200px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all duration-300 flex items-center justify-between gap-4;
   }
 
   .kimi-stat-card:hover {
