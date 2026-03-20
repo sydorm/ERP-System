@@ -21,6 +21,12 @@ const router = createRouter({
             component: () => import('@/views/auth/SignupView.vue'),
             meta: { requiresAuth: false }
         },
+        {
+            path: '/forgot-password',
+            name: 'forgot-password',
+            component: () => import('@/views/auth/ForgotPasswordView.vue'),
+            meta: { requiresAuth: false }
+        },
         // ─── Calculator (public, no auth required) ───────────────────────
         {
             path: '/calculator',

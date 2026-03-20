@@ -1,5 +1,5 @@
 # Schemas package
-from .user import UserCreate, UserLogin, UserUpdate, UserResponse, UserInDB, UserPasswordUpdate
+from .user import UserCreate, UserLogin, UserUpdate, UserResponse, UserInDB, UserPasswordUpdate, ForgotPasswordRequest
 from .token import Token, TokenData
 from .company import (
     CompanyCreate, CompanyResponse, CompanyRegistrationRequest, CompanyType

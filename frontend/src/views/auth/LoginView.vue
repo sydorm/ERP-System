@@ -39,7 +39,7 @@
             <el-checkbox v-model="loginForm.remember">
               Запам'ятати мене
             </el-checkbox>
-            <el-link type="primary" :underline="false">
+            <el-link type="primary" :underline="false" @click="router.push('/forgot-password')">
               Забули пароль?
             </el-link>
           </div>
