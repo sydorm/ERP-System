@@ -4,89 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Налаштування калькулятора</title>
+    <title>Управління — ERP</title>
+    <link rel="stylesheet" href="modern.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f1f3f8;
-            min-height: 100vh
-        }
-
-        .hdr {
-            background: linear-gradient(135deg, #1a2332, #2d3f5e);
-            padding: 0 24px
-        }
-
-        .hdr-in {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 0
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px
-        }
-
-        .logo span {
-            font-size: 28px
-        }
-
-        .logo h1 {
-            color: #fff;
-            font-size: 18px;
-            font-weight: 700
-        }
-
-        .logo p {
-            color: #9eb5d8;
-            font-size: 12px;
-            margin-top: 2px
-        }
-
-        .nav {
-            display: flex;
-            gap: 8px
-        }
-
-        .nbtn {
-            color: #c8ddf0;
-            font-size: 13px;
-            text-decoration: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, .18);
-            background: rgba(255, 255, 255, .08);
-            transition: .2s
-        }
-
-        .nbtn:hover,
-        .nbtn.on {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff
-        }
-
+        /* Modern-specific overrides for admin.html */
         .body {
             max-width: 1100px;
-            margin: 22px auto;
-            padding: 0 16px 80px
-        }
-
-        /* Tab groups */
-        .tab-group-label {
-            font-size: 10px;
-            font-weight: 800;
             color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: .08em;

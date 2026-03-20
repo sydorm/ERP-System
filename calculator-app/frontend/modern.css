@@ -1,0 +1,231 @@
+/* 
+   KIMI MODERN DESIGN SYSTEM (RELOADED)
+   Shared styles for the Calculator Application
+*/
+
+:root {
+    --kimi-bg: #f8fafc;
+    --kimi-primary: #6366f1;
+    --kimi-primary-light: #818cf8;
+    --kimi-primary-dark: #4f46e5;
+    --kimi-success: #10b981;
+    --kimi-danger: #f43f5e;
+    --kimi-amber: #f59e0b;
+    --kimi-text-main: #1e293b;
+    --kimi-text-muted: #64748b;
+    
+    --kimi-glass-bg: rgba(255, 255, 255, 0.7);
+    --kimi-glass-border: rgba(255, 255, 255, 0.3);
+    --kimi-card-bg: #ffffff;
+    --kimi-card-border: #e2e8f0;
+    
+    --kimi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --kimi-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --kimi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--kimi-bg);
+    color: var(--kimi-text-main);
+    line-height: 1.5;
+}
+
+/* ===== GLASS CARDS ===== */
+.kimi-glass-card {
+    background: var(--kimi-glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--kimi-glass-border);
+    border-radius: 1rem;
+    box-shadow: var(--kimi-shadow);
+    transition: all 0.3s ease;
+}
+
+.kimi-card {
+    background: var(--kimi-card-bg);
+    border: 1px solid var(--kimi-card-border);
+    border-radius: 1rem;
+    box-shadow: var(--kimi-shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.kimi-card:hover {
+    box-shadow: var(--kimi-shadow);
+    transform: translateY(-2px);
+}
+
+/* ===== HEADER & NAVIGATION ===== */
+.hdr {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hdr-in {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+}
+
+.logo h1 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.logo p {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.nbtn {
+    color: #cbd5e1;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nbtn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nbtn.on {
+    color: #fff;
+    background: var(--kimi-primary);
+}
+
+/* ===== BUTTONS ===== */
+.kimi-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    gap: 0.5rem;
+}
+
+.kimi-btn:active {
+    transform: scale(0.96);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--kimi-primary), var(--kimi-primary-dark));
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--kimi-success), #059669);
+    color: white;
+}
+
+.btn-danger {
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--kimi-danger);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.btn-danger:hover {
+    background: var(--kimi-danger);
+    color: white;
+}
+
+/* ===== INPUTS ===== */
+.f input, .f select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 2px solid var(--kimi-card-border);
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--kimi-text-main);
+    background: #fff;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.f input:focus, .f select:focus {
+    border-color: var(--kimi-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.f label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--kimi-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+/* ===== TABLES ===== */
+.kimi-table-wrap {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    border: 1px solid var(--kimi-card-border);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--kimi-text-muted);
+    border-bottom: 2px solid var(--kimi-card-border);
+}
+
+td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.875rem;
+}
+
+tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}

@@ -1,700 +1,159 @@
-<!DOCTYPE html>
-<html lang="uk">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор шухляд</title>
+    <title>Конструктор шухляд — ERP</title>
+    <link rel="stylesheet" href="modern.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f1f3f8;
-            min-height: 100vh
-        }
-
-        .hdr {
-            background: linear-gradient(135deg, #1c2b3a, #2e4057);
-            padding: 0 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, .3);
-            position: sticky;
-            top: 0;
-            z-index: 200
-        }
-
-        .hdr-in {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 0
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px
-        }
-
-        .logo span {
-            font-size: 34px
-        }
-
-        .logo h1 {
-            color: #fff;
-            font-size: 19px;
-            font-weight: 800
-        }
-
-        .logo p {
-            color: #8fadc8;
-            font-size: 12px;
-            margin-top: 2px
-        }
-
-        .nav {
-            display: flex;
-            gap: 8px
-        }
-
-        .nbtn {
-            color: #c8ddf0;
-            font-size: 13px;
-            text-decoration: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, .18);
-            background: rgba(255, 255, 255, .08);
-            transition: .2s
-        }
-
-        .nbtn:hover,
-        .nbtn.on {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff
-        }
-
+        /* Modern-specific overrides for index.html */
         .body {
             max-width: 960px;
-            margin: 24px auto;
-            padding: 0 16px 80px
+            margin: 2rem auto;
+            padding: 0 1rem 5rem;
         }
 
-        /* Mode tabs */
+        /* Tabs */
         .tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 18px
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .tab {
-            padding: 10px 22px;
-            border: 2px solid #dde3ef;
-            border-radius: 10px;
-            background: #fff;
-            color: #6b7a99;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--kimi-card-border);
+            border-radius: 0.75rem;
+            background: white;
+            color: var(--kimi-text-muted);
+            font-size: 0.875rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: .2s
+            transition: all 0.2s;
         }
 
         .tab.active {
-            border-color: #3b82f6;
-            background: #eff6ff;
-            color: #1d4ed8
+            border-color: var(--kimi-primary);
+            background: rgba(99, 102, 241, 0.05);
+            color: var(--kimi-primary);
         }
 
-        /* Sections */
         .section {
-            display: none
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
         }
 
         .section.active {
-            display: block
+            display: block;
         }
 
-        /* AI */
+        /* Upload Area */
         .upload-area {
-            border: 2.5px dashed #c4cedf;
-            border-radius: 16px;
-            background: #fff;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: .2s;
-            overflow: hidden
+            border: 2px dashed var(--kimi-primary-light);
+            border-radius: 1.25rem;
+            background: white;
+            min-height: 220px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; overflow: hidden;
+            box-shadow: var(--kimi-shadow-sm);
         }
 
-        .upload-area:hover,
-        .upload-area.drag {
-            border-color: #3b82f6;
-            background: #eff6ff
+        .upload-area:hover, .upload-area.drag {
+            border-color: var(--kimi-primary);
+            background: rgba(99, 102, 241, 0.02);
+            transform: scale(1.01);
         }
 
         .upload-placeholder {
             text-align: center;
-            padding: 40px;
-            color: #8fa0bb
+            padding: 2.5rem;
+            color: var(--kimi-text-muted);
         }
 
         .upload-placeholder .icon {
-            font-size: 54px;
-            margin-bottom: 12px
+            font-size: 3.5rem;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
 
         .upload-placeholder .link {
-            color: #3b82f6;
-            font-weight: 600
-        }
-
-        .upload-placeholder small {
-            display: block;
-            margin-top: 8px;
-            font-size: 12px
-        }
-
-        #preview-img {
-            width: 100%;
-            max-height: 300px;
-            object-fit: cover;
-            display: none
-        }
-
-        .btn-analyze {
-            width: 100%;
-            margin-top: 12px;
-            padding: 14px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #7c3aed, #4f46e5);
-            color: #fff;
-            border: none;
-            font-size: 15px;
+            color: var(--kimi-primary);
             font-weight: 700;
-            cursor: pointer;
-            transition: .2s
         }
 
-        .btn-analyze:disabled {
-            opacity: .6;
-            cursor: not-allowed
-        }
-
-        .ai-result {
-            margin-top: 14px;
-            background: #f0fdf4;
-            border: 1.5px solid #86efac;
-            border-radius: 12px;
-            padding: 16px
-        }
-
-        .ai-result h4 {
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between
-        }
-
-        .ai-notes {
-            color: #4b5563;
-            font-size: 14px;
-            margin-bottom: 10px
-        }
-
-        .btn-apply {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            background: #16a34a;
-            color: #fff;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer
-        }
-
-        /* Constructor */
-        .constructor {
-            display: flex;
-            flex-direction: column;
-            gap: 16px
-        }
-
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 22px 24px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, .06)
-        }
-
-        .card-label {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px
-        }
-
-        .step-num {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: #3b82f6;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0
-        }
-
-        /* Type grid */
+        /* Type Cards */
         .type-grid {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
         }
 
         .type-card {
-            flex: 1;
-            min-width: 100px;
-            border: 2.5px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 16px 12px;
+            background: #fff;
+            border: 2px solid var(--kimi-card-border);
+            border-radius: 1rem;
+            padding: 1.25rem 1rem;
             text-align: center;
             cursor: pointer;
-            transition: .2s;
-            background: #fafbfc
+            transition: all 0.2s;
+            box-shadow: var(--kimi-shadow-sm);
         }
 
         .type-card:hover {
-            border-color: #93c5fd;
-            background: #f0f7ff
+            border-color: var(--kimi-primary-light);
+            transform: translateY(-2px);
         }
 
         .type-card.sel {
-            border-color: #3b82f6;
-            background: #eff6ff
+            border-color: var(--kimi-primary);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        .type-icon {
-            font-size: 30px;
-            margin-bottom: 8px
+        .type-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .type-name { font-size: 0.8125rem; font-weight: 700; color: var(--kimi-text-main); }
+
+        /* Step Badge */
+        .step-num {
+            width: 28px; height: 28px;
+            background: var(--kimi-primary);
+            color: white; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8125rem; font-weight: 800;
         }
 
-        .type-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #334155
+        .card-label {
+            display: flex; align-items: center; gap: 0.75rem;
+            font-weight: 800; font-size: 0.9375rem; color: var(--kimi-text-main);
+            margin-bottom: 1.25rem;
         }
 
-        /* Dir icons */
-        .dir-vert,
-        .dir-horiz {
-            display: flex;
-            gap: 3px
-        }
-
-        .dir-vert {
-            flex-direction: column
-        }
-
-        .dr {
-            background: #3b82f6;
-            border-radius: 3px;
-            opacity: .7
-        }
-
-        .dr-r {
-            width: 44px;
-            height: 11px
-        }
-
-        .dr-c {
-            width: 11px;
-            height: 40px
-        }
-
-        /* Dims */
-        .dims {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-            gap: 14px
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 5px
-        }
-
-        .field label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: .04em
-        }
-
-        .field input,
-        .field select {
-            border: 2px solid #e2e8f0;
-            border-radius: 9px;
-            padding: 9px 12px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #1e293b;
-            outline: none;
-            transition: .2s;
-            background: #fff
-        }
-
-        .field input:focus,
-        .field select:focus {
-            border-color: #3b82f6
-        }
-
-        /* Count */
-        .count {
-            display: flex;
-            align-items: center;
-            border: 2px solid #e2e8f0;
-            border-radius: 9px;
-            overflow: hidden
-        }
-
-        .count button {
-            width: 36px;
-            height: 38px;
-            border: none;
-            background: #f1f5f9;
-            color: #334155;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: .2s
-        }
-
-        .count button:hover {
-            background: #dbeafe
-        }
-
-        .count span {
-            flex: 1;
-            text-align: center;
-            font-size: 17px;
-            font-weight: 700;
-            color: #1e293b
-        }
-
-        /* Box preview */
-        .preview {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px
-        }
-
+        /* Drawer preview style */
         .cabinet {
-            background: #d4a76a;
-            border: 3px solid #9b6f3a;
-            border-radius: 6px;
-            padding: 4px;
-            gap: 3px;
-            overflow: hidden;
-            transition: .4s
+            background: linear-gradient(135deg, #d97706, #b45309);
+            border: 3px solid #92400e;
+            border-radius: 10px;
+            padding: 8px;
+            display: flex; flex-direction: column; gap: 6px;
+            box-shadow: 0 10px 25px rgba(146, 64, 14, 0.25);
         }
 
         .drawer {
-            flex: 1;
-            background: #e8c990;
-            border-radius: 3px;
-            border: 2px solid #b5892a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 18px;
-            transition: .3s
+            background: #fcd34d;
+            border: 2px solid #b45309;
+            border-radius: 4px;
+            min-height: 24px;
+            transition: 0.3s;
         }
 
-        .preview-label {
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 600
-        }
-
-        /* Services */
-        .svc-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 8px
-        }
-
-        .svc-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: #334155;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1.5px solid #e2e8f0;
-            transition: .2s
-        }
-
-        .svc-item:hover {
-            border-color: #93c5fd
-        }
-
-        .svc-item input {
-            width: 15px;
-            height: 15px;
-            accent-color: #3b82f6
-        }
-
-        /* Calc button */
-        .btn-calc {
+        #btn-analyze {
             width: 100%;
-            padding: 17px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(37, 99, 235, .35);
-            transition: .2s;
-            margin-top: 6px
+            margin-top: 1rem;
+            padding: 1rem;
         }
 
-        .btn-calc:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(37, 99, 235, .45)
-        }
-
-        .btn-calc:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-            transform: none
-        }
-
-        /* Results */
         .results {
-            margin-top: 28px;
-            background: #fff;
-            border-radius: 16px;
-            padding: 28px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, .1);
-            border-top: 4px solid #3b82f6;
-            display: none
-        }
-
-        .results.show {
-            display: block
-        }
-
-        .res-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px
-        }
-
-        .res-header h2 {
-            font-size: 20px;
-            color: #1e293b
-        }
-
-        .res-actions {
-            display: flex;
-            gap: 10px
-        }
-
-        .btn-save,
-        .btn-print {
-            padding: 8px 16px;
-            border-radius: 9px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 2px solid
-        }
-
-        .btn-save {
-            background: #10b981;
-            border-color: #10b981;
-            color: #fff
-        }
-
-        .btn-print {
-            background: #fff;
-            border-color: #cbd5e1;
-            color: #475569
-        }
-
-        .summary-box {
-            background: #eff6ff;
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: #1e40af;
-            font-weight: 600
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            margin-bottom: 20px
-        }
-
-        th {
-            padding: 10px 12px;
-            text-align: left;
-            color: #64748b;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #e2e8f0;
-            background: #f8fafc
-        }
-
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155
-        }
-
-        tr:hover td {
-            background: #f8fafc
-        }
-
-        .price-td {
-            font-weight: 700;
-            color: #1d4ed8;
-            text-align: right
-        }
-
-        .totals {
-            max-width: 320px;
-            margin-left: auto
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: #334155;
-            padding: 6px 0;
-            border-bottom: 1px solid #f1f5f9
-        }
-
-        .grand {
-            padding-top: 12px;
-            border-top: 2px solid #1d4ed8;
-            border-bottom: none;
-            font-size: 18px;
-            color: #1e293b;
-            margin-top: 4px
-        }
-
-        .grand strong {
-            color: #1d4ed8;
-            font-size: 22px
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 600;
-            z-index: 9999;
-            display: none;
-            animation: slideUp .3s
-        }
-
-        .toast.show {
-            display: block
-        }
-
-        .toast.ok {
-            background: #10b981
-        }
-
-        .toast.err {
-            background: #ef4444
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0)
-            }
-        }
-
-        @media print {
-
-            .hdr,
-            .tabs,
-            .section,
-            .btn-save,
-            .btn-print,
-            .toast {
-                display: none !important
-            }
-
-            .results {
-                display: block !important;
-                box-shadow: none;
-                border: 1px solid #ccc
-            }
-        }
-
-        @media(max-width:640px) {
-            .hdr-in {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center
-            }
-
-            .tabs {
-                flex-direction: column
-            }
-
-            .type-grid {
-                flex-direction: column
-            }
-
-            .dims {
-                grid-template-columns: 1fr 1fr
-            }
+            margin-top: 2rem;
+            padding: 2rem;
+            border-top: 4px solid var(--kimi-primary);
         }
     </style>
 </head>
@@ -703,9 +162,8 @@
     <div class="hdr">
         <div class="hdr-in">
             <div class="logo">
-                <span>🪵</span>
                 <div>
-                    <h1>Конструктор шухляд</h1>
+                    <h1>Конструктор шухляд <span style="color:var(--kimi-primary-light)">RELOADED</span></h1>
                     <p>Швидкий розрахунок вартості виробу</p>
                 </div>
             </div>
@@ -713,7 +171,7 @@
                 <a href="/" class="nbtn on">🪵 Шухляди</a>
                 <a href="/metal.html" class="nbtn">🔩 Метал</a>
                 <a href="/cutter.html" class="nbtn">🔧 Розкрій</a>
-                <a href="/admin.html" class="nbtn">⚙️ Налаштування</a>
+                <a href="/admin.html" class="nbtn">⚙️ Управління</a>
             </div>
         </div>
     </div>
@@ -721,7 +179,7 @@
     <div class="body">
         <div class="tabs">
             <button class="tab active" onclick="setMode('manual')">📐 Конструктор</button>
-            <button class="tab" onclick="setMode('ai')" id="tab-ai">🤖 AI-аналіз фото</button>
+            <button class="tab" onclick="setMode('ai')" id="tab-ai">🤖 AI Аналіз</button>
         </div>
 
         <!-- AI -->
