@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.models import User
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, UserUpdate, Token,
-    CompanyRegistrationRequest, UserPasswordUpdate
+    CompanyRegistrationRequest, UserPasswordUpdate, ForgotPasswordRequest
 )
 from app.core.security import (
     get_password_hash, verify_password, create_access_token

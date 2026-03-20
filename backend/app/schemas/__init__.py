@@ -42,4 +42,5 @@ __all__ = [
     "SalesInvoiceResponse",
     "SalesInvoiceLineCreate",
     "SalesInvoiceLineResponse",
+    "ForgotPasswordRequest",
 ]
