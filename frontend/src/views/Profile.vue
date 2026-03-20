@@ -8,22 +8,22 @@
       </el-breadcrumb>
     </div>
 
-    <el-row :gutter="20">
-      <!-- General Information -->
-      <el-col :xs="24" :md="12" :lg="8">
-        <el-card class="box-card profile-card">
+    <el-row :gutter="20" class="profile-row">
+      <!-- Column 1: General Info & Avatar -->
+      <el-col :xs="24" :md="8" :lg="6">
+        <el-card class="box-card profile-card primary-card">
           <template #header>
             <div class="card-header">
-              <span>Загальна інформація</span>
+              <span>👤 Загальна інформація</span>
             </div>
           </template>
           
           <div class="user-avatar-section">
-            <el-avatar :size="100" class="profile-avatar">
+            <el-avatar :size="100" class="profile-avatar shadow-sm">
               {{ initials }}
             </el-avatar>
             <div class="user-role-badge">
-              <el-tag :type="roleType" effect="dark" round>{{ roleName }}</el-tag>
+              <el-tag :type="roleType" effect="dark" round size="large">{{ roleName }}</el-tag>
             </div>
           </div>
 
@@ -35,72 +35,118 @@
             class="profile-form"
           >
             <el-form-item label="Ім'я" prop="first_name">
-              <el-input v-model="profileForm.first_name" />
+              <el-input v-model="profileForm.first_name" placeholder="Введіть ім'я" />
             </el-form-item>
             
             <el-form-item label="Прізвище" prop="last_name">
-              <el-input v-model="profileForm.last_name" />
+              <el-input v-model="profileForm.last_name" placeholder="Введіть прізвище" />
             </el-form-item>
             
             <el-form-item label="Email" prop="email">
-              <el-input v-model="profileForm.email" />
+              <el-input v-model="profileForm.email" placeholder="email@example.com" />
             </el-form-item>
 
-            <el-button type="primary" class="w-100" @click="updateProfile" :loading="profileLoading">
-              Зберегти зміни
+            <el-form-item label="Телефон" prop="phone">
+              <el-input v-model="profileForm.phone" placeholder="+380..." />
+            </el-form-item>
+
+            <el-button type="primary" class="w-100 save-btn" @click="updateProfile" :loading="profileLoading">
+              Зберегти профіль
             </el-button>
           </el-form>
         </el-card>
       </el-col>
 
-      <!-- Security / Password -->
-      <el-col :xs="24" :md="12" :lg="16">
-        <el-card class="box-card">
-          <template #header>
-            <div class="card-header">
-              <span>Безпека</span>
-            </div>
-          </template>
+      <!-- Column 2: Security & Preferences -->
+      <el-col :xs="24" :md="16" :lg="18">
+        <el-row :gutter="20">
+          <!-- Preferences Section -->
+          <el-col :xs="24" :lg="12">
+            <el-card class="box-card mb-4 mt-xs-4">
+              <template #header>
+                <div class="card-header">
+                  <span>⚙️ Налаштування інтерфейсу</span>
+                </div>
+              </template>
+              
+              <el-form label-position="left" label-width="150px">
+                <el-form-item label="Мова інтерфейсу">
+                  <el-select v-model="preferences.language" class="w-100">
+                    <el-option label="Українська" value="uk" />
+                    <el-option label="English" value="en" />
+                  </el-select>
+                </el-form-item>
 
-          <el-form 
-            ref="passwordFormRef" 
-            :model="passwordForm" 
-            :rules="passwordRules" 
-            label-position="top"
-          >
-            <el-alert
-              title="Зміна пароля"
-              type="info"
-              description="Використовуйте надійний пароль (мінімум 8 символів)."
-              show-icon
-              :closable="false"
-              class="mb-4"
-            />
-            
-            <el-form-item label="Поточний пароль" prop="current_password">
-              <el-input v-model="passwordForm.current_password" type="password" show-password />
-            </el-form-item>
+                <el-form-item label="Часовий пояс">
+                  <el-select v-model="preferences.timezone" class="w-100">
+                    <el-option label="(GMT+02:00) Київ" value="Europe/Kiev" />
+                    <el-option label="(UTC) London" value="UTC" />
+                  </el-select>
+                </el-form-item>
 
-            <el-row :gutter="20">
-              <el-col :span="12">
+                <el-divider />
+
+                <el-form-item label="Компактний режим">
+                  <el-switch v-model="preferences.compactMode" />
+                  <span class="ml-2 text-muted">Більше даних на екрані</span>
+                </el-form-item>
+
+                <el-form-item label="Звукові сповіщення">
+                  <el-switch v-model="preferences.notifications.sound" />
+                </el-form-item>
+
+                <el-form-item label="Браузерні сповіщення">
+                  <el-switch v-model="preferences.notifications.browser" />
+                </el-form-item>
+              </el-form>
+            </el-card>
+          </el-col>
+
+          <!-- Security Section -->
+          <el-col :xs="24" :lg="12">
+            <el-card class="box-card">
+              <template #header>
+                <div class="card-header">
+                  <span>🔒 Безпека</span>
+                </div>
+              </template>
+
+              <el-form 
+                ref="passwordFormRef" 
+                :model="passwordForm" 
+                :rules="passwordRules" 
+                label-position="top"
+              >
+                <el-alert
+                  title="Зміна пароля"
+                  type="info"
+                  description="Використовуйте надійний пароль (мінімум 8 символів)."
+                  show-icon
+                  :closable="false"
+                  class="mb-4"
+                />
+                
+                <el-form-item label="Поточний пароль" prop="current_password">
+                  <el-input v-model="passwordForm.current_password" type="password" show-password />
+                </el-form-item>
+
                 <el-form-item label="Новий пароль" prop="new_password">
                   <el-input v-model="passwordForm.new_password" type="password" show-password />
                 </el-form-item>
-              </el-col>
-              <el-col :span="12">
+
                 <el-form-item label="Підтвердження пароля" prop="confirm_password">
                   <el-input v-model="passwordForm.confirm_password" type="password" show-password />
                 </el-form-item>
-              </el-col>
-            </el-row>
 
-            <el-form-item>
-              <el-button type="warning" @click="changePassword" :loading="passwordLoading">
-                Змінити пароль
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+                <el-form-item>
+                  <el-button type="warning" @click="changePassword" :loading="passwordLoading" class="w-100">
+                    Оновити пароль
+                  </el-button>
+                </el-form-item>
+              </el-form>
+            </el-card>
+          </el-col>
+        </el-row>
       </el-col>
     </el-row>
   </div>
@@ -120,7 +166,19 @@ const profileLoading = ref(false)
 const profileForm = reactive({
   first_name: '',
   last_name: '',
-  email: ''
+  email: '',
+  phone: ''
+})
+
+// Preferences Data (Local state, could be moved to store/DB later)
+const preferences = reactive({
+  language: 'uk',
+  timezone: 'Europe/Kiev',
+  compactMode: false,
+  notifications: {
+    sound: true,
+    browser: true
+  }
 })
 
 const profileRules = {
@@ -129,7 +187,8 @@ const profileRules = {
   email: [
     { required: true, message: 'Введіть email', trigger: 'blur' },
     { type: 'email', message: 'Некоректний email', trigger: 'blur' }
-  ]
+  ],
+  phone: [{ pattern: /^\+?[0-9\s-]{10,20}$/, message: 'Некоректний формат телефону', trigger: 'blur' }]
 }
 
 // Password Data
@@ -271,12 +330,15 @@ onMounted(() => {
 
 <style scoped>
 .profile-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 20px;
+}
+
+.profile-row {
+    margin-top: 10px;
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -284,9 +346,19 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.box-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.primary-card {
+    border-top: 4px solid #409eff;
 }
 
 .card-header {
@@ -294,24 +366,38 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
+  font-size: 16px;
 }
 
 .user-avatar-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 30px;
-    margin-top: 10px;
+    margin-bottom: 25px;
+    margin-top: 5px;
 }
 
 .profile-avatar {
     background-color: #409eff;
-    font-size: 36px;
+    font-size: 40px;
     margin-bottom: 15px;
 }
 
+.shadow-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .user-role-badge {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+}
+
+.profile-form {
+    padding: 0 5px;
+}
+
+.save-btn {
+    height: 44px;
+    font-weight: 600;
 }
 
 .w-100 {
@@ -320,5 +406,20 @@ onMounted(() => {
 
 .mb-4 {
     margin-bottom: 16px;
+}
+
+.ml-2 {
+    margin-left: 8px;
+}
+
+.text-muted {
+    color: #909399;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .mt-xs-4 {
+        margin-top: 20px;
+    }
 }
 </style>
