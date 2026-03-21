@@ -14,6 +14,9 @@ echo "🐳 Rebuilding and restarting containers..."
 docker-compose down
 docker-compose up -d --build
 
+echo "⏳ Waiting for database network to settle (10s)..."
+sleep 10
+
 # 3. Застосовуємо міграції бази даних
 echo "🗄️ Applying database migrations..."
 docker-compose exec backend alembic upgrade head
