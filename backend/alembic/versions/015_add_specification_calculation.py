@@ -25,7 +25,7 @@ def upgrade():
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('specification_item_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('dimension', sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension', create_type=False), nullable=False),
-        sa.Column('data_points', postgresql.JSON(as_text=True), nullable=False),
+        sa.Column('data_points', postgresql.JSON(), nullable=False),
         sa.Column('formula', sa.String(length=500), nullable=True),
         sa.Column('waste_factor', sa.Numeric(precision=5, scale=4), nullable=False, server_default='0'),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
