@@ -297,6 +297,24 @@ const syncCategoryAttributes = async () => {
          if (char) char.is_fixed = true
       }
     })
+
+    // Remove empty characteristics that don't belong to this category anymore
+    localCharacteristics.value = localCharacteristics.value.filter(c => {
+      // Keep if it has a value (don't delete user data)
+      if (c.option_id || c.text_value || c.bool_value) return true
+      
+      // Keep if it belongs to current category or is global
+      const attr = allAttributes.value.find(a => a.id === c.attribute_id)
+      if (!attr) return true
+      
+      // Safety check: if backend thinks it belongs to this category, keep it
+      const belongsToCategory = categoryAttributes.value.some(ca => ca.attribute_id === c.attribute_id)
+      if (belongsToCategory) return true
+
+      // Otherwise, check if it's explicitly global (no category codes)
+      const isGlobal = !attr.category_codes || attr.category_codes.length === 0
+      return isGlobal
+    })
   } catch (e) {
     console.error('Failed to sync category attributes', e)
   }
