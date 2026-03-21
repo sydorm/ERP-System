@@ -4,14 +4,14 @@ from app.models.dictionary import DictionaryItem
 
 DEFAULT_DICTIONARIES = {
     "UOM": [
-        {"code": "pcs", "name": "Штука", "sort_order": 1, "is_fixed": True},
-        {"code": "kg", "name": "Кілограм", "sort_order": 2},
-        {"code": "m", "name": "Метр", "sort_order": 3},
-        {"code": "m2", "name": "М.кв", "sort_order": 4},
-        {"code": "m3", "name": "М.куб", "sort_order": 5},
-        {"code": "l", "name": "Літр", "sort_order": 6},
-        {"code": "pack", "name": "Упаковка", "sort_order": 7},
-        {"code": "set", "name": "Комплект", "sort_order": 8},
+        {"code": "шт", "name": "Штука", "sort_order": 1, "is_fixed": True},
+        {"code": "кг", "name": "Кілограм", "sort_order": 2},
+        {"code": "м", "name": "Метр", "sort_order": 3},
+        {"code": "м2", "name": "М.кв", "sort_order": 4},
+        {"code": "м3", "name": "М.куб", "sort_order": 5},
+        {"code": "л", "name": "Літр", "sort_order": 6},
+        {"code": "уп", "name": "Упаковка", "sort_order": 7},
+        {"code": "комп", "name": "Комплект", "sort_order": 8},
     ],
     "PRODUCT_CATEGORY": [
         {"code": "materials", "name": "Матеріали", "sort_order": 1},

@@ -123,12 +123,12 @@
               <h4 class="product-title" @click="handleEdit(product)">{{ product.name }}</h4>
               <div class="price-row">
                 <span class="price-value">{{ formatCurrency(product.price, product.currency) }}</span>
-                <span class="price-unit">/ {{ product.unit_of_measure }}</span>
+                <span class="price-unit">/ {{ getUomName(product.unit_of_measure) }}</span>
               </div>
               <div class="stock-row">
                 <span class="stock-label">Запас:</span>
                 <span class="stock-value" :class="getStockClass(product.stock_balance)">
-                  {{ product.stock_balance }} {{ product.unit_of_measure }}
+                  {{ product.stock_balance }} {{ getUomName(product.unit_of_measure) }}
                 </span>
               </div>
               <el-progress
@@ -228,7 +228,7 @@
             <template #header>ЗАПАС</template>
             <template #default="scope">
               <span :class="['kimi-text-sm kimi-font-medium', getStockColorClass(scope.row.stock_balance)]">
-                {{ scope.row.stock_balance }} {{ scope.row.unit_of_measure }}
+                {{ scope.row.stock_balance }} {{ getUomName(scope.row.unit_of_measure) }}
               </span>
             </template>
           </el-table-column>
@@ -284,6 +284,9 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import { useDictionaryStore } from '@/stores/dictionary'
+
+const dictStore = useDictionaryStore()
 
 const router = useRouter()
 
@@ -299,12 +302,13 @@ const searchQuery = ref('')
 const filterCategory = ref('')
 const filterStock = ref('')
 const viewMode = ref('list') // default to list
-const categoryOptions = ref([])
+
+const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
+const uomOptions = computed(() => dictStore.getCategory('UOM'))
 
 const fetchDictionaries = async () => {
   try {
-    const catRes = await api.get('/api/v1/dictionaries/PRODUCT_CATEGORY')
-    categoryOptions.value = catRes.data
+    await dictStore.fetchMultiple(['PRODUCT_CATEGORY', 'UOM'])
   } catch (error) {
     console.error('Failed to load dictionaries', error)
   }
@@ -401,7 +405,11 @@ const goToCreate = () => {
 
 // Helpers
 const getCategoryName = (code) => {
-  return categoryOptions.value.find(c => c.code === code)?.name || code || '—'
+  return dictStore.getName('PRODUCT_CATEGORY', code)
+}
+
+const getUomName = (code) => {
+  return dictStore.getShortName('UOM', code)
 }
 
 const getStockClass = (qty) => {
@@ -587,7 +595,7 @@ onActivated(() => {
 .product-card:hover .product-actions-overlay { opacity: 1; }
 .product-details { padding: 14px; background: #fff; }
 .category-tag { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: inline-block; padding: 2px 6px; background: #f1f5f9; border-radius: 4px; }
-.product-title { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #1e293b; cursor: pointer; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-title { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #1e293b; cursor: pointer; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .product-title:hover { color: #4f46e5; }
 .price-row { margin-bottom: 8px; }
 .price-value { font-size: 16px; font-weight: 700; color: #1e293b; }

@@ -122,6 +122,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Close, Check } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import { useDictionaryStore } from '@/stores/dictionary'
+
+const dictStore = useDictionaryStore()
 
 // Sub-components
 import GeneralTab from './ProductTabs/GeneralTab.vue'
@@ -168,9 +171,9 @@ const productCharacteristics = ref([])
 const categoryAttributes = ref([])
 
 // Options
-const uomOptions = ref([])
-const categoryOptions = ref([])
-const currencyOptions = ref([])
+const uomOptions = computed(() => dictStore.getCategory('UOM'))
+const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
+const currencyOptions = computed(() => dictStore.getCategory('CURRENCY'))
 
 // Data
 const stockLevels = ref([])
@@ -182,14 +185,7 @@ const goBack = () => {
 
 const fetchDictionaries = async () => {
     try {
-        const [uomRes, catRes, currRes] = await Promise.all([
-            api.get('/api/v1/dictionaries/UOM'),
-            api.get('/api/v1/dictionaries/PRODUCT_CATEGORY'),
-            api.get('/api/v1/dictionaries/CURRENCY')
-        ])
-        uomOptions.value = uomRes.data
-        categoryOptions.value = catRes.data
-        currencyOptions.value = currRes.data
+        await dictStore.fetchMultiple(['UOM', 'PRODUCT_CATEGORY', 'CURRENCY'])
         
         // Auto-fetch attributes if category is selected
         if (form.category) fetchCategoryAttributes()

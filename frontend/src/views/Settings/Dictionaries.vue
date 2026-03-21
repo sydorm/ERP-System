@@ -194,7 +194,10 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Plus, Search, MoreFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import { useDictionaryStore } from '@/stores/dictionary'
 import ProductAttributesManager from './ProductAttributesManager.vue'
+
+const dictStore = useDictionaryStore()
 
 // Foundation Structure
 const sections = [
@@ -319,8 +322,8 @@ const fetchItems = async () => {
   
   loading.value = true
   try {
-    const response = await api.get(`/api/v1/dictionaries/${activeDictionary.value}`)
-    localItems.value = response.data
+    const data = await dictStore.fetchCategory(activeDictionary.value, true) // Force refresh when in settings
+    localItems.value = data
   } catch (error) {
     localItems.value = []
   } finally {
