@@ -345,8 +345,8 @@ const handleImageChange = async (event) => {
 /* === IMAGE UPLOAD ZONE === */
 .image-upload-zone {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 140px;
+  aspect-ratio: 1 / 1;
+  max-height: 280px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
