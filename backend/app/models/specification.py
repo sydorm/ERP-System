@@ -39,6 +39,7 @@ class SpecificationItem(BaseModel):
     # Relationships
     specification = relationship("ProductSpecification", back_populates="items")
     component = relationship("Product", foreign_keys=[component_id])
+    calculation_rule = relationship("SpecificationCalculationRule", back_populates="specification_item", uselist=False)
 
     def __repr__(self):
         return f"<SpecItem {self.component_id} x {self.quantity}>"

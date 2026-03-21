@@ -24,7 +24,7 @@ class SpecificationCalculationRule(BaseModel):
     dimension = Column(Enum(CalculationDimension), nullable=False, default=CalculationDimension.HEIGHT)
     
     # Data points for interpolation: [{"input": 40, "output": 1.2}, {"input": 50, "output": 1.4}]
-    data_points = Column(JSON, nullable=False, default=list)
+    data_points = Column(JSON, nullable=False, default=[])
     
     # Custom formula if dimension is CUSTOM (e.g., "(h * w) / 100")
     formula = Column(String(500), nullable=True)
@@ -35,7 +35,7 @@ class SpecificationCalculationRule(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
-    specification_item = relationship("SpecificationItem", backref="calculation_rule")
+    specification_item = relationship("SpecificationItem", back_populates="calculation_rule")
 
     def __repr__(self):
         return f"<CalculationRule for Item {self.specification_item_id}>"
