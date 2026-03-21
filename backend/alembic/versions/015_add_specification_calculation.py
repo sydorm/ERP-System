@@ -16,8 +16,11 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # 1. Create Enum
-    sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension').create(op.get_bind())
+    # 1. Create Enum (with check for existence)
+    bind = op.get_bind()
+    has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'calculationdimension'")).first()
+    if not has_enum:
+        sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension').create(bind)
 
     # 2. Create specification_calculation_rules
     op.create_table(
