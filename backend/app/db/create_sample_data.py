@@ -19,8 +19,8 @@ def create_sample_data():
         company = Company(
             id=uuid.uuid4(),
             name="Демо ФОП",
-            legal_name="ФОП Іваненко Іван Іванович",
-            tax_id="1234567890",
+            full_name_uk="ФОП Іваненко Іван Іванович",
+            edrpou="1234567890",
             company_type="FOP",
             is_active=True,
             created_at=datetime.utcnow(),
