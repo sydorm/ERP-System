@@ -79,7 +79,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: http://70.34.247.20:8000
     depends_on:
       - backend
     networks:
@@ -90,4 +90,5 @@ volumes:
 
 networks:
   erp_network:
+    name: erp_network
     driver: bridge
