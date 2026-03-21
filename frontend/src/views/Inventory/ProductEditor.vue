@@ -11,7 +11,7 @@
       </div>
       <div class="header-actions">
         <el-button @click="goBack" class="btn-cancel">
-          <el-icon><Close /></el-icon> Скасувати
+          Закрити
         </el-button>
         <el-button v-if="isEditMode" type="danger" plain @click="confirmDelete" class="btn-delete">
           Видалити

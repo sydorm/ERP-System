@@ -129,7 +129,36 @@ async def get_category_attributes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return db.query(CategoryAttribute).filter(CategoryAttribute.category_code == category_code).all()
+    # Attributes specifically linked to this category for this company
+    linked_attrs = db.query(CategoryAttribute).join(Attribute).filter(
+        Attribute.company_id == current_user.company_id,
+        CategoryAttribute.category_code == category_code,
+        Attribute.is_archived == False
+    ).all()
+    
+    # Attributes with NO category links are "global" (show for all categories)
+    global_attrs = db.query(Attribute).filter(
+        Attribute.company_id == current_user.company_id,
+        Attribute.is_archived == False,
+        ~Attribute.categories.any()
+    ).all()
+    
+    # Convert global attributes to CategoryAttributeResponse format for frontend consistency
+    results = list(linked_attrs)
+    existing_ids = {a.attribute_id for a in linked_attrs}
+    
+    for attr in global_attrs:
+        if attr.id not in existing_ids:
+            # We mock the CategoryAttribute wrapper
+            results.append({
+                "id": attr.id, # Mocking ID for the response wrapper
+                "category_code": category_code,
+                "attribute_id": attr.id,
+                "is_required": False,
+                "attribute": attr
+            })
+            
+    return results
 
 @router.post("/category", response_model=CategoryAttributeResponse)
 async def link_attribute_to_category(
