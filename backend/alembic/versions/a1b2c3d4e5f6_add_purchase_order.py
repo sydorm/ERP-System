@@ -17,8 +17,11 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Create Enum
-    sa.Enum('draft', 'confirmed', 'done', 'cancelled', name='purchaseorderstatus').create(op.get_bind())
+    # 1. Create Enum (safely)
+    bind = op.get_bind()
+    has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'purchaseorderstatus'")).first()
+    if not has_enum:
+        sa.Enum('draft', 'confirmed', 'done', 'cancelled', name='purchaseorderstatus').create(bind)
 
     # 2. Create purchase_orders
     op.create_table(
