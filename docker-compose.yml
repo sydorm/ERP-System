@@ -14,6 +14,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - erp_network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U erp_user -d erp_db" ]
       interval: 10s
@@ -27,6 +29,8 @@ services:
     hostname: redis
     ports:
       - "6379:6379"
+    networks:
+      - erp_network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -54,6 +58,8 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - erp_network
 
   # Vue 3 Frontend
   frontend:
@@ -71,6 +77,12 @@ services:
       VITE_API_URL: http://localhost:8000
     depends_on:
       - backend
+    networks:
+      - erp_network
 
 volumes:
   postgres_data:
+
+networks:
+  erp_network:
+    driver: bridge
