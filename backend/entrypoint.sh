@@ -2,8 +2,8 @@
 set -e
 
 # Wait for database to be ready
-echo "Waiting for database (postgres:5432)..."
-until pg_isready -h postgres -p 5432 -U erp_user; do
+echo "Waiting for database (erp_postgres:5432)..."
+until pg_isready -h erp_postgres -p 5432 -U erp_user; do
   echo "Postgres is unavailable - sleeping"
   sleep 1
 done
