@@ -2,15 +2,21 @@
 set -e
 
 # Wait for database to be ready
-echo "Waiting for database..."
+echo "Waiting for database (postgres:5432)..."
+until pg_isready -h postgres -p 5432 -U erp_user; do
+  echo "Postgres is unavailable - sleeping"
+  sleep 1
+done
+
+echo "Database is ready!"
 
 # Якщо ми запускаємо бекенд (uvicorn), тоді робимо міграції
 if [[ "$*" == *"uvicorn"* ]] || [ -z "$1" ]; then
   echo "Running migrations..."
   # Auto-merge heads if multiple exist
-  HEADS=$(alembic heads 2>&1 | grep -c "(head)")
-  if [ "$HEADS" -gt "1" ]; then
-    echo "Multiple heads detected ($HEADS), merging..."
+  HEAD_COUNT=$(alembic heads 2>&1 | grep -c "(head)")
+  if [ "$HEAD_COUNT" -gt "1" ]; then
+    echo "Multiple heads detected ($HEAD_COUNT), merging..."
     alembic merge heads -m "auto_merge" --rev-id "auto_merge_$(date +%s)" || true
   fi
   alembic upgrade head || echo "Migration failed, but trying to start app anyway..."
