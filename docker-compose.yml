@@ -1,5 +1,7 @@
 # Docker Compose for ERP System
 
+version: '3.8'
+
 services:
   # PostgreSQL Database
   postgres:
@@ -56,6 +58,9 @@ services:
       OPENROUTER_API_KEY: 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
       OPENROUTER_VISION_MODEL: google/gemini-2.0-flash-exp:free
     depends_on:
+      - postgres
+      - redis
+    links:
       - postgres
       - redis
     networks:
