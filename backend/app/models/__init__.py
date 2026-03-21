@@ -12,6 +12,7 @@ from .bank_account import BankAccount, Currency
 from .attribute import Attribute, AttributeOption, CategoryAttribute
 from .variant import ProductVariant, VariantValue
 from .specification import ProductSpecification, SpecificationItem
+from .specification_calculation import SpecificationCalculationRule, CalculationDimension
 from .product_file import ProductFile
 from .register import AccumulationRegister, RegisterType
 from .purchase_receipt import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStatus
@@ -58,5 +59,7 @@ __all__ = [
     "CalcHardware",
     "CalcService",
     "CalcQuote",
+    "SpecificationCalculationRule",
+    "CalculationDimension",
     "AuditLog",
 ]

@@ -4,6 +4,36 @@ from decimal import Decimal
 from uuid import UUID
 from datetime import datetime
 
+from datetime import datetime
+from enum import Enum
+
+class CalculationDimension(str, Enum):
+    HEIGHT = "height_cm"
+    WIDTH = "width_cm"
+    LENGTH = "length_cm"
+    CUSTOM = "custom"
+
+class CalculationPoint(BaseModel):
+    input: float
+    output: float
+
+class SpecificationCalculationBase(BaseModel):
+    dimension: CalculationDimension
+    data_points: List[CalculationPoint]
+    formula: Optional[str] = None
+    waste_factor: Decimal = Field(default=Decimal("0.0"), ge=0, le=1)
+    is_active: bool = True
+
+class SpecificationCalculationCreate(SpecificationCalculationBase):
+    pass
+
+class SpecificationCalculationResponse(SpecificationCalculationBase):
+    id: UUID
+    specification_item_id: UUID
+    
+    class Config:
+        from_attributes = True
+
 class SpecificationItemBase(BaseModel):
     component_id: UUID
     quantity: Decimal = Field(..., ge=0.0001)
@@ -11,7 +41,7 @@ class SpecificationItemBase(BaseModel):
     notes: Optional[str] = None
 
 class SpecificationItemCreate(SpecificationItemBase):
-    pass
+    calculation_rule: Optional[SpecificationCalculationCreate] = None
 
 class ComponentBasicInfo(BaseModel):
     id: UUID
@@ -24,6 +54,7 @@ class ComponentBasicInfo(BaseModel):
 class SpecificationItemResponse(SpecificationItemBase):
     id: UUID
     component: Optional[ComponentBasicInfo] = None
+    calculation_rule: Optional[SpecificationCalculationResponse] = None
     
     class Config:
         from_attributes = True

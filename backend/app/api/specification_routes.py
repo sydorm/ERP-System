@@ -7,6 +7,7 @@ from app.api.dependencies import get_db, get_current_user
 from app.models.product import Product
 from app.models.variant import ProductVariant
 from app.models.specification import ProductSpecification, SpecificationItem
+from app.models.specification_calculation import SpecificationCalculationRule
 from app.models.user import User
 from app.schemas.specification import (
     ProductSpecificationCreate,
@@ -26,7 +27,10 @@ async def list_specifications(
 ):
     """Get all specifications for a product."""
     specs = db.query(ProductSpecification).options(
-        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+        joinedload(ProductSpecification.items).options(
+            joinedload(SpecificationItem.component),
+            joinedload(SpecificationItem.calculation_rule)
+        )
     ).filter(
         ProductSpecification.product_id == product_id
     ).order_by(ProductSpecification.created_at.desc()).all()
@@ -70,6 +74,19 @@ async def create_specification(
             notes=item_in.notes
         )
         db.add(db_item)
+        
+        # Save calculation rule if present
+        if item_in.calculation_rule:
+            db.flush() # get item id
+            db_calc = SpecificationCalculationRule(
+                specification_item_id=db_item.id,
+                dimension=item_in.calculation_rule.dimension,
+                data_points=[p.dict() for p in item_in.calculation_rule.data_points],
+                formula=item_in.calculation_rule.formula,
+                waste_factor=item_in.calculation_rule.waste_factor,
+                is_active=item_in.calculation_rule.is_active
+            )
+            db.add(db_calc)
 
     db.commit()
     db.refresh(db_spec)
@@ -111,6 +128,19 @@ async def update_specification(
                 notes=item_in.notes
             )
             db.add(db_item)
+            
+            # Save calculation rule if present
+            if item_in.calculation_rule:
+                db.flush() # get item id
+                db_calc = SpecificationCalculationRule(
+                    specification_item_id=db_item.id,
+                    dimension=item_in.calculation_rule.dimension,
+                    data_points=[p.dict() for p in item_in.calculation_rule.data_points],
+                    formula=item_in.calculation_rule.formula,
+                    waste_factor=item_in.calculation_rule.waste_factor,
+                    is_active=item_in.calculation_rule.is_active
+                )
+                db.add(db_calc)
 
     db.commit()
     db.refresh(db_spec)
