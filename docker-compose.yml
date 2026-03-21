@@ -5,6 +5,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: erp_postgres
+    hostname: postgres
     environment:
       POSTGRES_DB: erp_db
       POSTGRES_USER: erp_user
@@ -23,6 +24,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: erp_redis
+    hostname: redis
     ports:
       - "6379:6379"
     healthcheck:
