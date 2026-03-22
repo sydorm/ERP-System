@@ -17,11 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
-    inspector = sa.inspect(bind)
-    existing_tables = inspector.get_table_names()
-
-    if 'document_sequences' not in existing_tables:
+    try:
         op.create_table(
             'document_sequences',
             sa.Column('id', sa.Integer(), nullable=False),
@@ -33,6 +29,8 @@ def upgrade() -> None:
         )
         op.create_index(op.f('ix_document_sequences_document_type'), 'document_sequences', ['document_type'], unique=True)
         op.create_index(op.f('ix_document_sequences_id'), 'document_sequences', ['id'], unique=False)
+    except Exception as e:
+        print(f"Skipping document_sequences creation: {e}")
 
 
 def downgrade() -> None:

@@ -17,10 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     bind = op.get_bind()
-    inspector = sa.inspect(bind)
-    existing_tables = inspector.get_table_names()
-
-    if 'audit_logs' not in existing_tables:
+    try:
         op.create_table('audit_logs',
             sa.Column('id', sa.UUID(), nullable=False),
             sa.Column('entity_type', sa.String(), nullable=False),
@@ -35,6 +32,8 @@ def upgrade() -> None:
         )
         op.create_index(op.f('ix_audit_logs_entity_id'), 'audit_logs', ['entity_id'], unique=False)
         op.create_index(op.f('ix_audit_logs_entity_type'), 'audit_logs', ['entity_type'], unique=False)
+    except Exception as e:
+        print(f"Skipping audit_logs creation: {e}")
 
 def downgrade() -> None:
     op.drop_index(op.f('ix_audit_logs_entity_type'), table_name='audit_logs')

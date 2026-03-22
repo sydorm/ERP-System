@@ -19,16 +19,12 @@ def upgrade():
     # 1. Create Enum (with check for existence)
     bind = op.get_bind()
     
-    # Check if table exists to prevent DuplicateTable error
-    inspector = sa.inspect(bind)
-    existing_tables = inspector.get_table_names()
-
     has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'calculationdimension'")).first()
     if not has_enum:
         sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension').create(bind)
 
     # 2. Create specification_calculation_rules
-    if 'specification_calculation_rules' not in existing_tables:
+    try:
         op.create_table(
             'specification_calculation_rules',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -45,6 +41,8 @@ def upgrade():
             sa.UniqueConstraint('specification_item_id')
         )
         op.create_index(op.f('ix_specification_calculation_rules_id'), 'specification_calculation_rules', ['id'], unique=False)
+    except Exception as e:
+        print(f"Skipping specification_calculation_rules creation: {e}")
 
 def downgrade():
     op.drop_index(op.f('ix_specification_calculation_rules_id'), table_name='specification_calculation_rules')

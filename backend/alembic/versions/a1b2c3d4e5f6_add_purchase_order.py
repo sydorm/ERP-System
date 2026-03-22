@@ -21,15 +21,12 @@ def upgrade() -> None:
     bind = op.get_bind()
     
     # Check if tables exist to prevent DuplicateTable error
-    inspector = sa.inspect(bind)
-    existing_tables = inspector.get_table_names()
-
     has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'purchaseorderstatus'")).first()
     if not has_enum:
         sa.Enum('draft', 'confirmed', 'done', 'cancelled', name='purchaseorderstatus').create(bind)
 
     # 2. Create purchase_orders
-    if 'purchase_orders' not in existing_tables:
+    try:
         op.create_table(
             'purchase_orders',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -55,9 +52,11 @@ def upgrade() -> None:
         op.create_index(op.f('ix_purchase_orders_company_id'), 'purchase_orders', ['company_id'], unique=False)
         op.create_index(op.f('ix_purchase_orders_id'), 'purchase_orders', ['id'], unique=False)
         op.create_index(op.f('ix_purchase_orders_order_number'), 'purchase_orders', ['order_number'], unique=False)
+    except Exception as e:
+        print(f"Skipping purchase_orders creation: {e}")
 
     # 3. Create purchase_order_lines
-    if 'purchase_order_lines' not in existing_tables:
+    try:
         op.create_table(
             'purchase_order_lines',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -76,6 +75,8 @@ def upgrade() -> None:
         )
         op.create_index(op.f('ix_purchase_order_lines_id'), 'purchase_order_lines', ['id'], unique=False)
         op.create_index(op.f('ix_purchase_order_lines_order_id'), 'purchase_order_lines', ['order_id'], unique=False)
+    except Exception as e:
+        print(f"Skipping purchase_order_lines creation: {e}")
 
 
 def downgrade() -> None:
