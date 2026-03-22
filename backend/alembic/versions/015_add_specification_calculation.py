@@ -18,27 +18,33 @@ depends_on = None
 def upgrade():
     # 1. Create Enum (with check for existence)
     bind = op.get_bind()
+    
+    # Check if table exists to prevent DuplicateTable error
+    inspector = sa.inspect(bind)
+    existing_tables = inspector.get_table_names()
+
     has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'calculationdimension'")).first()
     if not has_enum:
         sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension').create(bind)
 
     # 2. Create specification_calculation_rules
-    op.create_table(
-        'specification_calculation_rules',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('specification_item_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('dimension', sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension', create_type=False), nullable=False),
-        sa.Column('data_points', postgresql.JSON(), nullable=False),
-        sa.Column('formula', sa.String(length=500), nullable=True),
-        sa.Column('waste_factor', sa.Numeric(precision=5, scale=4), nullable=False, server_default='0'),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('created_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
-        sa.ForeignKeyConstraint(['specification_item_id'], ['specification_items.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('specification_item_id')
-    )
-    op.create_index(op.f('ix_specification_calculation_rules_id'), 'specification_calculation_rules', ['id'], unique=False)
+    if 'specification_calculation_rules' not in existing_tables:
+        op.create_table(
+            'specification_calculation_rules',
+            sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('specification_item_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('dimension', sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension', create_type=False), nullable=False),
+            sa.Column('data_points', postgresql.JSON(), nullable=False),
+            sa.Column('formula', sa.String(length=500), nullable=True),
+            sa.Column('waste_factor', sa.Numeric(precision=5, scale=4), nullable=False, server_default='0'),
+            sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
+            sa.Column('created_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
+            sa.Column('updated_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
+            sa.ForeignKeyConstraint(['specification_item_id'], ['specification_items.id'], ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('id'),
+            sa.UniqueConstraint('specification_item_id')
+        )
+        op.create_index(op.f('ix_specification_calculation_rules_id'), 'specification_calculation_rules', ['id'], unique=False)
 
 def downgrade():
     op.drop_index(op.f('ix_specification_calculation_rules_id'), table_name='specification_calculation_rules')

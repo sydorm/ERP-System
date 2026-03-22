@@ -16,20 +16,25 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    op.create_table('audit_logs',
-        sa.Column('id', sa.UUID(), nullable=False),
-        sa.Column('entity_type', sa.String(), nullable=False),
-        sa.Column('entity_id', sa.UUID(), nullable=False),
-        sa.Column('action', sa.String(), nullable=False),
-        sa.Column('user_id', sa.UUID(), nullable=True),
-        sa.Column('changes', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_audit_logs_entity_id'), 'audit_logs', ['entity_id'], unique=False)
-    op.create_index(op.f('ix_audit_logs_entity_type'), 'audit_logs', ['entity_type'], unique=False)
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_tables = inspector.get_table_names()
+
+    if 'audit_logs' not in existing_tables:
+        op.create_table('audit_logs',
+            sa.Column('id', sa.UUID(), nullable=False),
+            sa.Column('entity_type', sa.String(), nullable=False),
+            sa.Column('entity_id', sa.UUID(), nullable=False),
+            sa.Column('action', sa.String(), nullable=False),
+            sa.Column('user_id', sa.UUID(), nullable=True),
+            sa.Column('changes', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+            sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+            sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_audit_logs_entity_id'), 'audit_logs', ['entity_id'], unique=False)
+        op.create_index(op.f('ix_audit_logs_entity_type'), 'audit_logs', ['entity_type'], unique=False)
 
 def downgrade() -> None:
     op.drop_index(op.f('ix_audit_logs_entity_type'), table_name='audit_logs')

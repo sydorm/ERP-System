@@ -58,17 +58,30 @@ docker compose up -d
 
 **Причина:** PostgreSQL зберігає паролі всередині `postgres_data` volume. Якщо том був створений зі СТАРИМ паролем — PostgreSQL ігнорує `POSTGRES_PASSWORD` при наступних запусках і залишає старий пароль.
 
-**Швидке виправлення (без втрати даних):**
-```bash
-# 1. Підключитись до psql всередині контейнера
-docker compose exec postgres psql -U erp_user erp_db
+**Вирішення:**
+1. Виконати `ALTER USER erp_user WITH PASSWORD 'erp_password';` всередині контейнера `postgres`.
 
-# 2. У psql-консолі виконати:
-ALTER USER erp_user WITH PASSWORD 'erp_password';
-\q
+---
 
-# 3. Перезапустити бекенд
-docker compose restart backend
-```
+### 🪤 Docker: "Name or service not known" та "No space left on device"
+**Симптом:** Бекенд не може підключитися до бази («Name or service not known»), хоча в `docker-compose.yml` все вірно. Також `update.sh` може підвисати.
 
-**Важливо:** роль `postgres` (superuser) не існує в нашому setup, бо `POSTGRES_USER=erp_user`. Завжди підключатись саме як `-U erp_user`.
+**Причина 1 (Критична):** **Закінчилося місце на диску!** Перевірка: `df -h`. Якщо `/` заповнений на 100%, Докер не може створити мережевий міст (bridge) і DNS не працює.
+
+**Причина 2 (Race Condition):** Скрипт `update.sh` запускає міграції занадто швидко після старту контейнерів.
+
+**Вирішення:**
+1. **Очистити місце:** `docker system prune -a --volumes -f` та `sudo journalctl --vacuum-time=1d`.
+2. **Перезапустити Докер:** `sudo systemctl restart docker`.
+3. **Пауза:** Додати `sleep 10` у скрипт перед `alembic upgrade head`.
+
+---
+
+### 🪤 Alembic: "relation [table_name] already exists"
+**Симптом:** `alembic upgrade head` падає з помилкою `DuplicateTable`.
+
+**Причина:** Попередня міграція була перервана (наприклад, через повний диск) ПІСЛЯ створення таблиці, але ДО запису в `alembic_version`.
+
+**Вирішення:**
+1. Спершу синхронізувати лічильник: `docker compose exec backend alembic stamp head`.
+2. Потім повторити оновлення: `./scripts/update.sh`.

@@ -17,17 +17,22 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        'document_sequences',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('document_type', sa.String(length=50), nullable=False),
-        sa.Column('prefix', sa.String(length=20), nullable=False),
-        sa.Column('next_number', sa.Integer(), nullable=False),
-        sa.Column('padding', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_document_sequences_document_type'), 'document_sequences', ['document_type'], unique=True)
-    op.create_index(op.f('ix_document_sequences_id'), 'document_sequences', ['id'], unique=False)
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_tables = inspector.get_table_names()
+
+    if 'document_sequences' not in existing_tables:
+        op.create_table(
+            'document_sequences',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('document_type', sa.String(length=50), nullable=False),
+            sa.Column('prefix', sa.String(length=20), nullable=False),
+            sa.Column('next_number', sa.Integer(), nullable=False),
+            sa.Column('padding', sa.Integer(), nullable=False),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_document_sequences_document_type'), 'document_sequences', ['document_type'], unique=True)
+        op.create_index(op.f('ix_document_sequences_id'), 'document_sequences', ['id'], unique=False)
 
 
 def downgrade() -> None:
