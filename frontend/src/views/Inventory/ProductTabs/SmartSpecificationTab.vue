@@ -63,10 +63,10 @@
               <div class="rule-header">
                 <span class="comp-name">{{ item.component?.name || 'Компонент' }}</span>
                 <span class="comp-sku text-gray-400">{{ item.component?.sku }}</span>
-                <el-tag v-if="item.calculation_rule" type="success" size="small" class="ml-2">Розумний розрахунок</el-tag>
+                <el-tag v-if="item.is_calculated" type="success" size="small" class="ml-2">Розумний розрахунок</el-tag>
                 <el-tag v-else type="info" size="small" class="ml-2">Фіксована к-сть: {{ item.quantity }} {{ item.unit_of_measure }}</el-tag>
                 
-                <span v-if="item.calculation_rule" class="preview-result ml-auto mr-4">
+                <span v-if="item.is_calculated" class="preview-result ml-auto mr-4">
                   Прогноз: <span class="calc-val">{{ calculateQuantity(item) }}</span> {{ item.unit_of_measure }}
                 </span>
               </div>
@@ -77,7 +77,7 @@
                 <el-row :gutter="20">
                   <el-col :span="8">
                     <el-form-item label="Вимір для розрахунку">
-                      <el-select v-model="getRule(item).dimension" class="w-full">
+                      <el-select v-model="item.calc_dimension" class="w-full" @change="item.is_calculated = !!item.calc_dimension">
                         <el-option label="Висота (H)" value="height_cm" />
                         <el-option label="Ширина (W)" value="width_cm" />
                         <el-option label="Довжина (L)" value="length_cm" />
@@ -87,12 +87,12 @@
                   </el-col>
                   <el-col :span="8">
                     <el-form-item label="Коефіцієнт відходів (%)">
-                      <el-input-number v-model="getRule(item).waste_factor" :precision="2" :step="0.01" :min="0" :max="1" style="width: 100%" />
+                      <el-input-number v-model="item.calc_waste_factor" :precision="2" :step="0.01" :min="0" :max="1" style="width: 100%" />
                     </el-form-item>
                   </el-col>
-                  <el-col :span="8" v-if="getRule(item).dimension === 'custom'">
+                  <el-col :span="8" v-if="item.calc_dimension === 'custom'">
                     <el-form-item label="Формула (JS синтаксис)">
-                      <el-input v-model="getRule(item).formula" placeholder="напр. (h * w) / 100" />
+                      <el-input v-model="item.calc_formula" placeholder="напр. (h * w) / 100" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -103,7 +103,7 @@
                     <el-button type="primary" size="small" @click="addPoint(item)" plain :icon="Plus">Додати точку</el-button>
                   </div>
                   
-                  <el-table :data="getRule(item).data_points" size="small" border>
+                  <el-table :data="item.calc_data_points" size="small" border>
                     <el-table-column label="Значення виміру (см)" width="180">
                       <template #default="scope">
                         <el-input-number v-model="scope.row.input" size="small" style="width: 100%" />
@@ -127,7 +127,7 @@
                 </div>
               </el-form>
               
-              <div class="danger-zone mt-4" v-if="item.calculation_rule">
+              <div class="danger-zone mt-4" v-if="item.is_calculated">
                  <el-button type="danger" size="small" plain @click="disableRule(item)">Вимкнути розумний розрахунок</el-button>
               </div>
             </div>
@@ -172,44 +172,42 @@ const selectSpec = (spec) => {
 }
 
 const getRule = (item) => {
-  if (!item.calculation_rule) {
-    item.calculation_rule = {
-      dimension: 'height_cm',
-      data_points: [],
-      formula: '',
-      waste_factor: 0,
-      is_active: true
-    }
+  if (!item.calc_data_points) {
+    item.calc_data_points = []
+    item.calc_waste_factor = 0
+    item.is_calculated = false
   }
-  return item.calculation_rule
+  return item
 }
 
 const addPoint = (item) => {
-  const rule = getRule(item)
-  rule.data_points.push({ input: 0, output: 0 })
-  rule.data_points.sort((a, b) => a.input - b.input)
+  if (!item.calc_data_points) item.calc_data_points = []
+  item.calc_data_points.push({ input: 0, output: 0 })
+  item.calc_data_points.sort((a, b) => a.input - b.input)
+  item.is_calculated = true
 }
 
 const removePoint = (item, index) => {
-  item.calculation_rule.data_points.splice(index, 1)
+  item.calc_data_points.splice(index, 1)
+  if (item.calc_data_points.length === 0) item.is_calculated = false
 }
 
 const disableRule = (item) => {
-  item.calculation_rule = null
+  item.is_calculated = false
+  item.calc_dimension = null
 }
 
 const calculateQuantity = (item) => {
-  const rule = item.calculation_rule
-  if (!rule || !rule.is_active || rule.data_points.length === 0) return item.quantity
+  if (!item.is_calculated || !item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
 
   // Get current dimension value
   let inputValue = 0
-  if (rule.dimension === 'height_cm') inputValue = props.productDimensions.length_cm // Wait, why length_cm? Ah, I should check GeneralTab labels
-  else if (rule.dimension === 'width_cm') inputValue = props.productDimensions.width_cm
-  else if (rule.dimension === 'length_cm') inputValue = props.productDimensions.weight_kg // Dimensions fields in model are a bit mixed?
+  if (item.calc_dimension === 'height_cm') inputValue = props.productDimensions.length_cm // Using actual field mapping from backend
+  else if (item.calc_dimension === 'width_cm') inputValue = props.productDimensions.width_cm
+  else if (item.calc_dimension === 'length_cm') inputValue = props.productDimensions.weight_kg // Dimensions fields in model are a bit mixed?
   
   // Sorting for safety
-  const points = [...rule.data_points].sort((a, b) => a.input - b.input)
+  const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
   
   if (inputValue <= points[0].input) return points[0].output
   if (inputValue >= points[points.length - 1].input) return points[points.length - 1].output
@@ -223,8 +221,8 @@ const calculateQuantity = (item) => {
       let quantity = p1.output + ratio * (p2.output - p1.output)
       
       // Add waste factor
-      if (rule.waste_factor) {
-        quantity *= (1 + rule.waste_factor)
+      if (item.calc_waste_factor) {
+        quantity *= (1 + item.calc_waste_factor)
       }
       
       return quantity.toFixed(4)

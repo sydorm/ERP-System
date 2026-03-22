@@ -265,7 +265,12 @@ const addItem = () => {
         component_id: null,
         quantity: 1,
         unit_of_measure: 'шт',
-        notes: ''
+        notes: '',
+        is_calculated: false,
+        calc_dimension: null,
+        calc_data_points: [],
+        calc_formula: '',
+        calc_waste_factor: 0
     })
 }
 

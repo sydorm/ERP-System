@@ -7,7 +7,6 @@ from app.api.dependencies import get_db, get_current_user
 from app.models.product import Product
 from app.models.variant import ProductVariant
 from app.models.specification import ProductSpecification, SpecificationItem
-from app.models.specification_calculation import SpecificationCalculationRule
 from app.models.user import User
 from app.schemas.specification import (
     ProductSpecificationCreate,
@@ -28,8 +27,7 @@ async def list_specifications(
     """Get all specifications for a product."""
     specs = db.query(ProductSpecification).options(
         joinedload(ProductSpecification.items).options(
-            joinedload(SpecificationItem.component),
-            joinedload(SpecificationItem.calculation_rule)
+            joinedload(SpecificationItem.component)
         )
     ).filter(
         ProductSpecification.product_id == product_id
@@ -71,22 +69,15 @@ async def create_specification(
             component_id=item_in.component_id,
             quantity=item_in.quantity,
             unit_of_measure=item_in.unit_of_measure,
-            notes=item_in.notes
+            notes=item_in.notes,
+            # Merged calculation fields
+            is_calculated=item_in.is_calculated,
+            calc_dimension=item_in.calc_dimension,
+            calc_data_points=[p.dict() for p in item_in.calc_data_points] if item_in.calc_data_points else None,
+            calc_formula=item_in.calc_formula,
+            calc_waste_factor=item_in.calc_waste_factor
         )
         db.add(db_item)
-        
-        # Save calculation rule if present
-        if item_in.calculation_rule:
-            db.flush() # get item id
-            db_calc = SpecificationCalculationRule(
-                specification_item_id=db_item.id,
-                dimension=item_in.calculation_rule.dimension,
-                data_points=[p.dict() for p in item_in.calculation_rule.data_points],
-                formula=item_in.calculation_rule.formula,
-                waste_factor=item_in.calculation_rule.waste_factor,
-                is_active=item_in.calculation_rule.is_active
-            )
-            db.add(db_calc)
 
     db.commit()
     db.refresh(db_spec)
@@ -125,22 +116,15 @@ async def update_specification(
                 component_id=item_in.component_id,
                 quantity=item_in.quantity,
                 unit_of_measure=item_in.unit_of_measure,
-                notes=item_in.notes
+                notes=item_in.notes,
+                # Merged calculation fields
+                is_calculated=item_in.is_calculated,
+                calc_dimension=item_in.calc_dimension,
+                calc_data_points=[p.dict() for p in item_in.calc_data_points] if item_in.calc_data_points else None,
+                calc_formula=item_in.calc_formula,
+                calc_waste_factor=item_in.calc_waste_factor
             )
             db.add(db_item)
-            
-            # Save calculation rule if present
-            if item_in.calculation_rule:
-                db.flush() # get item id
-                db_calc = SpecificationCalculationRule(
-                    specification_item_id=db_item.id,
-                    dimension=item_in.calculation_rule.dimension,
-                    data_points=[p.dict() for p in item_in.calculation_rule.data_points],
-                    formula=item_in.calculation_rule.formula,
-                    waste_factor=item_in.calculation_rule.waste_factor,
-                    is_active=item_in.calculation_rule.is_active
-                )
-                db.add(db_calc)
 
     db.commit()
     db.refresh(db_spec)

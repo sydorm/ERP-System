@@ -1,7 +1,14 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, Numeric, Text
+import enum
+from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, Numeric, Text, JSON, Enum as saEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
+
+class CalculationDimension(str, enum.Enum):
+    HEIGHT = "height_cm"
+    WIDTH = "width_cm"
+    LENGTH = "length_cm"
+    CUSTOM = "custom"
 
 class ProductSpecification(BaseModel):
     """
@@ -26,7 +33,8 @@ class ProductSpecification(BaseModel):
 class SpecificationItem(BaseModel):
     """
     Specification Item (BOM Line)
-    Represents a component and its quantity in a specification.
+    Represents a component and its quantity in a specification, 
+    optionally with smart calculation rules.
     """
     __tablename__ = "specification_items"
     
@@ -35,11 +43,20 @@ class SpecificationItem(BaseModel):
     quantity = Column(Numeric(15, 4), nullable=False, default=1.0)
     unit_of_measure = Column(String(50), nullable=True) # Optional override
     notes = Column(String(500), nullable=True)
+
+    # Merged Smart Calculation Fields
+    is_calculated = Column(Boolean, default=False, nullable=False)
+    calc_dimension = Column(saEnum(CalculationDimension), nullable=True)
+    calc_data_points = Column(JSON, nullable=True)
+    calc_formula = Column(String(500), nullable=True)
+    calc_waste_factor = Column(Numeric(5, 4), nullable=False, default=0.0)
     
     # Relationships
     specification = relationship("ProductSpecification", back_populates="items")
     component = relationship("Product", foreign_keys=[component_id])
-    calculation_rule = relationship("SpecificationCalculationRule", back_populates="specification_item", uselist=False)
+
+    def __repr__(self):
+        return f"<SpecItem {self.component_id} x {self.quantity}>"
 
     def __repr__(self):
         return f"<SpecItem {self.component_id} x {self.quantity}>"

@@ -23,28 +23,31 @@ def upgrade():
     if not has_enum:
         sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension').create(bind)
 
-    # 2. Create specification_calculation_rules
-    try:
-        op.create_table(
-            'specification_calculation_rules',
-            sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('specification_item_id', postgresql.UUID(as_uuid=True), nullable=False),
-            sa.Column('dimension', sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension', create_type=False), nullable=False),
-            sa.Column('data_points', postgresql.JSON(), nullable=False),
-            sa.Column('formula', sa.String(length=500), nullable=True),
-            sa.Column('waste_factor', sa.Numeric(precision=5, scale=4), nullable=False, server_default='0'),
-            sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-            sa.Column('created_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
-            sa.Column('updated_at', sa.DateTime(), nullable=True, server_default=sa.func.now()),
-            sa.ForeignKeyConstraint(['specification_item_id'], ['specification_items.id'], ondelete='CASCADE'),
-            sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('specification_item_id')
-        )
-        op.create_index(op.f('ix_specification_calculation_rules_id'), 'specification_calculation_rules', ['id'], unique=False)
-    except Exception as e:
-        print(f"Skipping specification_calculation_rules creation: {e}")
+    # 2. Add columns to specification_items
+    inspector = sa.inspect(bind)
+    existing_columns = [c['name'] for c in inspector.get_columns('specification_items')]
+
+    if 'is_calculated' not in existing_columns:
+        op.add_column('specification_items', sa.Column('is_calculated', sa.Boolean(), nullable=False, server_default='false'))
+    
+    if 'calc_dimension' not in existing_columns:
+        op.add_column('specification_items', sa.Column('calc_dimension', sa.Enum('height_cm', 'width_cm', 'length_cm', 'custom', name='calculationdimension'), nullable=True))
+    
+    if 'calc_data_points' not in existing_columns:
+        op.add_column('specification_items', sa.Column('calc_data_points', postgresql.JSON(), nullable=True))
+    
+    if 'calc_formula' not in existing_columns:
+        op.add_column('specification_items', sa.Column('calc_formula', sa.String(length=500), nullable=True))
+    
+    if 'calc_waste_factor' not in existing_columns:
+        op.add_column('specification_items', sa.Column('calc_waste_factor', sa.Numeric(precision=5, scale=4), nullable=False, server_default='0'))
 
 def downgrade():
-    op.drop_index(op.f('ix_specification_calculation_rules_id'), table_name='specification_calculation_rules')
-    op.drop_table('specification_calculation_rules')
-    sa.Enum(name='calculationdimension').drop(op.get_bind())
+    op.drop_column('specification_items', 'calc_waste_factor')
+    op.drop_column('specification_items', 'calc_formula')
+    op.drop_column('specification_items', 'calc_data_points')
+    op.drop_column('specification_items', 'calc_dimension')
+    op.drop_column('specification_items', 'is_calculated')
+    
+    bind = op.get_bind()
+    bind.execute(sa.text("DROP TYPE calculationdimension"))

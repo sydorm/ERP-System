@@ -39,9 +39,16 @@ class SpecificationItemBase(BaseModel):
     quantity: Decimal = Field(..., ge=0.0001)
     unit_of_measure: Optional[str] = None
     notes: Optional[str] = None
+    
+    # Merged Smart Calculation Fields
+    is_calculated: bool = False
+    calc_dimension: Optional[CalculationDimension] = None
+    calc_data_points: Optional[List[CalculationPoint]] = None
+    calc_formula: Optional[str] = None
+    calc_waste_factor: Decimal = Field(default=Decimal("0.0"), ge=0, le=1)
 
 class SpecificationItemCreate(SpecificationItemBase):
-    calculation_rule: Optional[SpecificationCalculationCreate] = None
+    pass
 
 class ComponentBasicInfo(BaseModel):
     id: UUID
@@ -54,7 +61,6 @@ class ComponentBasicInfo(BaseModel):
 class SpecificationItemResponse(SpecificationItemBase):
     id: UUID
     component: Optional[ComponentBasicInfo] = None
-    calculation_rule: Optional[SpecificationCalculationResponse] = None
     
     class Config:
         from_attributes = True
