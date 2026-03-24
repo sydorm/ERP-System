@@ -32,6 +32,8 @@ class AttributeBase(BaseModel):
     icon: Optional[str] = None
     description: Optional[str] = None
     is_archived: bool = False
+    allow_manual_input: bool = False
+    mapped_dimension: Optional[str] = None
 
 class AttributeCreate(AttributeBase):
     options: Optional[List[AttributeOptionCreate]] = None
@@ -43,6 +45,8 @@ class AttributeUpdate(BaseModel):
     icon: Optional[str] = None
     description: Optional[str] = None
     is_archived: Optional[bool] = None
+    allow_manual_input: Optional[bool] = None
+    mapped_dimension: Optional[str] = None
     category_codes: Optional[List[str]] = None
 
 class AttributeResponse(AttributeBase):

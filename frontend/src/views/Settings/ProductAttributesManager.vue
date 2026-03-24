@@ -141,6 +141,31 @@
           </el-select>
         </el-form-item>
 
+        <div v-if="attrForm.type === 'SELECT'" class="bg-indigo-50/50 p-4 rounded-lg mb-4 border border-indigo-100">
+          <h4 class="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+            <el-icon><Operation /></el-icon> Налаштування конфігуратора (BOM)
+          </h4>
+          
+          <el-form-item label="Дозволити ручне введення" prop="allow_manual_input" class="mb-3">
+            <el-switch v-model="attrForm.allow_manual_input" active-text="Так" inactive-text="Ні" />
+            <div class="text-xs text-slate-500 mt-1">
+              Якщо ввімкнено, у замовленні можна буде вписати власний розмір (напр. "95"), замість вибору зі списку.
+            </div>
+          </el-form-item>
+
+          <el-form-item label="Впливає на габарит (BOM)" prop="mapped_dimension" class="mb-0">
+            <el-select v-model="attrForm.mapped_dimension" placeholder="Не впливає" clearable class="w-full">
+              <el-option label="Немає (Просто текст)" value="" />
+              <el-option label="Довжина (L)" value="length_cm" />
+              <el-option label="Ширина (W)" value="width_cm" />
+              <el-option label="Висота (H)" value="height_cm" />
+            </el-select>
+            <div class="text-xs text-slate-500 mt-1">
+              Значення цієї характеристики автоматично підставиться у Розумний Калькулятор замість базового габариту товару.
+            </div>
+          </el-form-item>
+        </div>
+
         <el-form-item label="Опис (опціонально)">
           <el-input v-model="attrForm.description" type="textarea" :rows="2" placeholder="Для чого ця характеристика?" />
         </el-form-item>
@@ -182,7 +207,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Search, MoreFilled, Menu, Collection } from '@element-plus/icons-vue'
+import { Plus, Search, MoreFilled, Menu, Collection, Operation } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
@@ -211,7 +236,9 @@ const attrForm = reactive({
   name: '',
   type: 'SELECT',
   description: '',
-  category_codes: []
+  category_codes: [],
+  allow_manual_input: false,
+  mapped_dimension: null
 })
 
 const optForm = reactive({
@@ -292,6 +319,8 @@ const openAddAttrModal = () => {
   attrForm.type = 'SELECT'
   attrForm.description = ''
   attrForm.category_codes = []
+  attrForm.allow_manual_input = false
+  attrForm.mapped_dimension = null
   attrModalVisible.value = true
 }
 
@@ -393,6 +422,7 @@ const handleCommand = (cmd, row) => {
     isEditMode.value = true
     Object.assign(attrForm, row)
     if (!attrForm.category_codes) attrForm.category_codes = []
+    if (attrForm.allow_manual_input === undefined) attrForm.allow_manual_input = false
     attrModalVisible.value = true
   } else if (cmd === 'delete') {
     ElMessageBox.confirm('Ви впевнені, що хочете видалити характеристику і всі її значення?', 'Видалити', { type: 'warning' })

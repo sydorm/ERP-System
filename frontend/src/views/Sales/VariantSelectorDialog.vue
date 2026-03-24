@@ -37,9 +37,11 @@
             >
               <el-select
                 v-model="selections[attr.id]"
-                placeholder="Оберіть варіант..."
+                placeholder="Оберіть варіант або введіть свій..."
                 style="width: 100%"
                 filterable
+                :allow-create="attr.allow_manual_input"
+                default-first-option
                 @change="handleAttributeChange(attr.id)"
                 class="premium-select"
               >
@@ -208,12 +210,19 @@ const handleConfirm = () => {
             id: null,
             product_id: props.product.id,
             sku: props.product.sku, // Base SKU
-            values: sortedAttributes.value.map(attr => ({
-                attribute_id: attr.id,
-                option_id: selections.value[attr.id],
-                attribute: attr,
-                option: attr.options?.find(o => o.id === selections.value[attr.id])
-            }))
+            values: sortedAttributes.value.map(attr => {
+                const selection = selections.value[attr.id];
+                // Check if the selection is a UUID (an existing option_id)
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(selection);
+                
+                return {
+                    attribute_id: attr.id,
+                    option_id: isUuid ? selection : null,
+                    text_value: isUuid ? null : selection,
+                    attribute: attr,
+                    option: isUuid ? attr.options?.find(o => o.id === selection) : null
+                }
+            })
         }
         emit('select', virtualVariant)
     }

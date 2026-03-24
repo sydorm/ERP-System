@@ -23,6 +23,10 @@ class Attribute(BaseModel):
     description = Column(String(500), nullable=True)
     is_archived = Column(Boolean, default=False, nullable=False)
     
+    # Configure-To-Order Settings
+    allow_manual_input = Column(Boolean, default=False, nullable=False)
+    mapped_dimension = Column(String(50), nullable=True) # "length_cm", "width_cm", "height_cm"
+    
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     
     # Relationships
