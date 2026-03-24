@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '017_add_attribute_cto'
-down_revision = '016_parametric' # Note: use the actual revision ID of 016 if it differs, but since the user has multiple heads we can just rely on alembic handling or specify the exact down_revision.
+down_revision = '016_complete_parametric_schema'
 
 def upgrade() -> None:
     # Add allow_manual_input
