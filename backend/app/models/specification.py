@@ -55,8 +55,8 @@ class SpecificationItem(BaseModel):
 
     # Merged Smart Calculation Fields
     is_calculated = Column(Boolean, default=False, nullable=False)
-    calc_type = Column(saEnum(CalculationType), nullable=True, default=CalculationType.FIXED)
-    calc_dimension = Column(saEnum(CalculationDimension), nullable=True)
+    calc_type = Column(saEnum(CalculationType, values_callable=lambda obj: [e.value for e in obj]), nullable=True, default=CalculationType.FIXED)
+    calc_dimension = Column(saEnum(CalculationDimension, values_callable=lambda obj: [e.value for e in obj]), nullable=True)
     calc_data_points = Column(JSON, nullable=True)
     calc_formula = Column(String(500), nullable=True)
     calc_waste_factor = Column(Numeric(5, 4), nullable=False, default=0.0)
