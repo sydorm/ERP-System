@@ -814,6 +814,14 @@ const saveOrder = async (action = 'save') => {
 
   const payload = {
     ...form,
+    lines: form.lines.map(l => ({
+        product_id: l.product_id,
+        variant_id: l.variant_id,
+        quantity: l.quantity,
+        price: l.price,
+        total: l.total,
+        variant_values: !l.variant_id && l._virtual_values ? l._virtual_values : undefined
+    })),
     total_amount: totalAmount.value,
     shipping_date: form.shipping_date || null,
     contract: form.contract || null,

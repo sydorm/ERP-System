@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.db.session import get_db
-from app.models import Order, OrderLine, OrderStatus, User, RegisterType
+from app.models import Order, OrderLine, OrderStatus, User, RegisterType, Product, ProductVariant, VariantValue
 from app.schemas.order import OrderCreate, OrderUpdate, OrderResponse
-from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService, PostingEntry
 from app.services.sequence_service import SequenceService
 from app.services.audit_service import AuditService
+import uuid
 
 router = APIRouter()
 
@@ -66,6 +66,24 @@ async def create_order(
     
     # 2. Add Lines
     for line_in in order_in.lines:
+        if line_in.variant_id is None and line_in.variant_values:
+            # Create a dynamic variant
+            product = db.query(Product).filter(Product.id == line_in.product_id).first()
+            sku_suffix = f"-CUST-{uuid.uuid4().hex[:4].upper()}"
+            new_variant = ProductVariant(
+                product_id=line_in.product_id,
+                sku=f"{product.sku}{sku_suffix}",
+                price_override=line_in.price,
+                is_active=False # Keep catalog clean
+            )
+            db.add(new_variant)
+            db.flush()
+            for val in line_in.variant_values:
+                db_val = VariantValue(**val.dict(), variant_id=new_variant.id)
+                db.add(db_val)
+            db.flush()
+            line_in.variant_id = new_variant.id
+
         line = OrderLine(
             order_id=order.id,
             product_id=line_in.product_id,
@@ -135,6 +153,24 @@ async def update_order(
         # Simple sync: remove old lines and add new ones
         db.query(OrderLine).filter(OrderLine.order_id == id).delete()
         for line_in in order_in.lines:
+            if line_in.variant_id is None and line_in.variant_values:
+                # Create a dynamic variant
+                product = db.query(Product).filter(Product.id == line_in.product_id).first()
+                sku_suffix = f"-CUST-{uuid.uuid4().hex[:4].upper()}"
+                new_variant = ProductVariant(
+                    product_id=line_in.product_id,
+                    sku=f"{product.sku}{sku_suffix}",
+                    price_override=line_in.price,
+                    is_active=False # Keep catalog clean
+                )
+                db.add(new_variant)
+                db.flush()
+                for val in line_in.variant_values:
+                    db_val = VariantValue(**val.dict(), variant_id=new_variant.id)
+                    db.add(db_val)
+                db.flush()
+                line_in.variant_id = new_variant.id
+
             line = OrderLine(
                 order_id=id,
                 product_id=line_in.product_id,
