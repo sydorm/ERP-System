@@ -45,7 +45,7 @@ class SpecificationCalculationResponse(SpecificationCalculationBase):
 
 class SpecificationItemBase(BaseModel):
     component_id: UUID
-    quantity: Decimal = Field(..., ge=0.0001)
+    quantity: Decimal = Field(default=Decimal("0.0"), ge=0)
     unit_of_measure: Optional[str] = None
     notes: Optional[str] = None
     

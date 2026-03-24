@@ -106,7 +106,7 @@
              <el-table-column label="Кількість / Розрахунок" width="200">
                 <template #default="scope">
                    <div class="flex items-center gap-2">
-                     <el-input-number v-model="scope.row.quantity" :min="0.0001" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
+                     <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
                      <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
                        <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
                      </el-tooltip>
@@ -321,8 +321,8 @@ const saveSpecification = async () => {
         return
     }
     
-    // Validate items
-    const validItems = specForm.value.items.filter(i => i.component_id && i.quantity > 0)
+    // Validate items: require a component, and either quantity > 0 OR it is a smart-calculated item
+    const validItems = specForm.value.items.filter(i => i.component_id && (i.quantity > 0 || (i.calc_type && i.calc_type !== 'fixed')))
     specForm.value.items = validItems
 
     saving.value = true
