@@ -22,7 +22,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Override sqlalchemy.url from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+db_url = settings.DATABASE_URL
+if "client_encoding" not in db_url:
+    separator = "?" if "?" not in db_url else "&"
+    db_url = f"{db_url}{separator}client_encoding=utf8"
+config.set_main_option("sqlalchemy.url", db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
