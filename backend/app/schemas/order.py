@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 from typing import List, Optional
 from datetime import date
-# from app.models.order import OrderStatus
+from uuid import UUID
 from app.schemas.variant import VariantValueCreate
 
 class OrderLineBase(BaseModel):
@@ -11,10 +11,10 @@ class OrderLineBase(BaseModel):
     variant_id: Optional[UUID] = None
     quantity: Decimal = Field(..., gt=0)
     price: Decimal = Field(..., ge=0)
-    quantity: Decimal = Field(..., gt=0)
-    price: Decimal = Field(..., ge=0)
     total: Decimal = Field(..., ge=0)
     variant_values: Optional[List[VariantValueCreate]] = None
+
+class OrderLineCreate(OrderLineBase):
     """Schema for creating an order line"""
     pass
 
