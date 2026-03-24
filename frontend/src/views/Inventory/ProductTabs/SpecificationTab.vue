@@ -138,7 +138,8 @@
             <el-form-item label="Тип калькулятора">
               <el-select v-model="activeCalcItem.calc_type" class="w-full" @change="handleTypeChange(activeCalcItem)">
                 <el-option label="Фіксована кількість" value="fixed" />
-                <el-option label="Таблиця (Інтерполяція)" value="interpolation" />
+                <el-option label="Таблиця (Точки / Авто-пропорція)" value="interpolation" />
+                <el-option label="Пропорція (від розміру)" value="proportional" />
                 <el-option label="Площа (W * H)" value="area" />
                 <el-option label="Об'єм (W * H * L)" value="volume" />
                 <el-option label="Своя формула" value="formula" />
@@ -180,6 +181,19 @@
                     </el-table-column>
                 </el-table>
             </div>
+
+            <el-form-item label="Вимір для розрахунку" v-if="activeCalcItem.calc_type === 'proportional'" class="mt-4">
+              <el-select v-model="activeCalcItem.calc_dimension" class="w-full">
+                <el-option label="Висота (H)" value="height_cm" />
+                <el-option label="Ширина (W)" value="width_cm" />
+                <el-option label="Довжина (L)" value="length_cm" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="Коефіцієнт (Множник)" v-if="activeCalcItem.calc_type === 'proportional'" class="mt-4">
+              <el-input v-model="activeCalcItem.calc_formula" type="number" step="0.0001" placeholder="напр. 0.1" />
+              <div class="text-xs text-gray-400 mt-1" style="line-height: 1.2;">К-сть = Вимір × Коефіцієнт</div>
+            </el-form-item>
 
             <el-form-item label="JS Формула (змінні: W, H, L)" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
               <el-input v-model="activeCalcItem.calc_formula" placeholder="(W * H) / 10000" />
@@ -443,23 +457,40 @@ const calculateQuantity = (item) => {
             const points = [...pointsArray].sort((a, b) => a.input - b.input)
             
             let dimResult = 0
-            if (dimVal <= points[0].input) dimResult = points[0].output
-            else if (dimVal >= points[points.length - 1].input) dimResult = points[points.length - 1].output
-            else {
-                for (let i = 0; i < points.length - 1; i++) {
-                    const p1 = points[i]; const p2 = points[i+1]
-                    if (dimVal >= p1.input && dimVal <= p2.input) {
-                        const ratio = (dimVal - p1.input) / (p2.input - p1.input)
-                        dimResult = p1.output + ratio * (p2.output - p1.output)
-                        break
+            if (points.length === 1) {
+                dimResult = points[0].output
+            } else {
+                if (dimVal <= points[0].input) {
+                    const p1 = points[0]; const p2 = points[1]
+                    const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+                    dimResult = p1.output + slope * (dimVal - p1.input)
+                } 
+                else if (dimVal >= points[points.length - 1].input) {
+                    const p1 = points[points.length - 2]; const p2 = points[points.length - 1]
+                    const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+                    dimResult = p2.output + slope * (dimVal - p2.input)
+                } 
+                else {
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const p1 = points[i]; const p2 = points[i+1]
+                        if (dimVal >= p1.input && dimVal <= p2.input) {
+                            const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+                            dimResult = p1.output + slope * (dimVal - p1.input)
+                            break
+                        }
                     }
                 }
             }
-            total += dimResult
+            total += Math.max(0, dimResult)
         }
         
         if (!hasAnyPoints) return item.quantity
         result = total
+    }
+    else if (item.calc_type === 'proportional') {
+        const dimVal = parseFloat(props.productDimensions[item.calc_dimension || 'width_cm']) || 0
+        const coeff = parseFloat(item.calc_formula) || 0
+        result = dimVal * coeff
     }
     else if (item.calc_type === 'area') {
         result = dimensions.W * dimensions.H / 10000 
