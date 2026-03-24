@@ -167,7 +167,7 @@
                             <el-input-number v-model="scope.row.input" size="small" style="width: 100%" />
                         </template>
                     </el-table-column>
-                    <el-table-column label="Потрібна кількість">
+                    <el-table-column :label="`Потрібна кількість (${activeCalcItem.unit_of_measure || 'шт'})`">
                         <template #default="scope">
                             <el-input-number v-model="scope.row.output" :precision="4" size="small" style="width: 100%" />
                         </template>
@@ -193,6 +193,18 @@
                 <el-alert title="Увага" type="info" :closable="false" show-icon>
                   Параметричний розрахунок ігнорує поле "Кількість" в таблиці. Його буде розраховано динамічно.
                 </el-alert>
+            </div>
+            
+            <!-- Preview Block -->
+            <div v-if="activeCalcItem.calc_type !== 'fixed'" style="margin-top: 16px; padding: 16px; border-radius: 8px; background-color: #eff6ff; border: 1px solid #bfdbfe; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: #1e3a8a; margin-bottom: 4px;">Поточний результат розрахунку:</div>
+                <div style="font-size: 12px; color: #1d4ed8;">Для розрахунку використані поточні габарити цього товару (Ш: {{ productDimensions.width_cm || 0 }}см, В: {{ productDimensions.height_cm || 0 }}см, Д: {{ productDimensions.length_cm || 0 }}см)</div>
+              </div>
+              <div style="font-size: 20px; font-weight: 700; color: #2563eb; text-align: right;">
+                {{ calculateQuantity(activeCalcItem) }} 
+                <span style="font-size: 14px; font-weight: 400; color: #64748b; margin-left: 4px;">{{ activeCalcItem.unit_of_measure || 'шт' }}</span>
+              </div>
             </div>
         </el-form>
       </div>
@@ -220,6 +232,10 @@ import api from '@/api'
 const props = defineProps({
     productId: {
         type: String,
+        required: true
+    },
+    productDimensions: {
+        type: Object,
         required: true
     }
 })
@@ -384,6 +400,59 @@ const addPoint = (item) => {
 
 const removePoint = (item, index) => {
     item.calc_data_points.splice(index, 1)
+}
+
+const calculateQuantity = (item) => {
+    if (!item || item.calc_type === 'fixed') return item?.quantity || 0
+
+    const dimensions = {
+        W: parseFloat(props.productDimensions.width_cm) || 0,
+        H: parseFloat(props.productDimensions.height_cm) || 0,
+        L: parseFloat(props.productDimensions.length_cm) || 0,
+        Kg: parseFloat(props.productDimensions.weight_kg) || 0
+    }
+
+    let result = 0
+
+    if (item.calc_type === 'interpolation') {
+        if (!item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
+        
+        const dimVal = parseFloat(props.productDimensions[item.calc_dimension]) || 0
+        const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
+        
+        if (dimVal <= points[0].input) result = points[0].output
+        else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
+        else {
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i]; const p2 = points[i+1]
+                if (dimVal >= p1.input && dimVal <= p2.input) {
+                    const ratio = (dimVal - p1.input) / (p2.input - p1.input)
+                    result = p1.output + ratio * (p2.output - p1.output)
+                    break
+                }
+            }
+        }
+    } 
+    else if (item.calc_type === 'area') {
+        result = dimensions.W * dimensions.H / 10000 
+    }
+    else if (item.calc_type === 'volume') {
+        result = dimensions.W * dimensions.H * dimensions.L / 1000000 
+    }
+    else if (item.calc_type === 'formula') {
+        try {
+            const { W, H, L, Kg } = dimensions
+            result = eval(item.calc_formula || '0')
+        } catch (e) {
+            return 'Помилка'
+        }
+    }
+
+    if (item.calc_waste_factor) {
+        result *= (1 + parseFloat(item.calc_waste_factor))
+    }
+    
+    return typeof result === 'number' ? result.toFixed(4) : result
 }
 
 // Product Search for components

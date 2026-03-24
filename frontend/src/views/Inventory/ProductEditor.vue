@@ -52,7 +52,7 @@
 
           <el-tab-pane label="Специфікації (BOM)" name="specification">
             <template v-if="form.id">
-              <SpecificationTab :product-id="form.id" />
+              <SpecificationTab :product-id="form.id" :product-dimensions="form" />
             </template>
             <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
           </el-tab-pane>
