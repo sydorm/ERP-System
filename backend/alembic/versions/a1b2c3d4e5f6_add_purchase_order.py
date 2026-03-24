@@ -26,7 +26,8 @@ def upgrade() -> None:
         sa.Enum('draft', 'confirmed', 'done', 'cancelled', name='purchaseorderstatus').create(bind)
 
     # 2. Create purchase_orders (safely)
-    if 'purchase_orders' not in inspector.get_table_names():
+    res = bind.execute(sa.text("SELECT 1 FROM information_schema.tables WHERE table_name = 'purchase_orders'")).first()
+    if not res:
         op.create_table(
             'purchase_orders',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -56,7 +57,8 @@ def upgrade() -> None:
         print("Table 'purchase_orders' already exists, skipping creation.")
 
     # 3. Create purchase_order_lines (safely)
-    if 'purchase_order_lines' not in inspector.get_table_names():
+    res_lines = bind.execute(sa.text("SELECT 1 FROM information_schema.tables WHERE table_name = 'purchase_order_lines'")).first()
+    if not res_lines:
         op.create_table(
             'purchase_order_lines',
             sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),

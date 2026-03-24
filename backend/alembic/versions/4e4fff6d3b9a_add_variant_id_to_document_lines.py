@@ -17,17 +17,26 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add variant_id to order_lines
-    op.add_column('order_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
-    op.create_foreign_key(None, 'order_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    
+    # Add variant_id to order_lines (safely)
+    columns = [c['name'] for c in inspector.get_columns('order_lines')]
+    if 'variant_id' not in columns:
+        op.add_column('order_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
+        op.create_foreign_key('fk_order_lines_variant_id', 'order_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
 
-    # Add variant_id to purchase_receipt_lines
-    op.add_column('purchase_receipt_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
-    op.create_foreign_key(None, 'purchase_receipt_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
+    # Add variant_id to purchase_receipt_lines (safely)
+    columns = [c['name'] for c in inspector.get_columns('purchase_receipt_lines')]
+    if 'variant_id' not in columns:
+        op.add_column('purchase_receipt_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
+        op.create_foreign_key('fk_purchase_receipt_lines_variant_id', 'purchase_receipt_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
 
-    # Add variant_id to sales_invoice_lines
-    op.add_column('sales_invoice_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
-    op.create_foreign_key(None, 'sales_invoice_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
+    # Add variant_id to sales_invoice_lines (safely)
+    columns = [c['name'] for c in inspector.get_columns('sales_invoice_lines')]
+    if 'variant_id' not in columns:
+        op.add_column('sales_invoice_lines', sa.Column('variant_id', sa.dialects.postgresql.UUID(as_uuid=True), nullable=True))
+        op.create_foreign_key('fk_sales_invoice_lines_variant_id', 'sales_invoice_lines', 'product_variants', ['variant_id'], ['id'], ondelete='RESTRICT')
 
 
 def downgrade() -> None:
