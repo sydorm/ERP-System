@@ -16,91 +16,54 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # 1. Alter status column in orders table
-    # We use USING status::text to convert the Enum value to a String
-    op.alter_column('orders', 'status',
-               existing_type=postgresql.ENUM('draft', 'confirmed', 'shipped', 'completed', 'cancelled', name='orderstatus'),
-               type_=sa.String(length=50),
-               existing_nullable=False,
-               postgresql_using='status::text')
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
     
-    # 2. Add description column to dictionary_items if not exists (it was missing from 004)
-    # Actually let's check dictionary_items columns first. 
-    # From 004 it doesn't have 'description'. Let's add it as it's used in the frontend.
-    op.add_column('dictionary_items', sa.Column('description', sa.String(length=500), nullable=True))
+    # 1. Alter status column in orders table (safely)
+    columns = inspector.get_columns('orders')
+    status_col = next((c for c in columns if c['name'] == 'status'), None)
+    
+    if status_col and str(status_col['type']).lower() != 'varchar(50)':
+        op.alter_column('orders', 'status',
+                   existing_type=postgresql.ENUM('draft', 'confirmed', 'shipped', 'completed', 'cancelled', name='orderstatus'),
+                   type_=sa.String(length=50),
+                   existing_nullable=False,
+                   postgresql_using='status::text')
+    
+    # 2. Add description column to dictionary_items if not exists (safely)
+    dict_columns = [c['name'] for c in inspector.get_columns('dictionary_items')]
+    if 'description' not in dict_columns:
+        op.add_column('dictionary_items', sa.Column('description', sa.String(length=500), nullable=True))
 
-    # 3. Seed initial order statuses for each company
-    # We'll insert defaults: draft, confirmed, shipped, completed, cancelled
-    op.execute("""
-        INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
-        SELECT 
-            gen_random_uuid(), 
-            id, 
-            'ORDER_STATUS', 
-            'draft', 
-            'Чернетка', 
-            'gray', 
-            1, 
-            true, 
-            true
-        FROM companies
-    """)
-    op.execute("""
-        INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
-        SELECT 
-            gen_random_uuid(), 
-            id, 
-            'ORDER_STATUS', 
-            'confirmed', 
-            'Підтверджено', 
-            'blue', 
-            2, 
-            true, 
-            true
-        FROM companies
-    """)
-    op.execute("""
-        INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
-        SELECT 
-            gen_random_uuid(), 
-            id, 
-            'ORDER_STATUS', 
-            'shipped', 
-            'Відправлено', 
-            'orange', 
-            3, 
-            true, 
-            true
-        FROM companies
-    """)
-    op.execute("""
-        INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
-        SELECT 
-            gen_random_uuid(), 
-            id, 
-            'ORDER_STATUS', 
-            'completed', 
-            'Виконано', 
-            'green', 
-            4, 
-            true, 
-            true
-        FROM companies
-    """)
-    op.execute("""
-        INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
-        SELECT 
-            gen_random_uuid(), 
-            id, 
-            'ORDER_STATUS', 
-            'cancelled', 
-            'Скасовано', 
-            'red', 
-            5, 
-            true, 
-            true
-        FROM companies
-    """)
+    # 3. Seed initial order statuses for each company (safely)
+    # We use NOT EXISTS to avoid duplicates
+    statuses = [
+        ('draft', 'Чернетка', 'gray', 1),
+        ('confirmed', 'Підтверджено', 'blue', 2),
+        ('shipped', 'Відправлено', 'orange', 3),
+        ('completed', 'Виконано', 'green', 4),
+        ('cancelled', 'Скасовано', 'red', 5)
+    ]
+    
+    for code, name, color, order in statuses:
+        op.execute(f"""
+            INSERT INTO dictionary_items (id, company_id, category, code, name, color, sort_order, is_fixed, is_active)
+            SELECT 
+                gen_random_uuid(), 
+                id, 
+                'ORDER_STATUS', 
+                '{code}', 
+                '{name}', 
+                '{color}', 
+                {order}, 
+                true, 
+                true
+            FROM companies c
+            WHERE NOT EXISTS (
+                SELECT 1 FROM dictionary_items di 
+                WHERE di.company_id = c.id AND di.category = 'ORDER_STATUS' AND di.code = '{code}'
+            )
+        """)
 
 def downgrade() -> None:
     # 1. Remove seeded items

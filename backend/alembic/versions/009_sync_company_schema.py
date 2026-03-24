@@ -17,43 +17,61 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Create TaxGroup enum
-    tax_group_enum = sa.Enum('GROUP_1', 'GROUP_2', 'GROUP_3', 'GENERAL', name='taxgroup')
-    tax_group_enum.create(op.get_bind())
-
-    # 2. Add new columns to companies
-    op.add_column('companies', sa.Column('full_name_uk', sa.String(length=500), nullable=True))
-    op.add_column('companies', sa.Column('short_name_uk', sa.String(length=255), nullable=True))
-    op.add_column('companies', sa.Column('full_name_en', sa.String(length=500), nullable=True))
-    op.add_column('companies', sa.Column('website', sa.String(length=255), nullable=True))
-    op.add_column('companies', sa.Column('edrpou', sa.String(length=20), nullable=True))
-    op.add_column('companies', sa.Column('ipn', sa.String(length=20), nullable=True))
-    op.add_column('companies', sa.Column('kved', sa.String(length=10), nullable=True))
-    op.add_column('companies', sa.Column('director_name', sa.String(length=255), nullable=True))
-    op.add_column('companies', sa.Column('director_position', sa.String(length=100), nullable=True))
-    op.add_column('companies', sa.Column('accountant_name', sa.String(length=255), nullable=True))
-    op.add_column('companies', sa.Column('legal_address', sa.String(length=500), nullable=True))
-    op.add_column('companies', sa.Column('physical_address', sa.String(length=500), nullable=True))
-    op.add_column('companies', sa.Column('phone', sa.String(length=50), nullable=True))
-    op.add_column('companies', sa.Column('email', sa.String(length=255), nullable=True))
-    op.add_column('companies', sa.Column('tax_group', sa.Enum('GROUP_1', 'GROUP_2', 'GROUP_3', 'GENERAL', name='taxgroup'), nullable=True))
-    op.add_column('companies', sa.Column('vat_payer', sa.Boolean(), server_default='false', nullable=False))
-    op.add_column('companies', sa.Column('vat_number', sa.String(length=50), nullable=True))
-    op.add_column('companies', sa.Column('tax_rate_single', sa.String(length=20), nullable=True))
-    op.add_column('companies', sa.Column('tax_amount_esv', sa.String(length=20), nullable=True))
-    op.add_column('companies', sa.Column('military_tax_rate', sa.String(length=20), nullable=True))
-    op.add_column('companies', sa.Column('last_tax_update', sa.String(length=50), nullable=True))
-    op.add_column('companies', sa.Column('is_default', sa.Boolean(), server_default='false', nullable=False))
-
-    # 3. Migrate existing data
-    op.execute("UPDATE companies SET full_name_uk = legal_name, edrpou = tax_id")
-
-    # 4. Create indices
-    op.create_index(op.f('ix_companies_edrpou'), 'companies', ['edrpou'], unique=False)
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
     
-    # 5. Drop old columns
-    op.drop_column('companies', 'tax_id')
-    op.drop_column('companies', 'legal_name')
+    # 1. Create TaxGroup enum (safely)
+    has_enum = bind.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'taxgroup'")).first()
+    if not has_enum:
+        sa.Enum('GROUP_1', 'GROUP_2', 'GROUP_3', 'GENERAL', name='taxgroup').create(bind)
+
+    # 2. Add new columns to companies (safely)
+    existing_columns = [c['name'] for c in inspector.get_columns('companies')]
+    new_columns = [
+        ('full_name_uk', sa.String(length=500)),
+        ('short_name_uk', sa.String(length=255)),
+        ('full_name_en', sa.String(length=500)),
+        ('website', sa.String(length=255)),
+        ('edrpou', sa.String(length=20)),
+        ('ipn', sa.String(length=20)),
+        ('kved', sa.String(length=10)),
+        ('director_name', sa.String(length=255)),
+        ('director_position', sa.String(length=100)),
+        ('accountant_name', sa.String(length=255)),
+        ('legal_address', sa.String(length=500)),
+        ('physical_address', sa.String(length=500)),
+        ('phone', sa.String(length=50)),
+        ('email', sa.String(length=255)),
+        ('tax_group', sa.Enum('GROUP_1', 'GROUP_2', 'GROUP_3', 'GENERAL', name='taxgroup')),
+        ('vat_payer', sa.Boolean(), sa.sql.expression.false()),
+        ('vat_number', sa.String(length=50)),
+        ('tax_rate_single', sa.String(length=20)),
+        ('tax_amount_esv', sa.String(length=20)),
+        ('military_tax_rate', sa.String(length=20)),
+        ('last_tax_update', sa.String(length=50)),
+        ('is_default', sa.Boolean(), sa.sql.expression.false()),
+    ]
+    
+    for col_name, col_type, *extra in new_columns:
+        if col_name not in existing_columns:
+            server_default = extra[0] if extra else None
+            is_nullable = False if col_name in ['vat_payer', 'is_default'] else True
+            op.add_column('companies', sa.Column(col_name, col_type, server_default=server_default, nullable=is_nullable))
+
+    # 3. Migrate existing data (safely)
+    # Check if old columns still exist before trying to migrate
+    if 'legal_name' in existing_columns and 'tax_id' in existing_columns:
+        op.execute("UPDATE companies SET full_name_uk = legal_name, edrpou = tax_id WHERE full_name_uk IS NULL OR edrpou IS NULL")
+
+    # 4. Create indices (safely)
+    existing_indices = [idx['name'] for idx in inspector.get_indexes('companies')]
+    if 'ix_companies_edrpou' not in existing_indices:
+        op.create_index(op.f('ix_companies_edrpou'), 'companies', ['edrpou'], unique=False)
+    
+    # 5. Drop old columns (safely)
+    for col_name in ['tax_id', 'legal_name']:
+        if col_name in existing_columns:
+            op.drop_column('companies', col_name)
 
 
 def downgrade() -> None:

@@ -15,12 +15,19 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Drop old RESTRICT constraint and recreate as SET NULL
-    op.drop_constraint(
-        'order_lines_variant_id_fkey',
-        'order_lines',
-        type_='foreignkey'
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    
+    # 1. Check if constraint already is on SET NULL
+    constraints = inspector.get_foreign_keys('order_lines')
+    fk = next((f for f in constraints if f['name'] == 'order_lines_variant_id_fkey'), None)
+    
+    if fk:
+        # If it exists, check its on_delete action
+        # Note: inspector might not expose on_delete directly in all versions, 
+        # but we can just drop and recreate if it's there
+        op.drop_constraint('order_lines_variant_id_fkey', 'order_lines', type_='foreignkey')
+    
     op.create_foreign_key(
         'order_lines_variant_id_fkey',
         'order_lines',
