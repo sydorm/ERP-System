@@ -145,7 +145,7 @@
             </el-form-item>
             
             <el-form-item label="Вимір для таблиці" v-if="activeCalcItem.calc_type === 'interpolation'">
-              <el-select v-model="activeCalcItem.calc_dimension" class="w-full">
+              <el-select v-model="activeCalcDimensionUI" class="w-full">
                 <el-option label="Висота (H)" value="height_cm" />
                 <el-option label="Ширина (W)" value="width_cm" />
                 <el-option label="Довжина (L)" value="length_cm" />
@@ -161,7 +161,7 @@
                     <span class="text-sm font-semibold">Точки розрахунку (Розмір -> Кількість)</span>
                     <el-button type="primary" size="small" @click="addPoint(activeCalcItem)" plain >Додати точку</el-button>
                 </div>
-                <el-table :data="activeCalcItem.calc_data_points" size="small" border>
+                <el-table :data="activeCalcItem.calc_data_points[activeCalcDimensionUI] || []" size="small" border>
                     <el-table-column label="Значення виміру (см)">
                         <template #default="scope">
                             <el-input-number v-model="scope.row.input" size="small" style="width: 100%" />
@@ -259,6 +259,7 @@ const productSearchResults = ref([])
 // Calculator UI state
 const calcDialogOpen = ref(false)
 const activeCalcItem = ref(null)
+const activeCalcDimensionUI = ref('width_cm')
 
 // Load all specifications for this product
 const loadSpecifications = async () => {
@@ -357,7 +358,6 @@ const deleteSpec = async (id) => {
     }
 }
 
-// Add Item Row
 const addItem = () => {
     specForm.value.items.push({
         component_id: null,
@@ -366,7 +366,7 @@ const addItem = () => {
         notes: '',
         is_calculated: false,
         calc_dimension: null,
-        calc_data_points: [],
+        calc_data_points: { width_cm: [], height_cm: [], length_cm: [] },
         calc_formula: '',
         calc_waste_factor: 0
     })
@@ -380,26 +380,35 @@ const removeItem = (index) => {
 const openCalcDialog = (item) => {
     // Ensure all calculator fields exist on the item
     if (!item.calc_type) item.calc_type = 'fixed'
-    if (!item.calc_data_points) item.calc_data_points = []
     
+    // Migrate old array lists to new dimension-mapped objects
+    if (!item.calc_data_points) {
+        item.calc_data_points = { width_cm: [], height_cm: [], length_cm: [] }
+    } else if (Array.isArray(item.calc_data_points)) {
+        const legacyDimension = item.calc_dimension || 'width_cm'
+        const points = [...item.calc_data_points]
+        item.calc_data_points = { width_cm: [], height_cm: [], length_cm: [] }
+        item.calc_data_points[legacyDimension] = points
+    }
+    
+    activeCalcDimensionUI.value = item.calc_dimension || 'width_cm'
     activeCalcItem.value = item
     calcDialogOpen.value = true
 }
 
 const handleTypeChange = (item) => {
     item.is_calculated = item.calc_type !== 'fixed'
-    if (item.calc_type === 'interpolation' && item.calc_data_points.length === 0) {
-        item.calc_dimension = 'width_cm'
-    }
 }
 
 const addPoint = (item) => {
-    if (!item.calc_data_points) item.calc_data_points = []
-    item.calc_data_points.push({ input: 0, output: 0 })
+    if (!item.calc_data_points[activeCalcDimensionUI.value]) {
+        item.calc_data_points[activeCalcDimensionUI.value] = []
+    }
+    item.calc_data_points[activeCalcDimensionUI.value].push({ input: 0, output: 0 })
 }
 
 const removePoint = (item, index) => {
-    item.calc_data_points.splice(index, 1)
+    item.calc_data_points[activeCalcDimensionUI.value].splice(index, 1)
 }
 
 const calculateQuantity = (item) => {
@@ -415,24 +424,42 @@ const calculateQuantity = (item) => {
     let result = 0
 
     if (item.calc_type === 'interpolation') {
-        if (!item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
+        if (!item.calc_data_points) return item.quantity
         
-        const dimVal = parseFloat(props.productDimensions[item.calc_dimension]) || 0
-        const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
+        let total = 0
+        let hasAnyPoints = false
         
-        if (dimVal <= points[0].input) result = points[0].output
-        else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
-        else {
-            for (let i = 0; i < points.length - 1; i++) {
-                const p1 = points[i]; const p2 = points[i+1]
-                if (dimVal >= p1.input && dimVal <= p2.input) {
-                    const ratio = (dimVal - p1.input) / (p2.input - p1.input)
-                    result = p1.output + ratio * (p2.output - p1.output)
-                    break
+        // Normalize object (in case of old flat array not parsed yet)
+        const pointsObj = Array.isArray(item.calc_data_points) 
+            ? { [(item.calc_dimension || 'width_cm')]: item.calc_data_points }
+            : item.calc_data_points
+            
+        for (const [dimKey, pointsArray] of Object.entries(pointsObj)) {
+            if (!pointsArray || pointsArray.length === 0) continue
+            hasAnyPoints = true
+            
+            const dimVal = parseFloat(props.productDimensions[dimKey]) || 0
+            const points = [...pointsArray].sort((a, b) => a.input - b.input)
+            
+            let dimResult = 0
+            if (dimVal <= points[0].input) dimResult = points[0].output
+            else if (dimVal >= points[points.length - 1].input) dimResult = points[points.length - 1].output
+            else {
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p1 = points[i]; const p2 = points[i+1]
+                    if (dimVal >= p1.input && dimVal <= p2.input) {
+                        const ratio = (dimVal - p1.input) / (p2.input - p1.input)
+                        dimResult = p1.output + ratio * (p2.output - p1.output)
+                        break
+                    }
                 }
             }
+            total += dimResult
         }
-    } 
+        
+        if (!hasAnyPoints) return item.quantity
+        result = total
+    }
     else if (item.calc_type === 'area') {
         result = dimensions.W * dimensions.H / 10000 
     }

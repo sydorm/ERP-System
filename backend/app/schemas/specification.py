@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID
@@ -53,7 +53,7 @@ class SpecificationItemBase(BaseModel):
     is_calculated: bool = False
     calc_type: Optional[CalculationType] = CalculationType.FIXED
     calc_dimension: Optional[CalculationDimension] = None
-    calc_data_points: Optional[List[CalculationPoint]] = None
+    calc_data_points: Optional[Any] = None
     calc_formula: Optional[str] = None
     calc_waste_factor: Decimal = Field(default=Decimal("0.0"), ge=0, le=1)
 
