@@ -17,10 +17,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add is_deleted column to products, counterparties, and warehouses
-    op.add_column('products', sa.Column('is_deleted', sa.Boolean(), server_default='false', nullable=False))
-    op.add_column('counterparties', sa.Column('is_deleted', sa.Boolean(), server_default='false', nullable=False))
-    op.add_column('warehouses', sa.Column('is_deleted', sa.Boolean(), server_default='false', nullable=False))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    
+    # Add is_deleted column to products, counterparties, and warehouses (safely)
+    for table_name in ['products', 'counterparties', 'warehouses']:
+        existing_columns = [c['name'] for c in inspector.get_columns(table_name)]
+        if 'is_deleted' not in existing_columns:
+            op.add_column(table_name, sa.Column('is_deleted', sa.Boolean(), server_default='false', nullable=False))
 
 
 def downgrade() -> None:
