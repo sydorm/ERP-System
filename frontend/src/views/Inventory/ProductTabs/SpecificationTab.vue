@@ -87,6 +87,7 @@
                       :remote-method="searchProducts"
                       :loading="searchingProducts"
                       class="w-full"
+                      @change="(val) => handleComponentSelect(scope.row, val)"
                    >
                       <el-option
                          v-for="p in productSearchResults"
@@ -497,6 +498,14 @@ const searchProducts = async (query) => {
         console.error('Failed to search products', e)
     } finally {
         searchingProducts.value = false
+    }
+}
+
+// Auto-fill unit of measure when component is selected
+const handleComponentSelect = (row, componentId) => {
+    const selected = productSearchResults.value.find(p => p.id === componentId)
+    if (selected && selected.unit_of_measure) {
+        row.unit_of_measure = selected.unit_of_measure
     }
 }
 
