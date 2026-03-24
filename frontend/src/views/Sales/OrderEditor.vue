@@ -288,6 +288,36 @@
             </div>
           </el-tab-pane>
 
+          <!-- TAB: Специфікація (BOM) -->
+          <el-tab-pane name="bom">
+            <template #label><el-icon><List /></el-icon>&nbsp;Специфікація <el-badge v-if="orderBOM.length" :value="orderBOM.length" class="tab-badge" /></template>
+            <div class="tab-content-card" style="max-width: 1000px">
+              <div v-if="orderBOM.length === 0" class="empty-state">
+                <el-icon size="40" color="#cbd5e1"><List /></el-icon>
+                <p>Додайте товари з налаштованою специфікацією, щоб побачити розрахунок матеріалів</p>
+              </div>
+              <div v-else class="bom-table-wrapper">
+                <el-table :data="orderBOM" border size="small" class="erp-dense-table" stripe>
+                  <el-table-column property="component_sku" label="SKU" width="120" />
+                  <el-table-column property="component_name" label="Матеріал / Компонент" min-width="200" />
+                  <el-table-column label="Потрібно" width="130" align="right">
+                    <template #default="scope">
+                      <strong class="text-blue-600" style="color: #2563eb">{{ Number(scope.row.totalQuantity).toFixed(4) }}</strong> <span class="text-gray-500" style="color: #6b7280; font-size: 11px;">{{ scope.row.unit }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="Для товарів" min-width="250">
+                    <template #default="scope">
+                      <div v-for="(src, idx) in scope.row.sourceLines" :key="idx" class="text-xs text-gray-500" style="margin-bottom: 2px;">
+                        <span>{{ src.productName }}</span> 
+                        <span class="text-gray-400" style="color: #9ca3af"> ({{ Number(src.qty).toFixed(4) }} {{ scope.row.unit }})</span>
+                      </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+          </el-tab-pane>
+
           <!-- TAB: Виробництво -->
           <el-tab-pane name="production">
             <template #label><el-icon><Tools /></el-icon>&nbsp;Виробництво</template>
@@ -377,9 +407,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, ArrowUp, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, ArrowUp, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View, List } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import { getProductSpecifications } from '@/api/specifications'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
 import AuditLogViewer from '@/components/AuditLogViewer.vue'
 
@@ -472,6 +503,9 @@ const variantSelectorVisible = ref(false)
 const selectedProductForSelector = ref(null)
 const activeLineForSelector = ref(null)
 
+// Specs and BOM State
+const specsCache = ref({})
+
 // Audit Log State
 const auditLogVisible = ref(false)
 const showAuditLog = () => {
@@ -481,6 +515,107 @@ const showAuditLog = () => {
 // Computed
 const subtotal = computed(() => {
   return form.lines.reduce((acc, line) => acc + (line.total || 0), 0)
+})
+
+const calculateQuantity = (item, baseDimensions, variantValues) => {
+  if (!item.is_calculated) return item.quantity
+
+  const dims = {
+    W: parseFloat(baseDimensions?.width_cm) || 0,
+    H: parseFloat(baseDimensions?.height_cm) || 0,
+    L: parseFloat(baseDimensions?.length_cm) || 0,
+    Kg: parseFloat(baseDimensions?.weight_kg) || 0
+  }
+
+  if (variantValues && variantValues.length > 0) {
+    variantValues.forEach(v => {
+      const mapping = v.attribute?.mapped_dimension
+      if (mapping === 'width_cm') dims.W = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.W
+      if (mapping === 'height_cm') dims.H = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.H
+      if (mapping === 'length_cm') dims.L = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.L
+    })
+  }
+
+  let result = 0
+  if (item.calc_type === 'interpolation') {
+    if (!item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
+    const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
+    const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
+    
+    if (dimVal <= points[0].input) result = points[0].output
+    else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
+    else {
+      for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i]; const p2 = points[i+1]
+        if (dimVal >= p1.input && dimVal <= p2.input) {
+          const ratio = (dimVal - p1.input) / (p2.input - p1.input)
+          result = p1.output + ratio * (p2.output - p1.output)
+          break
+        }
+      }
+    }
+  } 
+  else if (item.calc_type === 'area') {
+    result = dims.W * dims.H / 10000
+  }
+  else if (item.calc_type === 'volume') {
+    result = dims.W * dims.H * dims.L / 1000000
+  }
+  else if (item.calc_type === 'formula') {
+    try {
+      const { W, H, L, Kg } = dims
+      result = eval(item.calc_formula)
+    } catch (e) {
+      result = 0
+    }
+  }
+
+  if (item.calc_waste_factor) {
+    result *= (1 + parseFloat(item.calc_waste_factor))
+  }
+  return result
+}
+
+const orderBOM = computed(() => {
+  const bom = []
+  
+  form.lines.forEach(line => {
+    if (!line.product_id || !line.quantity) return
+    const spec = specsCache.value[line.product_id]
+    if (!spec || !spec.items) return
+    const product = products.value.find(p => p.id === line.product_id)
+    
+    let variantValues = []
+    if (line.variant_id && product?.variants) {
+       const variant = product.variants.find(v => v.id === line.variant_id)
+       if (variant) variantValues = variant.values || []
+    } else if (line._virtual_values) {
+       variantValues = line._virtual_values
+    }
+
+    spec.items.forEach(item => {
+      const qtyPerUnit = parseFloat(calculateQuantity(item, product, variantValues)) || 0
+      if (qtyPerUnit <= 0) return
+      
+      const totalQty = qtyPerUnit * line.quantity
+      const existing = bom.find(b => b.component_id === item.component_id)
+      
+      if (existing) {
+        existing.totalQuantity += totalQty
+        existing.sourceLines.push({ productName: product?.name, qty: totalQty })
+      } else {
+        bom.push({
+          component_id: item.component_id,
+          component_name: item.component?.name || 'Unknown',
+          component_sku: item.component?.sku || '',
+          unit: item.unit_of_measure,
+          totalQuantity: totalQty,
+          sourceLines: [{ productName: product?.name, qty: totalQty }]
+        })
+      }
+    })
+  })
+  return bom
 })
 
 const discountAmount = computed(() => {
@@ -629,7 +764,7 @@ const updateLinePrice = (line) => {
   }
 }
 
-const handleProductChange = (productId, line) => {
+const handleProductChange = async (productId, line) => {
   const product = products.value.find(p => p.id === productId)
   if (product) {
     line.variant_id = null
@@ -641,6 +776,16 @@ const handleProductChange = (productId, line) => {
       line.price = product.price
     }
     updateLineTotal(line)
+    
+    // Fetch specification for BOM calculation if not cached
+    if (productId && !specsCache.value[productId]) {
+      try {
+        const specs = await getProductSpecifications(productId)
+        specsCache.value[productId] = specs.find(s => s.is_default) || specs[0] || null
+      } catch (e) {
+        console.error('Failed to load spec for', productId)
+      }
+    }
   }
 }
 
@@ -757,6 +902,16 @@ const fetchData = async () => {
           line.quantity = Number(line.quantity || 0)
           line.price = Number(line.price || 0)
           line.total = Number(line.total || 0)
+        })
+        // Fetch specs for existing lines
+        const uniqueProductIds = [...new Set(data.lines.map(l => l.product_id).filter(Boolean))]
+        uniqueProductIds.forEach(async pid => {
+          if (!specsCache.value[pid]) {
+            try {
+              const specs = await getProductSpecifications(pid)
+              specsCache.value[pid] = specs.find(s => s.is_default) || specs[0] || null
+            } catch (e) { console.error(e) }
+          }
         })
       }
       Object.assign(form, data)
