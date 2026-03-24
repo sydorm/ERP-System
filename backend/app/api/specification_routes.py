@@ -73,7 +73,7 @@ async def create_specification(
             # Merged calculation fields
             is_calculated=item_in.is_calculated,
             calc_dimension=item_in.calc_dimension,
-            calc_data_points=[p.dict() for p in item_in.calc_data_points] if item_in.calc_data_points else None,
+            calc_data_points=item_in.calc_data_points,
             calc_formula=item_in.calc_formula,
             calc_waste_factor=item_in.calc_waste_factor
         )
@@ -120,7 +120,7 @@ async def update_specification(
                 # Merged calculation fields
                 is_calculated=item_in.is_calculated,
                 calc_dimension=item_in.calc_dimension,
-                calc_data_points=[p.dict() for p in item_in.calc_data_points] if item_in.calc_data_points else None,
+                calc_data_points=item_in.calc_data_points,
                 calc_formula=item_in.calc_formula,
                 calc_waste_factor=item_in.calc_waste_factor
             )
