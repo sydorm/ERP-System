@@ -39,7 +39,7 @@
             <el-checkbox v-model="loginForm.remember">
               Запам'ятати мене
             </el-checkbox>
-            <el-link type="primary" :underline="false" @click="router.push('/forgot-password')">
+            <el-link type="primary" underline="never" @click="router.push('/forgot-password')">
               Забули пароль?
             </el-link>
           </div>
@@ -61,7 +61,7 @@
 
       <div class="signup-link">
         <span>Ще немає облікового запису?</span>
-        <el-link type="primary" @click="goToSignup" :underline="false">
+        <el-link type="primary" @click="goToSignup" underline="never">
           Зареєструвати компанію
         </el-link>
       </div>

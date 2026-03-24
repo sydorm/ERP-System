@@ -34,6 +34,12 @@ class Product(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False, server_default='false')
     
+    # Dimensions and Weight
+    length_cm = Column(Numeric(10, 2), nullable=True)
+    width_cm = Column(Numeric(10, 2), nullable=True)
+    height_cm = Column(Numeric(10, 2), nullable=True)
+    weight_kg = Column(Numeric(10, 2), nullable=True)
+    
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     

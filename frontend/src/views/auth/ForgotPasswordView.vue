@@ -47,7 +47,7 @@
       </el-form>
 
       <div class="back-link">
-        <el-link type="primary" @click="goToLogin" :underline="false">
+        <el-link type="primary" @click="router.push('/login')" underline="never">
           Повернутися до входу
         </el-link>
       </div>

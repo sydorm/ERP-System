@@ -40,18 +40,22 @@
         <div class="flex items-center gap-6">
           <div class="dim-item">
             <span class="dim-label">Висота (H):</span>
-            <span class="dim-value">{{ productDimensions.length_cm }} см</span>
+            <span class="dim-value">{{ productDimensions.height_cm || 0 }} см</span>
           </div>
           <div class="dim-item">
             <span class="dim-label">Ширина (W):</span>
-            <span class="dim-value">{{ productDimensions.width_cm }} см</span>
+            <span class="dim-value">{{ productDimensions.width_cm || 0 }} см</span>
           </div>
           <div class="dim-item">
             <span class="dim-label">Довжина (L):</span>
-            <span class="dim-value">{{ productDimensions.weight_kg }} см</span>
+            <span class="dim-value">{{ productDimensions.length_cm || 0 }} см</span>
           </div>
-          <div class="text-xs text-gray-400">
-            * Використовуються фізичні параметри з вкладки "Загальна інформація"
+          <div class="dim-item" v-if="productDimensions.weight_kg">
+            <span class="dim-label">Вага (Kg):</span>
+            <span class="dim-value">{{ productDimensions.weight_kg }} кг</span>
+          </div>
+          <div class="text-xs text-gray-400 ml-auto">
+            * Фізичні параметри з вкладки "Загальна інформація"
           </div>
         </div>
       </el-card>
@@ -63,7 +67,9 @@
               <div class="rule-header">
                 <span class="comp-name">{{ item.component?.name || 'Компонент' }}</span>
                 <span class="comp-sku text-gray-400">{{ item.component?.sku }}</span>
-                <el-tag v-if="item.is_calculated" type="success" size="small" class="ml-2">Розумний розрахунок</el-tag>
+                <el-tag v-if="item.is_calculated" type="success" size="small" class="ml-2">
+                  {{ getCalcTypeLabel(item.calc_type) }}
+                </el-tag>
                 <el-tag v-else type="info" size="small" class="ml-2">Фіксована к-сть: {{ item.quantity }} {{ item.unit_of_measure }}</el-tag>
                 
                 <span v-if="item.is_calculated" class="preview-result ml-auto mr-4">
@@ -76,40 +82,47 @@
               <el-form label-position="top">
                 <el-row :gutter="20">
                   <el-col :span="8">
-                    <el-form-item label="Вимір для розрахунку">
-                      <el-select v-model="item.calc_dimension" class="w-full" @change="item.is_calculated = !!item.calc_dimension">
-                        <el-option label="Висота (H)" value="height_cm" />
-                        <el-option label="Ширина (W)" value="width_cm" />
-                        <el-option label="Довжина (L)" value="length_cm" />
-                        <el-option label="Своя формула" value="custom" />
+                    <el-form-item label="Тип калькулятора">
+                      <el-select v-model="item.calc_type" class="w-full" @change="handleTypeChange(item)">
+                        <el-option label="Фіксована кількість" value="fixed" />
+                        <el-option label="Таблиця (Інтерполяція)" value="interpolation" />
+                        <el-option label="Площа (W * H)" value="area" />
+                        <el-option label="Об'єм (W * H * L)" value="volume" />
+                        <el-option label="Своя формула" value="formula" />
                       </el-select>
                     </el-form-item>
                   </el-col>
+                  
+                  <el-col :span="8" v-if="item.calc_type === 'interpolation'">
+                    <el-form-item label="Вимір для таблиці">
+                      <el-select v-model="item.calc_dimension" class="w-full">
+                        <el-option label="Висота (H)" value="height_cm" />
+                        <el-option label="Ширина (W)" value="width_cm" />
+                        <el-option label="Довжина (L)" value="length_cm" />
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+
                   <el-col :span="8">
                     <el-form-item label="Коефіцієнт відходів (%)">
                       <el-input-number v-model="item.calc_waste_factor" :precision="2" :step="0.01" :min="0" :max="1" style="width: 100%" />
                     </el-form-item>
                   </el-col>
-                  <el-col :span="8" v-if="item.calc_dimension === 'custom'">
-                    <el-form-item label="Формула (JS синтаксис)">
-                      <el-input v-model="item.calc_formula" placeholder="напр. (h * w) / 100" />
-                    </el-form-item>
-                  </el-col>
                 </el-row>
 
-                <div class="data-points-section mt-2">
+                <!-- Interpolation Table -->
+                <div v-if="item.calc_type === 'interpolation'" class="data-points-section mt-2">
                   <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-semibold">Точки розрахунку (Таблиця залежностей)</span>
+                    <span class="text-sm font-semibold">Точки розрахунку (Розмір -> Кількість)</span>
                     <el-button type="primary" size="small" @click="addPoint(item)" plain :icon="Plus">Додати точку</el-button>
                   </div>
-                  
                   <el-table :data="item.calc_data_points" size="small" border>
                     <el-table-column label="Значення виміру (см)" width="180">
                       <template #default="scope">
                         <el-input-number v-model="scope.row.input" size="small" style="width: 100%" />
                       </template>
                     </el-table-column>
-                    <el-table-column label="Потрібна кількість матеріалу">
+                    <el-table-column label="Потрібна кількість">
                       <template #default="scope">
                         <el-input-number v-model="scope.row.output" :precision="4" size="small" style="width: 100%" />
                       </template>
@@ -120,15 +133,27 @@
                       </template>
                     </el-table-column>
                   </el-table>
-                  
-                  <div class="text-xs text-gray-400 mt-2">
-                    * Система використовує лінійну інтерполяцію між найближчими точками.
-                  </div>
+                </div>
+
+                <!-- Formula Editor -->
+                <el-row v-if="item.calc_type === 'formula'" :gutter="20" class="mt-2">
+                  <el-col :span="24">
+                    <el-form-item label="JS Формула (доступні змінні: H, W, L)">
+                      <el-input v-model="item.calc_formula" placeholder="напр. (W * H) / 10000" />
+                      <div class="text-xs text-gray-400 mt-1">Приклад: (W * H) / 10000 для м.кв.</div>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+
+                <!-- Formula Previews for Area/Volume -->
+                <div v-if="['area', 'volume'].includes(item.calc_type)" class="mt-2 p-3 bg-blue-50 rounded text-sm text-blue-700">
+                  <span v-if="item.calc_type === 'area'">Формула: Кількість = Ширина (W) * Висота (H) * (1 + відходи)</span>
+                  <span v-if="item.calc_type === 'volume'">Формула: Кількість = W * H * L * (1 + відходи)</span>
                 </div>
               </el-form>
               
-              <div class="danger-zone mt-4" v-if="item.is_calculated">
-                 <el-button type="danger" size="small" plain @click="disableRule(item)">Вимкнути розумний розрахунок</el-button>
+              <div class="danger-zone mt-4" v-if="item.calc_type !== 'fixed'">
+                 <el-button type="danger" size="small" plain @click="disableRule(item)">Вимкнути розрахунок</el-button>
               </div>
             </div>
           </el-collapse-item>
@@ -169,73 +194,107 @@ const loadSpecifications = async () => {
 
 const selectSpec = (spec) => {
   selectedSpec.value = JSON.parse(JSON.stringify(spec))
+  // Initialize calc_type if missing
+  selectedSpec.value.items.forEach(item => {
+    if (!item.calc_type) {
+      item.calc_type = item.is_calculated ? 'interpolation' : 'fixed'
+    }
+  })
 }
 
-const getRule = (item) => {
-  if (!item.calc_data_points) {
+const handleTypeChange = (item) => {
+  item.is_calculated = item.calc_type !== 'fixed'
+  if (item.calc_type === 'interpolation' && !item.calc_data_points) {
     item.calc_data_points = []
-    item.calc_waste_factor = 0
-    item.is_calculated = false
+    item.calc_dimension = 'width_cm'
   }
-  return item
+}
+
+const getCalcTypeLabel = (type) => {
+  const labels = {
+    fixed: 'Фіксована',
+    interpolation: 'Таблиця',
+    area: 'Площа',
+    volume: 'Об\'єм',
+    formula: 'Формула'
+  }
+  return labels[type] || 'Розумний розрахунок'
 }
 
 const addPoint = (item) => {
   if (!item.calc_data_points) item.calc_data_points = []
   item.calc_data_points.push({ input: 0, output: 0 })
   item.calc_data_points.sort((a, b) => a.input - b.input)
-  item.is_calculated = true
 }
 
 const removePoint = (item, index) => {
   item.calc_data_points.splice(index, 1)
-  if (item.calc_data_points.length === 0) item.is_calculated = false
 }
 
 const disableRule = (item) => {
+  item.calc_type = 'fixed'
   item.is_calculated = false
-  item.calc_dimension = null
 }
 
 const calculateQuantity = (item) => {
-  if (!item.is_calculated || !item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
+  if (!item.is_calculated) return item.quantity
 
-  // Get current dimension value
-  let inputValue = 0
-  if (item.calc_dimension === 'height_cm') inputValue = props.productDimensions.length_cm // Using actual field mapping from backend
-  else if (item.calc_dimension === 'width_cm') inputValue = props.productDimensions.width_cm
-  else if (item.calc_dimension === 'length_cm') inputValue = props.productDimensions.weight_kg // Dimensions fields in model are a bit mixed?
-  
-  // Sorting for safety
-  const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
-  
-  if (inputValue <= points[0].input) return points[0].output
-  if (inputValue >= points[points.length - 1].input) return points[points.length - 1].output
-  
-  // Interpolation
-  for (let i = 0; i < points.length - 1; i++) {
-    const p1 = points[i]
-    const p2 = points[i+1]
-    if (inputValue >= p1.input && inputValue <= p2.input) {
-      const ratio = (inputValue - p1.input) / (p2.input - p1.input)
-      let quantity = p1.output + ratio * (p2.output - p1.output)
-      
-      // Add waste factor
-      if (item.calc_waste_factor) {
-        quantity *= (1 + item.calc_waste_factor)
+  const dimensions = {
+    W: parseFloat(props.productDimensions.width_cm) || 0,
+    H: parseFloat(props.productDimensions.height_cm) || 0,
+    L: parseFloat(props.productDimensions.length_cm) || 0,
+    Kg: parseFloat(props.productDimensions.weight_kg) || 0
+  }
+
+  let result = 0
+
+  if (item.calc_type === 'interpolation') {
+    if (!item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
+    
+    // Get actual dimension key (width_cm, height_cm, length_cm)
+    const dimVal = parseFloat(props.productDimensions[item.calc_dimension]) || 0
+    const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
+    
+    if (dimVal <= points[0].input) result = points[0].output
+    else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
+    else {
+      for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i]; const p2 = points[i+1]
+        if (dimVal >= p1.input && dimVal <= p2.input) {
+          const ratio = (dimVal - p1.input) / (p2.input - p1.input)
+          result = p1.output + ratio * (p2.output - p1.output)
+          break
+        }
       }
-      
-      return quantity.toFixed(4)
+    }
+  } 
+  else if (item.calc_type === 'area') {
+    result = dimensions.W * dimensions.H / 10000 // default as assuming cm and wanting m2 
+  }
+  else if (item.calc_type === 'volume') {
+    result = dimensions.W * dimensions.H * dimensions.L / 1000000 // m3
+  }
+  else if (item.calc_type === 'formula') {
+    try {
+      // Safe local variables for formula
+      const { W, H, L, Kg } = dimensions
+      result = eval(item.calc_formula)
+    } catch (e) {
+      return 'Помилка формули'
     }
   }
+
+  // Apply waste factor
+  if (item.calc_waste_factor) {
+    result *= (1 + parseFloat(item.calc_waste_factor))
+  }
   
-  return item.quantity
+  return typeof result === 'number' ? result.toFixed(4) : result
 }
 
 const saveRules = async () => {
   saving.value = true
   try {
-    // We send the whole spec update to backend
     await updateProductSpecification(selectedSpec.value.id, selectedSpec.value)
     ElMessage.success('Правила успішно збережено')
     await loadSpecifications()
@@ -347,4 +406,13 @@ onMounted(loadSpecifications)
   border-top: 1px solid #fee2e2;
   padding-top: 12px;
 }
+
+.bg-blue-50 { background-color: #eff6ff; }
+.p-3 { padding: 0.75rem; }
+.rounded { border-radius: 0.375rem; }
+.text-sm { font-size: 0.875rem; }
+.text-blue-700 { color: #1d4ed8; }
+.text-xs { font-size: 0.75rem; }
+.text-gray-400 { color: #9ca3af; }
+.mt-1 { margin-top: 0.25rem; }
 </style>

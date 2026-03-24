@@ -17,6 +17,12 @@ class ProductBase(BaseModel):
     currency: str = Field("UAH", min_length=3, max_length=3)
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: bool = True
+    
+    # Dimensions and Weight
+    length_cm: Optional[Decimal] = None
+    width_cm: Optional[Decimal] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
 
 class ProductCreate(ProductBase):
     """Schema for creating a product"""
@@ -34,6 +40,12 @@ class ProductUpdate(BaseModel):
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: Optional[bool] = None
+    
+    length_cm: Optional[Decimal] = None
+    width_cm: Optional[Decimal] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
+    
     variants: Optional[List[ProductVariantCreate]] = None
 
 class ProductResponse(ProductBase):

@@ -11,7 +11,16 @@ class CalculationDimension(str, Enum):
     HEIGHT = "height_cm"
     WIDTH = "width_cm"
     LENGTH = "length_cm"
+    AREA = "area"
+    VOLUME = "volume"
     CUSTOM = "custom"
+
+class CalculationType(str, Enum):
+    FIXED = "fixed"
+    INTERPOLATION = "interpolation"
+    AREA = "area"
+    VOLUME = "volume"
+    FORMULA = "formula"
 
 class CalculationPoint(BaseModel):
     input: float
@@ -42,6 +51,7 @@ class SpecificationItemBase(BaseModel):
     
     # Merged Smart Calculation Fields
     is_calculated: bool = False
+    calc_type: Optional[CalculationType] = CalculationType.FIXED
     calc_dimension: Optional[CalculationDimension] = None
     calc_data_points: Optional[List[CalculationPoint]] = None
     calc_formula: Optional[str] = None

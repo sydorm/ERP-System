@@ -8,7 +8,16 @@ class CalculationDimension(str, enum.Enum):
     HEIGHT = "height_cm"
     WIDTH = "width_cm"
     LENGTH = "length_cm"
+    AREA = "area"
+    VOLUME = "volume"
     CUSTOM = "custom"
+
+class CalculationType(str, enum.Enum):
+    FIXED = "fixed"
+    INTERPOLATION = "interpolation"
+    AREA = "area"
+    VOLUME = "volume"
+    FORMULA = "formula"
 
 class ProductSpecification(BaseModel):
     """
@@ -46,6 +55,7 @@ class SpecificationItem(BaseModel):
 
     # Merged Smart Calculation Fields
     is_calculated = Column(Boolean, default=False, nullable=False)
+    calc_type = Column(saEnum(CalculationType), nullable=True, default=CalculationType.FIXED)
     calc_dimension = Column(saEnum(CalculationDimension), nullable=True)
     calc_data_points = Column(JSON, nullable=True)
     calc_formula = Column(String(500), nullable=True)

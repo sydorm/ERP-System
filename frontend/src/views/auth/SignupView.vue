@@ -181,7 +181,7 @@
 
       <div class="login-link">
         <span>Вже маєте обліковий запис?</span>
-        <el-link type="primary" @click="goToLogin" :underline="false">
+        <el-link type="primary" @click="goToLogin" underline="never">
           Увійти
         </el-link>
       </div>
