@@ -21,9 +21,10 @@ description: Як оновити код та сервер (Git + Vultr)
    ```bash
    cd /var/www/ERP-System
    git pull origin main
+   docker system prune -a -f
    ./scripts/update.sh
    ```
-   *(Примітка: якщо скрипт видає Permission Denied, користувач має виконати `chmod +x scripts/update.sh`)*
+   *(Примітка: `docker system prune` потрібен обов'язково для очищення кешу пам'яті сервера, щоб база PostgreSQL не впала від нестачі місця. Якщо скрипт видає Permission Denied, користувач має виконати `chmod +x scripts/update.sh`)*
 
 3. **Перевірка після оновлення**
    - Переконайтеся, що помилок немає.
