@@ -103,9 +103,14 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Кількість" width="150">
+             <el-table-column label="Кількість / Розрахунок" width="200">
                 <template #default="scope">
-                   <el-input-number v-model="scope.row.quantity" :min="0.0001" :step="1" :precision="3" style="width: 100%" />
+                   <div class="flex items-center gap-2">
+                     <el-input-number v-model="scope.row.quantity" :min="0.0001" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
+                     <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
+                       <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
+                     </el-tooltip>
+                   </div>
                 </template>
              </el-table-column>
              
@@ -124,12 +129,85 @@
        </el-card>
 
     </div>
+
+    <!-- Calculator Config Dialog -->
+    <el-dialog v-model="calcDialogOpen" title="Налаштування розумного розрахунку" width="600px">
+      <div v-if="activeCalcItem" class="p-2">
+        <el-form label-position="top">
+            <el-form-item label="Тип калькулятора">
+              <el-select v-model="activeCalcItem.calc_type" class="w-full" @change="handleTypeChange(activeCalcItem)">
+                <el-option label="Фіксована кількість" value="fixed" />
+                <el-option label="Таблиця (Інтерполяція)" value="interpolation" />
+                <el-option label="Площа (W * H)" value="area" />
+                <el-option label="Об'єм (W * H * L)" value="volume" />
+                <el-option label="Своя формула" value="formula" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="Вимір для таблиці" v-if="activeCalcItem.calc_type === 'interpolation'">
+              <el-select v-model="activeCalcItem.calc_dimension" class="w-full">
+                <el-option label="Висота (H)" value="height_cm" />
+                <el-option label="Ширина (W)" value="width_cm" />
+                <el-option label="Довжина (L)" value="length_cm" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="Коефіцієнт відходів (%)">
+              <el-input-number v-model="activeCalcItem.calc_waste_factor" :precision="2" :step="0.01" :min="0" :max="1" style="width: 100%" />
+            </el-form-item>
+
+            <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold">Точки розрахунку (Розмір -> Кількість)</span>
+                    <el-button type="primary" size="small" @click="addPoint(activeCalcItem)" plain >Додати точку</el-button>
+                </div>
+                <el-table :data="activeCalcItem.calc_data_points" size="small" border>
+                    <el-table-column label="Значення виміру (см)">
+                        <template #default="scope">
+                            <el-input-number v-model="scope.row.input" size="small" style="width: 100%" />
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="Потрібна кількість">
+                        <template #default="scope">
+                            <el-input-number v-model="scope.row.output" :precision="4" size="small" style="width: 100%" />
+                        </template>
+                    </el-table-column>
+                    <el-table-column width="60" align="center">
+                        <template #default="scope">
+                            <el-button type="danger" link @click="removePoint(activeCalcItem, scope.$index)" :icon="Delete" />
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+
+            <el-form-item label="JS Формула (змінні: W, H, L)" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
+              <el-input v-model="activeCalcItem.calc_formula" placeholder="(W * H) / 10000" />
+            </el-form-item>
+            
+            <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
+                Автоматичний розрахунок матеріалу на основі фізичних розмірів товару.
+                Якщо у товару зміниться ширина чи висота — система автоматично перерахує кількість цього матеріалу при плануванні виробництва.
+            </div>
+            
+            <div v-if="activeCalcItem.calc_type !== 'fixed'" class="mt-4">
+                <el-alert title="Увага" type="info" :closable="false" show-icon>
+                  Параметричний розрахунок ігнорує поле "Кількість" в таблиці. Його буде розраховано динамічно.
+                </el-alert>
+            </div>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="calcDialogOpen = false">Готово</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Plus, Delete, ArrowLeft } from '@element-plus/icons-vue'
+import { Plus, Delete, ArrowLeft, Setting } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     getProductSpecifications,
@@ -161,6 +239,10 @@ const specForm = ref({
 
 const searchingProducts = ref(false)
 const productSearchResults = ref([])
+
+// Calculator UI state
+const calcDialogOpen = ref(false)
+const activeCalcItem = ref(null)
 
 // Load all specifications for this product
 const loadSpecifications = async () => {
@@ -276,6 +358,32 @@ const addItem = () => {
 
 const removeItem = (index) => {
     specForm.value.items.splice(index, 1)
+}
+
+// Calculator Logic
+const openCalcDialog = (item) => {
+    // Ensure all calculator fields exist on the item
+    if (!item.calc_type) item.calc_type = 'fixed'
+    if (!item.calc_data_points) item.calc_data_points = []
+    
+    activeCalcItem.value = item
+    calcDialogOpen.value = true
+}
+
+const handleTypeChange = (item) => {
+    item.is_calculated = item.calc_type !== 'fixed'
+    if (item.calc_type === 'interpolation' && item.calc_data_points.length === 0) {
+        item.calc_dimension = 'width_cm'
+    }
+}
+
+const addPoint = (item) => {
+    if (!item.calc_data_points) item.calc_data_points = []
+    item.calc_data_points.push({ input: 0, output: 0 })
+}
+
+const removePoint = (item, index) => {
+    item.calc_data_points.splice(index, 1)
 }
 
 // Product Search for components

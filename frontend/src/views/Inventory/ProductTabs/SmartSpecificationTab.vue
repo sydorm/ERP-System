@@ -6,20 +6,29 @@
         <p class="tab-subtitle">Розрахунок кількості матеріалів залежно від розмірів виробу</p>
       </div>
       
-      <el-table :data="specifications" v-loading="loading" stripe border class="mt-4">
-        <el-table-column prop="name" label="Назва специфікації" min-width="200" />
-        <el-table-column label="Статус" width="120">
-          <template #default="scope">
-            <el-tag v-if="scope.row.is_default" type="success" size="small">Основна</el-tag>
-            <el-tag v-else type="info" size="small">Альтернативна</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="Дії" width="150" align="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" plain @click="selectSpec(scope.row)">Налаштувати правила</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-if="specifications.length > 0">
+        <el-table :data="specifications" v-loading="loading" stripe border class="mt-4">
+          <el-table-column prop="name" label="Назва специфікації" min-width="200" />
+          <el-table-column label="Статус" width="120">
+            <template #default="scope">
+              <el-tag v-if="scope.row.is_default" type="success" size="small">Основна</el-tag>
+              <el-tag v-else type="info" size="small">Альтернативна</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="Дії" width="150" align="right">
+            <template #default="scope">
+              <el-button size="small" type="primary" plain @click="selectSpec(scope.row)">Налаштувати правила</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      
+      <div v-else class="mt-4">
+        <el-empty 
+          description="Немає збережених специфікацій. Створіть та збережіть специфікацію у вкладці 'Специфікації (BOM)', щоб налаштувати для неї розумні правила."
+          :image-size="120"
+        />
+      </div>
     </div>
 
     <div v-else class="spec-rules-editor">

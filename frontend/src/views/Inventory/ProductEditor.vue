@@ -57,12 +57,7 @@
             <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
           </el-tab-pane>
 
-          <el-tab-pane label="Розумна специфікація" name="smart_specification">
-            <template v-if="form.id">
-              <SmartSpecificationTab :product-id="form.id" :product-dimensions="form" />
-            </template>
-            <el-empty v-else description="Спершу збережіть товар, щоб використовувати розумні специфікації" />
-          </el-tab-pane>
+
 
           <el-tab-pane label="Складський запас" name="inventory">
             <InventoryTab :stock-levels="stockLevels" />
@@ -138,7 +133,7 @@ import GeneralTab from './ProductTabs/GeneralTab.vue'
 import CharacteristicsTab from './ProductTabs/CharacteristicsTab.vue'
 import PricingTab from './ProductTabs/PricingTab.vue'
 import SpecificationTab from './ProductTabs/SpecificationTab.vue'
-import SmartSpecificationTab from './ProductTabs/SmartSpecificationTab.vue'
+
 import InventoryTab from './ProductTabs/InventoryTab.vue'
 import FilesTab from './ProductTabs/FilesTab.vue'
 import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
