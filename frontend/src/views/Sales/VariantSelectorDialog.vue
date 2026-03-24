@@ -65,6 +65,9 @@
                   </div>
                 </el-option>
               </el-select>
+              <div v-if="attr.allow_manual_input" class="text-xs text-indigo-500 mt-1 flex items-center gap-1">
+                <el-icon><EditPen /></el-icon> Почніть набирати текст, щоб вписати своє значення
+              </div>
             </el-form-item>
           </transition-group>
         </el-form>
@@ -105,7 +108,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Picture, Brush, Operation } from '@element-plus/icons-vue'
+import { Picture, Brush, Operation, EditPen } from '@element-plus/icons-vue'
 import api from '@/api'
 
 const props = defineProps({
