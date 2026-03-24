@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.db.session import get_db
+from app.api.dependencies import get_current_active_user
 from app.models import Order, OrderLine, OrderStatus, User, RegisterType, Product, ProductVariant, VariantValue
 from app.schemas.order import OrderCreate, OrderUpdate, OrderResponse
 from app.services.posting_service import PostingService, PostingEntry
