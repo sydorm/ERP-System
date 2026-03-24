@@ -542,19 +542,37 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
     const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
     const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
     
-    if (dimVal <= points[0].input) result = points[0].output
-    else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
-    else {
-      for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i]; const p2 = points[i+1]
-        if (dimVal >= p1.input && dimVal <= p2.input) {
-          const ratio = (dimVal - p1.input) / (p2.input - p1.input)
-          result = p1.output + ratio * (p2.output - p1.output)
-          break
+    if (points.length === 1) {
+      result = points[0].output
+    } else {
+      if (dimVal <= points[0].input) {
+        const p1 = points[0]; const p2 = points[1]
+        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+        result = p1.output + slope * (dimVal - p1.input)
+      } 
+      else if (dimVal >= points[points.length - 1].input) {
+        const p1 = points[points.length - 2]; const p2 = points[points.length - 1]
+        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+        result = p2.output + slope * (dimVal - p2.input)
+      } 
+      else {
+        for (let i = 0; i < points.length - 1; i++) {
+          const p1 = points[i]; const p2 = points[i+1]
+          if (dimVal >= p1.input && dimVal <= p2.input) {
+            const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+            result = p1.output + slope * (dimVal - p1.input)
+            break
+          }
         }
       }
     }
+    result = Math.max(0, result)
   } 
+  else if (item.calc_type === 'proportional') {
+    const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
+    const coeff = parseFloat(item.calc_formula) || 0
+    result = dimVal * coeff
+  }
   else if (item.calc_type === 'area') {
     result = dims.W * dims.H / 10000
   }

@@ -94,7 +94,8 @@
                     <el-form-item label="Тип калькулятора">
                       <el-select v-model="item.calc_type" class="w-full" @change="handleTypeChange(item)">
                         <el-option label="Фіксована кількість" value="fixed" />
-                        <el-option label="Таблиця (Інтерполяція)" value="interpolation" />
+                        <el-option label="Таблиця (Точки / Авто-пропорція)" value="interpolation" />
+                        <el-option label="Пропорція (від розміру)" value="proportional" />
                         <el-option label="Площа (W * H)" value="area" />
                         <el-option label="Об'єм (W * H * L)" value="volume" />
                         <el-option label="Своя формула" value="formula" />
@@ -102,8 +103,8 @@
                     </el-form-item>
                   </el-col>
                   
-                  <el-col :span="8" v-if="item.calc_type === 'interpolation'">
-                    <el-form-item label="Вимір для таблиці">
+                  <el-col :span="8" v-if="['interpolation', 'proportional'].includes(item.calc_type)">
+                    <el-form-item label="Вимір для розрахунку">
                       <el-select v-model="item.calc_dimension" class="w-full">
                         <el-option label="Висота (H)" value="height_cm" />
                         <el-option label="Ширина (W)" value="width_cm" />
@@ -125,6 +126,9 @@
                     <span class="text-sm font-semibold">Точки розрахунку (Розмір -> Кількість)</span>
                     <el-button type="primary" size="small" @click="addPoint(item)" plain :icon="Plus">Додати точку</el-button>
                   </div>
+                  <div class="text-xs text-gray-500 mb-2">
+                    Введіть 2 або більше точок. Система автоматично вирахує математичну пропорцію (крок) для будь-яких інших розмірів, спираючись на ці дані.
+                  </div>
                   <el-table :data="item.calc_data_points" size="small" border>
                     <el-table-column label="Значення виміру (см)" width="180">
                       <template #default="scope">
@@ -143,6 +147,16 @@
                     </el-table-column>
                   </el-table>
                 </div>
+
+                <!-- Proportional Editor -->
+                <el-row v-if="item.calc_type === 'proportional'" :gutter="20" class="mt-2">
+                  <el-col :span="8">
+                    <el-form-item label="Коефіцієнт (Множник)">
+                      <el-input v-model="item.calc_formula" type="number" step="0.0001" placeholder="напр. 0.1" />
+                      <div class="text-xs text-gray-400 mt-1">К-сть = Вимір × Коефіцієнт</div>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
 
                 <!-- Formula Editor -->
                 <el-row v-if="item.calc_type === 'formula'" :gutter="20" class="mt-2">
@@ -223,6 +237,7 @@ const getCalcTypeLabel = (type) => {
   const labels = {
     fixed: 'Фіксована',
     interpolation: 'Таблиця',
+    proportional: 'Пропорція',
     area: 'Площа',
     volume: 'Об\'єм',
     formula: 'Формула'
@@ -264,19 +279,38 @@ const calculateQuantity = (item) => {
     const dimVal = parseFloat(props.productDimensions[item.calc_dimension]) || 0
     const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
     
-    if (dimVal <= points[0].input) result = points[0].output
-    else if (dimVal >= points[points.length - 1].input) result = points[points.length - 1].output
-    else {
-      for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i]; const p2 = points[i+1]
-        if (dimVal >= p1.input && dimVal <= p2.input) {
-          const ratio = (dimVal - p1.input) / (p2.input - p1.input)
-          result = p1.output + ratio * (p2.output - p1.output)
-          break
+    if (points.length === 1) {
+      result = points[0].output
+    } else {
+      if (dimVal <= points[0].input) {
+        const p1 = points[0]; const p2 = points[1]
+        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+        result = p1.output + slope * (dimVal - p1.input)
+      } 
+      else if (dimVal >= points[points.length - 1].input) {
+        const p1 = points[points.length - 2]; const p2 = points[points.length - 1]
+        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+        result = p2.output + slope * (dimVal - p2.input)
+      } 
+      else {
+        for (let i = 0; i < points.length - 1; i++) {
+          const p1 = points[i]; const p2 = points[i+1]
+          if (dimVal >= p1.input && dimVal <= p2.input) {
+            const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
+            result = p1.output + slope * (dimVal - p1.input)
+            break
+          }
         }
       }
     }
+    // Dont allow negative quantities resulting from negative extrapolation
+    result = Math.max(0, result)
   } 
+  else if (item.calc_type === 'proportional') {
+    const dimVal = parseFloat(props.productDimensions[item.calc_dimension]) || 0
+    const coeff = parseFloat(item.calc_formula) || 0
+    result = dimVal * coeff
+  }
   else if (item.calc_type === 'area') {
     result = dimensions.W * dimensions.H / 10000 // default as assuming cm and wanting m2 
   }
