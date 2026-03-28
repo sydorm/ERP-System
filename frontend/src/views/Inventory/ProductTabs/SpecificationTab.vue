@@ -149,7 +149,8 @@
 
 
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
-                <!-- Three separate dimension sub-tables -->
+                <!-- Three separate dimension sub-tables in a grid -->
+                <div class="dim-grid">
                 <div v-for="dim in interpDims" :key="dim.key" class="dim-section">
                     <div class="flex justify-between items-center mb-1 dim-header">
                         <span class="dim-title">{{ dim.label }}</span>
@@ -201,6 +202,7 @@
                     <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-info">
                         📐 Крок: <b>{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -665,11 +667,17 @@ onMounted(() => {
 }
 
 .dim-section {
-    margin-bottom: 16px;
+    margin-bottom: 0;
     padding: 10px 12px;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     background: #f8fafc;
+}
+.dim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
 }
 .dim-header {
     margin-bottom: 6px;
