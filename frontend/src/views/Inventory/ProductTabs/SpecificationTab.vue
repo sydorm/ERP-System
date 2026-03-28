@@ -180,7 +180,21 @@
                         </div>
                         <div class="dim-config-field">
                             <span class="dim-config-label">Читати з хар-ки:</span>
-                            <el-input v-model="getDimConfig(activeCalcItem, dim.key).char_name" size="small" placeholder="напр. Розмір" style="width:120px" clearable />
+                            <el-select
+                                v-model="getDimConfig(activeCalcItem, dim.key).char_name"
+                                size="small"
+                                placeholder="авто з характеристики..."
+                                clearable
+                                filterable
+                                style="width:160px"
+                            >
+                                <el-option
+                                    v-for="attr in productAttributes"
+                                    :key="attr.id"
+                                    :label="attr.name"
+                                    :value="attr.name"
+                                />
+                            </el-select>
                         </div>
                     </div>
                     <!-- Per-dim step info -->
@@ -240,6 +254,7 @@ import {
     updateProductSpecification,
     deleteProductSpecification
 } from '@/api/specifications'
+import { ref, computed, watch, onMounted } from 'vue'
 import api from '@/api'
 
 const props = defineProps({
@@ -256,6 +271,17 @@ const props = defineProps({
 const loading = ref(false)
 const saving = ref(false)
 const specifications = ref([])
+
+// All product attributes/characteristics loaded from API
+const productAttributes = ref([])
+const loadProductAttributes = async () => {
+    try {
+        const res = await api.get('/api/v1/attributes/')
+        productAttributes.value = res.data || []
+    } catch (e) {
+        // non-critical — silent fail
+    }
+}
 
 const editingSpec = ref(null)
 const specForm = ref({
@@ -580,6 +606,7 @@ const handleComponentSelect = (row, componentId) => {
 
 onMounted(() => {
     loadSpecifications()
+    loadProductAttributes()
     searchProducts('') // Preload some products for the dropdown
 })
 </script>
