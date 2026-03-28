@@ -132,7 +132,7 @@
     </div>
 
     <!-- Calculator Config Dialog -->
-    <el-dialog v-model="calcDialogOpen" title="Налаштування розумного розрахунку" width="600px">
+    <el-dialog v-model="calcDialogOpen" title="Налаштування розумного розрахунку" width="760px">
       <div v-if="activeCalcItem" class="p-2">
         <el-form label-position="top">
             <el-form-item label="Тип калькулятора">
