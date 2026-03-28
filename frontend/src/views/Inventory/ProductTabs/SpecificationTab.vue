@@ -149,45 +149,32 @@
 
 
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-semibold">Точки розрахунку — вкажіть розмір і кількість матеріалу для кожного виміру</span>
-                    <el-button type="primary" size="small" @click="addPoint(activeCalcItem)" plain>Додати точку</el-button>
-                </div>
-                <el-table :data="activeCalcItem.calc_data_points || []" size="small" border>
-                    <el-table-column label="Розмір (см)" width="110">
-                        <template #default="scope">
-                            <el-input-number v-model="scope.row.size_cm" size="small" style="width: 100%" :controls="false" />
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="Висота H">
-                        <template #default="scope">
-                            <el-input-number v-model="scope.row.h" :precision="4" size="small" style="width: 100%" :controls="false" placeholder="–" />
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="Ширина W">
-                        <template #default="scope">
-                            <el-input-number v-model="scope.row.w" :precision="4" size="small" style="width: 100%" :controls="false" placeholder="–" />
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="Довжина L">
-                        <template #default="scope">
-                            <el-input-number v-model="scope.row.l" :precision="4" size="small" style="width: 100%" :controls="false" placeholder="–" />
-                        </template>
-                    </el-table-column>
-                    <el-table-column width="50" align="center">
-                        <template #default="scope">
-                            <el-button type="danger" link @click="removePoint(activeCalcItem, scope.$index)" :icon="Delete" />
-                        </template>
-                    </el-table-column>
-                </el-table>
-
-                <!-- Calculated step info panel -->
-                <div v-if="calcStepInfo" class="mt-3 p-3 rounded" style="background:#eff6ff;border:1px solid #bfdbfe">
-                    <div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px">📐 Система вивчила крок на 1 см:</div>
-                    <div style="font-size:13px;color:#1d4ed8;display:flex;gap:16px;flex-wrap:wrap">
-                        <span v-if="calcStepInfo.h !== null">Висота: <b>{{ calcStepInfo.h > 0 ? '+' : '' }}{{ calcStepInfo.h }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b></span>
-                        <span v-if="calcStepInfo.w !== null">Ширина: <b>{{ calcStepInfo.w > 0 ? '+' : '' }}{{ calcStepInfo.w }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b></span>
-                        <span v-if="calcStepInfo.l !== null">Довжина: <b>{{ calcStepInfo.l > 0 ? '+' : '' }}{{ calcStepInfo.l }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b></span>
+                <!-- Three separate dimension sub-tables -->
+                <div v-for="dim in interpDims" :key="dim.key" class="dim-section">
+                    <div class="flex justify-between items-center mb-1 dim-header">
+                        <span class="dim-title">{{ dim.label }}</span>
+                        <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" plain>+ Додати</el-button>
+                    </div>
+                    <el-table :data="getPoints(activeCalcItem, dim.key)" size="small" border>
+                        <el-table-column :label="dim.label + ' (см)'" width="130">
+                            <template #default="scope">
+                                <el-input-number v-model="scope.row.x" size="small" style="width:100%" :controls="false" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column :label="'Кількість (' + (activeCalcItem.unit_of_measure || 'шт') + ')'">
+                            <template #default="scope">
+                                <el-input-number v-model="scope.row.qty" :precision="4" size="small" style="width:100%" :controls="false" />
+                            </template>
+                        </el-table-column>
+                        <el-table-column width="46" align="center">
+                            <template #default="scope">
+                                <el-button type="danger" link @click="removePoint(activeCalcItem, dim.key, scope.$index)" :icon="Delete" />
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <!-- Per-dim step info -->
+                    <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-info">
+                        📐 Крок: <b>{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b>
                     </div>
                 </div>
             </div>
@@ -274,24 +261,36 @@ const productSearchResults = ref([])
 // Calculator UI state
 const calcDialogOpen = ref(false)
 const activeCalcItem = ref(null)
-// calcStepInfo: shows the inferred per-cm step from the first two interpolation points
+// interpDims: list of the three dimension descriptors used in the template
+const interpDims = [
+    { key: 'h', label: 'Висота (H)' },
+    { key: 'w', label: 'Ширина (W)' },
+    { key: 'l', label: 'Довжина (L)' },
+]
+
+// Helper: safely get the points array for a given dimension key
+const getPoints = (item, key) => {
+    if (!item?.calc_data_points || Array.isArray(item.calc_data_points)) return []
+    return item.calc_data_points[key] || []
+}
+
+// calcStepInfo: per-dimension step values based on first 2 points of each series
 const calcStepInfo = computed(() => {
     if (!activeCalcItem.value || activeCalcItem.value.calc_type !== 'interpolation') return null
-    const points = activeCalcItem.value.calc_data_points
-    if (!Array.isArray(points) || points.length < 2) return null
-    const sorted = [...points].sort((a, b) => (a.size_cm || 0) - (b.size_cm || 0))
-    const p1 = sorted[0], p2 = sorted[1]
-    const sizeDiff = (p2.size_cm || 0) - (p1.size_cm || 0)
-    if (sizeDiff === 0) return null
+    const dp = activeCalcItem.value.calc_data_points
+    if (!dp || Array.isArray(dp)) return null
     const info = {}
     let hasAny = false
     for (const key of ['h', 'w', 'l']) {
-        if (p1[key] != null && p2[key] != null) {
-            info[key] = parseFloat(((p2[key] - p1[key]) / sizeDiff).toFixed(4))
-            hasAny = true
-        } else {
-            info[key] = null
-        }
+        const arr = dp[key] || []
+        if (arr.length >= 2) {
+            const s = [...arr].sort((a, b) => (a.x || 0) - (b.x || 0))
+            const xDiff = (s[1].x || 0) - (s[0].x || 0)
+            if (xDiff !== 0) {
+                info[key] = parseFloat(((s[1].qty - s[0].qty) / xDiff).toFixed(4))
+                hasAny = true
+            } else { info[key] = null }
+        } else { info[key] = null }
     }
     return hasAny ? info : null
 })
@@ -415,29 +414,25 @@ const removeItem = (index) => {
 const openCalcDialog = (item) => {
     if (!item.calc_type) item.calc_type = 'fixed'
 
-    // Migrate old format { width_cm: [{input, output}], ... } → new unified [{size_cm, h, w, l}]
-    if (!item.calc_data_points) {
-        item.calc_data_points = []
-    } else if (!Array.isArray(item.calc_data_points)) {
-        const old = item.calc_data_points
-        const keyMap = { width_cm: 'w', height_cm: 'h', length_cm: 'l' }
-        const maxLen = Math.max(
-            (old.width_cm || []).length,
-            (old.height_cm || []).length,
-            (old.length_cm || []).length
-        )
-        const newPoints = []
-        for (let i = 0; i < maxLen; i++) {
-            const entry = { size_cm: 0, h: null, w: null, l: null }
-            for (const [dimKey, arrKey] of Object.entries(keyMap)) {
-                if (old[dimKey] && old[dimKey][i] != null) {
-                    if (entry.size_cm === 0) entry.size_cm = old[dimKey][i].input || 0
-                    entry[arrKey] = old[dimKey][i].output
-                }
-            }
-            newPoints.push(entry)
+    // Initialize or migrate to new per-dim format: { h: [{x,qty}], w: [{x,qty}], l: [{x,qty}] }
+    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
+        // If old flat array [{size_cm, h, w, l}] — convert to new format
+        const oldFlat = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
+        const newDp = { h: [], w: [], l: [] }
+        for (const pt of oldFlat) {
+            if (pt.h != null) newDp.h.push({ x: pt.size_cm || 0, qty: pt.h })
+            if (pt.w != null) newDp.w.push({ x: pt.size_cm || 0, qty: pt.w })
+            if (pt.l != null) newDp.l.push({ x: pt.size_cm || 0, qty: pt.l })
         }
-        item.calc_data_points = newPoints
+        item.calc_data_points = newDp
+    } else if (!item.calc_data_points.h) {
+        // Very old format { width_cm: [{input,output}], ... } — convert
+        const old = item.calc_data_points
+        item.calc_data_points = {
+            h: (old.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+            w: (old.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+            l: (old.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        }
     }
 
     activeCalcItem.value = item
@@ -448,13 +443,14 @@ const handleTypeChange = (item) => {
     item.is_calculated = item.calc_type !== 'fixed'
 }
 
-const addPoint = (item) => {
-    if (!Array.isArray(item.calc_data_points)) item.calc_data_points = []
-    item.calc_data_points.push({ size_cm: 0, h: null, w: null, l: null })
+const addPoint = (item, dimKey) => {
+    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) item.calc_data_points = { h: [], w: [], l: [] }
+    if (!item.calc_data_points[dimKey]) item.calc_data_points[dimKey] = []
+    item.calc_data_points[dimKey].push({ x: 0, qty: 0 })
 }
 
-const removePoint = (item, index) => {
-    item.calc_data_points.splice(index, 1)
+const removePoint = (item, dimKey, index) => {
+    item.calc_data_points[dimKey].splice(index, 1)
 }
 
 const calculateQuantity = (item) => {
@@ -470,45 +466,36 @@ const calculateQuantity = (item) => {
     let result = 0
 
     if (item.calc_type === 'interpolation') {
-        const rawPoints = item.calc_data_points
-        if (!Array.isArray(rawPoints) || rawPoints.length === 0) return item.quantity
+        const dp = item.calc_data_points
+        if (!dp || Array.isArray(dp)) return item.quantity
 
         const dimMap = { h: 'height_cm', w: 'width_cm', l: 'length_cm' }
         let total = 0
         let hasAnyPoints = false
 
         for (const [key, dimKey] of Object.entries(dimMap)) {
-            const relevant = rawPoints.filter(p => p[key] != null)
-            if (relevant.length === 0) continue
+            const pts = (dp[key] || []).filter(p => p.qty != null)
+            if (pts.length === 0) continue
             hasAnyPoints = true
-
             const dimVal = parseFloat(props.productDimensions[dimKey]) || 0
-            const pts = [...relevant].sort((a, b) => (a.size_cm || 0) - (b.size_cm || 0))
-
+            const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
             let dimResult = 0
-            if (pts.length === 1) {
-                dimResult = pts[0][key]
-            } else {
-                const interp = (p1, p2, val) => {
-                    const slope = (p2.size_cm !== p1.size_cm) ? (p2[key] - p1[key]) / (p2.size_cm - p1.size_cm) : 0
-                    return p1[key] + slope * (val - p1.size_cm)
-                }
-                if (dimVal <= pts[0].size_cm) {
-                    dimResult = interp(pts[0], pts[1], dimVal)
-                } else if (dimVal >= pts[pts.length - 1].size_cm) {
-                    dimResult = interp(pts[pts.length - 2], pts[pts.length - 1], dimVal)
-                } else {
-                    for (let i = 0; i < pts.length - 1; i++) {
-                        if (dimVal >= pts[i].size_cm && dimVal <= pts[i + 1].size_cm) {
-                            dimResult = interp(pts[i], pts[i + 1], dimVal)
-                            break
-                        }
+            const interp = (p1, p2, val) => {
+                const slope = (p2.x !== p1.x) ? (p2.qty - p1.qty) / (p2.x - p1.x) : 0
+                return p1.qty + slope * (val - p1.x)
+            }
+            if (sorted.length === 1) { dimResult = sorted[0].qty }
+            else if (dimVal <= sorted[0].x) { dimResult = interp(sorted[0], sorted[1], dimVal) }
+            else if (dimVal >= sorted[sorted.length - 1].x) { dimResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimVal) }
+            else {
+                for (let i = 0; i < sorted.length - 1; i++) {
+                    if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) {
+                        dimResult = interp(sorted[i], sorted[i + 1], dimVal); break
                     }
                 }
             }
             total += Math.max(0, dimResult)
         }
-
         if (!hasAnyPoints) return item.quantity
         result = total
     }
@@ -623,5 +610,31 @@ onMounted(() => {
 
 .component-table {
     border-top: 1px solid #ebeef5;
+}
+
+.dim-section {
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+.dim-header {
+    margin-bottom: 6px;
+}
+.dim-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e40af;
+}
+.step-info {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 4px 8px;
+    display: inline-block;
 }
 </style>

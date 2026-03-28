@@ -538,51 +538,58 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
 
   let result = 0
   if (item.calc_type === 'interpolation') {
-    const rawPoints = item.calc_data_points
+    const dp = item.calc_data_points
 
-    // New unified format: [{size_cm, h, w, l}, ...]
-    if (Array.isArray(rawPoints) && rawPoints.length > 0 && rawPoints[0].size_cm !== undefined) {
-      const dimMap = { h: 'H', w: 'W', l: 'L' }
-      let total = 0
-      let hasAny = false
-
-      for (const [key, dimKey] of Object.entries(dimMap)) {
-        const relevant = rawPoints.filter(p => p[key] != null)
-        if (!relevant.length) continue
-        hasAny = true
-        const dimVal = dims[dimKey] || 0
-        const pts = [...relevant].sort((a, b) => (a.size_cm || 0) - (b.size_cm || 0))
-        let dimResult = 0
-        const interp = (p1, p2, val) => {
-          const slope = (p2.size_cm !== p1.size_cm) ? (p2[key] - p1[key]) / (p2.size_cm - p1.size_cm) : 0
-          return p1[key] + slope * (val - p1.size_cm)
-        }
-        if (pts.length === 1) { dimResult = pts[0][key] }
-        else if (dimVal <= pts[0].size_cm) { dimResult = interp(pts[0], pts[1], dimVal) }
-        else if (dimVal >= pts[pts.length - 1].size_cm) { dimResult = interp(pts[pts.length - 2], pts[pts.length - 1], dimVal) }
-        else {
-          for (let i = 0; i < pts.length - 1; i++) {
-            if (dimVal >= pts[i].size_cm && dimVal <= pts[i + 1].size_cm) {
-              dimResult = interp(pts[i], pts[i + 1], dimVal); break
-            }
-          }
-        }
-        total += Math.max(0, dimResult)
+    // Normalize to per-dim format { h:[{x,qty}], w:[...], l:[...] }
+    let normalized = null
+    if (dp && !Array.isArray(dp) && dp.h !== undefined) {
+      // Already new per-dim format
+      normalized = dp
+    } else if (Array.isArray(dp) && dp.length > 0 && dp[0].size_cm !== undefined) {
+      // Old flat array [{size_cm, h, w, l}] → convert
+      normalized = { h: [], w: [], l: [] }
+      for (const pt of dp) {
+        if (pt.h != null) normalized.h.push({ x: pt.size_cm || 0, qty: pt.h })
+        if (pt.w != null) normalized.w.push({ x: pt.size_cm || 0, qty: pt.w })
+        if (pt.l != null) normalized.l.push({ x: pt.size_cm || 0, qty: pt.l })
       }
-      result = hasAny ? total : item.quantity
+    } else if (dp && !Array.isArray(dp) && (dp.height_cm || dp.width_cm || dp.length_cm)) {
+      // Very old {height_cm:[{input,output}]...} format
+      normalized = {
+        h: (dp.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        w: (dp.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        l: (dp.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+      }
     }
-    // Legacy format: old single-dimension array [{input, output}]
-    else if (Array.isArray(rawPoints) && rawPoints.length > 0) {
-      const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
-      const pts = [...rawPoints].sort((a, b) => a.input - b.input)
+
+    if (!normalized) return item.quantity
+
+    const dimKeyMap = { h: 'H', w: 'W', l: 'L' }
+    let total = 0
+    let hasAny = false
+
+    for (const [key, dimKey] of Object.entries(dimKeyMap)) {
+      const pts = (normalized[key] || []).filter(p => p.qty != null)
+      if (!pts.length) continue
+      hasAny = true
+      const dimVal = dims[dimKey] || 0
+      const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
+      const interp = (p1, p2, val) => {
+        const slope = (p2.x !== p1.x) ? (p2.qty - p1.qty) / (p2.x - p1.x) : 0
+        return p1.qty + slope * (val - p1.x)
+      }
       let r = 0
-      if (pts.length === 1) { r = pts[0].output }
-      else if (dimVal <= pts[0].input) { r = pts[0].output + ((pts[1].output - pts[0].output) / (pts[1].input - pts[0].input || 1)) * (dimVal - pts[0].input) }
-      else if (dimVal >= pts[pts.length - 1].input) { const p1 = pts[pts.length - 2], p2 = pts[pts.length - 1]; r = p2.output + ((p2.output - p1.output) / (p2.input - p1.input || 1)) * (dimVal - p2.input) }
-      else { for (let i = 0; i < pts.length - 1; i++) { if (dimVal >= pts[i].input && dimVal <= pts[i+1].input) { r = pts[i].output + ((pts[i+1].output - pts[i].output) / (pts[i+1].input - pts[i].input || 1)) * (dimVal - pts[i].input); break } } }
-      result = Math.max(0, r)
+      if (sorted.length === 1) { r = sorted[0].qty }
+      else if (dimVal <= sorted[0].x) { r = interp(sorted[0], sorted[1], dimVal) }
+      else if (dimVal >= sorted[sorted.length - 1].x) { r = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimVal) }
+      else {
+        for (let i = 0; i < sorted.length - 1; i++) {
+          if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) { r = interp(sorted[i], sorted[i + 1], dimVal); break }
+        }
+      }
+      total += Math.max(0, r)
     }
-    else { return item.quantity }
+    result = hasAny ? total : item.quantity
   }
   else if (item.calc_type === 'proportional') {
     const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
