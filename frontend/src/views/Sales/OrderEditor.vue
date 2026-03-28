@@ -1075,6 +1075,7 @@ const saveOrder = async (action = 'save') => {
     lines: form.lines.map(l => ({
         product_id: l.product_id,
         variant_id: l.variant_id,
+        specification_id: l.specification_id || null,
         quantity: l.quantity,
         price: l.price,
         total: l.total,

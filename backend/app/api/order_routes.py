@@ -89,6 +89,7 @@ async def create_order(
             order_id=order.id,
             product_id=line_in.product_id,
             variant_id=line_in.variant_id,
+            specification_id=line_in.specification_id,
             quantity=line_in.quantity,
             price=line_in.price,
             total=line_in.total
@@ -176,6 +177,7 @@ async def update_order(
                 order_id=id,
                 product_id=line_in.product_id,
                 variant_id=line_in.variant_id,
+                specification_id=line_in.specification_id,
                 quantity=line_in.quantity,
                 price=line_in.price,
                 total=line_in.total
