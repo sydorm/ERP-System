@@ -889,6 +889,13 @@ const handleProductChange = async (productId, line) => {
         console.error('Failed to load spec for', productId)
       }
     }
+    
+    // Auto-select default specification ID
+    const cachedSpecs = specsCache.value[productId]
+    if (cachedSpecs && cachedSpecs.length) {
+      const defaultSpec = cachedSpecs.find(s => s.is_default) || cachedSpecs[0]
+      line.specification_id = defaultSpec.id
+    }
   }
 }
 
@@ -1006,14 +1013,22 @@ const fetchData = async () => {
           line.price = Number(line.price || 0)
           line.total = Number(line.total || 0)
         })
-        // Fetch specs for existing lines
+        // Fetch specs for existing lines and map null specification_id to default
         const uniqueProductIds = [...new Set(data.lines.map(l => l.product_id).filter(Boolean))]
-        uniqueProductIds.forEach(async pid => {
+        await Promise.all(uniqueProductIds.map(async pid => {
           if (!specsCache.value[pid]) {
             try {
               const specs = await getProductSpecifications(pid)
               specsCache.value[pid] = specs
             } catch (e) { console.error(e) }
+          }
+        }))
+        
+        data.lines.forEach(line => {
+          if (!line.specification_id && specsCache.value[line.product_id]) {
+            const cachedSpecs = specsCache.value[line.product_id]
+            const defaultSpec = cachedSpecs.find(s => s.is_default) || cachedSpecs[0]
+            if (defaultSpec) line.specification_id = defaultSpec.id
           }
         })
       }
