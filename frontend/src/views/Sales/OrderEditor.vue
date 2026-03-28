@@ -292,15 +292,14 @@
             </div>
           </el-tab-pane>
 
-          <!-- TAB: Специфікація (BOM) -->
           <el-tab-pane name="bom">
             <template #label><el-icon><List /></el-icon>&nbsp;Специфікація <el-badge v-if="orderBOM.length" :value="orderBOM.length" class="tab-badge" /></template>
-            <div class="tab-content-card bg-gray-50 flex justify-center py-4 print-area" style="min-height: 500px">
-              <div v-if="orderBOM.length === 0" class="empty-state w-full">
+            <div class="tab-content-card print-area" style="background-color: #f9fafb; padding: 20px;">
+              <div v-if="orderBOM.length === 0" class="empty-state">
                 <el-icon size="40" color="#cbd5e1"><List /></el-icon>
                 <p>Додайте товари з налаштованою специфікацією, щоб побачити розрахунок матеріалів</p>
               </div>
-              <div v-else class="bom-document shadow-md">
+              <div v-else class="bom-document">
                 <div class="bom-doc-actions no-print">
                   <el-button type="primary" :icon="Printer" size="small" @click="printBOM">Друк специфікації</el-button>
                 </div>
@@ -1376,11 +1375,11 @@ watch(() => route.params.id, (newId, oldId) => {
 .bom-document {
   background: white;
   width: 100%;
-  max-width: 850px;
-  min-height: 297mm; /* standard A4 height approximation */
-  padding: 40px;
+  max-width: 900px;
   margin: 0 auto;
-  box-sizing: border-box;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   font-family: 'Inter', -apple-system, sans-serif;
   color: #1e293b;
   position: relative;
