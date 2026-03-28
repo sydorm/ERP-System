@@ -72,8 +72,10 @@ async def create_specification(
             notes=item_in.notes,
             # Merged calculation fields
             is_calculated=item_in.is_calculated,
+            calc_type=item_in.calc_type,
             calc_dimension=item_in.calc_dimension,
             calc_data_points=item_in.calc_data_points,
+            calc_dim_config=item_in.calc_dim_config,
             calc_formula=item_in.calc_formula,
             calc_waste_factor=item_in.calc_waste_factor
         )
@@ -119,8 +121,10 @@ async def update_specification(
                 notes=item_in.notes,
                 # Merged calculation fields
                 is_calculated=item_in.is_calculated,
+                calc_type=item_in.calc_type,
                 calc_dimension=item_in.calc_dimension,
                 calc_data_points=item_in.calc_data_points,
+                calc_dim_config=item_in.calc_dim_config,
                 calc_formula=item_in.calc_formula,
                 calc_waste_factor=item_in.calc_waste_factor
             )
