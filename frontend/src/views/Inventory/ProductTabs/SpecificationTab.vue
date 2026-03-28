@@ -254,7 +254,6 @@ import {
     updateProductSpecification,
     deleteProductSpecification
 } from '@/api/specifications'
-import { ref, computed, watch, onMounted } from 'vue'
 import api from '@/api'
 
 const props = defineProps({
