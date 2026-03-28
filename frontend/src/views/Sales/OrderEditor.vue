@@ -1012,7 +1012,7 @@ const fetchData = async () => {
           if (!specsCache.value[pid]) {
             try {
               const specs = await getProductSpecifications(pid)
-              specsCache.value[pid] = specs.find(s => s.is_default) || specs[0] || null
+              specsCache.value[pid] = specs
             } catch (e) { console.error(e) }
           }
         })
