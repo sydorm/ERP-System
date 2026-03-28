@@ -172,6 +172,17 @@
                             </template>
                         </el-table-column>
                     </el-table>
+                    <!-- Per-dim config: default value + characteristic name -->
+                    <div class="dim-config-row">
+                        <div class="dim-config-field">
+                            <span class="dim-config-label">Стандарт (см):</span>
+                            <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" :controls="false" style="width:80px" placeholder="0" />
+                        </div>
+                        <div class="dim-config-field">
+                            <span class="dim-config-label">Читати з хар-ки:</span>
+                            <el-input v-model="getDimConfig(activeCalcItem, dim.key).char_name" size="small" placeholder="напр. Розмір" style="width:120px" clearable />
+                        </div>
+                    </div>
                     <!-- Per-dim step info -->
                     <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-info">
                         📐 Крок: <b>{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b>
@@ -272,6 +283,13 @@ const interpDims = [
 const getPoints = (item, key) => {
     if (!item?.calc_data_points || Array.isArray(item.calc_data_points)) return []
     return item.calc_data_points[key] || []
+}
+
+// Helper: safely get or init the dim config for a given dimension key
+const getDimConfig = (item, key) => {
+    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0 }, w: { char_name: '', default: 0 }, l: { char_name: '', default: 0 } }
+    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0 }
+    return item.calc_dim_config[key]
 }
 
 // calcStepInfo: per-dimension step values based on first 2 points of each series
@@ -400,7 +418,8 @@ const addItem = () => {
         notes: '',
         is_calculated: false,
         calc_dimension: null,
-        calc_data_points: { width_cm: [], height_cm: [], length_cm: [] },
+        calc_data_points: { h: [], w: [], l: [] },
+        calc_dim_config: { h: { char_name: '', default: 0 }, w: { char_name: '', default: 0 }, l: { char_name: '', default: 0 } },
         calc_formula: '',
         calc_waste_factor: 0
     })
@@ -416,7 +435,6 @@ const openCalcDialog = (item) => {
 
     // Initialize or migrate to new per-dim format: { h: [{x,qty}], w: [{x,qty}], l: [{x,qty}] }
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
-        // If old flat array [{size_cm, h, w, l}] — convert to new format
         const oldFlat = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
         const newDp = { h: [], w: [], l: [] }
         for (const pt of oldFlat) {
@@ -426,12 +444,20 @@ const openCalcDialog = (item) => {
         }
         item.calc_data_points = newDp
     } else if (!item.calc_data_points.h) {
-        // Very old format { width_cm: [{input,output}], ... } — convert
         const old = item.calc_data_points
         item.calc_data_points = {
             h: (old.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
             w: (old.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
             l: (old.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        }
+    }
+
+    // Ensure calc_dim_config exists
+    if (!item.calc_dim_config) {
+        item.calc_dim_config = {
+            h: { char_name: '', default: 0 },
+            w: { char_name: '', default: 0 },
+            l: { char_name: '', default: 0 }
         }
     }
 
@@ -636,5 +662,23 @@ onMounted(() => {
     border-radius: 4px;
     padding: 4px 8px;
     display: inline-block;
+}
+.dim-config-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 6px 4px;
+    flex-wrap: wrap;
+}
+.dim-config-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.dim-config-label {
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
 }
 </style>

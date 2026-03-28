@@ -536,6 +536,31 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
     })
   }
 
+  // Apply calc_dim_config: use 'default' as fallback and 'char_name' to read from characteristics
+  if (item.calc_dim_config) {
+    const dimKeyMap = { h: 'H', w: 'W', l: 'L' }
+    for (const [key, dimKey] of Object.entries(dimKeyMap)) {
+      const cfg = item.calc_dim_config[key]
+      if (!cfg) continue
+      // Apply standard default if current dim is 0 and default is set
+      if (dims[dimKey] === 0 && cfg.default > 0) {
+        dims[dimKey] = cfg.default
+      }
+      // Override with characteristic value if char_name is specified
+      if (cfg.char_name && variantValues?.length > 0) {
+        const charNameLower = cfg.char_name.toLowerCase().trim()
+        const found = variantValues.find(v => {
+          const attrName = (v.attribute?.name || v.attribute?.slug || '').toLowerCase().trim()
+          return attrName === charNameLower
+        })
+        if (found) {
+          const val = parseFloat(found.text_value) || parseFloat(found.option?.value) || parseFloat(found.option?.label) || null
+          if (val !== null && val > 0) dims[dimKey] = val
+        }
+      }
+    }
+  }
+
   let result = 0
   if (item.calc_type === 'interpolation') {
     const dp = item.calc_data_points
