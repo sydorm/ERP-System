@@ -75,11 +75,13 @@ class OrderLine(BaseModel):
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False)
     variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="SET NULL"), nullable=True)
+    specification_id = Column(UUID(as_uuid=True), ForeignKey("product_specifications.id", ondelete="SET NULL"), nullable=True)
     
     # Relationships
     order = relationship("Order", back_populates="lines")
     product = relationship("Product", back_populates="order_lines")
     variant = relationship("ProductVariant")
+    specification = relationship("ProductSpecification")
     
     def __repr__(self):
         return f"<OrderLine qty={self.quantity} price={self.price}>"

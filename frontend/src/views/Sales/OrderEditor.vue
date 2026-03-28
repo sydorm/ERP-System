@@ -149,8 +149,12 @@
                     <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width:100%" />
                   </template>
                 </el-table-column>
-                <el-table-column label="Специфікація" min-width="80">
-                  <template #default><span class="placeholder">...</span></template>
+                <el-table-column label="Специфікація" min-width="120">
+                  <template #default="scope">
+                    <el-select v-model="scope.row.specification_id" size="small" placeholder="За замовчуванням" clearable class="erp-cell-input" style="width:100%">
+                      <el-option v-for="s in (specsCache[scope.row.product_id] || [])" :key="s.id" :label="s.is_default ? s.name + ' (Авто)' : s.name" :value="s.id" />
+                    </el-select>
+                  </template>
                 </el-table-column>
                 <el-table-column label="" width="40" align="center" fixed="right">
                   <template #default="scope">
@@ -291,29 +295,52 @@
           <!-- TAB: Специфікація (BOM) -->
           <el-tab-pane name="bom">
             <template #label><el-icon><List /></el-icon>&nbsp;Специфікація <el-badge v-if="orderBOM.length" :value="orderBOM.length" class="tab-badge" /></template>
-            <div class="tab-content-card" style="max-width: 1000px">
-              <div v-if="orderBOM.length === 0" class="empty-state">
+            <div class="tab-content-card bg-gray-50 flex justify-center py-4 print-area" style="min-height: 500px">
+              <div v-if="orderBOM.length === 0" class="empty-state w-full">
                 <el-icon size="40" color="#cbd5e1"><List /></el-icon>
                 <p>Додайте товари з налаштованою специфікацією, щоб побачити розрахунок матеріалів</p>
               </div>
-              <div v-else class="bom-table-wrapper">
-                <el-table :data="orderBOM" border size="small" class="erp-dense-table" stripe>
-                  <el-table-column property="component_sku" label="SKU" width="120" />
-                  <el-table-column property="component_name" label="Матеріал / Компонент" min-width="200" />
-                  <el-table-column label="Потрібно" width="130" align="right">
-                    <template #default="scope">
-                      <strong class="text-blue-600" style="color: #2563eb">{{ Number(scope.row.totalQuantity).toFixed(4) }}</strong> <span class="text-gray-500" style="color: #6b7280; font-size: 11px;">{{ scope.row.unit }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="Для товарів" min-width="250">
-                    <template #default="scope">
-                      <div v-for="(src, idx) in scope.row.sourceLines" :key="idx" class="text-xs text-gray-500" style="margin-bottom: 2px;">
-                        <span>{{ src.productName }}</span> 
-                        <span class="text-gray-400" style="color: #9ca3af"> ({{ Number(src.qty).toFixed(4) }} {{ scope.row.unit }})</span>
-                      </div>
-                    </template>
-                  </el-table-column>
-                </el-table>
+              <div v-else class="bom-document shadow-md">
+                <div class="bom-doc-actions no-print">
+                  <el-button type="primary" :icon="Printer" size="small" @click="printBOM">Друк специфікації</el-button>
+                </div>
+                <div class="bom-doc-header">
+                  <div class="bom-doc-title">Специфікація матеріалів</div>
+                  <div class="bom-doc-meta">
+                    <div><strong>Замовлення:</strong> {{ form.order_number }} від {{ form.order_date }}</div>
+                    <div><strong>Клієнт:</strong> {{ selectedCustomerObj ? selectedCustomerObj.name : '—' }}</div>
+                  </div>
+                </div>
+                <div class="bom-table-wrapper">
+                  <table class="bom-print-table">
+                    <thead>
+                      <tr>
+                        <th width="15%">Артикул</th>
+                        <th width="35%">Матеріал / Компонент</th>
+                        <th width="30%">Для яких товарів</th>
+                        <th width="20%" class="text-right">Потрібно</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(row, i) in orderBOM" :key="i">
+                        <td>{{ row.component_sku }}</td>
+                        <td class="font-medium">{{ row.component_name }}</td>
+                        <td>
+                          <div v-for="(src, idx) in row.sourceLines" :key="idx" class="text-xs text-gray-600 mb-1">
+                            {{ src.productName }} <span class="text-gray-400">({{ Number(src.qty).toFixed(4) }} {{ row.unit }})</span>
+                          </div>
+                        </td>
+                        <td class="text-right font-bold text-blue-800">
+                          {{ Number(row.totalQuantity).toFixed(4) }} <span class="text-xs text-gray-500 font-normal">{{ row.unit }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="bom-doc-footer mt-8 pt-4 border-t text-sm text-gray-500 flex justify-between">
+                  <div>Сформовано автоматично ERP-системою</div>
+                  <div>Всього унікальних матеріалів: {{ orderBOM.length }}</div>
+                </div>
               </div>
             </div>
           </el-tab-pane>
@@ -647,8 +674,13 @@ const orderBOM = computed(() => {
   
   form.lines.forEach(line => {
     if (!line.product_id || !line.quantity) return
-    const spec = specsCache.value[line.product_id]
+    const specs = specsCache.value[line.product_id] || []
+    if (!specs.length) return
+    
+    // Use selected specification or fallback to default
+    const spec = line.specification_id ? specs.find(s => s.id === line.specification_id) : (specs.find(s => s.is_default) || specs[0])
     if (!spec || !spec.items) return
+    
     const product = products.value.find(p => p.id === line.product_id)
     
     let variantValues = []
@@ -760,6 +792,10 @@ const goBack = () => router.push('/sales/orders')
 // New action handlers
 const handleCopyOrder = () => ElMessage.info('Копіювання замовлення (в розробці)')
 const handlePrint = () => ElMessage.info('Друк замовлення (в розробці)')
+const printBOM = () => {
+  window.print()
+}
+
 const handleSendEmail = () => {
   const c = selectedCustomerObj.value
   if (!c?.email) { ElMessage.warning('У клієнта не вказано email'); return }
@@ -810,6 +846,7 @@ const addLine = () => {
   form.lines.push({
     product_id: '',
     variant_id: null,
+    specification_id: null,
     quantity: 1,
     price: 0,
     total: 0
@@ -847,7 +884,7 @@ const handleProductChange = async (productId, line) => {
     if (productId && !specsCache.value[productId]) {
       try {
         const specs = await getProductSpecifications(productId)
-        specsCache.value[productId] = specs.find(s => s.is_default) || specs[0] || null
+        specsCache.value[productId] = specs
       } catch (e) {
         console.error('Failed to load spec for', productId)
       }
@@ -1297,5 +1334,92 @@ onMounted(fetchData)
 }
 .qa-btn:hover { background: #eef2ff !important; border-color: #c7d2fe !important; color: #4338ca !important; }
 .req { color: #f56c6c; }
+
+/* Document Printing and Styling for BOM */
+.bom-document {
+  background: white;
+  width: 100%;
+  max-width: 850px;
+  min-height: 297mm; /* standard A4 height approximation */
+  padding: 40px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: #1e293b;
+  position: relative;
+}
+
+.bom-doc-actions {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.bom-doc-header {
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.bom-doc-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0f172a;
+}
+
+.bom-doc-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #475569;
+}
+
+.bom-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.bom-print-table th, .bom-print-table td {
+  border: 1px solid #cbd5e1;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.bom-print-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .bom-document, .bom-document * {
+    visibility: visible;
+  }
+  .bom-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    min-height: auto;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .bom-print-table th {
+    background-color: #e2e8f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
 </style>
 

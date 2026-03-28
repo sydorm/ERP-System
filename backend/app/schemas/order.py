@@ -13,6 +13,7 @@ class OrderLineBase(BaseModel):
     price: Decimal = Field(..., ge=0)
     total: Decimal = Field(..., ge=0)
     variant_values: Optional[List[VariantValueCreate]] = None
+    specification_id: Optional[UUID] = None
 
 class OrderLineCreate(OrderLineBase):
     """Schema for creating an order line"""
