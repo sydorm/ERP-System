@@ -146,9 +146,7 @@
               </el-select>
             </el-form-item>
             
-            <el-form-item label="Коефіцієнт відходів (%)">
-              <el-input-number v-model="activeCalcItem.calc_waste_factor" :precision="2" :step="0.01" :min="0" :max="1" style="width: 100%" />
-            </el-form-item>
+
 
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
                 <div class="flex justify-between items-center mb-2">
@@ -222,17 +220,7 @@
                 </el-alert>
             </div>
             
-            <!-- Preview Block -->
-            <div v-if="activeCalcItem.calc_type !== 'fixed'" style="margin-top: 16px; padding: 16px; border-radius: 8px; background-color: #eff6ff; border: 1px solid #bfdbfe; display: flex; align-items: center; justify-content: space-between;">
-              <div>
-                <div style="font-size: 14px; font-weight: 600; color: #1e3a8a; margin-bottom: 4px;">Поточний результат розрахунку:</div>
-                <div style="font-size: 12px; color: #1d4ed8;">Для розрахунку використані поточні габарити цього товару (Ш: {{ productDimensions.width_cm || 0 }}см, В: {{ productDimensions.height_cm || 0 }}см, Д: {{ productDimensions.length_cm || 0 }}см)</div>
-              </div>
-              <div style="font-size: 20px; font-weight: 700; color: #2563eb; text-align: right;">
-                {{ calculateQuantity(activeCalcItem) }} 
-                <span style="font-size: 14px; font-weight: 400; color: #64748b; margin-left: 4px;">{{ activeCalcItem.unit_of_measure || 'шт' }}</span>
-              </div>
-            </div>
+
         </el-form>
       </div>
       <template #footer>

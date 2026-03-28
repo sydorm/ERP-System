@@ -538,36 +538,52 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
 
   let result = 0
   if (item.calc_type === 'interpolation') {
-    if (!item.calc_data_points || item.calc_data_points.length === 0) return item.quantity
-    const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
-    const points = [...item.calc_data_points].sort((a, b) => a.input - b.input)
-    
-    if (points.length === 1) {
-      result = points[0].output
-    } else {
-      if (dimVal <= points[0].input) {
-        const p1 = points[0]; const p2 = points[1]
-        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
-        result = p1.output + slope * (dimVal - p1.input)
-      } 
-      else if (dimVal >= points[points.length - 1].input) {
-        const p1 = points[points.length - 2]; const p2 = points[points.length - 1]
-        const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
-        result = p2.output + slope * (dimVal - p2.input)
-      } 
-      else {
-        for (let i = 0; i < points.length - 1; i++) {
-          const p1 = points[i]; const p2 = points[i+1]
-          if (dimVal >= p1.input && dimVal <= p2.input) {
-            const slope = (p2.input !== p1.input) ? (p2.output - p1.output) / (p2.input - p1.input) : 0
-            result = p1.output + slope * (dimVal - p1.input)
-            break
+    const rawPoints = item.calc_data_points
+
+    // New unified format: [{size_cm, h, w, l}, ...]
+    if (Array.isArray(rawPoints) && rawPoints.length > 0 && rawPoints[0].size_cm !== undefined) {
+      const dimMap = { h: 'H', w: 'W', l: 'L' }
+      let total = 0
+      let hasAny = false
+
+      for (const [key, dimKey] of Object.entries(dimMap)) {
+        const relevant = rawPoints.filter(p => p[key] != null)
+        if (!relevant.length) continue
+        hasAny = true
+        const dimVal = dims[dimKey] || 0
+        const pts = [...relevant].sort((a, b) => (a.size_cm || 0) - (b.size_cm || 0))
+        let dimResult = 0
+        const interp = (p1, p2, val) => {
+          const slope = (p2.size_cm !== p1.size_cm) ? (p2[key] - p1[key]) / (p2.size_cm - p1.size_cm) : 0
+          return p1[key] + slope * (val - p1.size_cm)
+        }
+        if (pts.length === 1) { dimResult = pts[0][key] }
+        else if (dimVal <= pts[0].size_cm) { dimResult = interp(pts[0], pts[1], dimVal) }
+        else if (dimVal >= pts[pts.length - 1].size_cm) { dimResult = interp(pts[pts.length - 2], pts[pts.length - 1], dimVal) }
+        else {
+          for (let i = 0; i < pts.length - 1; i++) {
+            if (dimVal >= pts[i].size_cm && dimVal <= pts[i + 1].size_cm) {
+              dimResult = interp(pts[i], pts[i + 1], dimVal); break
+            }
           }
         }
+        total += Math.max(0, dimResult)
       }
+      result = hasAny ? total : item.quantity
     }
-    result = Math.max(0, result)
-  } 
+    // Legacy format: old single-dimension array [{input, output}]
+    else if (Array.isArray(rawPoints) && rawPoints.length > 0) {
+      const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
+      const pts = [...rawPoints].sort((a, b) => a.input - b.input)
+      let r = 0
+      if (pts.length === 1) { r = pts[0].output }
+      else if (dimVal <= pts[0].input) { r = pts[0].output + ((pts[1].output - pts[0].output) / (pts[1].input - pts[0].input || 1)) * (dimVal - pts[0].input) }
+      else if (dimVal >= pts[pts.length - 1].input) { const p1 = pts[pts.length - 2], p2 = pts[pts.length - 1]; r = p2.output + ((p2.output - p1.output) / (p2.input - p1.input || 1)) * (dimVal - p2.input) }
+      else { for (let i = 0; i < pts.length - 1; i++) { if (dimVal >= pts[i].input && dimVal <= pts[i+1].input) { r = pts[i].output + ((pts[i+1].output - pts[i].output) / (pts[i+1].input - pts[i].input || 1)) * (dimVal - pts[i].input); break } } }
+      result = Math.max(0, r)
+    }
+    else { return item.quantity }
+  }
   else if (item.calc_type === 'proportional') {
     const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
     const coeff = parseFloat(item.calc_formula) || 0
