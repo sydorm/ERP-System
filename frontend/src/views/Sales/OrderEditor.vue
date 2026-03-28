@@ -432,7 +432,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, ArrowUp, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View, List } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -1118,6 +1118,27 @@ const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currenc
 const formatShort = (val) => new Intl.NumberFormat('uk-UA').format(val) + ' грн'
 
 onMounted(fetchData)
+
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId !== oldId) {
+    if (!newId) {
+      // Reset form to defaults when creating new
+      Object.assign(form, {
+        order_number: 'Авто',
+        order_date: new Date().toISOString().split('T')[0],
+        shipping_date: null,
+        counterparty_id: '',
+        warehouse_id: '',
+        contract: '',
+        comment: '',
+        status: 'draft',
+        discount_percent: 0,
+        lines: []
+      })
+    }
+    fetchData()
+  }
+})
 </script>
 
 <style scoped>
