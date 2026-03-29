@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 import uuid
 
-from app.db.base_class import get_db
+from app.db.session import get_db
 from app.models.production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 from app.models.document_sequence import DocumentSequence
 from app.schemas.production import ProductionOrderCreate, ProductionOrderUpdate, ProductionOrderResponse
