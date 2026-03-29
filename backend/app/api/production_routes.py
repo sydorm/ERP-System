@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 import uuid
+from typing import List
 
 from app.db.session import get_db
+from app.api.dependencies import get_current_user
 from app.models.production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 from app.models.document_sequence import DocumentSequence
 from app.schemas.production import ProductionOrderCreate, ProductionOrderUpdate, ProductionOrderResponse
-from app.api.auth_routes import get_current_user
 from app.models.user import User
 from app.services.posting_service import PostingService, PostingEntry
 from app.models.register import RegisterType
