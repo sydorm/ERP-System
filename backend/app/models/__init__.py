@@ -20,6 +20,7 @@ from .sales_invoice import SalesInvoice, SalesInvoiceLine, SalesInvoiceStatus
 from .document_sequence import DocumentSequence
 from .calculator import CalcMaterial, CalcHardware, CalcService, CalcQuote
 from .audit_log import AuditLog
+from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 
 __all__ = [
     "Base",
@@ -60,4 +61,7 @@ __all__ = [
     "CalcQuote",
     "CalculationDimension",
     "AuditLog",
+    "ProductionOrder",
+    "ProductionOrderLine",
+    "ProductionOrderMaterial",
 ]

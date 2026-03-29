@@ -48,6 +48,14 @@
           <el-menu-item index="/purchases/receipts" v-if="userStore.hasPermission('purchases.receipts.view')">Прибуткові накладні</el-menu-item>
         </el-sub-menu>
 
+        <el-sub-menu index="production">
+          <template #title>
+            <el-icon><Tools /></el-icon>
+            <span>Виробництво</span>
+          </template>
+          <el-menu-item index="/production/orders">Завдання на виробництво</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="finance" v-if="userStore.hasPermission('finance.view')">
           <template #title>
             <el-icon><Wallet /></el-icon>
@@ -179,7 +187,8 @@ import {
   User,
   UserFilled,
   SwitchButton,
-  Monitor
+  Monitor,
+  Tools
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 

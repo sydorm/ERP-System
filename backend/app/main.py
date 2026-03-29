@@ -140,6 +140,9 @@ app.include_router(audit_log_router, prefix="/api/v1")
 from app.api.upload_routes import router as upload_router
 app.include_router(upload_router, prefix="/api/v1/upload", tags=["Uploads"])
 
+from app.api.production_routes import router as production_router
+app.include_router(production_router, prefix="/api/v1/production", tags=["Production"])
+
 # Ensure uploads directory exists and mount it for static file serving
 import os
 from fastapi.staticfiles import StaticFiles

@@ -192,7 +192,25 @@ const router = createRouter({
                     component: () => import('@/views/Purchases/PurchaseReceiptEditor.vue'),
                     meta: { title: 'Редагування накладної' }
                 },
-                // Previews removed
+                // Production routes
+                {
+                    path: '/production/orders',
+                    name: 'production-orders',
+                    component: () => import('@/views/Production/ProductionOrdersList.vue'),
+                    meta: { title: 'Завдання на виробництво' }
+                },
+                {
+                    path: '/production/orders/new',
+                    name: 'production-order-new',
+                    component: () => import('@/views/Production/ProductionOrderEditor.vue'),
+                    meta: { title: 'Нове завдання' }
+                },
+                {
+                    path: '/production/orders/:id',
+                    name: 'production-order-edit',
+                    component: () => import('@/views/Production/ProductionOrderEditor.vue'),
+                    meta: { title: 'Редагування завдання' }
+                },
                 // Settings
                 {
                     path: '/settings/users',

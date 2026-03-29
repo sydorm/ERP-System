@@ -17,6 +17,7 @@
               <el-dropdown-item command="invoice">Видаткова накладна</el-dropdown-item>
               <el-dropdown-item command="payment">Вхідний платіж</el-dropdown-item>
               <el-dropdown-item command="purchase_order">Замовлення постачальнику</el-dropdown-item>
+              <el-dropdown-item command="production_order" divided><el-icon><Tools /></el-icon> Завдання на виробництво</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -456,6 +457,8 @@ const handleCreateBasedOn = (command) => {
   } else if (command === 'purchase_order') {
     // router.push({ path: '/purchases/orders/new', query: { based_on: orderId } })
     ElMessage.info('Створення Замовлення постачальнику (в розробці)')
+  } else if (command === 'production_order') {
+    router.push({ path: '/production/orders/new', query: { base_order: orderId } })
   }
 }
 
