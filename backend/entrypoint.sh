@@ -1,14 +1,23 @@
 #!/bin/bash
 set -e
 
-# Wait for database to be ready
+# Wait for database to be ready with timeout
 echo "Waiting for database (postgres:5432)..."
-until pg_isready -h postgres -p 5432 -U erp_user; do
-  echo "Postgres is unavailable - sleeping"
+MAX_RETRIES=30
+RETRY_COUNT=0
+
+until pg_isready -h postgres -p 5432 -U erp_user || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+  echo "Postgres is unavailable - sleeping ($RETRY_COUNT/$MAX_RETRIES)"
+  RETRY_COUNT=$((RETRY_COUNT + 1))
   sleep 1
 done
 
-echo "Database is ready!"
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+  echo "❌ Error: Could not connect to Postgres after $MAX_RETRIES seconds. Exiting."
+  exit 1
+fi
+
+echo "✅ Database is ready!"
 
 # Якщо ми запускаємо бекенд (uvicorn), тоді робимо міграції
 if [[ "$*" == *"uvicorn"* ]] || [ -z "$1" ]; then

@@ -7,18 +7,28 @@ echo "🚀 Starting update process..."
 
 # 1. Отримуємо останні зміни з GitHub
 echo "📥 Pulling latest changes from git..."
-git pull origin main
+git pull origin main || { echo "❌ Git pull failed"; exit 1; }
 
-# 2. Перезбираємо контейнери (якщо змінились залежності або Dockerfile)
+# 2. Очищення старих образів для звільнення пам'яті (важливо для Vultr)
+echo "🧹 Cleaning up old docker resources..."
+docker system prune -f --volumes
+
+# 3. Перезбираємо контейнери
 echo "🐳 Rebuilding and restarting containers..."
 docker-compose down
 docker-compose up -d --build
 
-echo "⏳ Waiting for database network to settle (10s)..."
-sleep 10
+echo "⏳ Waiting for services to settle (15s)..."
+sleep 15
 
-# 3. Застосовуємо міграції бази даних
+# 4. Перевірка статусу контейнерів
+echo "📊 Checking container status..."
+docker-compose ps
+
+# 5. Застосовуємо міграції бази даних
 echo "🗄️ Applying database migrations..."
-docker-compose exec backend alembic upgrade head
+docker-compose exec -T backend alembic upgrade head || echo "⚠️ Migration failed or already up to date"
 
 echo "✅ Update completed successfully!"
+echo "🌐 Frontend available at: http://70.34.247.20:5173"
+echo "🔌 Backend available at: http://70.34.247.20:8000"

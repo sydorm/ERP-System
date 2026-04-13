@@ -8,10 +8,15 @@ services:
     image: postgres:15-alpine
     container_name: erp_postgres
     hostname: postgres
+    restart: always
     environment:
       POSTGRES_DB: erp_db
       POSTGRES_USER: erp_user
       POSTGRES_PASSWORD: erp_password
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -29,6 +34,11 @@ services:
     image: redis:7-alpine
     container_name: erp_redis
     hostname: redis
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     ports:
       - "6379:6379"
     networks:
@@ -57,9 +67,12 @@ services:
       ENVIRONMENT: development
       OPENROUTER_API_KEY: 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
       OPENROUTER_VISION_MODEL: google/gemini-2.0-flash-exp:free
+    restart: always
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     links:
       - postgres
       - redis
@@ -80,8 +93,10 @@ services:
       - "5173:5173"
     environment:
       VITE_API_URL: http://70.34.247.20:8000
+    restart: always
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - erp_network
 
