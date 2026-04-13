@@ -5,18 +5,22 @@
 
 echo "🚀 Starting update process..."
 
-# 1. Отримуємо останні зміни з GitHub
+# 1. Отримуємо останні зміни з GitHub (Жорстко)
 echo "📥 Pulling latest changes from git..."
-git pull origin main || { echo "❌ Git pull failed"; exit 1; }
+git fetch origin main
+git reset --hard origin/main
 
-# 2. Очищення старих образів для звільнення пам'яті (важливо для Vultr)
-echo "🧹 Cleaning up old docker resources..."
+# 2. Очищення старих образів та КЕШУ Vite
+echo "🧹 Cleaning up old docker resources & Vite cache..."
 docker system prune -f --volumes
+# Видаляємо кеш Vite інструментами хоста, якщо папка примонтована
+rm -rf frontend/node_modules/.vite 2>/dev/null || true
 
-# 3. Перезбираємо контейнери
+# 3. Перезбираємо контейнери (примусово без кешу для фронтенду)
 echo "🐳 Rebuilding and restarting containers..."
 docker-compose down
-docker-compose up -d --build
+docker-compose build --no-cache frontend
+docker-compose up -d
 
 echo "⏳ Waiting for services to settle (15s)..."
 sleep 15
