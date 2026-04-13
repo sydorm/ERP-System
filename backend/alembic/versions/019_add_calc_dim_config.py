@@ -10,7 +10,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = '019_add_calc_dim_config'
-down_revision = None
+down_revision = '017_add_attribute_cto'
 branch_labels = None
 depends_on = None
 
