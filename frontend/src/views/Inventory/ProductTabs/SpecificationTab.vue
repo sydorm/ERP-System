@@ -132,7 +132,7 @@
     </div>
 
     <!-- Calculator Config Dialog -->
-    <el-dialog v-model="calcDialogOpen" title="Налаштування розумного розрахунку" width="760px">
+    <el-dialog v-model="calcDialogOpen" title="Налаштування розумного розрахунку" width="1000px" class="smart-calc-dialog">
       <div v-if="activeCalcItem" class="p-2">
         <el-form label-position="top">
             <el-form-item label="Тип калькулятора">
@@ -151,56 +151,65 @@
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
                 <!-- Three separate dimension sub-tables in a grid -->
                 <div class="dim-grid">
-                <div v-for="dim in interpDims" :key="dim.key" class="dim-section">
-                    <div class="flex justify-between items-center mb-1 dim-header">
-                        <span class="dim-title">{{ dim.label }}</span>
-                        <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" plain>+ Додати</el-button>
-                    </div>
-                    <el-table :data="getPoints(activeCalcItem, dim.key)" size="small" border>
-                        <el-table-column :label="dim.label + ' (см)'" width="130">
-                            <template #default="scope">
-                                <el-input-number v-model="scope.row.x" size="small" style="width:100%" :controls="false" />
-                            </template>
-                        </el-table-column>
-                        <el-table-column :label="'Кількість (' + (activeCalcItem.unit_of_measure || 'шт') + ')'">
-                            <template #default="scope">
-                                <el-input-number v-model="scope.row.qty" :precision="4" size="small" style="width:100%" :controls="false" />
-                            </template>
-                        </el-table-column>
-                        <el-table-column width="46" align="center">
-                            <template #default="scope">
-                                <el-button type="danger" link @click="removePoint(activeCalcItem, dim.key, scope.$index)" :icon="Delete" />
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                    <!-- Per-dim config: default value + characteristic name -->
-                    <div class="dim-config-row">
-                        <div class="dim-config-field">
-                            <span class="dim-config-label">Стандарт (см):</span>
-                            <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" :controls="false" style="width:80px" placeholder="0" />
+                <div v-for="dim in interpDims" :key="dim.key" :class="['dim-section', `dim-${dim.key}`]">
+                    <div class="dim-header-box">
+                        <div class="dim-title-group">
+                            <span class="dim-icon">{{ dim.key.toUpperCase() }}</span>
+                            <span class="dim-title">{{ dim.label }}</span>
                         </div>
-                        <div class="dim-config-field">
-                            <span class="dim-config-label">Читати з хар-ки:</span>
-                            <el-select
-                                v-model="getDimConfig(activeCalcItem, dim.key).char_name"
-                                size="small"
-                                placeholder="авто з характеристики..."
-                                clearable
-                                filterable
-                                style="width:160px"
-                            >
-                                <el-option
-                                    v-for="attr in productAttributes"
-                                    :key="attr.id"
-                                    :label="attr.name"
-                                    :value="attr.name"
-                                />
-                            </el-select>
-                        </div>
+                        <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" :icon="Plus" circle />
                     </div>
-                    <!-- Per-dim step info -->
-                    <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-info">
-                        📐 Крок: <b>{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }} {{ activeCalcItem.unit_of_measure || 'шт' }}/см</b>
+                    
+                    <div class="table-container">
+                        <el-table :data="getPoints(activeCalcItem, dim.key)" size="small" border class="compact-table">
+                            <el-table-column :label="dim.label + ' (см)'">
+                                <template #default="scope">
+                                    <el-input-number v-model="scope.row.x" size="small" style="width:100%" :controls="false" />
+                                </template>
+                            </el-table-column>
+                            <el-table-column :label="'К-сть (' + (activeCalcItem.unit_of_measure || 'шт') + ')'">
+                                <template #default="scope">
+                                    <el-input-number v-model="scope.row.qty" :precision="4" size="small" style="width:100%" :controls="false" />
+                                </template>
+                            </el-table-column>
+                            <el-table-column width="40" align="center">
+                                <template #default="scope">
+                                    <el-button type="danger" link @click="removePoint(activeCalcItem, dim.key, scope.$index)" :icon="Delete" />
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+
+                    <div class="dim-footer">
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label>Стандарт (см)</label>
+                                <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" :controls="false" placeholder="0" />
+                            </div>
+                            <div class="config-item wide">
+                                <label>Читати з характеристики</label>
+                                <el-select
+                                    v-model="getDimConfig(activeCalcItem, dim.key).char_name"
+                                    size="small"
+                                    placeholder="Виберіть..."
+                                    clearable
+                                    filterable
+                                >
+                                    <el-option
+                                        v-for="attr in productAttributes"
+                                        :key="attr.id"
+                                        :label="attr.name"
+                                        :value="attr.name"
+                                    />
+                                </el-select>
+                            </div>
+                        </div>
+
+                        <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-badge">
+                            <span class="step-label">📐 Крок:</span>
+                            <span class="step-value">{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }}</span>
+                            <span class="step-unit">{{ activeCalcItem.unit_of_measure || 'шт' }}/см</span>
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -668,51 +677,128 @@ onMounted(() => {
 
 .dim-section {
     margin-bottom: 0;
-    padding: 10px 12px;
+    padding: 0;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background: #f8fafc;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
+
+.dim-section:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
 .dim-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 16px;
     margin-bottom: 8px;
 }
-.dim-header {
-    margin-bottom: 6px;
-}
-.dim-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1e40af;
-}
-.step-info {
-    margin-top: 6px;
-    font-size: 12px;
-    color: #1d4ed8;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 4px;
-    padding: 4px 8px;
-    display: inline-block;
-}
-.dim-config-row {
+
+.dim-header-box {
+    padding: 10px 14px;
     display: flex;
-    gap: 16px;
+    justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
-    padding: 6px 4px;
-    flex-wrap: wrap;
+    border-bottom: 1px solid #f1f5f9;
 }
-.dim-config-field {
+
+.dim-title-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
-.dim-config-label {
+
+.dim-icon {
+    width: 24px;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 11px;
+    font-weight: 900;
+    color: #475569;
+}
+
+.dim-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+/* Color accents */
+.dim-h .dim-icon { background: #dbeafe; color: #1d4ed8; }
+.dim-h .dim-title { color: #1e40af; }
+.dim-h .dim-header-box { background: #f0f7ff; }
+
+.dim-w .dim-icon { background: #e0e7ff; color: #4338ca; }
+.dim-w .dim-title { color: #3730a3; }
+.dim-w .dim-header-box { background: #f5f7ff; }
+
+.dim-l .dim-icon { background: #d1fae5; color: #047857; }
+.dim-l .dim-title { color: #065f46; }
+.dim-l .dim-header-box { background: #f0fdf4; }
+
+.table-container {
+    padding: 10px;
+    flex: 1;
+}
+
+.compact-table :deep(.el-table__header th) {
+    background-color: #f8fafc;
     color: #64748b;
-    white-space: nowrap;
+    font-size: 11px;
+    padding: 4px 0;
+}
+
+.dim-footer {
+    padding: 12px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.config-item label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.step-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.step-label { color: #94a3b8; }
+.step-value { font-weight: 800; color: #0f172a; }
+.step-unit { color: #64748b; font-size: 11px; }
+
+.smart-calc-dialog :deep(.el-dialog__body) {
+    padding-top: 10px;
 }
 </style>
