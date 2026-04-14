@@ -140,11 +140,7 @@
                     <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
-                <el-table-column label="Знижка%" width="80" align="center">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.discount" :min="0" :max="100" :precision="0" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
-                  </template>
-                </el-table-column>
+
                 <el-table-column label="Сума" width="100">
                   <template #default="scope">
                     <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width:100%" />
