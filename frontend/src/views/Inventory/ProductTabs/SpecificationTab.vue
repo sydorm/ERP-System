@@ -183,11 +183,11 @@
     </el-dialog>
 
     <!-- Calculator Config Dialog -->
-    <el-dialog v-model="calcDialogOpen" width="96%" style="max-width: 1600px;" class="smart-calc-dialog" top="5vh">
+    <el-dialog v-model="calcDialogOpen" :width="null" style="width: 95vw; max-width: 1700px;" class="smart-calc-dialog" top="5vh">
       <template #header>
         <div class="flex items-center gap-2">
-            <span class="text-lg font-bold">Налаштування розумного розрахунку</span>
-            <el-tag type="info" size="small" effect="plain" class="ml-2">v1.2 (New UI)</el-tag>
+            <span class="text-lg font-bold">Налаштування розумного розрахунку [v1.3-WIDE]</span>
+            <el-tag type="success" size="small" effect="dark" class="ml-2">Оновлено</el-tag>
         </div>
       </template>
       <div v-if="activeCalcItem" class="p-2">
