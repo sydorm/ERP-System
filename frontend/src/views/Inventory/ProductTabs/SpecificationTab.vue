@@ -740,6 +740,20 @@ onMounted(() => {
     align-items: center;
 }
 
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.editor-header .left-actions,
+.editor-header .right-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .header-left {
     display: flex;
     align-items: center;
