@@ -585,40 +585,10 @@ const getTimeline = (order) => {
   font-weight: 500;
 }
 
-/* ===== STAT CARDS (using global classes from tailwind.css) ===== */
-.kimi-stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.kimi-stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-  border: 1px solid #e2e8f0;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.15s;
-  min-width: 0;
-}
-.kimi-stat-card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.08); transform: translateY(-1px); }
-
-.kimi-stat-indigo { background: linear-gradient(to bottom right, #eef2ff, #fff); }
-.kimi-stat-emerald { background: linear-gradient(to bottom right, #ecfdf5, #fff); }
-.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); }
-.kimi-stat-blue { background: linear-gradient(to bottom right, #eff6ff, #fff); }
-
-.kimi-stat-info { flex: 1; min-width: 0; }
-.kimi-stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kimi-stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
+/* ===== STAT CARDS — use global kimi-stat-card from tailwind.css ===== */
+/* Local overrides removed so cards match the Sales Orders page */
 .kimi-stat-icon-wrapper {
-  width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+  width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
 }
 .text-indigo-600 { color: #4f46e5; }
 .text-emerald-600 { color: #059669; }
