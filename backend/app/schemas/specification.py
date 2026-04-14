@@ -101,3 +101,16 @@ class ProductSpecificationResponse(ProductSpecificationBase):
 
     class Config:
         from_attributes = True
+
+class SpecificationCalculationRequest(BaseModel):
+    width_cm: float
+    height_cm: float
+    length_cm: float
+    weight_kg: float = 0.0
+
+class CalculatedMaterialResponse(BaseModel):
+    component_id: UUID
+    component_name: str
+    quantity: Decimal
+    unit_of_measure: str
+    notes: Optional[str] = None

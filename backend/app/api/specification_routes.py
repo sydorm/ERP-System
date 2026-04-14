@@ -148,3 +148,44 @@ async def delete_specification(
     db.delete(db_spec)
     db.commit()
     return None
+
+from app.services.specification_service import SpecificationService
+from app.schemas.specification import SpecificationCalculationRequest, CalculatedMaterialResponse
+
+@router.post("/specifications/{spec_id}/calculate", response_model=List[CalculatedMaterialResponse])
+async def calculate_specification_materials(
+    spec_id: UUID,
+    dims: SpecificationCalculationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Calculates the materials list for a specification given the parent product dimensions.
+    """
+    db_spec = db.query(ProductSpecification).options(
+        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+    ).filter(ProductSpecification.id == spec_id).first()
+    
+    if not db_spec:
+        raise HTTPException(status_code=404, detail="Specification not found")
+    
+    results = []
+    parent_dims = {
+        'width_cm': dims.width_cm,
+        'height_cm': dims.height_cm,
+        'length_cm': dims.length_cm,
+        'weight_kg': dims.weight_kg
+    }
+    
+    for item in db_spec.items:
+        quantity = SpecificationService.calculate_item_quantity(item, parent_dims)
+        
+        results.append(CalculatedMaterialResponse(
+            component_id=item.component_id,
+            component_name=item.component.name if item.component else "Unknown",
+            quantity=quantity,
+            unit_of_measure=item.unit_of_measure or (item.component.unit_of_measure if item.component else "шт"),
+            notes=item.notes
+        ))
+        
+    return results

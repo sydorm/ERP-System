@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 import uuid
 from typing import List
+from decimal import Decimal
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
@@ -68,15 +69,57 @@ def create_production_order(
             )
             db.add(db_line)
             
-        for mat_in in order_in.materials:
-            db_mat = ProductionOrderMaterial(
-                production_order_id=db_order.id,
-                component_id=mat_in.component_id,
-                required_quantity=mat_in.required_quantity,
-                unit_of_measure=mat_in.unit_of_measure,
-                cost_estimate=mat_in.cost_estimate
-            )
-            db.add(db_mat)
+            # --- AUTO-CALCULATE MATERIALS ---
+            # If materials list is empty, try to explode the specification
+            if not order_in.materials and line_in.specification_id:
+                from app.models.specification import ProductSpecification, SpecificationItem
+                from app.models.product import Product
+                from app.services.specification_service import SpecificationService
+                from sqlalchemy.orm import joinedload
+                
+                # Get the product to get dimensions
+                product = db.query(Product).filter(Product.id == line_in.product_id).first()
+                if not product:
+                    continue
+                
+                # Get the specification
+                spec = db.query(ProductSpecification).options(
+                    joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+                ).filter(ProductSpecification.id == line_in.specification_id).first()
+                
+                if spec:
+                    parent_dims = {
+                        'width_cm': float(product.width_cm or 0),
+                        'height_cm': float(product.height_cm or 0),
+                        'length_cm': float(product.length_cm or 0),
+                        'weight_kg': float(product.weight_kg or 0)
+                    }
+                    
+                    for spec_item in spec.items:
+                        calc_qty = SpecificationService.calculate_item_quantity(spec_item, parent_dims)
+                        # Multiply by the quantity of the produced product
+                        total_qty = calc_qty * Decimal(str(line_in.quantity))
+                        
+                        db_mat = ProductionOrderMaterial(
+                            production_order_id=db_order.id,
+                            component_id=spec_item.component_id,
+                            required_quantity=total_qty,
+                            unit_of_measure=spec_item.unit_of_measure or (spec_item.component.unit_of_measure if spec_item.component else "шт"),
+                            cost_estimate=0 # Will be updated later if needed
+                        )
+                        db.add(db_mat)
+            
+        # If materials were provided manually, use them
+        if order_in.materials:
+            for mat_in in order_in.materials:
+                db_mat = ProductionOrderMaterial(
+                    production_order_id=db_order.id,
+                    component_id=mat_in.component_id,
+                    required_quantity=mat_in.required_quantity,
+                    unit_of_measure=mat_in.unit_of_measure,
+                    cost_estimate=mat_in.cost_estimate
+                )
+                db.add(db_mat)
             
         db.flush()
         
