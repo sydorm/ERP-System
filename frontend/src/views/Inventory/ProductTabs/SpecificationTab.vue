@@ -122,7 +122,7 @@
              
              <el-table-column label="Од. вим." width="120">
                 <template #default="scope">
-                   <el-input v-model="scope.row.unit_of_measure" placeholder="шт/кг" />
+                   <el-input v-model="scope.row.unit_of_measure" placeholder="шт/кг" disabled />
                 </template>
              </el-table-column>
              
