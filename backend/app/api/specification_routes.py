@@ -185,7 +185,7 @@ async def calculate_specification_materials(
             component_id=item.component_id,
             component_name=item.component.name if item.component else "Unknown",
             quantity=quantity,
-            unit_of_measure=item.unit_of_measure or (item.component.unit_of_measure if item.component else "шт"),
+            unit_of_measure=(item.component.unit_of_measure if item.component and item.component.unit_of_measure else item.unit_of_measure) or "шт",
             notes=item.notes
         ))
         

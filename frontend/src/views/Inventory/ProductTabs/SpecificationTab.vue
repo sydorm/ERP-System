@@ -185,7 +185,11 @@
               <span class="font-bold text-indigo-600">{{ scope.row.quantity }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="unit_of_measure" label="Од. вим." width="100" />
+          <el-table-column label="Од. вим." width="100">
+            <template #default="scope">
+              {{ getUomName(scope.row.unit_of_measure) }}
+            </template>
+          </el-table-column>
         </el-table>
       </div>
       <template #footer>
