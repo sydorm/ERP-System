@@ -174,7 +174,8 @@ async def calculate_specification_materials(
         'width_cm': dims.width_cm,
         'height_cm': dims.height_cm,
         'length_cm': dims.length_cm,
-        'weight_kg': dims.weight_kg
+        'weight_kg': dims.weight_kg,
+        'custom_attributes': dims.custom_attributes
     }
     
     for item in db_spec.items:

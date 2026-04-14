@@ -1,4 +1,4 @@
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID
@@ -107,6 +107,7 @@ class SpecificationCalculationRequest(BaseModel):
     height_cm: float
     length_cm: float
     weight_kg: float = 0.0
+    custom_attributes: Optional[Dict[str, float]] = Field(default_factory=dict)
 
 class CalculatedMaterialResponse(BaseModel):
     component_id: UUID

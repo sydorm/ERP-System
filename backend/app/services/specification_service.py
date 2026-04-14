@@ -7,11 +7,11 @@ class SpecificationService:
     @staticmethod
     def calculate_item_quantity(
         item: SpecificationItem, 
-        parent_dimensions: Dict[str, float]
+        parent_dimensions: Dict[str, Any]
     ) -> Decimal:
         """
         Calculates the quantity of a component based on smart rules.
-        parent_dimensions should contain: 'width_cm', 'height_cm', 'length_cm', 'weight_kg'
+        parent_dimensions should contain: 'width_cm', 'height_cm', 'length_cm', 'weight_kg', 'custom_attributes'
         """
         if not item.is_calculated or item.calc_type == CalculationType.FIXED:
             return Decimal(str(item.quantity or 0))
@@ -20,6 +20,7 @@ class SpecificationService:
         h = float(parent_dimensions.get('height_cm') or 0)
         l = float(parent_dimensions.get('length_cm') or 0)
         kg = float(parent_dimensions.get('weight_kg') or 0)
+        custom_attrs = parent_dimensions.get('custom_attributes') or {}
 
         result = 0.0
 
@@ -32,7 +33,7 @@ class SpecificationService:
             # W * H * L / 1000000 (cm3 to m3)
             result = (w * h * l) / 1000000.0
         elif item.calc_type == CalculationType.FORMULA:
-            result = SpecificationService._evaluate_formula(item.calc_formula, w, h, l, kg)
+            result = SpecificationService._evaluate_formula(item.calc_formula, w, h, l, kg, custom_attrs)
         
         # Apply waste factor
         waste_factor = float(item.calc_waste_factor or 0)
@@ -93,14 +94,25 @@ class SpecificationService:
         return total if has_any_points else float(item.quantity or 0)
 
     @staticmethod
-    def _evaluate_formula(formula: str, w: float, h: float, l: float, kg: float) -> float:
+    def _evaluate_formula(formula: str, w: float, h: float, l: float, kg: float, custom_attrs: Dict[str, float] = None) -> float:
         if not formula:
             return 0.0
         
-        # Simple/Safe evaluation for basic math formulas
-        # We replace variables with their values
-        safe_formula = formula.upper()
-        # Replace variables (order matters to avoid partial replacement)
+        custom_attrs = custom_attrs or {}
+        
+        # 1. Replace custom attributes like {AttributeName} with their values
+        # We find matches and attempt to lookup the key in custom_attrs.
+        # If not found, defaults to 0.0
+        def replace_custom_attr(match):
+            attr_name = match.group(1)
+            # Find attribute case-insensitively, or exact match depending on input
+            # By default, match exactly
+            return str(custom_attrs.get(attr_name, 0.0))
+            
+        safe_formula = re.sub(r'\{([^}]+)\}', replace_custom_attr, formula)
+        
+        # 2. Simple/Safe evaluation for basic math formulas
+        safe_formula = safe_formula.upper()
         subs = {
             'W': w,
             'H': h,
@@ -108,7 +120,7 @@ class SpecificationService:
             'KG': kg
         }
         
-        # Use regex to find standalone variables
+        # Replace base variables
         for var, val in subs.items():
             safe_formula = re.sub(rf'\b{var}\b', str(val), safe_formula)
             
@@ -117,9 +129,6 @@ class SpecificationService:
             return 0.0
             
         try:
-            # Note: eval is generally unsafe, but here we strictly filtered characters 
-            # and it's a controlled environment. 
-            # In a true prod system, use a proper math parser like 'numexpr' or 'simpleeval'.
             return float(eval(safe_formula))
         except:
             return 0.0

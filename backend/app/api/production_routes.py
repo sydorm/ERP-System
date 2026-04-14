@@ -88,11 +88,32 @@ def create_production_order(
                 ).filter(ProductSpecification.id == line_in.specification_id).first()
                 
                 if spec:
+                    custom_attrs = {}
+                    if line_in.variant_id:
+                        from app.models.variant import ProductVariant, VariantValue
+                        variant = db.query(ProductVariant).options(
+                            joinedload(ProductVariant.values).joinedload(VariantValue.attribute),
+                            joinedload(ProductVariant.values).joinedload(VariantValue.option)
+                        ).filter(ProductVariant.id == line_in.variant_id).first()
+                        
+                        if variant:
+                            for val in variant.values:
+                                attr_name = val.attribute.name if val.attribute else None
+                                if not attr_name: continue
+                                try:
+                                    if val.option and val.option.value:
+                                        custom_attrs[attr_name] = float(val.option.value)
+                                    elif val.text_value:
+                                        custom_attrs[attr_name] = float(val.text_value)
+                                except ValueError:
+                                    pass
+
                     parent_dims = {
                         'width_cm': float(product.width_cm or 0),
                         'height_cm': float(product.height_cm or 0),
                         'length_cm': float(product.length_cm or 0),
-                        'weight_kg': float(product.weight_kg or 0)
+                        'weight_kg': float(product.weight_kg or 0),
+                        'custom_attributes': custom_attrs
                     }
                     
                     for spec_item in spec.items:

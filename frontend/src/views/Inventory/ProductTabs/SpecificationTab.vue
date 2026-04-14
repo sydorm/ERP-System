@@ -143,25 +143,36 @@
           <el-row :gutter="20">
             <el-col :span="6">
               <el-form-item label="Висота (H), см">
-                <el-input-number v-model="testDims.height_cm" class="w-full" />
+                <el-input-number v-model="testDims.height_cm" class="w-full" :controls="false" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Ширина (W), см">
-                <el-input-number v-model="testDims.width_cm" class="w-full" />
+                <el-input-number v-model="testDims.width_cm" class="w-full" :controls="false" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Глибина (L), см">
-                <el-input-number v-model="testDims.length_cm" class="w-full" />
+                <el-input-number v-model="testDims.length_cm" class="w-full" :controls="false" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Вага, кг">
-                <el-input-number v-model="testDims.weight_kg" class="w-full" />
+                <el-input-number v-model="testDims.weight_kg" class="w-full" :controls="false" />
               </el-form-item>
             </el-col>
           </el-row>
+
+          <div v-if="testAttributes.length > 0" class="mt-2 mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+            <h5 class="m-0 mb-3 text-gray-700">Атрибути з формул:</h5>
+            <el-row :gutter="20">
+              <el-col :span="8" v-for="attr in testAttributes" :key="attr">
+                <el-form-item :label="attr">
+                  <el-input-number v-model="testDims.custom_attributes[attr]" class="w-full" :controls="false" :precision="2" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
           <div class="flex justify-end mt-2 mb-4">
             <el-button type="primary" @click="runPreviewCalculation">Розрахувати заново</el-button>
           </div>
@@ -285,8 +296,47 @@
               <div class="text-xs text-gray-400 mt-1" style="line-height: 1.2;">К-сть = Вимір × Коефіцієнт</div>
             </el-form-item>
 
-            <el-form-item label="JS Формула (змінні: W, H, L)" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
-              <el-input v-model="activeCalcItem.calc_formula" placeholder="(W * H) / 10000" />
+            <el-form-item label="Своя математична формула" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
+              <el-input v-model="activeCalcItem.calc_formula" placeholder="(W * H) / 10000 * {Товщина_ДСП}" />
+              <div class="mt-2 w-full">
+                <span class="text-xs text-gray-500 mb-1 block">Доступні змінні (натисніть щоб додати у формулу):</span>
+                <div class="flex flex-wrap gap-2">
+                  <el-tag
+                    size="small"
+                    type="primary"
+                    class="cursor-pointer"
+                    effect="light"
+                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'W'"
+                  >W (Ширина)</el-tag>
+                  <el-tag
+                    size="small"
+                    type="primary"
+                    class="cursor-pointer"
+                    effect="light"
+                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'H'"
+                  >H (Висота)</el-tag>
+                  <el-tag
+                    size="small"
+                    type="primary"
+                    class="cursor-pointer"
+                    effect="light"
+                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'L'"
+                  >L (Глибина)</el-tag>
+                  <!-- Динамічні характеристики -->
+                  <el-tag
+                    v-for="attr in productAttributes" 
+                    :key="attr.id"
+                    size="small"
+                    type="info"
+                    class="cursor-pointer"
+                    effect="plain"
+                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + '{' + attr.name + '}'"
+                    style="cursor: pointer"
+                  >
+                    {{ '{' + attr.name + '}' }}
+                  </el-tag>
+                </div>
+              </div>
             </el-form-item>
             
             <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
@@ -701,7 +751,29 @@ const testDims = reactive({
     height_cm: props.productDimensions?.height_cm || 0,
     width_cm: props.productDimensions?.width_cm || 0,
     length_cm: props.productDimensions?.length_cm || 0,
-    weight_kg: props.productDimensions?.weight_kg || 0
+    weight_kg: props.productDimensions?.weight_kg || 0,
+    custom_attributes: {}
+})
+
+const testAttributes = computed(() => {
+    const keys = new Set()
+    if (specForm.value && specForm.value.items) {
+        specForm.value.items.forEach(item => {
+            if (item.calc_type === 'formula' && item.calc_formula) {
+                // Find all {attribute_name}
+                const regex = /{([^}]+)}/g
+                let match;
+                while ((match = regex.exec(item.calc_formula)) !== null) {
+                    keys.add(match[1])
+                    // Initialize if not present
+                    if (!(match[1] in testDims.custom_attributes)) {
+                        testDims.custom_attributes[match[1]] = 0
+                    }
+                }
+            }
+        })
+    }
+    return Array.from(keys)
 })
 
 const openPreviewDialog = () => {
