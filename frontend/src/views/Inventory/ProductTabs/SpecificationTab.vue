@@ -183,7 +183,7 @@
     </el-dialog>
 
     <!-- Calculator Config Dialog -->
-    <el-dialog v-model="calcDialogOpen" width="1450px" style="max-width: 98vw;" class="smart-calc-dialog">
+    <el-dialog v-model="calcDialogOpen" width="96%" style="max-width: 1600px;" class="smart-calc-dialog" top="5vh">
       <template #header>
         <div class="flex items-center gap-2">
             <span class="text-lg font-bold">Налаштування розумного розрахунку</span>
@@ -781,9 +781,9 @@ onMounted(() => {
 
 .dim-grid {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     margin-bottom: 8px;
-    overflow-x: auto;
     padding-bottom: 12px;
 }
 
