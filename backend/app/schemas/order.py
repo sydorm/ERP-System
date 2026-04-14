@@ -57,6 +57,7 @@ class OrderUpdate(BaseModel):
     contract: Optional[str] = Field(None, max_length=255)
     comment: Optional[str] = None
     discount_percent: Optional[Decimal] = Field(None, ge=0, le=100)
+    total_amount: Optional[Decimal] = Field(None, ge=0)
     
     lines: Optional[List[OrderLineCreate]] = None
 

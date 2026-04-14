@@ -1364,7 +1364,7 @@ watch(() => route.params.id, (newId, oldId) => {
 .quick-actions { display: flex; flex-direction: column; gap: 6px; }
 .qa-btn {
   width: 100%; justify-content: flex-start !important; text-align: left;
-  height: 30px !important; font-size: 12px !important;
+  height: 30px !important; font-size: 12px !important; margin-left: 0 !important;
   background: #f8fafc !important; border-color: #e2e8f0 !important; color: #374151 !important;
 }
 .qa-btn:hover { background: #eef2ff !important; border-color: #c7d2fe !important; color: #4338ca !important; }
