@@ -59,46 +59,28 @@
           <!-- Weight + Dimensions -->
           <div class="section-divider">Фізичні параметри</div>
           <el-row :gutter="16">
-            <el-col :span="8">
+            <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Вага (кг)</span></template>
-                <el-input-number
-                  v-model="modelValue.weight_kg"
-                  :precision="3"
-                  :step="0.1"
-                  :min="0"
-                  controls-position="right"
-                  style="width: 100%"
-                  class="styled-number"
-                />
+                <el-input-number v-model="modelValue.weight_kg" :precision="3" :step="0.1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Довжина (см)</span></template>
-                <el-input-number
-                  v-model="modelValue.length_cm"
-                  :precision="1"
-                  :step="1"
-                  :min="0"
-                  controls-position="right"
-                  style="width: 100%"
-                  class="styled-number"
-                />
+                <el-input-number v-model="modelValue.length_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Ширина (см)</span></template>
-                <el-input-number
-                  v-model="modelValue.width_cm"
-                  :precision="1"
-                  :step="1"
-                  :min="0"
-                  controls-position="right"
-                  style="width: 100%"
-                  class="styled-number"
-                />
+                <el-input-number v-model="modelValue.width_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item>
+                <template #label><span class="field-label">Висота (см)</span></template>
+                <el-input-number v-model="modelValue.height_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
           </el-row>
