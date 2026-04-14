@@ -65,6 +65,7 @@ class ComponentBasicInfo(BaseModel):
     id: UUID
     name: str
     sku: str
+    unit_of_measure: Optional[str] = None
     
     class Config:
         from_attributes = True

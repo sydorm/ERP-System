@@ -122,7 +122,7 @@
              
              <el-table-column label="Од. вим." width="120">
                 <template #default="scope">
-                   <el-input v-model="scope.row.unit_of_measure" placeholder="шт/кг" disabled />
+                   <el-input :model-value="getUomName(scope.row.unit_of_measure)" placeholder="шт/кг" disabled />
                 </template>
              </el-table-column>
              
@@ -373,6 +373,22 @@ import {
     deleteProductSpecification
 } from '@/api/specifications'
 import api from '@/api'
+import { useDictionaryStore } from '@/stores/dictionary'
+
+const dictStore = useDictionaryStore()
+const uomOptions = ref([])
+
+onMounted(async () => {
+    uomOptions.value = await dictStore.fetchCategory('UOM')
+    loadSpecifications()
+    loadAvailableAttributes()
+})
+
+const getUomName = (code) => {
+    if (!code) return 'шт'
+    const opt = uomOptions.value.find(o => o.code === code)
+    return opt ? opt.name : code
+}
 
 const props = defineProps({
     productId: {
@@ -468,6 +484,11 @@ const loadSpecifications = async () => {
         resData.forEach(spec => {
             if (spec.items) {
                 spec.items.forEach(item => {
+                    // Sync up-to-date unit of measure from component
+                    if (item.component?.unit_of_measure) {
+                        item.unit_of_measure = item.component.unit_of_measure
+                    }
+
                     if (typeof item.quantity === 'string') item.quantity = parseFloat(item.quantity) || 0
                     if (item.calc_data_points) {
                         for (const key of ['h', 'w', 'l']) {
