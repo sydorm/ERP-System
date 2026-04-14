@@ -147,10 +147,27 @@
           </template>
         </el-table-column>
 
+        <!-- Payment -->
+        <el-table-column label="Оплата" width="155" align="center">
+          <template #default="{ row }">
+            <div class="kimi-payment-col">
+              <span class="kimi-badge" :class="getPaymentBadgeClass(row)">
+                {{ getPaymentLabel(row) }}
+              </span>
+              <p class="kimi-text-xxs kimi-text-slate-400 kimi-mt-1" v-if="row.paid_amount > 0">
+                {{ formatCurrency(row.paid_amount) }} / {{ formatCurrency(row.total_amount) }} ₴
+              </p>
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom">
           <template #default="{ row }">
             <div>
               <p class="kimi-text-sm kimi-font-medium">{{ formatCurrency(row.total_amount) }} ₴</p>
+              <p class="kimi-text-xxs kimi-text-emerald-600" v-if="(row.discount_amount || 0) > 0">
+                - {{ formatCurrency(row.discount_amount) }} ₴
+              </p>
             </div>
           </template>
         </el-table-column>
@@ -343,14 +360,14 @@ const fetchOrders = async () => {
     const res = await api.get('/api/v1/purchase-orders', { params })
     orders.value = res.data
 
-    // Load supplier names
+    // Load supplier names & phone
     const cpIds = [...new Set(res.data.map(o => o.supplier_id))].filter(id => id && !counterparties.value[id])
     for (const id of cpIds) {
       try {
         const r = await api.get(`/api/v1/counterparties/${id}`)
-        counterparties.value[id] = r.data.name
+        counterparties.value[id] = { name: r.data.name, phone: r.data.phone }
       } catch {
-        counterparties.value[id] = 'Н/Д'
+        counterparties.value[id] = { name: 'Н/Д', phone: '' }
       }
     }
   } catch {
@@ -486,6 +503,25 @@ const getStatusIcon = (code) => {
 const getStatusLabel = (code) => {
   const s = orderStatuses.value.find(i => i.code === code)
   return s?.name || code || '—'
+}
+
+// ===== PAYMENT HELPERS =====
+const getPaymentBadgeClass = (row) => {
+  if (!row.total_amount || row.total_amount <= 0) return 'kimi-payment-rose'
+  const paid = parseFloat(row.paid_amount) || 0
+  const total = parseFloat(row.total_amount) || 0
+  if (paid >= total) return 'kimi-payment-emerald'
+  if (paid > 0) return 'kimi-payment-amber'
+  return 'kimi-payment-rose'
+}
+
+const getPaymentLabel = (row) => {
+  if (!row.total_amount || row.total_amount <= 0) return 'Не оплачено'
+  const paid = parseFloat(row.paid_amount) || 0
+  const total = parseFloat(row.total_amount) || 0
+  if (paid >= total) return 'Оплачено'
+  if (paid > 0) return 'Частково'
+  return 'Не оплачено'
 }
 
 const getTimeline = (order) => {
@@ -630,7 +666,7 @@ const getTimeline = (order) => {
   box-shadow: 0 1px 4px rgba(0,0,0,0.02);
   border: 1px solid #e2e8f0;
   overflow: hidden;
-  margin: 0 20px 20px;
+  margin: 0 0 20px;
 }
 
 .orders-table :deep(th.el-table__cell) {
@@ -749,5 +785,11 @@ const getTimeline = (order) => {
 }
 .kimi-ghost-btn:hover { background: #f1f5f9; }
 .kimi-ghost-btn .el-icon { font-size: 16px; }
+
+/* Payment badge */
+.kimi-payment-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.kimi-payment-emerald { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
+.kimi-payment-amber   { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+.kimi-payment-rose    { background: #ffe4e6; color: #e11d48; border-color: #fecdd3; }
 
 </style>
