@@ -604,6 +604,7 @@ const getTimeline = (order) => {
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.15s;
+  min-width: 0;
 }
 .kimi-stat-card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.08); transform: translateY(-1px); }
 
@@ -612,9 +613,9 @@ const getTimeline = (order) => {
 .kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); }
 .kimi-stat-blue { background: linear-gradient(to bottom right, #eff6ff, #fff); }
 
-.kimi-stat-info { flex: 1; }
-.kimi-stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; margin: 0; }
-.kimi-stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+.kimi-stat-info { flex: 1; min-width: 0; }
+.kimi-stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kimi-stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .kimi-stat-icon-wrapper {
   width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;

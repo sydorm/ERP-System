@@ -671,6 +671,7 @@ const getTimeline = (order) => {
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.15s;
+  min-width: 0;
 }
 .stat-card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.08); transform: translateY(-1px); }
 .stat-icon {
@@ -679,8 +680,8 @@ const getTimeline = (order) => {
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; flex-shrink: 0;
 }
-.stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; }
-.stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 18px; font-weight: 800; color: #1e1b4b; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-label { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat-dot {
   position: absolute; top: 10px; right: 10px;
   width: 6px; height: 6px; border-radius: 50%;
