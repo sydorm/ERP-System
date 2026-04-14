@@ -52,11 +52,11 @@
         </div>
         <div class="erp-field">
           <span class="erp-label">від:</span>
-          <el-date-picker v-model="form.order_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" style="width:130px" />
+          <el-date-picker v-model="form.order_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" style="width:145px" />
         </div>
         <div class="erp-field">
           <span class="erp-label">Відвантаження:</span>
-          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" style="width:130px" />
+          <el-date-picker v-model="form.shipping_date" type="date" size="small" class="erp-input-wrapper" value-format="YYYY-MM-DD" placeholder="Планова" style="width:145px" />
         </div>
         <div class="erp-badges-group ml-auto flex gap-2">
             <el-select v-model="form.status" size="small" class="erp-status-select" :class="statusType" style="width:140px">
