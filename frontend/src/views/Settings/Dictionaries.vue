@@ -148,7 +148,22 @@
           <el-input v-model="form.name" placeholder="Введіть назву" />
         </el-form-item>
         
-        <el-form-item label="Системний код" prop="code">
+        <el-form-item label="Стандартна одиниця (Системний код)" prop="code" v-if="activeDictionary === 'UOM'">
+          <el-select 
+            v-model="form.code" 
+            filterable 
+            allow-create 
+            default-first-option
+            placeholder="Оберіть з бібліотеки або впишіть свій" 
+            :disabled="isEditMode && form.is_fixed"
+            @change="handleUomSelect"
+            class="w-full"
+          >
+            <el-option v-for="uom in standardUOMs" :key="uom.code" :label="uom.label" :value="uom.code" />
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="Системний код" prop="code" v-else>
           <el-input v-model="form.code" placeholder="Унікальний ідентифікатор" :disabled="isEditMode && form.is_fixed" />
         </el-form-item>
 
@@ -198,6 +213,26 @@ import { useDictionaryStore } from '@/stores/dictionary'
 import ProductAttributesManager from './ProductAttributesManager.vue'
 
 const dictStore = useDictionaryStore()
+
+// Standard Library
+const standardUOMs = [
+  { code: 'pcs', label: 'Штуки (pcs)', defaultName: 'шт.' },
+  { code: 'm', label: 'Метри (m)', defaultName: 'м' },
+  { code: 'm2', label: 'Метри квадратні (m2)', defaultName: 'м.кв.' },
+  { code: 'm3', label: 'Метри кубічні (m3)', defaultName: 'м.куб.' },
+  { code: 'kg', label: 'Кілограми (kg)', defaultName: 'кг' },
+  { code: 'g', label: 'Грами (g)', defaultName: 'г' },
+  { code: 'l', label: 'Літри (l)', defaultName: 'л' },
+  { code: 'pack', label: 'Упаковки (pack)', defaultName: 'упак.' },
+  { code: 'set', label: 'Комплекти (set)', defaultName: 'компл.' }
+]
+
+const handleUomSelect = (code) => {
+  if (!form.name) {
+    const std = standardUOMs.find(u => u.code === code)
+    if (std) form.name = std.defaultName
+  }
+}
 
 // Foundation Structure
 const sections = [
