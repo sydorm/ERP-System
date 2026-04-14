@@ -144,7 +144,13 @@ watch(() => props.initialVariants, (newVal) => {
     const newProps = JSON.stringify(newVal || [])
     
     if (newProps !== currentState) {
-        variants.value = JSON.parse(newProps)
+        let parsed = JSON.parse(newProps)
+        parsed.forEach(v => {
+            if (typeof v.price_override === 'string') {
+                v.price_override = parseFloat(v.price_override) || null
+            }
+        })
+        variants.value = parsed
         // Update primarySku based on new variants
         const primary = variants.value.find(v => v.is_primary)
         primarySku.value = primary ? primary.sku : ''

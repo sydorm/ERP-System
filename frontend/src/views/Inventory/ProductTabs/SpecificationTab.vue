@@ -385,7 +385,7 @@ const uomOptions = ref([])
 onMounted(async () => {
     uomOptions.value = await dictStore.fetchCategory('UOM')
     loadSpecifications()
-    loadAvailableAttributes()
+    loadProductAttributes()
 })
 
 const getUomName = (code) => {
