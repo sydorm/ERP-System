@@ -35,16 +35,21 @@
 
     <!-- EDITOR VIEW -->
     <div v-else class="spec-editor">
-       <div class="tab-header">
-          <div class="header-left">
-             <el-button :icon="ArrowLeft" circle @click="editingSpec = null" class="back-btn" />
-             <h3>{{ specForm.id ? 'Редагування специфікації' : 'Нова специфікація' }}</h3>
-          </div>
-          <div class="header-actions">
-             <el-button @click="editingSpec = null">Скасувати</el-button>
-             <el-button type="primary" :loading="saving" @click="saveSpecification">Зберегти</el-button>
-          </div>
-       </div>
+       <div class="editor-header">
+        <div class="left-actions">
+           <el-button @click="editingSpec = null" class="btn-back">
+             <el-icon><Back /></el-icon> До списку
+           </el-button>
+        </div>
+        <div class="right-actions">
+           <el-button type="info" plain @click="openPreviewDialog" :disabled="!specForm.id">
+             <el-icon><Monitor /></el-icon> Перевірити розрахунок
+           </el-button>
+           <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
+             <el-icon><Check /></el-icon> Зберегти специфікацію
+           </el-button>
+        </div>
+      </div>
        
        <el-card shadow="never" class="mt-4">
           <el-form :model="specForm" label-position="top">
@@ -130,6 +135,52 @@
        </el-card>
 
     </div>
+
+    <!-- Test Calculation Preview Dialog -->
+    <el-dialog v-model="previewVisible" title="Перевірка розрахунку матеріалів" width="800px">
+      <div v-loading="previewLoading">
+        <el-form label-position="top">
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <el-form-item label="Висота (H), см">
+                <el-input-number v-model="testDims.height_cm" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="Ширина (W), см">
+                <el-input-number v-model="testDims.width_cm" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="Глибина (L), см">
+                <el-input-number v-model="testDims.length_cm" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="Вага, кг">
+                <el-input-number v-model="testDims.weight_kg" class="w-full" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <div class="flex justify-end mt-2 mb-4">
+            <el-button type="primary" @click="runPreviewCalculation">Розрахувати заново</el-button>
+          </div>
+        </el-form>
+
+        <el-table :data="previewResults" border stripe>
+          <el-table-column prop="component_name" label="Матеріал" />
+          <el-table-column prop="quantity" label="Розрахована к-ть" width="150" align="right">
+            <template #default="scope">
+              <span class="font-bold text-indigo-600">{{ scope.row.quantity }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="unit_of_measure" label="Од. вим." width="100" />
+        </el-table>
+      </div>
+      <template #footer>
+        <el-button @click="previewVisible = false">Закрити</el-button>
+      </template>
+    </el-dialog>
 
     <!-- Calculator Config Dialog -->
     <el-dialog v-model="calcDialogOpen" width="1200px" style="max-width: 95vw;" class="smart-calc-dialog">
@@ -617,6 +668,35 @@ const handleComponentSelect = (row, componentId) => {
     const selected = productSearchResults.value.find(p => p.id === componentId)
     if (selected && selected.unit_of_measure) {
         row.unit_of_measure = selected.unit_of_measure
+    }
+}
+
+// Preview calculation logic
+const previewVisible = ref(false)
+const previewLoading = ref(false)
+const previewResults = ref([])
+const testDims = reactive({
+    height_cm: props.productDimensions?.height_cm || 0,
+    width_cm: props.productDimensions?.width_cm || 0,
+    length_cm: props.productDimensions?.length_cm || 0,
+    weight_kg: props.productDimensions?.weight_kg || 0
+})
+
+const openPreviewDialog = () => {
+    if (!specForm.value.id) return
+    previewVisible.value = true
+    runPreviewCalculation()
+}
+
+const runPreviewCalculation = async () => {
+    previewLoading.value = true
+    try {
+        const res = await api.post(`/api/v1/products/specifications/${specForm.value.id}/calculate`, testDims)
+        previewResults.value = res.data
+    } catch (e) {
+        ElMessage.error('Помилка розрахунку на сервері')
+    } finally {
+        previewLoading.value = false
     }
 }
 
