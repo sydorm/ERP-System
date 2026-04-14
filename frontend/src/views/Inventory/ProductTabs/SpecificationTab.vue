@@ -411,7 +411,29 @@ const loadSpecifications = async () => {
     if (!props.productId) return
     loading.value = true
     try {
-        specifications.value = await getProductSpecifications(props.productId)
+        const resData = await getProductSpecifications(props.productId)
+        
+        // Data sanitization: backend might return floats as strings (e.g., "1.000").
+        // ElInputNumber requires strict Numbers.
+        resData.forEach(spec => {
+            if (spec.items) {
+                spec.items.forEach(item => {
+                    if (typeof item.quantity === 'string') item.quantity = parseFloat(item.quantity) || 0
+                    if (item.calc_data_points) {
+                        for (const key of ['h', 'w', 'l']) {
+                            if (Array.isArray(item.calc_data_points[key])) {
+                                item.calc_data_points[key].forEach(p => {
+                                    if (typeof p.x === 'string') p.x = parseFloat(p.x) || 0
+                                    if (typeof p.qty === 'string') p.qty = parseFloat(p.qty) || 0
+                                })
+                            }
+                        }
+                    }
+                })
+            }
+        })
+        
+        specifications.value = resData
     } catch (e) {
         ElMessage.error('Помилка завантаження специфікацій')
     } finally {
