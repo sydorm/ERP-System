@@ -1,6 +1,6 @@
 """add specification_id to order_lines
 
-Revision ID: 020_add_orderline_spec
+Revision ID: 020_add_orderline_specification_id
 Revises: 019_add_calc_dim_config
 Create Date: 2026-03-29 01:05:00.000000
 
