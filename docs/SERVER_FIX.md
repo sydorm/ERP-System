@@ -7,7 +7,14 @@
 
 ## Порядок дій на сервері Vultr:
 
-1. **Оновіть код для отримання скрипта виправлення:**
+1. **Оновіть Docker Compose до сучасної версії (рекомендовано):**
+   Це виправить баг `KeyError: 'ContainerConfig'` раз і назавжди.
+   ```bash
+   apt update
+   apt install docker-compose-plugin -y
+   ```
+
+2. **Оновіть код проекту:**
    ```bash
    cd /var/www/R1
    git pull origin main
