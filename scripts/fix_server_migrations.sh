@@ -7,7 +7,8 @@ echo "🚀 Починаємо процес відновлення..."
 
 # 1. Видаляємо проблемний контейнер ТА ОБРАЗ (обходимо баг docker-compose 1.29.2)
 echo "📦 Видаляємо контейнер та старі образи..."
-docker rm -f erp_backend 2>/dev/null || true
+# Шукаємо будь-який контейнер, що містить 'erp_backend' у назві
+docker rm -f $(docker ps -a -q -f "name=erp_backend") 2>/dev/null || true
 docker rmi erp-system_backend 2>/dev/null || true
 docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true
 
