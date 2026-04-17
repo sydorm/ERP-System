@@ -8,6 +8,7 @@ class AttributeType(str, enum.Enum):
     NUMBER = "NUMBER"
     COLOR = "COLOR"
     BOOLEAN = "BOOLEAN"
+    DIMENSIONS = "DIMENSIONS"
 
 # Attribute Options
 class AttributeOptionBase(BaseModel):

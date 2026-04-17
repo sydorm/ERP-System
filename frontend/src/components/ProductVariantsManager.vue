@@ -291,7 +291,13 @@ const addManualVariant = () => {
 }
 
 const getAttributeLabel = (val) => val.attribute?.name || val.name || 'Хар-ка'
-const getOptionLabel = (val) => val.option?.value || val.value || 'Значення'
+const getOptionLabel = (val) => {
+  if ((val.attribute?.type || val.type) === 'DIMENSIONS' && val.text_value) {
+    const [w, h] = val.text_value.split('x')
+    if (w && h) return `${w}×${h} мм`
+  }
+  return val.option?.value || val.value || val.text_value || 'Значення'
+}
 </script>
 
 <style scoped>

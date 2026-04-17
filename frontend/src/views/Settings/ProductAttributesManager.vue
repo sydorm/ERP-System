@@ -129,6 +129,7 @@
             <el-option label="Довільний текст" value="TEXT" />
             <el-option label="Число" value="NUMBER" />
             <el-option label="Так / Ні" value="BOOLEAN" />
+            <el-option label="Розміри (Ш × В, мм)" value="DIMENSIONS" />
           </el-select>
           <div class="text-xs text-slate-400 mt-1">
             Для 'Списку' і 'Кольору' ви зможете додати варіанти значень після збереження.

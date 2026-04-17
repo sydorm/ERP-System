@@ -45,7 +45,23 @@
             </div>
             <div class="attr-meta">
               <span class="type-badge">{{ typeLabel(getAttrType(char)) }}</span>
-              <div v-if="getAttrOptions(char).length > 0" class="options-preview">
+              <div v-if="getAttrType(char) === 'DIMENSIONS'" class="dimensions-input">
+                <el-input-number
+                  :model-value="getDimW(char)"
+                  @update:model-value="val => setDimW(char, val)"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Ш" size="small" class="dim-field"
+                />
+                <span class="dims-sep">×</span>
+                <el-input-number
+                  :model-value="getDimH(char)"
+                  @update:model-value="val => setDimH(char, val)"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="В" size="small" class="dim-field"
+                />
+                <span class="dims-unit">мм</span>
+              </div>
+              <div v-else-if="getAttrOptions(char).length > 0" class="options-preview">
                 <span v-for="opt in getAttrOptions(char).slice(0, 5)" :key="opt.id" class="mini-option-dot">
                   <span v-if="opt.color_code" class="dot-swatch" :style="{ background: opt.color_code }"></span>
                   {{ opt.value }}
@@ -234,8 +250,27 @@ const getAttrOptions = (char) => {
 }
 
 const typeLabel = (type) => {
-  const map = { TEXT: 'Текст', SELECT: 'Список', NUMBER: 'Число', COLOR: 'Колір', BOOLEAN: 'Так/Ні' }
+  const map = { TEXT: 'Текст', SELECT: 'Список', NUMBER: 'Число', COLOR: 'Колір', BOOLEAN: 'Так/Ні', DIMENSIONS: 'Розміри' }
   return map[type] || type
+}
+
+const getDimW = (char) => {
+  const parts = (char.text_value || '').split('x')
+  return parts[0] ? Number(parts[0]) : null
+}
+const getDimH = (char) => {
+  const parts = (char.text_value || '').split('x')
+  return parts[1] ? Number(parts[1]) : null
+}
+const setDimW = (char, val) => {
+  const h = getDimH(char) ?? ''
+  char.text_value = `${val ?? ''}x${h}`
+  emitUpdate()
+}
+const setDimH = (char, val) => {
+  const w = getDimW(char) ?? ''
+  char.text_value = `${w}x${val ?? ''}`
+  emitUpdate()
 }
 
 const onAttributeChange = (char) => {
@@ -595,6 +630,36 @@ onMounted(async () => {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.dimensions-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dim-field {
+  width: 72px;
+}
+
+.dim-field :deep(.el-input__wrapper) {
+  background: #f8fafc !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 2px 8px !important;
+}
+
+.dims-sep {
+  font-size: 14px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.dims-unit {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .dialog-footer {

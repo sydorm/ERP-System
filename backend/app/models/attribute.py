@@ -10,6 +10,7 @@ class AttributeType(str, enum.Enum):
     NUMBER = "NUMBER"
     COLOR = "COLOR"
     BOOLEAN = "BOOLEAN"
+    DIMENSIONS = "DIMENSIONS"
 
 class Attribute(BaseModel):
     """
