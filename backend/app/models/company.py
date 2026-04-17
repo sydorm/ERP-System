@@ -65,6 +65,11 @@ class Company(BaseModel):
     military_tax_rate = Column(String(20), nullable=True)  # Military tax / Військовий збір
     last_tax_update = Column(String(50), nullable=True)    # Timestamp of last official rate fetch
     
+    # Branding / Брендування
+    logo_url = Column(String(255), nullable=True)          # Logo URL / Логотип
+    stamp_url = Column(String(255), nullable=True)         # Stamp URL / Печатка
+    signature_url = Column(String(255), nullable=True)     # Signature URL / Підпис директора
+    
     # Status & Selection
     is_active = Column(Boolean, default=True, nullable=False)
     is_default = Column(Boolean, default=False, nullable=False) # Default company for current user

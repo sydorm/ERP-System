@@ -1133,7 +1133,7 @@ const formatShort = (val) => new Intl.NumberFormat('uk-UA').format(val) + ' гр
 onMounted(fetchData)
 
 watch(() => route.params.id, (newId, oldId) => {
-  if (newId !== oldId) {
+  if (newId !== oldId && ['sales-order-edit', 'sales-order-new'].includes(route.name)) {
     if (!newId) {
       // Reset form to defaults when creating new
       Object.assign(form, {

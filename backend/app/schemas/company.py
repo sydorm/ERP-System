@@ -58,6 +58,11 @@ class CompanyBase(BaseModel):
     # Status & Selection
     is_active: bool = True
     is_default: bool = False
+    
+    # Branding
+    logo_url: Optional[str] = None
+    stamp_url: Optional[str] = None
+    signature_url: Optional[str] = None
 
 class CompanyCreate(CompanyBase):
     pass

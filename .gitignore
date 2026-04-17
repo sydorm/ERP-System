@@ -55,3 +55,9 @@ temp/
 # Coverage
 .coverage
 htmlcov/
+
+# Agent data
+.gemini/
+.agent/
+_archive/
+**/_archive/
