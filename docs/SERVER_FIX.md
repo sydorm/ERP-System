@@ -1,35 +1,34 @@
-# 🛠️ Fix: Alembic Migration Conflict on Server
+# 🛠️ Остаточне рішення: Виправлення міграцій та помилок зв'язку
 
-If you see the error `KeyError: '020_add_orderline_spec'`, follow these steps to synchronize the migration state.
+Ця інструкція допоможе виправити помилку `KeyError: '020_add_orderline_spec'` та `CONNECTION_RESET` за допомогою автоматичного скрипта. 
 
-## Step 1: Update the Code on Server
+> [!CAUTION]
+> **Це безпечно для ваших даних.** База даних PostgreSQL знаходиться в окремому контейнері та має власне сховище (Volume), тому видалення контейнера бекенду не зачепить саму базу.
 
-Connect to your server via SSH and pull the latest changes that I've just pushed to GitHub.
+## Порядок дій на сервері Vultr:
 
-```bash
-cd /var/www/R1
-git pull origin main
-```
+1. **Оновіть код для отримання скрипта виправлення:**
+   ```bash
+   cd /var/www/R1
+   git pull origin main
+   ```
 
-## Step 2: Fix the Database State
+2. **Надайте права на виконання скрипту:**
+   ```bash
+   chmod +x scripts/fix_server_migrations.sh
+   ```
 
-Since the migration IDs were inconsistent, we need to tell the database that it should be at the "correct" head.
+3. **Запустіть автоматичне відновлення:**
+   ```bash
+   ./scripts/fix_server_migrations.sh
+   ```
 
-Run this command inside your Docker environment:
+## Що зробить цей скрипт:
+1. Видалить контейнер `erp_backend` напряму через Docker (щоб обійти баг версії 1.29.2).
+2. Очистить "сміттєві" файли міграцій, які заважали запуску.
+3. Перезбере та запустить бекенд з правильним кодом.
+4. Синхронізує стан бази даних через `alembic stamp head`.
 
-```bash
-docker-compose exec backend alembic stamp head
-```
+---
 
-> [!IMPORTANT]
-> This command marks the database as being at the latest version. Use this if your database structure already contains the changes from the migrations but the version tracking is stuck.
-
-## Step 3: Verify the Fix
-
-Try to create the "Dimensions" attribute again in the UI. It should work now as the `DIMENSIONS` type will be available in the database.
-
-If it still fails, run the migrations normally:
-
-```bash
-docker-compose exec backend alembic upgrade head
-```
+**Після завершення роботи скрипта спробуйте знову створити характеристику в браузері – тепер все має працювати коректно!**
