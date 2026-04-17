@@ -29,13 +29,33 @@
       <div class="selection-body">
         <el-form label-position="top" class="premium-form">
           <transition-group name="fade-list">
-            <el-form-item 
-              v-for="attr in sortedAttributes" 
-              :key="attr.id" 
+            <el-form-item
+              v-for="attr in sortedAttributes"
+              :key="attr.id"
               :label="attr.name"
               class="selection-item"
             >
+              <!-- DIMENSIONS: два числових поля Ш × В -->
+              <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
+                <el-input-number
+                  v-model="dimSelections[attr.id].w"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Ширина"
+                  class="dim-input"
+                />
+                <span class="dims-sep">×</span>
+                <el-input-number
+                  v-model="dimSelections[attr.id].h"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Висота"
+                  class="dim-input"
+                />
+                <span class="dims-unit">мм</span>
+              </div>
+
+              <!-- Всі інші типи: dropdown -->
               <el-select
+                v-else
                 v-model="selections[attr.id]"
                 placeholder="Оберіть варіант або введіть свій..."
                 style="width: 100%"
@@ -56,16 +76,16 @@
                   :value="opt.id"
                 >
                   <div class="option-item">
-                    <span 
-                      v-if="opt.color_code" 
-                      class="color-pill" 
+                    <span
+                      v-if="opt.color_code"
+                      class="color-pill"
                       :style="{ backgroundColor: opt.color_code }"
                     ></span>
                     <span class="option-text">{{ opt.value }}</span>
                   </div>
                 </el-option>
               </el-select>
-              <div v-if="attr.allow_manual_input" class="text-xs text-indigo-500 mt-1 flex items-center gap-1">
+              <div v-if="attr.allow_manual_input && attr.type !== 'DIMENSIONS'" class="text-xs text-indigo-500 mt-1 flex items-center gap-1">
                 <el-icon><EditPen /></el-icon> Почніть набирати текст, щоб вписати своє значення
               </div>
             </el-form-item>
@@ -125,6 +145,7 @@ const visible = computed({
 })
 
 const selections = ref({})
+const dimSelections = ref({})
 const sortedAttributes = ref([])
 const allCategoryAttributes = ref([])
 const attributeLoading = ref(false)
@@ -170,6 +191,10 @@ const initializeSelector = () => {
   }
   
   selections.value = {}
+  dimSelections.value = {}
+  sortedAttributes.value.forEach(attr => {
+    if (attr.type === 'DIMENSIONS') dimSelections.value[attr.id] = { w: null, h: null }
+  })
 
   if (props.initialVariantId) {
     const variant = props.product.variants.find(v => v.id === props.initialVariantId)
@@ -188,7 +213,13 @@ const getAvailableOptions = (attrId) => {
 
 const allAttributesSelected = computed(() => {
   if (sortedAttributes.value.length === 0) return false
-  return sortedAttributes.value.every(a => !!selections.value[a.id])
+  return sortedAttributes.value.every(a => {
+    if (a.type === 'DIMENSIONS') {
+      const d = dimSelections.value[a.id]
+      return d && d.w > 0 && d.h > 0
+    }
+    return !!selections.value[a.id]
+  })
 })
 
 const currentVariant = computed(() => {
@@ -218,6 +249,10 @@ const handleConfirm = () => {
                 // Check if the selection is a UUID (an existing option_id)
                 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(selection);
                 
+                if (attr.type === 'DIMENSIONS') {
+                  const d = dimSelections.value[attr.id]
+                  return { attribute_id: attr.id, option_id: null, text_value: `${d.w}x${d.h}`, attribute: attr, option: null }
+                }
                 return {
                     attribute_id: attr.id,
                     option_id: isUuid ? selection : null,
@@ -415,4 +450,14 @@ const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currenc
   font-weight: 600 !important;
   padding: 0 24px !important;
 }
+
+.dims-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.dim-input { width: 100px; }
+.dims-sep { font-size: 18px; color: #64748b; font-weight: 600; }
+.dims-unit { font-size: 14px; color: #64748b; white-space: nowrap; }
 </style>
