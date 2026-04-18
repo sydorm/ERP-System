@@ -430,17 +430,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock
 } from '@element-plus/icons-vue'
 import apiClient from '@/api/index.js'
+import { useUserStore } from '@/stores/user'
 
-const router = useRouter()
-const route  = useRoute()
-const orderId = computed(() => route.params.id !== 'new' ? route.params.id : null)
+const router    = useRouter()
+const route     = useRoute()
+const userStore = useUserStore()
+const orderId   = computed(() => route.params.id !== 'new' ? route.params.id : null)
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const loading        = ref(false)
@@ -689,11 +691,14 @@ const goToPurchases = () => router.push('/purchases/orders/new')
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const save = async (action) => {
   if (!form.counterparty_id) { ElMessage.warning('Оберіть клієнта'); return }
+
+  // Auto-pick warehouse if not set
   if (!form.warehouse_id) {
-    // Auto-pick first warehouse
-    const wRes = await apiClient.get('/warehouses?limit=1')
-    if (wRes.data?.[0]) form.warehouse_id = wRes.data[0].id
-    else { ElMessage.warning('Не знайдено жодного складу'); return }
+    try {
+      const wRes = await apiClient.get('/warehouses?limit=1')
+      if (wRes.data?.[0]) form.warehouse_id = wRes.data[0].id
+      else { ElMessage.warning('Не знайдено жодного складу'); return }
+    } catch { ElMessage.warning('Не вдалося отримати склад'); return }
   }
 
   saving.value = true
@@ -705,7 +710,7 @@ const save = async (action) => {
       warehouse_id:       form.warehouse_id,
       total_amount:       form.total_amount,
       discount_percent:   form.discount_percent,
-      crm_stage:          action === 'production' ? 'production' : form.crm_stage,
+      crm_stage:          form.crm_stage,
       channel:            form.channel,
       city:               form.city,
       delivery_type:      form.delivery_type,
@@ -729,6 +734,7 @@ const save = async (action) => {
       }] : [],
     }
 
+    // 1. Save / update the order
     let savedOrder
     if (orderId.value) {
       const res = await apiClient.put(`/orders/${orderId.value}`, payload)
@@ -738,7 +744,21 @@ const save = async (action) => {
       savedOrder = res.data
     }
 
-    ElMessage.success(action === 'production' ? 'Передано у виробництво!' : 'Збережено як чернетку')
+    // 2. If "send to production" — call dedicated endpoint that sets stage + creates ProductionOrder
+    if (action === 'production') {
+      try {
+        const prodRes = await apiClient.post(`/orders/${savedOrder.id}/send-to-production`)
+        ElMessage.success(`Передано у виробництво! Завдання ${prodRes.data.production_order_number} створено`)
+        router.push(`/production/orders/${prodRes.data.production_order_id}`)
+        return
+      } catch (err) {
+        ElMessage.error('Замовлення збережено, але помилка при створенні завдання: ' + (err.response?.data?.detail || ''))
+        router.push(`/crm/orders/${savedOrder.id}`)
+        return
+      }
+    }
+
+    ElMessage.success('Збережено як чернетку')
     router.push(`/crm/orders/${savedOrder.id}`)
   } catch (err) {
     ElMessage.error(err.response?.data?.detail || 'Помилка збереження')
@@ -751,14 +771,14 @@ const save = async (action) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const [pRes, cpRes, usersRes] = await Promise.all([
-      apiClient.get('/products?limit=500&is_active=true'),
+    const [pRes, cpRes, usersRes] = await Promise.allSettled([
+      apiClient.get('/products?limit=500'),
       apiClient.get('/counterparties?limit=500&is_customer=true'),
       apiClient.get('/users/colleagues'),
     ])
-    products.value       = pRes.data
-    counterparties.value = cpRes.data
-    users.value          = usersRes.data
+    products.value       = pRes.status       === 'fulfilled' ? pRes.value.data       : []
+    counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
+    users.value          = usersRes.status   === 'fulfilled' ? usersRes.value.data   : []
 
     if (orderId.value) {
       const res = await apiClient.get(`/orders/${orderId.value}`)

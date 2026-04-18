@@ -3,7 +3,7 @@ from uuid import UUID
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
+from sqlalchemy import func
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_active_user
@@ -14,7 +14,6 @@ from app.schemas.order import (
     OrderCreate, OrderUpdate, OrderResponse,
     MaterialCheckItem, MaterialCheckResponse
 )
-from app.services.posting_service import PostingService, PostingEntry
 from app.services.sequence_service import SequenceService
 from app.services.audit_service import AuditService
 import uuid
@@ -338,6 +337,90 @@ async def check_order_materials(
         has_issues=has_issues,
         items=items_out,
     )
+
+
+@router.post("/orders/{id}/send-to-production")
+async def send_order_to_production(
+    id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Save order as confirmed + auto-create a ProductionOrder linked to it.
+    Returns { order, production_order }.
+    """
+    from app.models.specification import ProductSpecification
+    from app.models.production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
+    from app.models.warehouse import Warehouse
+    from app.services.sequence_service import SequenceService
+
+    order = db.query(Order).filter(
+        Order.id == id,
+        Order.company_id == current_user.company_id
+    ).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.crm_stage = "production"
+    order.status    = "confirmed"
+
+    # Get default warehouse
+    warehouse = db.query(Warehouse).filter(
+        Warehouse.company_id == current_user.company_id,
+        Warehouse.is_deleted == False
+    ).order_by(Warehouse.is_default.desc()).first()
+    if not warehouse:
+        raise HTTPException(status_code=400, detail="No warehouse found for this company")
+
+    # Build production order number
+    prod_num = SequenceService.get_next_number(db, "production_order", "PRD-")
+
+    prod_order = ProductionOrder(
+        order_number=prod_num,
+        status="draft",
+        base_order_id=order.id,
+        company_id=current_user.company_id,
+        warehouse_id=warehouse.id,
+        created_by=current_user.id,
+        due_date=order.deadline_date,
+        comment=f"Авто-створено з CRM замовлення {order.order_number}",
+    )
+    db.add(prod_order)
+    db.flush()
+
+    for line in order.lines:
+        # Find default active spec for this product
+        spec = db.query(ProductSpecification).filter(
+            ProductSpecification.product_id == line.product_id,
+            ProductSpecification.is_default == True,
+            ProductSpecification.is_active == True,
+        ).first()
+
+        db_line = ProductionOrderLine(
+            production_order_id=prod_order.id,
+            product_id=line.product_id,
+            variant_id=line.variant_id,
+            specification_id=spec.id if spec else None,
+            quantity=line.quantity,
+        )
+        db.add(db_line)
+
+        # Auto-expand BOM into materials
+        if spec:
+            for item in spec.items:
+                db_mat = ProductionOrderMaterial(
+                    production_order_id=prod_order.id,
+                    component_id=item.component_id,
+                    required_quantity=item.quantity * line.quantity,
+                    unit_of_measure=item.unit_of_measure,
+                )
+                db.add(db_mat)
+
+    db.commit()
+    db.refresh(order)
+    db.refresh(prod_order)
+
+    return {"order_id": str(order.id), "production_order_id": str(prod_order.id), "production_order_number": prod_order.order_number}
 
 
 @router.delete("/orders/{id}", status_code=status.HTTP_204_NO_CONTENT)
