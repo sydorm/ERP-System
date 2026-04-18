@@ -81,6 +81,19 @@
             </div>
           </div>
 
+          <div class="crm-field">
+            <label class="crm-label">Статус клієнта</label>
+            <div class="client-status-pills">
+              <button
+                v-for="cs in clientStatuses"
+                :key="cs.value"
+                class="client-status-pill"
+                :class="[`csp-${cs.value}`, form.client_status === cs.value ? 'active' : '']"
+                @click="form.client_status = form.client_status === cs.value ? null : cs.value"
+              >{{ cs.label }}</button>
+            </div>
+          </div>
+
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Місто</label>
@@ -94,6 +107,18 @@
                 <el-option value="courier"      label="Кур'єр" />
                 <el-option value="pickup"       label="Самовивіз" />
               </el-select>
+            </div>
+          </div>
+
+          <!-- Nova Poshta branch — shown only when NP selected -->
+          <div v-if="form.delivery_type === 'nova_poshta'" class="crm-grid-2">
+            <div class="crm-field">
+              <label class="crm-label">Відділення НП</label>
+              <el-input v-model="form.np_branch" placeholder="Наприклад: відділення №12" />
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">ТТН</label>
+              <el-input v-model="form.np_ttn" placeholder="(генерується після оплати)" disabled />
             </div>
           </div>
         </div>
@@ -482,6 +507,9 @@ const form = reactive({
   internal_notes: null,
   reference_photo: null,
   discount_percent: 0,
+  np_branch:      null,
+  np_ttn:         null,
+  client_status:  null,
 })
 
 // Client quick-edit fields (synced to counterparty)
@@ -517,6 +545,11 @@ const paymentStatuses = [
   { value: 'unpaid',  label: 'Не оплачено' },
   { value: 'partial', label: 'Частково' },
   { value: 'paid',    label: 'Оплачено' },
+]
+const clientStatuses = [
+  { value: 'thinking',    label: '🤔 Думає' },
+  { value: 'ordered',     label: '✅ Замовив' },
+  { value: 'processing',  label: '⚙️ В обробці' },
 ]
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
@@ -595,6 +628,11 @@ const onProductChange = async (productId) => {
       productAttributes.value = res.data
         ?.map(ca => ca.attribute)
         .filter(a => a && !a.is_archived) || []
+    }
+    // Auto-fill total amount from product price if available and not already set
+    if (product?.price && Number(product.price) > 0) {
+      form.total_amount = Number(product.price)
+      calcPrepayment()
     }
   } catch { /* no attributes */ }
 
@@ -703,6 +741,13 @@ const save = async (action) => {
 
   saving.value = true
   try {
+    // Merge NP delivery fields and client status into attributes_values (JSONB)
+    const mergedAttrs = { ...form.attributes_values }
+    if (form.np_branch)     mergedAttrs._np_branch     = form.np_branch
+    else                    delete mergedAttrs._np_branch
+    if (form.client_status) mergedAttrs._client_status = form.client_status
+    else                    delete mergedAttrs._client_status
+
     const payload = {
       order_number:       form.order_number,
       order_date:         form.order_date,
@@ -714,7 +759,7 @@ const save = async (action) => {
       channel:            form.channel,
       city:               form.city,
       delivery_type:      form.delivery_type,
-      attributes_values:  form.attributes_values,
+      attributes_values:  mergedAttrs,
       paid_amount:        form.paid_amount,
       payment_status:     form.payment_status,
       prepayment_percent: form.prepayment_percent,
@@ -793,7 +838,13 @@ const loadData = async () => {
         channel:         o.channel,
         city:            o.city,
         delivery_type:   o.delivery_type,
-        attributes_values: o.attributes_values || {},
+        attributes_values: (() => {
+          const av = { ...(o.attributes_values || {}) }
+          delete av._np_branch; delete av._client_status
+          return av
+        })(),
+        np_branch:       o.attributes_values?._np_branch || null,
+        client_status:   o.attributes_values?._client_status || null,
         total_amount:    Number(o.total_amount),
         paid_amount:     Number(o.paid_amount || 0),
         payment_status:  o.payment_status || 'unpaid',
@@ -1067,6 +1118,17 @@ onMounted(loadData)
 .pp-normal.active   { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
 .pp-urgent.active   { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 .pp-critical.active { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+/* ─── Client status pills ────────────────────────────────────────────────── */
+.client-status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.client-status-pill {
+  padding: 5px 14px; border-radius: 99px; border: 1.5px solid #e2e8f0;
+  background: #f8fafc; font-size: 12px; font-weight: 500; color: #475569;
+  cursor: pointer; transition: all 0.12s;
+}
+.csp-thinking.active   { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+.csp-ordered.active    { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+.csp-processing.active { background: #e0e7ff; border-color: #a5b4fc; color: #3730a3; }
 
 /* ─── History ─────────────────────────────────────────────────────────────── */
 .history-list { display: flex; flex-direction: column; gap: 6px; }
