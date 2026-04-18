@@ -211,6 +211,25 @@ const router = createRouter({
                     component: () => import('@/views/Production/ProductionOrderEditor.vue'),
                     meta: { title: 'Редагування завдання' }
                 },
+                // CRM routes
+                {
+                    path: '/crm',
+                    name: 'crm-board',
+                    component: () => import('@/views/CRM/CrmOrdersBoard.vue'),
+                    meta: { title: 'CRM — Замовлення' }
+                },
+                {
+                    path: '/crm/orders/new',
+                    name: 'crm-order-new',
+                    component: () => import('@/views/CRM/CrmOrderEditor.vue'),
+                    meta: { title: 'Нова заявка CRM' }
+                },
+                {
+                    path: '/crm/orders/:id',
+                    name: 'crm-order-edit',
+                    component: () => import('@/views/CRM/CrmOrderEditor.vue'),
+                    meta: { title: 'CRM — Замовлення' }
+                },
                 // Settings
                 {
                     path: '/settings/users',
