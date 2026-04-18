@@ -1,7 +1,7 @@
 """
 Company schemas
 """
-from pydantic import BaseModel, Field, HttpUrl, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from uuid import UUID
 from enum import Enum
@@ -41,7 +41,7 @@ class CompanyBase(BaseModel):
     
     # Contacts
     phone: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     
     # Tax Settings
     company_type: CompanyType = CompanyType.FOP

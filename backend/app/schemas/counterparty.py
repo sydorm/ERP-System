@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 class CounterpartyBase(BaseModel):
@@ -12,7 +12,7 @@ class CounterpartyBase(BaseModel):
     is_supplier: bool = False
     
     phone: Optional[str] = Field(None, max_length=50)
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     address: Optional[str] = Field(None, max_length=500)
     default_contract: Optional[str] = Field(None, max_length=255)
     
@@ -32,7 +32,7 @@ class CounterpartyUpdate(BaseModel):
     is_supplier: Optional[bool] = None
     
     phone: Optional[str] = Field(None, max_length=50)
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     address: Optional[str] = Field(None, max_length=500)
     default_contract: Optional[str] = Field(None, max_length=255)
     
