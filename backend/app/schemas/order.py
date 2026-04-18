@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 from app.schemas.variant import VariantValueCreate
 
@@ -53,6 +53,7 @@ class OrderBase(BaseModel):
 
     deadline_date: Optional[date] = None
     next_contact_date: Optional[date] = None
+    next_contact_at: Optional[datetime] = None
 
     priority: str = Field(default="normal", max_length=20)
     manager_id: Optional[UUID] = None
@@ -89,6 +90,7 @@ class OrderUpdate(BaseModel):
     prepayment_amount: Optional[Decimal] = Field(None, ge=0)
     deadline_date: Optional[date] = None
     next_contact_date: Optional[date] = None
+    next_contact_at: Optional[datetime] = None
     priority: Optional[str] = Field(None, max_length=20)
     manager_id: Optional[UUID] = None
     internal_notes: Optional[str] = None
@@ -102,6 +104,7 @@ class OrderResponse(OrderBase):
     status: str
     company_id: UUID
     created_by: Optional[UUID] = None
+    contact_attempts: int = 0
     lines: List[OrderLineResponse]
 
     model_config = ConfigDict(from_attributes=True)

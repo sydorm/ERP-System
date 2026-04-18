@@ -27,6 +27,38 @@
       </div>
     </div>
 
+    <!-- ===== MY TASKS TODAY ===== -->
+    <div class="crm-tasks-panel" v-if="todayTasks.length">
+      <div class="tasks-panel-head">
+        <el-icon class="tasks-icon"><Bell /></el-icon>
+        <span class="tasks-title">Мої задачі на сьогодні</span>
+        <span class="tasks-count">{{ todayTasks.length }}</span>
+      </div>
+      <div class="tasks-list">
+        <div
+          v-for="task in todayTasks"
+          :key="task.id"
+          class="task-row"
+          :class="{ 'task-overdue': isTaskOverdue(task) }"
+        >
+          <div class="task-time">
+            <span v-if="isTaskOverdue(task)" class="overdue-badge">!</span>
+            <span v-else>{{ formatTaskTime(task.scheduled_at) }}</span>
+          </div>
+          <div class="task-info">
+            <span class="task-client">{{ task.client_name || '—' }}</span>
+            <span class="task-order">{{ task.order_number }}</span>
+            <span v-if="task.client_phone" class="task-phone">{{ task.client_phone }}</span>
+          </div>
+          <div class="task-actions">
+            <button class="task-btn task-call" @click="openTaskOrder(task)">Зателефонувати</button>
+            <button class="task-btn task-move" @click="rescheduleTask(task)">Перенести</button>
+            <button class="task-btn task-done" @click="completeTask(task)">✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== TODAY FOLLOW-UPS BANNER ===== -->
     <div class="crm-followup-banner" v-if="todayFollowUps.length">
       <el-icon class="fu-icon"><Bell /></el-icon>
@@ -143,6 +175,7 @@ const loading     = ref(false)
 const orders      = ref([])
 const counterparties = ref([])
 const users       = ref([])
+const todayTasks     = ref([])
 const searchQuery    = ref('')
 const filterPriority = ref('')
 const filterManager  = ref('')
@@ -171,8 +204,13 @@ const totalOrders = computed(() => orders.value.length)
 
 const todayFollowUps = computed(() => {
   const today = new Date().toISOString().slice(0, 10)
-  return orders.value.filter(o => o.next_contact_date === today)
+  return orders.value.filter(o =>
+    (o.next_contact_date === today) ||
+    (o.next_contact_at && o.next_contact_at.slice(0, 10) === today)
+  )
 })
+
+const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date(new Date().toDateString())
 
 const ordersInStage = (stageKey) =>
   orders.value.filter(o => o.crm_stage === stageKey)
@@ -270,6 +308,47 @@ const onDrop = async (targetStage) => {
   dragOrderId.value = null
 }
 
+// ─── Task helpers ─────────────────────────────────────────────────────────────
+const formatTaskTime = (dt) => {
+  if (!dt) return ''
+  const d = new Date(dt)
+  const today = new Date().toDateString()
+  if (d.toDateString() === today) {
+    return d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+  }
+  return d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' }) +
+    ' ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+}
+
+const openTaskOrder = (task) => router.push(`/crm/orders/${task.order_id}`)
+
+const completeTask = async (task) => {
+  try {
+    await api.put(`/api/v1/crm/tasks/${task.id}/complete`)
+    todayTasks.value = todayTasks.value.filter(t => t.id !== task.id)
+  } catch {
+    ElMessage.error('Помилка')
+  }
+}
+
+const rescheduleTask = async (task) => {
+  const newTime = prompt('Новий час (YYYY-MM-DDTHH:mm:ss):')
+  if (!newTime) return
+  try {
+    await api.put(`/api/v1/crm/tasks/${task.id}/reschedule`, { scheduled_at: newTime })
+    await fetchTasks()
+  } catch {
+    ElMessage.error('Помилка')
+  }
+}
+
+const fetchTasks = async () => {
+  try {
+    const res = await api.get('/api/v1/crm/tasks/today')
+    todayTasks.value = res.data
+  } catch { /* silent */ }
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 const openEditor   = (order) => router.push(`/crm/orders/${order.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
@@ -287,6 +366,7 @@ const fetchAll = async () => {
     orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
     counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
     users.value          = usersRes.status === 'fulfilled' ? usersRes.value.data : []
+    await fetchTasks()
   } catch (e) {
     ElMessage.error('Помилка завантаження даних: ' + (e?.response?.data?.detail || e?.message || ''))
   } finally {
@@ -331,6 +411,47 @@ onMounted(fetchAll)
   cursor: pointer; transition: background 0.15s;
 }
 .crm-new-btn:hover { background: #4f46e5; }
+
+/* ─── Tasks Panel ─────────────────────────────────────────────────────────── */
+.crm-tasks-panel {
+  background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px;
+  flex-shrink: 0;
+}
+.tasks-panel-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.tasks-icon  { color: #6366f1; font-size: 15px; }
+.tasks-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+.tasks-count {
+  font-size: 11px; font-weight: 700; background: #6366f1; color: #fff;
+  padding: 1px 8px; border-radius: 99px;
+}
+.tasks-list  { display: flex; flex-direction: column; gap: 5px; }
+.task-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: 8px; background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.task-row.task-overdue { background: #fff1f2; border-color: #fca5a5; }
+.task-time  { font-size: 12px; font-weight: 700; color: #6366f1; width: 50px; flex-shrink: 0; }
+.overdue-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ef4444; color: #fff; font-size: 11px; font-weight: 800;
+}
+.task-info  { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.task-client { font-size: 13px; font-weight: 600; color: #1e293b; }
+.task-order  { font-size: 11px; color: #6366f1; background: #eef2ff; padding: 1px 7px; border-radius: 99px; }
+.task-phone  { font-size: 11px; color: #64748b; }
+.task-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.task-btn {
+  padding: 4px 10px; border-radius: 6px; border: none;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: opacity 0.12s;
+}
+.task-btn:hover { opacity: .85; }
+.task-call { background: #dbeafe; color: #1e40af; }
+.task-move { background: #f1f5f9; color: #475569; }
+.task-done { background: #d1fae5; color: #065f46; }
 
 /* ─── Follow-up Banner ────────────────────────────────────────────────────── */
 .crm-followup-banner {

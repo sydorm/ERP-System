@@ -21,6 +21,7 @@ from .document_sequence import DocumentSequence
 from .calculator import CalcMaterial, CalcHardware, CalcService, CalcQuote
 from .audit_log import AuditLog
 from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
+from .crm import CrmContact, CrmTask
 
 __all__ = [
     "Base",
@@ -64,4 +65,6 @@ __all__ = [
     "ProductionOrder",
     "ProductionOrderLine",
     "ProductionOrderMaterial",
+    "CrmContact",
+    "CrmTask",
 ]

@@ -143,6 +143,9 @@ app.include_router(upload_router, prefix="/api/v1/upload", tags=["Uploads"])
 from app.api.production_routes import router as production_router
 app.include_router(production_router, prefix="/api/v1/production", tags=["Production"])
 
+from app.api.crm_routes import router as crm_router
+app.include_router(crm_router, prefix="/api/v1", tags=["CRM"])
+
 # Ensure uploads directory exists and mount it for static file serving
 import os
 from fastapi.staticfiles import StaticFiles

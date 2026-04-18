@@ -83,6 +83,7 @@ async def create_order(
         prepayment_amount=order_in.prepayment_amount,
         deadline_date=order_in.deadline_date,
         next_contact_date=order_in.next_contact_date,
+        next_contact_at=order_in.next_contact_at,
         priority=order_in.priority,
         manager_id=order_in.manager_id,
         internal_notes=order_in.internal_notes,

@@ -1,7 +1,7 @@
 """
 Order models - represents customer orders and their line items
 """
-from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Text
+from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Text, Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from decimal import Decimal
@@ -59,6 +59,10 @@ class Order(BaseModel):
     priority = Column(String(20), nullable=False, default="normal")  # low/normal/urgent/critical
     manager_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
+    # CRM: communication tracking
+    contact_attempts = Column(Integer, nullable=False, default=0)
+    next_contact_at = Column(DateTime, nullable=True)
+
     # CRM: notes & media
     internal_notes = Column(Text, nullable=True)
     reference_photo = Column(String(500), nullable=True)
@@ -84,6 +88,8 @@ class Order(BaseModel):
     created_by_user = relationship("User", back_populates="created_orders", foreign_keys=[created_by], overlaps="manager")
     manager = relationship("User", foreign_keys=[manager_id], overlaps="created_by_user,created_orders")
     lines = relationship("OrderLine", back_populates="order", cascade="all, delete-orphan")
+    contacts = relationship("CrmContact", back_populates="order", cascade="all, delete-orphan")
+    tasks = relationship("CrmTask", back_populates="order", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Order {self.order_number} - {self.crm_stage}>"

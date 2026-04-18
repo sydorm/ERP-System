@@ -81,19 +81,6 @@
             </div>
           </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Статус клієнта</label>
-            <div class="client-status-pills">
-              <button
-                v-for="cs in clientStatuses"
-                :key="cs.value"
-                class="client-status-pill"
-                :class="[`csp-${cs.value}`, form.client_status === cs.value ? 'active' : '']"
-                @click="form.client_status = form.client_status === cs.value ? null : cs.value"
-              >{{ cs.label }}</button>
-            </div>
-          </div>
-
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Місто</label>
@@ -111,15 +98,9 @@
           </div>
 
           <!-- Nova Poshta branch — shown only when NP selected -->
-          <div v-if="form.delivery_type === 'nova_poshta'" class="crm-grid-2">
-            <div class="crm-field">
-              <label class="crm-label">Відділення НП</label>
-              <el-input v-model="form.np_branch" placeholder="Наприклад: відділення №12" />
-            </div>
-            <div class="crm-field">
-              <label class="crm-label">ТТН</label>
-              <el-input v-model="form.np_ttn" placeholder="(генерується після оплати)" disabled />
-            </div>
+          <div v-if="form.delivery_type === 'nova_poshta'" class="crm-field">
+            <label class="crm-label">Відділення Нової Пошти</label>
+            <el-input v-model="form.np_branch" placeholder="Наприклад: відділення №12" />
           </div>
         </div>
 
@@ -390,13 +371,76 @@
           <div class="crm-field">
             <label class="crm-label">Наступний контакт</label>
             <el-date-picker
-              v-model="form.next_contact_date"
-              type="date"
-              format="DD.MM.YYYY"
-              value-format="YYYY-MM-DD"
+              v-model="form.next_contact_at"
+              type="datetime"
+              format="DD.MM.YYYY HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
               style="width:100%"
-              placeholder="Коли передзвонити?"
+              placeholder="18.04.2026  10:00"
             />
+          </div>
+        </div>
+
+        <!-- ══ КОМУНІКАЦІЯ ══ -->
+        <div class="crm-section" v-if="orderId">
+          <div class="comm-section-head">
+            <span class="crm-section-title">Комунікація</span>
+            <span class="attempts-badge" v-if="form.contact_attempts > 0">
+              {{ form.contact_attempts }} {{ form.contact_attempts === 1 ? 'спроба' : 'спроби' }}
+            </span>
+          </div>
+
+          <div class="crm-field">
+            <label class="crm-label">Результат контакту</label>
+            <div class="contact-result-list">
+              <button
+                v-for="cr in contactResults"
+                :key="cr.value"
+                class="contact-result-btn"
+                :class="[`cr-${cr.value}`, contactResult === cr.value ? 'active' : '']"
+                @click="contactResult = contactResult === cr.value ? null : cr.value"
+              >{{ cr.label }}</button>
+            </div>
+          </div>
+
+          <div class="crm-field" v-if="contactResult === 'thinking'">
+            <label class="crm-label">Передзвонити</label>
+            <el-date-picker
+              v-model="contactNextAt"
+              type="datetime"
+              format="DD.MM.YYYY HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+              style="width:100%"
+              placeholder="Вкажіть дату та час"
+            />
+          </div>
+
+          <div class="crm-field" v-if="contactResult === 'refused'">
+            <label class="crm-label">Причина відмови</label>
+            <el-input v-model="contactNote" placeholder="Чому відмовився..." />
+          </div>
+
+          <button class="log-contact-btn" @click="logContact"
+            :disabled="!contactResult || savingContact">
+            <el-icon v-if="savingContact" class="is-loading"><Loading /></el-icon>
+            Записати результат
+          </button>
+
+          <div v-if="contacts.length" style="margin-top:12px">
+            <div class="crm-label" style="margin-bottom:6px">Історія контактів</div>
+            <div
+              v-for="c in contacts"
+              :key="c.id"
+              class="contact-history-item"
+              :class="`chi-${c.result}`"
+            >
+              <span class="chi-icon">{{ contactResultIcon(c.result) }}</span>
+              <div class="chi-body">
+                <span class="chi-label">{{ contactResultLabel(c.result) }}</span>
+                <span class="chi-note" v-if="c.note">{{ c.note }}</span>
+              </div>
+              <span class="chi-time">{{ formatDateTime(c.contacted_at) }}</span>
+            </div>
           </div>
         </div>
 
@@ -483,6 +527,13 @@ const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
 
+// Communication
+const contacts      = ref([])
+const contactResult = ref(null)
+const contactNote   = ref('')
+const contactNextAt = ref(null)
+const savingContact = ref(false)
+
 const form = reactive({
   order_number:   'Авто',
   order_date:     new Date().toISOString().slice(0, 10),
@@ -503,13 +554,13 @@ const form = reactive({
   next_contact_date: null,
   priority:       'normal',
   manager_id:     null,
-  comment:        null,
-  internal_notes: null,
-  reference_photo: null,
+  comment:          null,
+  internal_notes:   null,
+  reference_photo:  null,
   discount_percent: 0,
-  np_branch:      null,
-  np_ttn:         null,
-  client_status:  null,
+  np_branch:        null,
+  next_contact_at:  null,
+  contact_attempts: 0,
 })
 
 // Client quick-edit fields (synced to counterparty)
@@ -546,10 +597,11 @@ const paymentStatuses = [
   { value: 'partial', label: 'Частково' },
   { value: 'paid',    label: 'Оплачено' },
 ]
-const clientStatuses = [
-  { value: 'thinking',    label: '🤔 Думає' },
-  { value: 'ordered',     label: '✅ Замовив' },
-  { value: 'processing',  label: '⚙️ В обробці' },
+const contactResults = [
+  { value: 'no_answer', label: 'Не відповів' },
+  { value: 'thinking',  label: 'Думає' },
+  { value: 'refused',   label: 'Відмовився' },
+  { value: 'confirmed', label: 'Підтвердив замовлення' },
 ]
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
@@ -726,6 +778,47 @@ const createNewClient = async () => {
 // ─── Go to purchases ──────────────────────────────────────────────────────────
 const goToPurchases = () => router.push('/purchases/orders/new')
 
+// ─── Communication helpers ────────────────────────────────────────────────────
+const contactResultLabel = (r) => contactResults.find(x => x.value === r)?.label || r
+const contactResultIcon = (r) =>
+  ({ no_answer: '📵', thinking: '🤔', refused: '❌', confirmed: '✅' }[r] || '•')
+const formatDateTime = (d) => {
+  if (!d) return ''
+  return new Date(d).toLocaleString('uk-UA', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+const loadContacts = async () => {
+  if (!orderId.value) return
+  try {
+    const res = await api.get(`/api/v1/crm/orders/${orderId.value}/contacts`)
+    contacts.value = res.data
+  } catch { /* silent */ }
+}
+
+const logContact = async () => {
+  if (!contactResult.value) return
+  savingContact.value = true
+  try {
+    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, {
+      result: contactResult.value,
+      note: contactNote.value || null,
+      next_contact_at: contactNextAt.value || null,
+    })
+    ElMessage.success('Контакт записано')
+    contactResult.value = null
+    contactNote.value = ''
+    contactNextAt.value = null
+    await loadData()  // reload to reflect updated stage / attempts / next_contact_at
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
+  } finally {
+    savingContact.value = false
+  }
+}
+
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const save = async (action) => {
   if (!form.counterparty_id) { ElMessage.warning('Оберіть клієнта'); return }
@@ -741,12 +834,10 @@ const save = async (action) => {
 
   saving.value = true
   try {
-    // Merge NP delivery fields and client status into attributes_values (JSONB)
+    // Merge NP branch into attributes_values (JSONB)
     const mergedAttrs = { ...form.attributes_values }
-    if (form.np_branch)     mergedAttrs._np_branch     = form.np_branch
-    else                    delete mergedAttrs._np_branch
-    if (form.client_status) mergedAttrs._client_status = form.client_status
-    else                    delete mergedAttrs._client_status
+    if (form.np_branch) mergedAttrs._np_branch = form.np_branch
+    else                delete mergedAttrs._np_branch
 
     const payload = {
       order_number:       form.order_number,
@@ -765,7 +856,7 @@ const save = async (action) => {
       prepayment_percent: form.prepayment_percent,
       prepayment_amount:  form.prepayment_amount,
       deadline_date:      form.deadline_date,
-      next_contact_date:  form.next_contact_date,
+      next_contact_at:    form.next_contact_at,
       priority:           form.priority,
       manager_id:         form.manager_id,
       comment:            form.comment,
@@ -843,9 +934,10 @@ const loadData = async () => {
           delete av._np_branch; delete av._client_status
           return av
         })(),
-        np_branch:       o.attributes_values?._np_branch || null,
-        client_status:   o.attributes_values?._client_status || null,
-        total_amount:    Number(o.total_amount),
+        np_branch:        o.attributes_values?._np_branch || null,
+        next_contact_at:  o.next_contact_at || null,
+        contact_attempts: o.contact_attempts || 0,
+        total_amount:     Number(o.total_amount),
         paid_amount:     Number(o.paid_amount || 0),
         payment_status:  o.payment_status || 'unpaid',
         prepayment_percent: o.prepayment_percent ? Number(o.prepayment_percent) : null,
@@ -862,6 +954,7 @@ const loadData = async () => {
       if (form.product_id) await onProductChange(form.product_id)
       const cp = counterparties.value.find(c => c.id === form.counterparty_id)
       if (cp) { clientName.value = cp.name; clientPhone.value = cp.phone || '' }
+      await loadContacts()
     }
   } catch {
     ElMessage.error('Помилка завантаження')
@@ -1119,16 +1212,48 @@ onMounted(loadData)
 .pp-urgent.active   { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 .pp-critical.active { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
 
-/* ─── Client status pills ────────────────────────────────────────────────── */
-.client-status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.client-status-pill {
-  padding: 5px 14px; border-radius: 99px; border: 1.5px solid #e2e8f0;
+/* ─── Communication section ──────────────────────────────────────────────── */
+.comm-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.attempts-badge {
+  font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px;
+  background: #fee2e2; color: #991b1b;
+}
+.contact-result-list { display: flex; flex-direction: column; gap: 5px; }
+.contact-result-btn {
+  width: 100%; text-align: left;
+  padding: 7px 12px; border-radius: 8px; border: 1.5px solid #e2e8f0;
   background: #f8fafc; font-size: 12px; font-weight: 500; color: #475569;
   cursor: pointer; transition: all 0.12s;
 }
-.csp-thinking.active   { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
-.csp-ordered.active    { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
-.csp-processing.active { background: #e0e7ff; border-color: #a5b4fc; color: #3730a3; }
+.contact-result-btn:hover { border-color: #c7d2fe; background: #eef2ff; }
+.cr-no_answer.active  { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+.cr-thinking.active   { background: #fefce8; border-color: #fde047; color: #854d0e; }
+.cr-refused.active    { background: #fff1f2; border-color: #fca5a5; color: #9f1239; }
+.cr-confirmed.active  { background: #f0fdf4; border-color: #86efac; color: #166534; }
+
+.log-contact-btn {
+  width: 100%; margin-top: 8px;
+  padding: 8px 14px; border-radius: 8px; border: none;
+  background: #6366f1; color: #fff; font-size: 12px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.log-contact-btn:hover:not(:disabled) { background: #4f46e5; }
+.log-contact-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.contact-history-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 8px; border-radius: 7px; margin-bottom: 4px;
+  font-size: 12px; background: #f8fafc;
+}
+.chi-no_answer  { background: #fff7ed; }
+.chi-thinking   { background: #fefce8; }
+.chi-refused    { background: #fff1f2; }
+.chi-confirmed  { background: #f0fdf4; }
+.chi-icon       { font-size: 14px; flex-shrink: 0; }
+.chi-body       { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.chi-label      { font-weight: 600; color: #1e293b; }
+.chi-note       { color: #64748b; font-size: 11px; }
+.chi-time       { font-size: 10px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
 
 /* ─── History ─────────────────────────────────────────────────────────────── */
 .history-list { display: flex; flex-direction: column; gap: 6px; }
