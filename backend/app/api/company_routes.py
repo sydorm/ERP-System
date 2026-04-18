@@ -16,10 +16,20 @@ async def get_companies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all companies accessible to the user."""
-    # For now, return all companies since multi-tenant logic is being implemented
-    # Ideally, filter by user access
-    return db.query(Company).all()
+    import traceback as tb
+    try:
+        companies = db.query(Company).all()
+        result = []
+        for c in companies:
+            try:
+                result.append(CompanyResponse.model_validate(c))
+            except Exception as ve:
+                raise HTTPException(status_code=500, detail=f"Validation error on company {c.id}: {str(ve)}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DB error: {str(e)}\n{tb.format_exc()}")
 
 @router.get("/my", response_model=List[CompanyResponse])
 async def get_my_companies(
