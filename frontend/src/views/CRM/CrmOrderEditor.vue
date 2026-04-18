@@ -436,7 +436,7 @@ import { ElMessage } from 'element-plus'
 import {
   ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock
 } from '@element-plus/icons-vue'
-import apiClient from '@/api/index.js'
+import api from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const router    = useRouter()
@@ -593,7 +593,7 @@ const onProductChange = async (productId) => {
     // Fetch category attributes for this product
     const product = products.value.find(p => p.id === productId)
     if (product?.category) {
-      const res = await apiClient.get(`/attributes/category/${product.category}`)
+      const res = await api.get(`/api/v1/attributes/category/${product.category}`)
       productAttributes.value = res.data?.filter(a => !a.is_archived) || []
     }
   } catch { /* no attributes */ }
@@ -608,11 +608,11 @@ const checkMaterials = async (productId) => {
   try {
     const pid = orderId.value || 'new'
     if (orderId.value) {
-      const res = await apiClient.get(`/orders/${orderId.value}/material-check?product_id=${productId}`)
+      const res = await api.get(`/api/v1/orders/${orderId.value}/material-check?product_id=${productId}`)
       Object.assign(materialCheck, res.data)
     } else {
       // For new orders, fetch spec directly
-      const specRes = await apiClient.get(`/products/${productId}/specifications`)
+      const specRes = await api.get(`/api/v1/products/${productId}/specifications`)
       const specs = specRes.data || []
       const defaultSpec = specs.find(s => s.is_default && s.is_active) || specs[0]
       if (!defaultSpec?.items?.length) { materialsLoading.value = false; return }
@@ -621,7 +621,7 @@ const checkMaterials = async (productId) => {
       const items = []
       let hasIssues = false
       for (const item of defaultSpec.items) {
-        const stockRes = await apiClient.get(`/products/${item.component_id}/stock`)
+        const stockRes = await api.get(`/api/v1/products/${item.component_id}/stock`)
         const avail = stockRes.data?.total_quantity || 0
         const req = Number(item.quantity)
         const st = avail >= req ? 'ok' : avail > 0 ? 'low' : 'missing'
@@ -652,7 +652,7 @@ const uploadPhoto = async (e) => {
   const fd = new FormData()
   fd.append('file', file)
   try {
-    const res = await apiClient.post('/upload/image', fd)
+    const res = await api.post('/api/v1/upload/image', fd)
     form.reference_photo = res.data.url
   } catch {
     ElMessage.error('Помилка завантаження фото')
@@ -664,7 +664,7 @@ const createNewClient = async () => {
   if (!newClient.name) { ElMessage.warning('Вкажіть ім\'я'); return }
   savingClient.value = true
   try {
-    const res = await apiClient.post('/counterparties', {
+    const res = await api.post('/api/v1/counterparties', {
       name: newClient.name,
       phone: newClient.phone,
       email: newClient.email,
@@ -695,7 +695,7 @@ const save = async (action) => {
   // Auto-pick warehouse if not set
   if (!form.warehouse_id) {
     try {
-      const wRes = await apiClient.get('/warehouses?limit=1')
+      const wRes = await api.get('/api/v1/warehouses?limit=1')
       if (wRes.data?.[0]) form.warehouse_id = wRes.data[0].id
       else { ElMessage.warning('Не знайдено жодного складу'); return }
     } catch { ElMessage.warning('Не вдалося отримати склад'); return }
@@ -737,17 +737,17 @@ const save = async (action) => {
     // 1. Save / update the order
     let savedOrder
     if (orderId.value) {
-      const res = await apiClient.put(`/orders/${orderId.value}`, payload)
+      const res = await api.put(`/api/v1/orders/${orderId.value}`, payload)
       savedOrder = res.data
     } else {
-      const res = await apiClient.post('/orders', payload)
+      const res = await api.post('/api/v1/orders', payload)
       savedOrder = res.data
     }
 
     // 2. If "send to production" — call dedicated endpoint that sets stage + creates ProductionOrder
     if (action === 'production') {
       try {
-        const prodRes = await apiClient.post(`/orders/${savedOrder.id}/send-to-production`)
+        const prodRes = await api.post(`/api/v1/orders/${savedOrder.id}/send-to-production`)
         ElMessage.success(`Передано у виробництво! Завдання ${prodRes.data.production_order_number} створено`)
         router.push(`/production/orders/${prodRes.data.production_order_id}`)
         return
@@ -772,16 +772,16 @@ const loadData = async () => {
   loading.value = true
   try {
     const [pRes, cpRes, usersRes] = await Promise.allSettled([
-      apiClient.get('/products?limit=500'),
-      apiClient.get('/counterparties?limit=500&is_customer=true'),
-      apiClient.get('/users/colleagues'),
+      api.get('/api/v1/products?limit=500'),
+      api.get('/api/v1/counterparties?limit=500&is_customer=true'),
+      api.get('/api/v1/users/colleagues'),
     ])
     products.value       = pRes.status       === 'fulfilled' ? pRes.value.data       : []
     counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
     users.value          = usersRes.status   === 'fulfilled' ? usersRes.value.data   : []
 
     if (orderId.value) {
-      const res = await apiClient.get(`/orders/${orderId.value}`)
+      const res = await api.get(`/api/v1/orders/${orderId.value}`)
       const o = res.data
       Object.assign(form, {
         order_number:    o.order_number,

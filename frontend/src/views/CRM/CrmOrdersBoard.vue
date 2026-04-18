@@ -134,7 +134,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, Bell, Clock, User } from '@element-plus/icons-vue'
-import apiClient from '@/api/index.js'
+import api from '@/api'
 
 const router = useRouter()
 
@@ -262,7 +262,7 @@ const onDrop = async (targetStage) => {
   order.crm_stage = targetStage // optimistic update
 
   try {
-    await apiClient.patch(`/orders/${order.id}/stage?stage=${targetStage}`)
+    await api.patch(`/api/v1/orders/${order.id}/stage?stage=${targetStage}`)
   } catch {
     order.crm_stage = prevStage
     ElMessage.error('Не вдалося змінити етап')
@@ -280,9 +280,9 @@ const fetchAll = async () => {
   loading.value = true
   try {
     const [ordersRes, cpRes, usersRes] = await Promise.allSettled([
-      apiClient.get('/orders?limit=500'),
-      apiClient.get('/counterparties?limit=500'),
-      apiClient.get('/users/colleagues'),
+      api.get('/api/v1/orders?limit=500'),
+      api.get('/api/v1/counterparties?limit=500'),
+      api.get('/api/v1/users/colleagues'),
     ])
     orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
     counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
