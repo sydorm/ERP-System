@@ -81,8 +81,8 @@ class Order(BaseModel):
     company = relationship("Company", back_populates="orders")
     counterparty = relationship("Counterparty", back_populates="orders")
     warehouse = relationship("Warehouse", back_populates="orders")
-    created_by_user = relationship("User", back_populates="created_orders", foreign_keys=[created_by])
-    manager = relationship("User", foreign_keys=[manager_id])
+    created_by_user = relationship("User", back_populates="created_orders", foreign_keys=[created_by], overlaps="manager")
+    manager = relationship("User", foreign_keys=[manager_id], overlaps="created_by_user,created_orders")
     lines = relationship("OrderLine", back_populates="order", cascade="all, delete-orphan")
 
     def __repr__(self):

@@ -33,7 +33,7 @@ class User(BaseModel):
     
     # Relationships
     company = relationship("Company", back_populates="users")
-    created_orders = relationship("Order", back_populates="created_by_user", foreign_keys="Order.created_by")
+    created_orders = relationship("Order", back_populates="created_by_user", foreign_keys="Order.created_by", overlaps="manager")
     
     @property
     def full_name(self) -> str:
