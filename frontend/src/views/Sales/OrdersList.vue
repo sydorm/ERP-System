@@ -284,11 +284,9 @@
         <!-- Shipping date (відвантаження) -->
         <el-table-column label="Відвантаження" width="130" align="center" v-if="colVisible('shipping_date')" :fixed="colFixed('shipping_date')">
           <template #default="{ row }">
-            <div v-if="row.shipping_date" class="date-cell" :class="getDateClass(row.shipping_date)">
+            <div v-if="row.shipping_date" class="date-cell" :class="getDateClass(row.shipping_date)" :title="getDateTitle(row.shipping_date)">
+              <span class="date-cell-dot" v-if="getDateClass(row.shipping_date)" />
               <span class="date-cell-text">{{ formatDate(row.shipping_date) }}</span>
-              <span class="date-cell-hint date-hint-overdue" v-if="getDateClass(row.shipping_date) === 'date-overdue'">протерм.</span>
-              <span class="date-cell-hint date-hint-today"   v-else-if="getDateClass(row.shipping_date) === 'date-today'">сьогодні</span>
-              <span class="date-cell-hint date-hint-soon"    v-else-if="getDateClass(row.shipping_date) === 'date-soon'">скоро</span>
             </div>
             <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
           </template>
@@ -297,11 +295,9 @@
         <!-- Delivery date -->
         <el-table-column label="Доставка" width="115" align="center" v-if="colVisible('delivery_date')" :fixed="colFixed('delivery_date')">
           <template #default="{ row }">
-            <div v-if="row.delivery_date" class="date-cell" :class="getDateClass(row.delivery_date)">
+            <div v-if="row.delivery_date" class="date-cell" :class="getDateClass(row.delivery_date)" :title="getDateTitle(row.delivery_date)">
+              <span class="date-cell-dot" v-if="getDateClass(row.delivery_date)" />
               <span class="date-cell-text">{{ formatDate(row.delivery_date) }}</span>
-              <span class="date-cell-hint date-hint-overdue" v-if="getDateClass(row.delivery_date) === 'date-overdue'">протерм.</span>
-              <span class="date-cell-hint date-hint-today"   v-else-if="getDateClass(row.delivery_date) === 'date-today'">сьогодні</span>
-              <span class="date-cell-hint date-hint-soon"    v-else-if="getDateClass(row.delivery_date) === 'date-soon'">скоро</span>
             </div>
             <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
           </template>
@@ -825,6 +821,15 @@ const getDateClass = (dateStr) => {
   return ''
 }
 
+const getDateTitle = (dateStr) => {
+  if (!dateStr) return ''
+  const diff = Math.floor((new Date(dateStr) - new Date().setHours(0,0,0,0)) / 86400000)
+  if (diff < 0) return `Протерміновано на ${Math.abs(diff)} дн.`
+  if (diff === 0) return 'Сьогодні'
+  if (diff <= 3) return `Через ${diff} дн.`
+  return formatDate(dateStr)
+}
+
 const getStatusStyle = (code) => {
   const s = orderStatuses.value.find(i => i.code === code)
   const color = s?.color || 'gray'
@@ -1343,23 +1348,25 @@ const getTimeline = (order) => {
 
 /* ===== DATE CELL HIGHLIGHTING ===== */
 .date-cell {
-  display: inline-flex; flex-direction: column; align-items: center;
-  gap: 1px; border-radius: 5px; padding: 2px 7px;
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 5px; padding: 3px 8px; cursor: default;
 }
 .date-cell-text { font-size: 12px; font-weight: 500; color: #475569; }
-.date-cell-hint { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.date-cell-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
 
 .date-overdue { background: #fff1f2; }
-.date-overdue .date-cell-text { color: #dc2626; }
-.date-hint-overdue { color: #dc2626; }
+.date-overdue .date-cell-text { color: #dc2626; font-weight: 600; }
+.date-overdue .date-cell-dot { background: #dc2626; }
 
 .date-today { background: #fff7ed; }
 .date-today .date-cell-text { color: #ea580c; font-weight: 700; }
-.date-hint-today { color: #ea580c; }
+.date-today .date-cell-dot { background: #ea580c; }
 
 .date-soon { background: #fefce8; }
-.date-soon .date-cell-text { color: #ca8a04; }
-.date-hint-soon { color: #ca8a04; }
+.date-soon .date-cell-text { color: #ca8a04; font-weight: 600; }
+.date-soon .date-cell-dot { background: #ca8a04; }
 
 /* ===== COLUMN SETTINGS PANEL ===== */
 .col-settings-panel { user-select: none; }
