@@ -29,6 +29,11 @@
           <el-menu-item index="/inventory/stock" v-if="userStore.hasPermission('inventory.stock.view')">Залишки</el-menu-item>
         </el-sub-menu>
 
+        <el-menu-item index="/crm">
+          <el-icon><Tickets /></el-icon>
+          <template #title>CRM</template>
+        </el-menu-item>
+
         <el-sub-menu index="sales" v-if="userStore.hasPermission('sales.view')">
           <template #title>
             <el-icon><ShoppingCart /></el-icon>
@@ -189,7 +194,8 @@ import {
   UserFilled,
   SwitchButton,
   Monitor,
-  Tools
+  Tools,
+  Tickets
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
