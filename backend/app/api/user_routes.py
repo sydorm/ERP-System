@@ -13,13 +13,22 @@ from app.schemas import (
     UserCreate, UserResponse, UserUpdate, UserInDB
 )
 from app.core.security import get_password_hash
-from app.api.dependencies import get_current_admin_user
+from app.api.dependencies import get_current_admin_user, get_current_active_user
 from app.services.mail_service import send_new_password_email
 from app.services.audit_service import create_audit_log
 import secrets
 import string
 
 router = APIRouter()
+
+
+@router.get("/users/colleagues", response_model=List[UserResponse])
+async def read_colleagues(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Return all users in the same company (available to any authenticated user)."""
+    return db.query(User).filter(User.company_id == current_user.company_id).all()
 
 
 @router.get("/users", response_model=List[UserResponse])

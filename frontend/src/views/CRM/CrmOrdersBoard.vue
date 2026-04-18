@@ -279,16 +279,16 @@ const openNewOrderInStage = (stage) => router.push(`/crm/orders/new?stage=${stag
 const fetchAll = async () => {
   loading.value = true
   try {
-    const [ordersRes, cpRes, usersRes] = await Promise.all([
+    const [ordersRes, cpRes, usersRes] = await Promise.allSettled([
       apiClient.get('/orders?limit=500'),
       apiClient.get('/counterparties?limit=500'),
-      apiClient.get('/users?limit=200'),
+      apiClient.get('/users/colleagues'),
     ])
-    orders.value       = ordersRes.data
-    counterparties.value = cpRes.data
-    users.value        = usersRes.data
-  } catch {
-    ElMessage.error('Помилка завантаження даних')
+    orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
+    counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
+    users.value          = usersRes.status === 'fulfilled' ? usersRes.value.data : []
+  } catch (e) {
+    ElMessage.error('Помилка завантаження даних: ' + (e?.response?.data?.detail || e?.message || ''))
   } finally {
     loading.value = false
   }

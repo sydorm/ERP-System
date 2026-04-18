@@ -754,7 +754,7 @@ const loadData = async () => {
     const [pRes, cpRes, usersRes] = await Promise.all([
       apiClient.get('/products?limit=500&is_active=true'),
       apiClient.get('/counterparties?limit=500&is_customer=true'),
-      apiClient.get('/users?limit=200'),
+      apiClient.get('/users/colleagues'),
     ])
     products.value       = pRes.data
     counterparties.value = cpRes.data
