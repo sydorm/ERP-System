@@ -90,6 +90,43 @@
           <span class="adv-btn-label">Фільтри</span>
           <span class="adv-count-badge" v-if="advancedFiltersCount">{{ advancedFiltersCount }}</span>
         </button>
+        <el-popover trigger="click" placement="bottom-end" :width="290" popper-class="col-settings-popper">
+          <template #reference>
+            <button
+              class="kimi-adv-btn"
+              :class="{ active: columnConfig.some(c => c.fixed && !c.required) }"
+              title="Налаштування стовпців"
+            >
+              <el-icon><Setting /></el-icon>
+              <span class="adv-btn-label">Стовпці</span>
+            </button>
+          </template>
+          <div class="col-settings-panel">
+            <div class="col-settings-header">
+              <span class="col-settings-title">Стовпці таблиці</span>
+              <el-button size="small" link @click="resetColConfig">Скинути</el-button>
+            </div>
+            <div class="col-settings-list">
+              <div v-for="col in columnConfig" :key="col.key" class="col-settings-row">
+                <el-switch v-model="col.visible" :disabled="col.required" size="small" @change="saveColConfig" />
+                <span class="col-settings-label" :class="{ 'col-required': col.required }">{{ col.label }}</span>
+                <button
+                  v-if="col.visible && !col.required"
+                  class="col-pin-btn"
+                  :class="{ active: col.fixed }"
+                  @click="col.fixed = !col.fixed; saveColConfig()"
+                  title="Закріпити зліва"
+                >
+                  <el-icon><Lock /></el-icon>
+                  {{ col.fixed ? 'Закріплено' : 'Закріпити' }}
+                </button>
+              </div>
+            </div>
+            <div class="col-settings-hint">
+              <el-icon><Lock /></el-icon> — зафіксувати стовпець зліва при прокручуванні
+            </div>
+          </div>
+        </el-popover>
         <el-button class="kimi-refresh-btn" @click="fetchOrders" title="Оновити">
           <el-icon><Refresh /></el-icon>
         </el-button>
@@ -192,7 +229,7 @@
         </el-table-column>
 
         <!-- Order number + date combined -->
-        <el-table-column label="Номер / Дата" width="160" sortable="custom" prop="order_number">
+        <el-table-column label="Номер / Дата" width="160" sortable="custom" prop="order_number" :fixed="colFixed('order_number')">
           <template #default="{ row }">
             <div>
               <p class="kimi-text-sm kimi-font-medium kimi-text-indigo-600">{{ row.order_number }}</p>
@@ -201,7 +238,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Клієнт" min-width="200">
+        <el-table-column label="Клієнт" min-width="200" v-if="colVisible('client')" :fixed="colFixed('client')">
           <template #default="{ row }">
             <div>
               <p class="kimi-text-sm kimi-font-medium">{{ getCounterpartyName(row.counterparty_id) || '—' }}</p>
@@ -210,7 +247,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Статус" width="155" align="center">
+        <el-table-column label="Статус" width="155" align="center" v-if="colVisible('status')" :fixed="colFixed('status')">
           <template #default="{ row }">
             <span class="kimi-badge" :class="getStatusBadgeClass(row.status)">
               <el-icon class="kimi-badge-icon" v-if="getStatusIcon(row.status)"><component :is="getStatusIcon(row.status)" /></el-icon>
@@ -220,7 +257,7 @@
         </el-table-column>
 
         <!-- Payment -->
-        <el-table-column label="Оплата" width="155" align="center">
+        <el-table-column label="Оплата" width="155" align="center" v-if="colVisible('payment')" :fixed="colFixed('payment')">
           <template #default="{ row }">
             <div class="kimi-payment-col">
               <span class="kimi-badge" :class="getPaymentBadgeClass(row)">
@@ -233,7 +270,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom">
+        <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom" v-if="colVisible('total_amount')" :fixed="colFixed('total_amount')">
           <template #default="{ row }">
             <div>
               <p class="kimi-text-sm kimi-font-medium">{{ formatCurrency(row.total_amount) }} ₴</p>
@@ -244,10 +281,28 @@
           </template>
         </el-table-column>
 
-        <!-- Delivery date -->
-        <el-table-column label="Доставка" width="115" align="center">
+        <!-- Shipping date (відвантаження) -->
+        <el-table-column label="Відвантаження" width="130" align="center" v-if="colVisible('shipping_date')" :fixed="colFixed('shipping_date')">
           <template #default="{ row }">
-            <span class="kimi-text-xs" v-if="row.delivery_date">{{ formatDate(row.delivery_date) }}</span>
+            <div v-if="row.shipping_date" class="date-cell" :class="getDateClass(row.shipping_date)">
+              <span class="date-cell-text">{{ formatDate(row.shipping_date) }}</span>
+              <span class="date-cell-hint date-hint-overdue" v-if="getDateClass(row.shipping_date) === 'date-overdue'">протерм.</span>
+              <span class="date-cell-hint date-hint-today"   v-else-if="getDateClass(row.shipping_date) === 'date-today'">сьогодні</span>
+              <span class="date-cell-hint date-hint-soon"    v-else-if="getDateClass(row.shipping_date) === 'date-soon'">скоро</span>
+            </div>
+            <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
+          </template>
+        </el-table-column>
+
+        <!-- Delivery date -->
+        <el-table-column label="Доставка" width="115" align="center" v-if="colVisible('delivery_date')" :fixed="colFixed('delivery_date')">
+          <template #default="{ row }">
+            <div v-if="row.delivery_date" class="date-cell" :class="getDateClass(row.delivery_date)">
+              <span class="date-cell-text">{{ formatDate(row.delivery_date) }}</span>
+              <span class="date-cell-hint date-hint-overdue" v-if="getDateClass(row.delivery_date) === 'date-overdue'">протерм.</span>
+              <span class="date-cell-hint date-hint-today"   v-else-if="getDateClass(row.delivery_date) === 'date-today'">сьогодні</span>
+              <span class="date-cell-hint date-hint-soon"    v-else-if="getDateClass(row.delivery_date) === 'date-soon'">скоро</span>
+            </div>
             <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
           </template>
         </el-table-column>
@@ -354,7 +409,7 @@ import { useRouter } from 'vue-router'
 import {
   Plus, Search, Download, MoreFilled,
   Document, Wallet, Check, Close, Select,
-  Clock, Refresh, View, Edit, Delete, Printer, Filter
+  Clock, Refresh, View, Edit, Delete, Printer, Filter, Setting, Lock
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -382,6 +437,29 @@ const showAdvancedFilters = ref(false)
 const paymentFilter = ref('')
 const amountMin = ref(null)
 const amountMax = ref(null)
+
+// ===== COLUMN CONFIG =====
+const COL_DEFAULTS = [
+  { key: 'order_number', label: 'Номер / Дата',    visible: true,  fixed: true,  required: true },
+  { key: 'client',       label: 'Клієнт',           visible: true,  fixed: false },
+  { key: 'status',       label: 'Статус',           visible: true,  fixed: false },
+  { key: 'payment',      label: 'Оплата',           visible: true,  fixed: false },
+  { key: 'total_amount', label: 'Сума',             visible: true,  fixed: false },
+  { key: 'shipping_date',label: 'Відвантаження',    visible: false, fixed: false },
+  { key: 'delivery_date',label: 'Доставка',         visible: true,  fixed: false },
+]
+const COLS_STORAGE_KEY = 'erp_orders_cols_v1'
+const columnConfig = ref((() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(COLS_STORAGE_KEY))
+    if (Array.isArray(saved) && saved.length === COL_DEFAULTS.length) return saved
+  } catch {}
+  return COL_DEFAULTS.map(c => ({ ...c }))
+})())
+const colVisible = (key) => columnConfig.value.find(c => c.key === key)?.visible ?? true
+const colFixed  = (key) => (columnConfig.value.find(c => c.key === key)?.fixed ? 'left' : undefined)
+const saveColConfig  = () => localStorage.setItem(COLS_STORAGE_KEY, JSON.stringify(columnConfig.value))
+const resetColConfig = () => { columnConfig.value = COL_DEFAULTS.map(c => ({ ...c })); saveColConfig() }
 
 // ===== COMPUTED =====
 const filteredOrders = computed(() => {
@@ -736,6 +814,15 @@ const getPaymentLabel = (row) => {
   if (paid >= total) return 'Оплачено'
   if (paid > 0) return 'Частково'
   return 'Не оплачено'
+}
+
+const getDateClass = (dateStr) => {
+  if (!dateStr) return ''
+  const diff = Math.floor((new Date(dateStr) - new Date().setHours(0,0,0,0)) / 86400000)
+  if (diff < 0) return 'date-overdue'
+  if (diff === 0) return 'date-today'
+  if (diff <= 3) return 'date-soon'
+  return ''
 }
 
 const getStatusStyle = (code) => {
@@ -1253,6 +1340,55 @@ const getTimeline = (order) => {
 }
 .kimi-ghost-btn:hover { background: #f1f5f9; }
 .kimi-ghost-btn .el-icon { font-size: 16px; }
+
+/* ===== DATE CELL HIGHLIGHTING ===== */
+.date-cell {
+  display: inline-flex; flex-direction: column; align-items: center;
+  gap: 1px; border-radius: 5px; padding: 2px 7px;
+}
+.date-cell-text { font-size: 12px; font-weight: 500; color: #475569; }
+.date-cell-hint { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.date-overdue { background: #fff1f2; }
+.date-overdue .date-cell-text { color: #dc2626; }
+.date-hint-overdue { color: #dc2626; }
+
+.date-today { background: #fff7ed; }
+.date-today .date-cell-text { color: #ea580c; font-weight: 700; }
+.date-hint-today { color: #ea580c; }
+
+.date-soon { background: #fefce8; }
+.date-soon .date-cell-text { color: #ca8a04; }
+.date-hint-soon { color: #ca8a04; }
+
+/* ===== COLUMN SETTINGS PANEL ===== */
+.col-settings-panel { user-select: none; }
+.col-settings-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;
+}
+.col-settings-title { font-size: 13px; font-weight: 600; color: #374151; }
+.col-settings-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.col-settings-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px; border-radius: 6px; transition: background 0.12s;
+}
+.col-settings-row:hover { background: #f8fafc; }
+.col-settings-label { flex: 1; font-size: 13px; color: #374151; }
+.col-settings-label.col-required { color: #94a3b8; font-style: italic; }
+.col-pin-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid #e2e8f0; border-radius: 5px; background: #fff;
+  padding: 2px 8px; cursor: pointer; font-size: 11px; color: #94a3b8;
+  transition: all 0.15s; white-space: nowrap;
+}
+.col-pin-btn:hover { border-color: #6366f1; color: #6366f1; }
+.col-pin-btn.active { border-color: #6366f1; background: #eef2ff; color: #4f46e5; font-weight: 600; }
+.col-settings-hint {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #94a3b8; padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
 
 /* ===== DATE PICKER ===== */
 .kimi-date-picker { width: 220px !important; flex-shrink: 0; }
