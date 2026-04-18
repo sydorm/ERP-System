@@ -107,7 +107,18 @@
               <el-button size="small" link @click="resetColConfig">Скинути</el-button>
             </div>
             <div class="col-settings-list">
-              <div v-for="col in columnConfig" :key="col.key" class="col-settings-row">
+              <div
+                v-for="(col, index) in columnConfig"
+                :key="col.key"
+                class="col-settings-row"
+                :class="{ 'drag-over': colDragOver === index && colDragFrom !== index }"
+                draggable="true"
+                @dragstart="onColDragStart(index)"
+                @dragover.prevent="onColDragOver(index)"
+                @drop.prevent="onColDrop(index)"
+                @dragend="onColDragEnd"
+              >
+                <span class="col-drag-handle" title="Перетягнути">⠿</span>
                 <el-switch v-model="col.visible" :disabled="col.required" size="small" @change="saveColConfig" />
                 <span class="col-settings-label" :class="{ 'col-required': col.required }">{{ col.label }}</span>
                 <button
@@ -209,6 +220,7 @@
       <el-table
         v-loading="loading"
         :data="filteredOrders"
+        :key="columnConfigKey"
         height="100%"
         size="small"
         style="width: 100%"
@@ -221,89 +233,95 @@
       >
         <el-table-column type="selection" width="40" align="center" />
 
-        <!-- Row # -->
-        <el-table-column label="№" width="46" align="center">
-          <template #default="{ $index }">
-            <span class="kimi-text-xs kimi-text-slate-400">{{ (currentPage - 1) * pageSize + $index + 1 }}</span>
-          </template>
-        </el-table-column>
+        <template v-for="col in visibleColumns" :key="col.key">
 
-        <!-- Order number + date combined -->
-        <el-table-column label="Номер / Дата" width="160" sortable="custom" prop="order_number" :fixed="colFixed('order_number')">
-          <template #default="{ row }">
-            <div>
-              <p class="kimi-text-sm kimi-font-medium kimi-text-indigo-600">{{ row.order_number }}</p>
-              <p class="kimi-text-xxs kimi-text-slate-400">{{ formatDate(row.order_date) }}</p>
-            </div>
-          </template>
-        </el-table-column>
+          <!-- Row # -->
+          <el-table-column v-if="col.key === 'row_num'" label="№" width="46" align="center" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ $index }">
+              <span class="kimi-text-xs kimi-text-slate-400">{{ (currentPage - 1) * pageSize + $index + 1 }}</span>
+            </template>
+          </el-table-column>
 
-        <el-table-column label="Клієнт" min-width="200" v-if="colVisible('client')" :fixed="colFixed('client')">
-          <template #default="{ row }">
-            <div>
-              <p class="kimi-text-sm kimi-font-medium">{{ getCounterpartyName(row.counterparty_id) || '—' }}</p>
-              <p class="kimi-text-xxs kimi-text-slate-400">{{ getCounterpartyPhone(row.counterparty_id) || '—' }}</p>
-            </div>
-          </template>
-        </el-table-column>
+          <!-- Order number + date -->
+          <el-table-column v-else-if="col.key === 'order_number'" label="Номер / Дата" width="160" sortable="custom" prop="order_number" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div>
+                <p class="kimi-text-sm kimi-font-medium kimi-text-indigo-600">{{ row.order_number }}</p>
+                <p class="kimi-text-xxs kimi-text-slate-400">{{ formatDate(row.order_date) }}</p>
+              </div>
+            </template>
+          </el-table-column>
 
-        <el-table-column label="Статус" width="155" align="center" v-if="colVisible('status')" :fixed="colFixed('status')">
-          <template #default="{ row }">
-            <span class="kimi-badge" :class="getStatusBadgeClass(row.status)">
-              <el-icon class="kimi-badge-icon" v-if="getStatusIcon(row.status)"><component :is="getStatusIcon(row.status)" /></el-icon>
-              {{ getStatusLabel(row.status) }}
-            </span>
-          </template>
-        </el-table-column>
+          <!-- Client -->
+          <el-table-column v-else-if="col.key === 'client'" label="Клієнт" min-width="200" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div>
+                <p class="kimi-text-sm kimi-font-medium">{{ getCounterpartyName(row.counterparty_id) || '—' }}</p>
+                <p class="kimi-text-xxs kimi-text-slate-400">{{ getCounterpartyPhone(row.counterparty_id) || '—' }}</p>
+              </div>
+            </template>
+          </el-table-column>
 
-        <!-- Payment -->
-        <el-table-column label="Оплата" width="155" align="center" v-if="colVisible('payment')" :fixed="colFixed('payment')">
-          <template #default="{ row }">
-            <div class="kimi-payment-col">
-              <span class="kimi-badge" :class="getPaymentBadgeClass(row)">
-                {{ getPaymentLabel(row) }}
+          <!-- Status -->
+          <el-table-column v-else-if="col.key === 'status'" label="Статус" width="155" align="center" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <span class="kimi-badge" :class="getStatusBadgeClass(row.status)">
+                <el-icon class="kimi-badge-icon" v-if="getStatusIcon(row.status)"><component :is="getStatusIcon(row.status)" /></el-icon>
+                {{ getStatusLabel(row.status) }}
               </span>
-              <p class="kimi-text-xxs kimi-text-slate-400 kimi-mt-1" v-if="row.paid_amount > 0">
-                {{ formatCurrency(row.paid_amount) }} / {{ formatCurrency(row.total_amount) }} ₴
-              </p>
-            </div>
-          </template>
-        </el-table-column>
+            </template>
+          </el-table-column>
 
-        <el-table-column prop="total_amount" label="Сума" width="140" align="right" sortable="custom" v-if="colVisible('total_amount')" :fixed="colFixed('total_amount')">
-          <template #default="{ row }">
-            <div>
-              <p class="kimi-text-sm kimi-font-medium">{{ formatCurrency(row.total_amount) }} ₴</p>
-              <p class="kimi-text-xxs kimi-text-emerald-600" v-if="(row.discount_amount || 0) > 0">
-                - {{ formatCurrency(row.discount_amount) }} ₴
-              </p>
-            </div>
-          </template>
-        </el-table-column>
+          <!-- Payment -->
+          <el-table-column v-else-if="col.key === 'payment'" label="Оплата" width="155" align="center" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div class="kimi-payment-col">
+                <span class="kimi-badge" :class="getPaymentBadgeClass(row)">{{ getPaymentLabel(row) }}</span>
+                <p class="kimi-text-xxs kimi-text-slate-400 kimi-mt-1" v-if="row.paid_amount > 0">
+                  {{ formatCurrency(row.paid_amount) }} / {{ formatCurrency(row.total_amount) }} ₴
+                </p>
+              </div>
+            </template>
+          </el-table-column>
 
-        <!-- Shipping date (відвантаження) -->
-        <el-table-column label="Відвантаження" width="130" align="center" v-if="colVisible('shipping_date')" :fixed="colFixed('shipping_date')">
-          <template #default="{ row }">
-            <div v-if="row.shipping_date" class="date-cell" :class="getDateClass(row.shipping_date)" :title="getDateTitle(row.shipping_date)">
-              <span class="date-cell-dot" v-if="getDateClass(row.shipping_date)" />
-              <span class="date-cell-text">{{ formatDate(row.shipping_date) }}</span>
-            </div>
-            <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
-          </template>
-        </el-table-column>
+          <!-- Total amount -->
+          <el-table-column v-else-if="col.key === 'total_amount'" prop="total_amount" label="Сума" width="140" align="right" sortable="custom" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div>
+                <p class="kimi-text-sm kimi-font-medium">{{ formatCurrency(row.total_amount) }} ₴</p>
+                <p class="kimi-text-xxs kimi-text-emerald-600" v-if="(row.discount_amount || 0) > 0">
+                  - {{ formatCurrency(row.discount_amount) }} ₴
+                </p>
+              </div>
+            </template>
+          </el-table-column>
 
-        <!-- Delivery date -->
-        <el-table-column label="Доставка" width="115" align="center" v-if="colVisible('delivery_date')" :fixed="colFixed('delivery_date')">
-          <template #default="{ row }">
-            <div v-if="row.delivery_date" class="date-cell" :class="getDateClass(row.delivery_date)" :title="getDateTitle(row.delivery_date)">
-              <span class="date-cell-dot" v-if="getDateClass(row.delivery_date)" />
-              <span class="date-cell-text">{{ formatDate(row.delivery_date) }}</span>
-            </div>
-            <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
-          </template>
-        </el-table-column>
+          <!-- Shipping date -->
+          <el-table-column v-else-if="col.key === 'shipping_date'" label="Відвантаження" width="130" align="center" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div v-if="row.shipping_date" class="date-cell" :class="getDateClass(row.shipping_date)" :title="getDateTitle(row.shipping_date)">
+                <span class="date-cell-dot" v-if="getDateClass(row.shipping_date)" />
+                <span class="date-cell-text">{{ formatDate(row.shipping_date) }}</span>
+              </div>
+              <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
+            </template>
+          </el-table-column>
 
-        <el-table-column label="Дії" width="120" align="center">
+          <!-- Delivery date -->
+          <el-table-column v-else-if="col.key === 'delivery_date'" label="Доставка" width="115" align="center" :fixed="col.fixed ? 'left' : undefined">
+            <template #default="{ row }">
+              <div v-if="row.delivery_date" class="date-cell" :class="getDateClass(row.delivery_date)" :title="getDateTitle(row.delivery_date)">
+                <span class="date-cell-dot" v-if="getDateClass(row.delivery_date)" />
+                <span class="date-cell-text">{{ formatDate(row.delivery_date) }}</span>
+              </div>
+              <span class="kimi-text-xs kimi-text-slate-400" v-else>—</span>
+            </template>
+          </el-table-column>
+
+        </template>
+
+        <!-- Actions — always last, fixed right -->
+        <el-table-column label="Дії" width="120" align="center" fixed="right">
           <template #default="{ row }">
             <div @click.stop class="kimi-actions-col">
               <button class="kimi-ghost-btn" @click.stop="() => { selectedOrder = row; drawerVisible = true }" title="Переглянути"><el-icon class="kimi-text-slate-400"><View /></el-icon></button>
@@ -436,7 +454,8 @@ const amountMax = ref(null)
 
 // ===== COLUMN CONFIG =====
 const COL_DEFAULTS = [
-  { key: 'order_number', label: 'Номер / Дата',    visible: true,  fixed: true,  required: true },
+  { key: 'row_num',      label: '№',               visible: true,  fixed: false, required: true },
+  { key: 'order_number', label: 'Номер / Дата',    visible: true,  fixed: false, required: true },
   { key: 'client',       label: 'Клієнт',           visible: true,  fixed: false },
   { key: 'status',       label: 'Статус',           visible: true,  fixed: false },
   { key: 'payment',      label: 'Оплата',           visible: true,  fixed: false },
@@ -444,7 +463,7 @@ const COL_DEFAULTS = [
   { key: 'shipping_date',label: 'Відвантаження',    visible: false, fixed: false },
   { key: 'delivery_date',label: 'Доставка',         visible: true,  fixed: false },
 ]
-const COLS_STORAGE_KEY = 'erp_orders_cols_v1'
+const COLS_STORAGE_KEY = 'erp_orders_cols_v2'
 const columnConfig = ref((() => {
   try {
     const saved = JSON.parse(localStorage.getItem(COLS_STORAGE_KEY))
@@ -452,10 +471,26 @@ const columnConfig = ref((() => {
   } catch {}
   return COL_DEFAULTS.map(c => ({ ...c }))
 })())
-const colVisible = (key) => columnConfig.value.find(c => c.key === key)?.visible ?? true
-const colFixed  = (key) => (columnConfig.value.find(c => c.key === key)?.fixed ? 'left' : undefined)
-const saveColConfig  = () => localStorage.setItem(COLS_STORAGE_KEY, JSON.stringify(columnConfig.value))
-const resetColConfig = () => { columnConfig.value = COL_DEFAULTS.map(c => ({ ...c })); saveColConfig() }
+const visibleColumns   = computed(() => columnConfig.value.filter(c => c.visible))
+const columnConfigKey  = computed(() => columnConfig.value.map(c => `${c.key}:${c.fixed}`).join(','))
+const saveColConfig    = () => localStorage.setItem(COLS_STORAGE_KEY, JSON.stringify(columnConfig.value))
+const resetColConfig   = () => { columnConfig.value = COL_DEFAULTS.map(c => ({ ...c })); saveColConfig() }
+
+// Drag-and-drop column reorder
+const colDragFrom = ref(null)
+const colDragOver = ref(null)
+const onColDragStart = (i)    => { colDragFrom.value = i }
+const onColDragOver  = (i)    => { colDragOver.value = i }
+const onColDragEnd   = ()     => { colDragFrom.value = null; colDragOver.value = null }
+const onColDrop      = (i)    => {
+  if (colDragFrom.value === null || colDragFrom.value === i) { onColDragEnd(); return }
+  const arr = [...columnConfig.value]
+  const [moved] = arr.splice(colDragFrom.value, 1)
+  arr.splice(i, 0, moved)
+  columnConfig.value = arr
+  saveColConfig()
+  onColDragEnd()
+}
 
 // ===== COMPUTED =====
 const filteredOrders = computed(() => {
@@ -1379,8 +1414,15 @@ const getTimeline = (order) => {
 .col-settings-row {
   display: flex; align-items: center; gap: 10px;
   padding: 6px 8px; border-radius: 6px; transition: background 0.12s;
+  cursor: default;
 }
 .col-settings-row:hover { background: #f8fafc; }
+.col-settings-row.drag-over { background: #e0e7ff; border: 1px dashed #6366f1; }
+.col-drag-handle {
+  cursor: grab; font-size: 16px; color: #94a3b8; line-height: 1;
+  user-select: none; flex-shrink: 0;
+}
+.col-drag-handle:active { cursor: grabbing; }
 .col-settings-label { flex: 1; font-size: 13px; color: #374151; }
 .col-settings-label.col-required { color: #94a3b8; font-style: italic; }
 .col-pin-btn {
