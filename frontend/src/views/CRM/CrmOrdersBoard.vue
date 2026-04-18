@@ -282,7 +282,7 @@ const fetchAll = async () => {
     const [ordersRes, cpRes, usersRes] = await Promise.allSettled([
       api.get('/api/v1/orders?limit=500'),
       api.get('/api/v1/counterparties?limit=500'),
-      api.get('/api/v1/users/colleagues'),
+      api.get('/users/colleagues'),
     ])
     orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
     counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []

@@ -774,7 +774,7 @@ const loadData = async () => {
     const [pRes, cpRes, usersRes] = await Promise.allSettled([
       api.get('/api/v1/products?limit=500'),
       api.get('/api/v1/counterparties?limit=500&is_customer=true'),
-      api.get('/api/v1/users/colleagues'),
+      api.get('/users/colleagues'),
     ])
     products.value       = pRes.status       === 'fulfilled' ? pRes.value.data       : []
     counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
