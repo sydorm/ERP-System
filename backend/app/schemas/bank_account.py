@@ -34,8 +34,14 @@ class BankAccountCreate(BankAccountBase):
 class BankAccountUpdate(BankAccountBase):
     pass
 
-class BankAccountResponse(BankAccountBase):
+class BankAccountResponse(BaseModel):
     id: UUID
     company_id: UUID
+    bank_name: Optional[str] = None
+    mfo: Optional[str] = None
+    iban: Optional[str] = None
+    currency: str = "UAH"
+    is_primary: bool = False
+    description: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

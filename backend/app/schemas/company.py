@@ -75,7 +75,7 @@ class CompanyResponse(CompanyBase):
     is_active: bool
     bank_accounts: List[BankAccountResponse] = []
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, revalidate_instances='never')
 
 # Schemas for Registration Flow
 class CompanyRegInfo(BaseModel):
