@@ -137,9 +137,7 @@
               :key="attr.id"
               class="attr-group"
             >
-              <label class="crm-label">
-                З картки товару: <strong>{{ attr.name }}</strong>
-              </label>
+              <label class="crm-label">{{ attr.name }}</label>
 
               <!-- SELECT / COLOR — pill chooser -->
               <div v-if="['SELECT', 'COLOR'].includes(attr.type)" class="attr-pills">
@@ -594,7 +592,9 @@ const onProductChange = async (productId) => {
     const product = products.value.find(p => p.id === productId)
     if (product?.category) {
       const res = await api.get(`/api/v1/attributes/category/${product.category}`)
-      productAttributes.value = res.data?.filter(a => !a.is_archived) || []
+      productAttributes.value = res.data
+        ?.map(ca => ca.attribute)
+        .filter(a => a && !a.is_archived) || []
     }
   } catch { /* no attributes */ }
 
