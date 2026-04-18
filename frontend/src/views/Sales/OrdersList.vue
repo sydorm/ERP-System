@@ -62,16 +62,38 @@
           v-model="activeTab"
           placeholder="Всі статуси"
           clearable
-          style="width:160px"
+          style="width:150px"
           @change="(v) => setTab(v || '')"
           class="kimi-status-select"
         >
           <el-option v-for="s in orderStatuses" :key="s.code" :label="s.name" :value="s.code" />
         </el-select>
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="—"
+          start-placeholder="Від"
+          end-placeholder="До"
+          format="DD.MM.YYYY"
+          value-format="YYYY-MM-DD"
+          clearable
+          class="kimi-date-picker"
+          @change="currentPage = 1"
+        />
+        <button
+          class="kimi-adv-btn"
+          :class="{ active: showAdvancedFilters || advancedFiltersCount > 0 }"
+          @click="showAdvancedFilters = !showAdvancedFilters"
+          title="Додаткові фільтри"
+        >
+          <el-icon><Filter /></el-icon>
+          <span class="adv-btn-label">Фільтри</span>
+          <span class="adv-count-badge" v-if="advancedFiltersCount">{{ advancedFiltersCount }}</span>
+        </button>
         <el-button class="kimi-refresh-btn" @click="fetchOrders" title="Оновити">
           <el-icon><Refresh /></el-icon>
         </el-button>
-        <el-button link class="reset-btn" @click="handleReset" v-if="searchQuery || dateRange || activeTab">
+        <el-button link class="reset-btn" @click="handleReset" v-if="hasActiveFilters">
           Скинути
         </el-button>
       </div>
@@ -81,6 +103,56 @@
         </button>
       </div>
     </div>
+
+    <!-- ===== ADVANCED FILTERS PANEL ===== -->
+    <transition name="adv-panel">
+      <div class="adv-filters-panel" v-if="showAdvancedFilters">
+        <div class="adv-group">
+          <span class="adv-label">Оплата</span>
+          <div class="payment-pills">
+            <button :class="['pay-pill', paymentFilter === '' && 'active']" @click="paymentFilter = ''; currentPage = 1">Всі</button>
+            <button :class="['pay-pill', 'pay-paid', paymentFilter === 'paid' && 'active']" @click="paymentFilter = 'paid'; currentPage = 1">Оплачено</button>
+            <button :class="['pay-pill', 'pay-partial', paymentFilter === 'partial' && 'active']" @click="paymentFilter = 'partial'; currentPage = 1">Частково</button>
+            <button :class="['pay-pill', 'pay-unpaid', paymentFilter === 'unpaid' && 'active']" @click="paymentFilter = 'unpaid'; currentPage = 1">Не оплачено</button>
+          </div>
+        </div>
+        <div class="adv-divider" />
+        <div class="adv-group">
+          <span class="adv-label">Сума (₴)</span>
+          <el-input-number
+            v-model="amountMin"
+            :min="0"
+            placeholder="Від"
+            controls-position="right"
+            size="small"
+            class="adv-amount-input"
+            @change="currentPage = 1"
+          />
+          <span class="adv-range-sep">—</span>
+          <el-input-number
+            v-model="amountMax"
+            :min="0"
+            placeholder="До"
+            controls-position="right"
+            size="small"
+            class="adv-amount-input"
+            @change="currentPage = 1"
+          />
+        </div>
+      </div>
+    </transition>
+
+    <!-- ===== ACTIVE FILTER CHIPS ===== -->
+    <transition name="chips-fade">
+      <div class="active-chips-row" v-if="activeFilterChips.length">
+        <span class="chips-row-label">Фільтри:</span>
+        <div class="chip" v-for="chip in activeFilterChips" :key="chip.key">
+          {{ chip.label }}
+          <button class="chip-remove" @click="chip.remove()">×</button>
+        </div>
+        <button class="chips-clear-all" @click="handleReset">Скинути всі</button>
+      </div>
+    </transition>
 
     <!-- ===== BULK ACTION BAR ===== -->
     <transition name="bulk-bar">
@@ -282,7 +354,7 @@ import { useRouter } from 'vue-router'
 import {
   Plus, Search, Download, MoreFilled,
   Document, Wallet, Check, Close, Select,
-  Clock, Refresh, View, Edit
+  Clock, Refresh, View, Edit, Delete, Printer, Filter
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -306,6 +378,10 @@ const selected = ref([])
 const drawerVisible = ref(false)
 const selectedOrder = ref(null)
 const searchInputRef = ref(null)
+const showAdvancedFilters = ref(false)
+const paymentFilter = ref('')
+const amountMin = ref(null)
+const amountMax = ref(null)
 
 // ===== COMPUTED =====
 const filteredOrders = computed(() => {
@@ -319,8 +395,37 @@ const filteredOrders = computed(() => {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(o =>
       o.order_number?.toLowerCase().includes(q) ||
-      getCounterpartyName(o.counterparty_id)?.toLowerCase().includes(q)
+      getCounterpartyName(o.counterparty_id)?.toLowerCase().includes(q) ||
+      getCounterpartyPhone(o.counterparty_id)?.toLowerCase().includes(q)
     )
+  }
+
+  if (dateRange.value) {
+    const [from, to] = dateRange.value
+    const fromMs = new Date(from).setHours(0, 0, 0, 0)
+    const toMs = new Date(to).setHours(23, 59, 59, 999)
+    list = list.filter(o => {
+      const d = new Date(o.order_date).getTime()
+      return d >= fromMs && d <= toMs
+    })
+  }
+
+  if (paymentFilter.value) {
+    list = list.filter(o => {
+      const paid = parseFloat(o.paid_amount) || 0
+      const total = parseFloat(o.total_amount) || 0
+      if (paymentFilter.value === 'paid') return paid >= total && total > 0
+      if (paymentFilter.value === 'partial') return paid > 0 && paid < total
+      if (paymentFilter.value === 'unpaid') return paid === 0
+      return true
+    })
+  }
+
+  if (amountMin.value != null) {
+    list = list.filter(o => parseFloat(o.total_amount) >= amountMin.value)
+  }
+  if (amountMax.value != null) {
+    list = list.filter(o => parseFloat(o.total_amount) <= amountMax.value)
   }
 
   // Sort
@@ -341,6 +446,59 @@ const filteredOrders = computed(() => {
   totalCount.value = list.length
   const start = (currentPage.value - 1) * pageSize.value
   return list.slice(start, start + pageSize.value)
+})
+
+const hasActiveFilters = computed(() =>
+  !!(searchQuery.value || activeTab.value || dateRange.value || paymentFilter.value || amountMin.value != null || amountMax.value != null)
+)
+
+const advancedFiltersCount = computed(() => {
+  let n = 0
+  if (dateRange.value) n++
+  if (paymentFilter.value) n++
+  if (amountMin.value != null || amountMax.value != null) n++
+  return n
+})
+
+const activeFilterChips = computed(() => {
+  const chips = []
+  if (searchQuery.value) chips.push({
+    key: 'search',
+    label: `Пошук: ${searchQuery.value}`,
+    remove: () => { searchQuery.value = ''; currentPage.value = 1 }
+  })
+  if (activeTab.value) chips.push({
+    key: 'status',
+    label: `Статус: ${getStatusLabel(activeTab.value)}`,
+    remove: () => { activeTab.value = ''; currentPage.value = 1 }
+  })
+  if (dateRange.value) {
+    const [from, to] = dateRange.value
+    chips.push({
+      key: 'date',
+      label: `Дата: ${formatDate(from)} — ${formatDate(to)}`,
+      remove: () => { dateRange.value = null; currentPage.value = 1 }
+    })
+  }
+  if (paymentFilter.value) {
+    const labels = { paid: 'Оплачено', partial: 'Частково', unpaid: 'Не оплачено' }
+    chips.push({
+      key: 'payment',
+      label: `Оплата: ${labels[paymentFilter.value]}`,
+      remove: () => { paymentFilter.value = '' }
+    })
+  }
+  if (amountMin.value != null || amountMax.value != null) {
+    let label = 'Сума:'
+    if (amountMin.value != null) label += ` від ${formatCurrency(amountMin.value)}`
+    if (amountMax.value != null) label += ` до ${formatCurrency(amountMax.value)}`
+    chips.push({
+      key: 'amount',
+      label,
+      remove: () => { amountMin.value = null; amountMax.value = null }
+    })
+  }
+  return chips
 })
 
 const statCards = computed(() => [
@@ -403,6 +561,9 @@ const handleReset = () => {
   searchQuery.value = ''
   dateRange.value = null
   activeTab.value = ''
+  paymentFilter.value = ''
+  amountMin.value = null
+  amountMax.value = null
   currentPage.value = 1
 }
 
@@ -575,6 +736,26 @@ const getPaymentLabel = (row) => {
   if (paid >= total) return 'Оплачено'
   if (paid > 0) return 'Частково'
   return 'Не оплачено'
+}
+
+const getStatusStyle = (code) => {
+  const s = orderStatuses.value.find(i => i.code === code)
+  const color = s?.color || 'gray'
+  const map = {
+    blue: { background: '#dbeafe', color: '#2563eb', border: '1px solid #93c5fd' },
+    green: { background: '#d1fae5', color: '#059669', border: '1px solid #6ee7b7' },
+    success: { background: '#d1fae5', color: '#059669', border: '1px solid #6ee7b7' },
+    orange: { background: '#fef3c7', color: '#d97706', border: '1px solid #fcd34d' },
+    warning: { background: '#fef3c7', color: '#d97706', border: '1px solid #fcd34d' },
+    red: { background: '#ffe4e6', color: '#e11d48', border: '1px solid #fda4af' },
+    danger: { background: '#ffe4e6', color: '#e11d48', border: '1px solid #fda4af' },
+    gray: { background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }
+  }
+  return map[color] || map.gray
+}
+
+const handlePrint = (row) => {
+  window.open(`/sales/orders/${row.id}?print=1`, '_blank')
 }
 
 const getTimeline = (order) => {
@@ -1020,7 +1201,7 @@ const getTimeline = (order) => {
 .bg-amber-100 { background: #fef3c7; }
 .bg-blue-100 { background: #dbeafe; }
 
-.kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
 .kimi-filter-left { display: flex; align-items: center; gap: 8px; flex: 1; }
 .kimi-search-input { max-width: 400px; }
 .kimi-search-input :deep(.el-input__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
@@ -1072,5 +1253,91 @@ const getTimeline = (order) => {
 }
 .kimi-ghost-btn:hover { background: #f1f5f9; }
 .kimi-ghost-btn .el-icon { font-size: 16px; }
+
+/* ===== DATE PICKER ===== */
+.kimi-date-picker { width: 220px !important; flex-shrink: 0; }
+.kimi-date-picker :deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.kimi-date-picker :deep(.el-range-input) { font-size: 12px; }
+.kimi-date-picker :deep(.el-input__wrapper.is-focus) {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2px rgba(79,70,229,0.1) !important;
+}
+
+/* ===== ADVANCED FILTER BUTTON ===== */
+.kimi-adv-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 0 12px; height: 32px;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  background: #fff; color: #64748b; font-size: 13px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.kimi-adv-btn:hover { border-color: #4f46e5; color: #4f46e5; }
+.kimi-adv-btn.active { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+.adv-btn-label { font-size: 13px; }
+.adv-count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: #4f46e5; color: #fff;
+  border-radius: 10px; font-size: 11px; font-weight: 700;
+}
+
+/* ===== ADVANCED FILTERS PANEL ===== */
+.adv-filters-panel {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 10px 16px; margin-bottom: 8px;
+}
+.adv-panel-enter-active, .adv-panel-leave-active {
+  transition: all 0.2s ease; overflow: hidden;
+}
+.adv-panel-enter-from, .adv-panel-leave-to { opacity: 0; transform: translateY(-6px); }
+
+.adv-group { display: flex; align-items: center; gap: 8px; }
+.adv-label { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; }
+.adv-divider { width: 1px; height: 24px; background: #e2e8f0; flex-shrink: 0; }
+.adv-range-sep { color: #94a3b8; font-size: 13px; }
+.adv-amount-input { width: 110px !important; }
+.adv-amount-input :deep(.el-input__wrapper) { border-radius: 6px; }
+
+/* ===== PAYMENT PILLS ===== */
+.payment-pills { display: flex; gap: 4px; }
+.pay-pill {
+  padding: 3px 10px; border-radius: 14px; font-size: 12px; font-weight: 500;
+  border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer;
+  transition: all 0.15s;
+}
+.pay-pill:hover { border-color: #94a3b8; }
+.pay-pill.active { border-color: #4f46e5; background: #4f46e5; color: #fff; }
+.pay-pill.pay-paid.active { background: #059669; border-color: #059669; }
+.pay-pill.pay-partial.active { background: #d97706; border-color: #d97706; }
+.pay-pill.pay-unpaid.active { background: #e11d48; border-color: #e11d48; }
+
+/* ===== ACTIVE FILTER CHIPS ===== */
+.active-chips-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.chips-fade-enter-active, .chips-fade-leave-active { transition: all 0.2s ease; }
+.chips-fade-enter-from, .chips-fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.chips-row-label { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px 3px 10px; border-radius: 14px;
+  background: #eef2ff; color: #4f46e5;
+  font-size: 12px; font-weight: 500; border: 1px solid #c7d2fe;
+}
+.chip-remove {
+  background: none; border: none; cursor: pointer; color: #818cf8;
+  font-size: 15px; line-height: 1; display: flex; align-items: center; padding: 0;
+}
+.chip-remove:hover { color: #4f46e5; }
+.chips-clear-all {
+  padding: 3px 10px; border-radius: 14px; font-size: 12px;
+  border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer;
+}
+.chips-clear-all:hover { border-color: #e11d48; color: #e11d48; }
 
 </style>
