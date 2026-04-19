@@ -608,8 +608,7 @@ const getMonthName = (m) => {
 
 <style scoped>
 .company-settings-page {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .page-header {
@@ -631,7 +630,8 @@ const getMonthName = (m) => {
 }
 
 .company-card {
-    width: 280px;
+    width: 100%;
+    margin-bottom: 12px;
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid transparent;
