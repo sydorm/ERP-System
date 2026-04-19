@@ -37,21 +37,42 @@
             </h3>
           </div>
           <div class="p-2 space-y-1">
-            <button
-              v-for="dict in currentSectionDictionaries"
-              :key="dict.code"
-              @click="handleDictionarySelect(dict.code)"
-              class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
-              :class="activeDictionary === dict.code 
-                ? 'bg-indigo-50 text-indigo-700' 
-                : 'text-slate-600 hover:bg-slate-50'"
-            >
-              <span>{{ dict.name }}</span>
-              <span v-if="counts[dict.code] !== undefined" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                {{ counts[dict.code] }}
-              </span>
-            </button>
+            <template v-if="activeSection === 'numbering'">
+              <button
+                v-for="seq in sequences"
+                :key="seq.id"
+                @click="handleSequenceSelect(seq)"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                :class="activeSequence === seq.id 
+                  ? 'bg-indigo-50 text-indigo-700' 
+                  : 'text-slate-600 hover:bg-slate-50'"
+              >
+                <div class="flex flex-col">
+                  <span>{{ docTypeLabels[seq.document_type] || seq.document_type }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">
+                    {{ seq.prefix }}{{ String(seq.next_number).padStart(seq.padding, '0') }}
+                  </span>
+                </div>
+              </button>
+            </template>
+            <template v-else>
+              <button
+                v-for="dict in currentSectionDictionaries"
+                :key="dict.code"
+                @click="handleDictionarySelect(dict.code)"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                :class="activeDictionary === dict.code 
+                  ? 'bg-indigo-50 text-indigo-700' 
+                  : 'text-slate-600 hover:bg-slate-50'"
+              >
+                <span>{{ dict.name }}</span>
+                <span v-if="counts[dict.code] !== undefined" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                  {{ counts[dict.code] }}
+                </span>
+              </button>
+            </template>
           </div>
+
         </div>
       </div>
 
@@ -60,6 +81,54 @@
         
         <!-- CUSTOM COMPONENT FOR ATTRIBUTES -->
         <ProductAttributesManager v-if="activeDictionary === 'PRODUCT_ATTRIBUTES'" />
+
+        <!-- NUMBERING UI -->
+        <template v-else-if="activeSection === 'numbering'">
+          <div class="p-12 max-w-2xl mx-auto w-full" v-if="seqForm.id">
+            <div class="mb-10 overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/50 p-8 text-center shadow-inner">
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Наступний номер буде:</p>
+                <h3 class="text-5xl font-black text-indigo-600 tracking-tight">
+                  {{ seqForm.prefix }}{{ String(seqForm.next_number || 1).padStart(seqForm.padding || 5, '0') }}
+                </h3>
+            </div>
+
+            <el-form label-position="top" class="premium-form">
+              <el-row :gutter="32">
+                <el-col :span="14">
+                  <el-form-item label="Префікс">
+                    <el-input v-model="seqForm.prefix" placeholder="напр. ORD-" size="large" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="10">
+                  <el-form-item label="К-сть нулів (Padding)">
+                    <el-input-number v-model="seqForm.padding" :min="1" :max="10" class="w-full" size="large" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <el-form-item label="Наступний номер лічильника">
+                <el-input-number v-model="seqForm.next_number" :min="1" class="w-full" size="large" />
+                <div class="mt-4 p-4 rounded-xl bg-orange-50 border border-orange-100 text-xs text-orange-700 flex items-start gap-3">
+                  <el-icon class="mt-0.5 text-base"><WarningFilled /></el-icon>
+                  <span>
+                    <strong>Будьте обережні:</strong> зменшення наступного номера може призвести до дублювання номерів документів, якщо замовлення з такими номерами вже існують у базі.
+                  </span>
+                </div>
+              </el-form-item>
+
+              <div class="mt-12 pt-8 border-t border-slate-100 flex justify-end">
+                <el-button type="primary" color="#4f46e5" size="large" class="px-10" @click="saveSequence" :loading="seqSubmitting">
+                   Зберегти налаштування
+                </el-button>
+              </div>
+            </el-form>
+          </div>
+          <div v-else class="flex-1 flex flex-col items-center justify-center text-slate-400 p-12">
+            <el-icon :size="64" class="mb-4 opacity-20"><Document /></el-icon>
+            <p>Оберіть тип документа зліва для налаштування нумерації</p>
+          </div>
+        </template>
+
 
         <!-- STANDARD DICTIONARY UI -->
         <template v-else>
@@ -214,8 +283,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Plus, Search, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Search, MoreFilled, WarningFilled, Document } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
 import ProductAttributesManager from './ProductAttributesManager.vue'
@@ -247,8 +317,10 @@ const sections = [
   { id: 'finance', name: 'Фінанси' },
   { id: 'commerce', name: 'Комерція' },
   { id: 'inventory', name: 'Номенклатура' },
-  { id: 'tags', name: 'Теги та Статуси' }
+  { id: 'tags', name: 'Теги та Статуси' },
+  { id: 'numbering', name: 'Нумерація' }
 ]
+
 
 const dictionariesMap = {
   'finance': [
@@ -278,6 +350,27 @@ const dictionariesMap = {
 
 const activeSection = ref('commerce')
 const activeDictionary = ref('LEAD_SOURCE')
+
+// Numbering State
+const sequences = ref([])
+const activeSequence = ref(null)
+const seqSubmitting = ref(false)
+const seqForm = reactive({
+  id: null,
+  document_type: '',
+  prefix: '',
+  next_number: 1,
+  padding: 5
+})
+
+const docTypeLabels = {
+  'order': 'Замовлення покупця',
+  'purchase_receipt': 'Прибуткова накладна',
+  'sales_invoice': 'Видаткова накладна',
+  'transfer': 'Переміщення',
+  'inventory': 'Інвентаризація'
+}
+
 
 // Data State
 const localItems = ref([])
@@ -345,11 +438,13 @@ const filteredItems = computed(() => {
 
 // Watchers
 watch(activeSection, (newSection) => {
-  // Select the first dictionary in the new section automatically
-  if (dictionariesMap[newSection] && dictionariesMap[newSection].length > 0) {
+  if (newSection === 'numbering') {
+    fetchSequences()
+  } else if (dictionariesMap[newSection] && dictionariesMap[newSection].length > 0) {
     activeDictionary.value = dictionariesMap[newSection][0].code
   }
 })
+
 
 watch(activeDictionary, () => {
   fetchItems()
@@ -429,7 +524,46 @@ const handleToggle = async (item) => {
 }
 
 
+const fetchSequences = async () => {
+  loading.value = true
+  try {
+    const res = await api.get('/api/v1/document-sequences')
+    sequences.value = res.data
+    if (sequences.value.length > 0 && !activeSequence.value) {
+      handleSequenceSelect(sequences.value[0])
+    }
+  } catch (error) {
+    ElMessage.error('Помилка завантаження лічильників')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSequenceSelect = (seq) => {
+  activeSequence.value = seq.id
+  Object.assign(seqForm, seq)
+}
+
+const saveSequence = async () => {
+  seqSubmitting.value = true
+  try {
+    const payload = {
+      prefix: seqForm.prefix,
+      next_number: seqForm.next_number,
+      padding: seqForm.padding
+    }
+    await api.put(`/api/v1/document-sequences/${seqForm.id}`, payload)
+    ElMessage.success('Налаштування збережено')
+    fetchSequences()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
+  } finally {
+    seqSubmitting.value = false
+  }
+}
+
 const submitForm = async () => {
+
   if (!formRef.value) return
   
   await formRef.value.validate(async (valid) => {

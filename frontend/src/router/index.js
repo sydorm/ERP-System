@@ -57,12 +57,7 @@ const router = createRouter({
                     component: () => import('@/views/Profile.vue'),
                     meta: { title: 'Профіль' }
                 },
-                {
-                    path: '/settings/numbering',
-                    name: 'system-numbering',
-                    component: () => import('@/views/Settings/DocumentSequences.vue'),
-                    meta: { requiresAuth: true, title: 'Нумерація документів', permission: 'admin.all' }
-                },
+
                 {
                     path: '/settings/dictionaries',
                     name: 'dictionaries',
