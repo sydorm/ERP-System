@@ -18,6 +18,7 @@ class DictionaryItem(BaseModel):
     
     # Classification
     category = Column(String(50), nullable=False, index=True) # e.g., 'UOM', 'PRODUCT_CATEGORY', 'ORDER_STATUS'
+    type = Column(String(50), nullable=True, index=True)      # alias for category, matching TZ
     
     # Data
     code = Column(String(50), nullable=False) # e.g., 'kg', 'new'
@@ -27,10 +28,12 @@ class DictionaryItem(BaseModel):
     color = Column(String(20), nullable=True) # e.g., 'success', '#f00' (for badges)
     icon = Column(String(50), nullable=True) # e.g., 'Box', 'Check'
     sort_order = Column(Integer, default=0, nullable=False)
+    order = Column(Integer, default=0, nullable=False)   # matching TZ name (order of items)
     
     # System logic
     is_fixed = Column(Boolean, default=False, nullable=False) # If True, cannot be deleted (system default)
     is_active = Column(Boolean, default=True, nullable=False)
+
     
     # Relationships
     company = relationship("Company", backref="dictionary_items")

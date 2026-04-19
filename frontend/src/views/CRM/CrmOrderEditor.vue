@@ -72,14 +72,21 @@
             <label class="crm-label">Канал звернення</label>
             <div class="channel-pills">
               <button
-                v-for="ch in channels"
-                :key="ch.value"
+                v-for="ch in leadSources"
+                :key="ch.id"
                 class="channel-pill"
-                :class="[`ch-${ch.value}`, form.channel === ch.value ? 'active' : '']"
-                @click="form.channel = form.channel === ch.value ? null : ch.value"
-              >{{ ch.label }}</button>
+                :class="{ active: form.lead_source_id === ch.id }"
+                :style="{ 
+                  '--pill-color': ch.color || '#94a3b8',
+                  borderColor: form.lead_source_id === ch.id ? (ch.color || '#6366f1') : '#e2e8f0',
+                  background: form.lead_source_id === ch.id ? (ch.color || '#6366f1') : 'transparent',
+                  color: form.lead_source_id === ch.id ? '#fff' : '#475569'
+                }"
+                @click="form.lead_source_id = form.lead_source_id === ch.id ? null : ch.id"
+              >{{ ch.name }}</button>
             </div>
           </div>
+
 
           <div class="crm-grid-2">
             <div class="crm-field">
@@ -88,13 +95,16 @@
             </div>
             <div class="crm-field">
               <label class="crm-label">Доставка</label>
-              <el-select v-model="form.delivery_type" placeholder="Оберіть" clearable style="width:100%">
-                <el-option value="nova_poshta"  label="Нова Пошта" />
-                <el-option value="ukrposhta"    label="Укрпошта" />
-                <el-option value="courier"      label="Кур'єр" />
-                <el-option value="pickup"       label="Самовивіз" />
+              <el-select v-model="form.delivery_method_id" placeholder="Оберіть" clearable style="width:100%">
+                <el-option 
+                  v-for="dm in deliveryMethods" 
+                  :key="dm.id" 
+                  :label="dm.name" 
+                  :value="dm.id" 
+                />
               </el-select>
             </div>
+
           </div>
 
           <!-- Nova Poshta branch — shown only when NP selected -->
@@ -523,6 +533,11 @@ const productAttributes = ref([])
 const showNewClientDialog = ref(false)
 const photoInput     = ref(null)
 
+const leadSources = ref([])
+const paymentStatusesRes = ref([])
+const prioritiesRes = ref([])
+const deliveryMethods = ref([])
+
 const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
@@ -541,6 +556,7 @@ const form = reactive({
   warehouse_id:   null,
   product_id:     null,
   crm_stage:      route.query.stage || 'new',
+  lead_source_id: null,
   channel:        null,
   city:           null,
   delivery_type:  null,
@@ -567,6 +583,23 @@ const form = reactive({
 const clientName  = ref('')
 const clientPhone = ref('')
 
+onMounted(async () => {
+  try {
+    const [ls, ps, pr, dm] = await Promise.all([
+      api.get('/api/v1/dictionaries/LEAD_SOURCE'),
+      api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
+      api.get('/api/v1/dictionaries/PRIORITY'),
+      api.get('/api/v1/dictionaries/DELIVERY_METHOD')
+    ])
+    leadSources.value = ls.data
+    paymentStatusesRes.value = ps.data
+    prioritiesRes.value = pr.data
+    deliveryMethods.value = dm.data
+  } catch (e) {
+    console.error('Failed to load dictionaries', e)
+  }
+})
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 const stages = [
   { key: 'new',        label: 'Нова заявка' },
@@ -579,30 +612,17 @@ const stages = [
 const stageIndex = computed(() => stages.findIndex(s => s.key === form.crm_stage))
 const isPassedStage = (idx) => idx < stageIndex.value
 
-const channels = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'website',   label: 'Сайт' },
-  { value: 'referral',  label: 'Сарафанка' },
-  { value: 'telegram',  label: 'Telegram' },
-  { value: 'olx',       label: 'OLX' },
-  { value: 'phone',     label: 'Телефон' },
-]
-const priorities = [
-  { value: 'normal',   label: 'Звичайний' },
-  { value: 'urgent',   label: 'Терміновий' },
-  { value: 'critical', label: 'Критичний' },
-]
-const paymentStatuses = [
-  { value: 'unpaid',  label: 'Не оплачено' },
-  { value: 'partial', label: 'Частково' },
-  { value: 'paid',    label: 'Оплачено' },
-]
+// Dictionaries fetched in onMounted
+const priorities = computed(() => prioritiesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
+const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
+
 const contactResults = [
   { value: 'no_answer', label: 'Не відповів' },
   { value: 'thinking',  label: 'Думає' },
   { value: 'refused',   label: 'Відмовився' },
   { value: 'confirmed', label: 'Підтвердив замовлення' },
 ]
+
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const selectedProduct = computed(() => products.value.find(p => p.id === form.product_id) || null)
@@ -848,20 +868,27 @@ const save = async (action) => {
       discount_percent:   form.discount_percent,
       crm_stage:          form.crm_stage,
       channel:            form.channel,
+      lead_source_id:     form.lead_source_id,
       city:               form.city,
       delivery_type:      form.delivery_type,
+      delivery_method_id: form.delivery_method_id,
       attributes_values:  mergedAttrs,
       paid_amount:        form.paid_amount,
       payment_status:     form.payment_status,
+      payment_status_id:  form.payment_status_id,
       prepayment_percent: form.prepayment_percent,
       prepayment_amount:  form.prepayment_amount,
       deadline_date:      form.deadline_date,
       next_contact_at:    form.next_contact_at,
       priority:           form.priority,
+      priority_id:        form.priority_id,
       manager_id:         form.manager_id,
+      cancel_reason_id:   form.cancel_reason_id,
+      client_type_id:     form.client_type_id,
       comment:            form.comment,
       internal_notes:     form.internal_notes,
       reference_photo:    form.reference_photo,
+
       lines: form.product_id ? [{
         product_id: form.product_id,
         quantity:   1,
@@ -919,6 +946,14 @@ const loadData = async () => {
     if (orderId.value) {
       const res = await api.get(`/api/v1/orders/${orderId.value}`)
       const o = res.data
+      Object.assign(form, o)
+      // Map new fields
+      form.lead_source_id = o.lead_source_id
+      form.delivery_method_id = o.delivery_method_id
+      form.payment_status_id = o.payment_status_id
+      form.priority_id = o.priority_id
+      form.cancel_reason_id = o.cancel_reason_id
+      form.client_type_id = o.client_type_id
       Object.assign(form, {
         order_number:    o.order_number,
         order_date:      o.order_date,

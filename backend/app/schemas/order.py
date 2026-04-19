@@ -42,12 +42,15 @@ class OrderBase(BaseModel):
     # CRM fields
     crm_stage: str = Field(default="new", max_length=50)
     channel: Optional[str] = Field(None, max_length=50)
+    lead_source_id: Optional[UUID] = None
     city: Optional[str] = Field(None, max_length=255)
     delivery_type: Optional[str] = Field(None, max_length=50)
+    delivery_method_id: Optional[UUID] = None
     attributes_values: Optional[Dict[str, Any]] = None
 
     paid_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     payment_status: str = Field(default="unpaid", max_length=50)
+    payment_status_id: Optional[UUID] = None
     prepayment_percent: Optional[Decimal] = Field(None, ge=0, le=100)
     prepayment_amount: Optional[Decimal] = Field(None, ge=0)
 
@@ -56,10 +59,16 @@ class OrderBase(BaseModel):
     next_contact_at: Optional[datetime] = None
 
     priority: str = Field(default="normal", max_length=20)
+    priority_id: Optional[UUID] = None
     manager_id: Optional[UUID] = None
 
     internal_notes: Optional[str] = None
     reference_photo: Optional[str] = Field(None, max_length=500)
+    
+    # Additional IDs
+    cancel_reason_id: Optional[UUID] = None
+    client_type_id: Optional[UUID] = None
+
 
 
 class OrderCreate(OrderBase):
@@ -81,20 +90,28 @@ class OrderUpdate(BaseModel):
     # CRM fields
     crm_stage: Optional[str] = Field(None, max_length=50)
     channel: Optional[str] = Field(None, max_length=50)
+    lead_source_id: Optional[UUID] = None
     city: Optional[str] = Field(None, max_length=255)
     delivery_type: Optional[str] = Field(None, max_length=50)
+    delivery_method_id: Optional[UUID] = None
     attributes_values: Optional[Dict[str, Any]] = None
     paid_amount: Optional[Decimal] = Field(None, ge=0)
     payment_status: Optional[str] = Field(None, max_length=50)
+    payment_status_id: Optional[UUID] = None
     prepayment_percent: Optional[Decimal] = Field(None, ge=0, le=100)
     prepayment_amount: Optional[Decimal] = Field(None, ge=0)
     deadline_date: Optional[date] = None
     next_contact_date: Optional[date] = None
     next_contact_at: Optional[datetime] = None
     priority: Optional[str] = Field(None, max_length=20)
+    priority_id: Optional[UUID] = None
     manager_id: Optional[UUID] = None
     internal_notes: Optional[str] = None
     reference_photo: Optional[str] = Field(None, max_length=500)
+    
+    cancel_reason_id: Optional[UUID] = None
+    client_type_id: Optional[UUID] = None
+
 
     lines: Optional[List[OrderLineCreate]] = None
 

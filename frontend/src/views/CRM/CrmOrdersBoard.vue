@@ -119,10 +119,14 @@
               <span>{{ getCounterpartyName(order.counterparty_id) || '—' }}</span>
             </div>
 
-            <!-- Channel tag -->
-            <span v-if="order.channel" class="card-channel-tag" :class="`channel-${order.channel}`">
-              {{ getChannelLabel(order.channel) }}
+            <span 
+              v-if="order.lead_source_id || order.channel" 
+              class="card-channel-tag" 
+              :style="getChannelStyle(order.lead_source_id || order.channel)"
+            >
+              {{ getChannelLabel(order.lead_source_id || order.channel) }}
             </span>
+
 
             <!-- Amount + payment -->
             <div class="card-finance-row">
@@ -354,6 +358,27 @@ const openEditor   = (order) => router.push(`/crm/orders/${order.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
 const openNewOrderInStage = (stage) => router.push(`/crm/orders/new?stage=${stage}`)
 
+const dictionaryStore = ref({
+  leadSources: [],
+  priorities: [],
+  paymentStatuses: []
+})
+
+const fetchDictionaries = async () => {
+  try {
+    const [ls, pr, ps] = await Promise.all([
+      api.get('/api/v1/dictionaries/LEAD_SOURCE'),
+      api.get('/api/v1/dictionaries/PRIORITY'),
+      api.get('/api/v1/dictionaries/PAYMENT_STATUS')
+    ])
+    dictionaryStore.value.leadSources = ls.data
+    dictionaryStore.value.priorities = pr.data
+    dictionaryStore.value.paymentStatuses = ps.data
+  } catch (e) {
+    console.error('Failed to load dictionaries', e)
+  }
+}
+
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 const fetchAll = async () => {
   loading.value = true
@@ -366,7 +391,8 @@ const fetchAll = async () => {
     orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
     counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
     users.value          = usersRes.status === 'fulfilled' ? usersRes.value.data : []
-    await fetchTasks()
+    
+    await Promise.all([fetchTasks(), fetchDictionaries()])
   } catch (e) {
     ElMessage.error('Помилка завантаження даних: ' + (e?.response?.data?.detail || e?.message || ''))
   } finally {
@@ -374,8 +400,36 @@ const fetchAll = async () => {
   }
 }
 
+const getChannelLabel = (ch) => {
+  const source = dictionaryStore.value.leadSources.find(s => s.id === ch || s.code === ch)
+  return source ? source.name : ch
+}
+
+const getChannelStyle = (ch) => {
+  const source = dictionaryStore.value.leadSources.find(s => s.id === ch || s.code === ch)
+  if (source && source.color) {
+    return {
+      backgroundColor: `${source.color}20`, // low opacity bg
+      color: source.color,
+      borderColor: source.color
+    }
+  }
+  return {}
+}
+
+const getPriorityLabel = (p) => {
+  const prio = dictionaryStore.value.priorities.find(s => s.id === p || s.code === p)
+  return prio ? prio.name : (priorities.find(x => x.value === p)?.label || 'Звичайний')
+}
+
+const getPaymentLabel = (s) => {
+  const status = dictionaryStore.value.paymentStatuses.find(i => i.id === s || i.code === s)
+  return status ? status.name : ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
+}
+
 onMounted(fetchAll)
 </script>
+
 
 <style scoped>
 /* ─── Page Layout ─────────────────────────────────────────────────────────── */

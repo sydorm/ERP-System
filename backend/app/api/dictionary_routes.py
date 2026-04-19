@@ -12,19 +12,35 @@ router = APIRouter()
 @router.get("/dictionaries/{category}", response_model=List[DictionaryItemResponse])
 async def get_dictionary_items(
     category: str,
+    all_items: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Get all active items for a specific category (e.g., 'UOM', 'ORDER_STATUS')
+    Get items for a specific category (e.g., 'UOM', 'LEAD_SOURCE')
+    By default returns only active items, sorted by 'order'
     """
-    items = db.query(DictionaryItem).filter(
+    query = db.query(DictionaryItem).filter(
         DictionaryItem.company_id == current_user.company_id,
-        DictionaryItem.category == category.upper(),
-        DictionaryItem.is_active == True
-    ).order_by(DictionaryItem.sort_order).all()
+        (DictionaryItem.category == category.upper()) | (DictionaryItem.type == category.lower())
+    )
     
-    return items
+    if not all_items:
+        query = query.filter(DictionaryItem.is_active == True)
+        
+    return query.order_by(DictionaryItem.order, DictionaryItem.sort_order).all()
+
+@router.get("/dictionaries/{category}/all", response_model=List[DictionaryItemResponse])
+async def get_all_dictionary_items(
+    category: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get all items (active and inactive) for a specific category (for administration)
+    """
+    return await get_dictionary_items(category, all_items=True, db=db, current_user=current_user)
+
 
 @router.post("/dictionaries", response_model=DictionaryItemResponse, status_code=status.HTTP_201_CREATED)
 async def create_dictionary_item(
@@ -139,3 +155,23 @@ async def update_dictionary_item(
     db.commit()
     db.refresh(item)
     return item
+
+@router.get("/dictionaries/meta/counts")
+async def get_dictionary_counts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get item counts for all categories
+    """
+    from sqlalchemy import func
+    counts = db.query(
+        DictionaryItem.category, 
+        func.count(DictionaryItem.id)
+    ).filter(
+        DictionaryItem.company_id == current_user.company_id,
+        DictionaryItem.is_active == True
+    ).group_by(DictionaryItem.category).all()
+    
+    return {cat: count for cat, count in counts}
+

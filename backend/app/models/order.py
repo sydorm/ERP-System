@@ -56,8 +56,19 @@ class Order(BaseModel):
     next_contact_date = Column(Date, nullable=True)
 
     # CRM: production
+    # CRM: priority
     priority = Column(String(20), nullable=False, default="normal")  # low/normal/urgent/critical
+    priority_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    
+    # CRM: foreign keys to dictionaries
+    lead_source_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    cancel_reason_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    delivery_method_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    client_type_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    payment_status_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+
     manager_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
 
     # CRM: communication tracking
     contact_attempts = Column(Integer, nullable=False, default=0)

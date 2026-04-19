@@ -99,7 +99,14 @@
               </template>
             </el-table-column>
 
+            <el-table-column prop="order" label="Порядок" width="100" sortable>
+              <template #default="{ row }">
+                <el-input-number v-model="row.order" :min="0" :max="999" size="small" @change="handleToggle(row)" />
+              </template>
+            </el-table-column>
+
             <el-table-column label="Властивості" min-width="150">
+
               <template #default="{ row }">
                 <div v-if="row.color" class="flex items-center gap-2">
                   <div class="w-3 h-3 rounded-full" :class="`bg-${row.color}`"></div>
@@ -170,6 +177,11 @@
         <el-form-item label="Опис (опціонально)">
           <el-input v-model="form.description" type="textarea" :rows="2" placeholder="Додаткова інформація" />
         </el-form-item>
+
+        <el-form-item label="Порядок сортування">
+          <el-input-number v-model="form.order" :min="0" :max="999" class="w-full" />
+        </el-form-item>
+
 
         <!-- Dynamic Fields based on active dictionary -->
         <el-form-item v-if="['LEAD_SOURCE', 'ORDER_STATUS', 'CANCEL_REASON'].includes(activeDictionary)" label="Колір тегу">
@@ -251,16 +263,21 @@ const dictionariesMap = {
   'commerce': [
     { code: 'LEAD_SOURCE', name: 'Джерела лідів', description: 'Звідки приходять клієнти' },
     { code: 'CANCEL_REASON', name: 'Причини скасування', description: 'Чому зірвалася угода' },
+    { code: 'CLIENT_TYPE', name: 'Типи клієнтів', description: 'Класифікація покупців' },
     { code: 'PRICE_TYPE', name: 'Типи цін', description: 'Оптова, роздрібна, дилерська тощо' }
   ],
   'inventory': [
     { code: 'PRODUCT_CATEGORY', name: 'Категорії товарів', description: 'Деревоподібна структура номенклатури' },
     { code: 'PRODUCT_ATTRIBUTES', name: 'Характеристики товарів', description: 'Кольори, розміри, матеріали' },
-    { code: 'UOM', name: 'Одиниці виміру', description: 'Шт., кг., упаковки' }
+    { code: 'UOM', name: 'Одиниці виміру', description: 'Шт., кг., упаковки' },
+    { code: 'DELIVERY_METHOD', name: 'Способи доставки', description: 'NP, Укрпошта, Самовивіз тощо' }
   ],
   'tags': [
-    { code: 'ORDER_STATUS', name: 'Статуси замовлень', description: 'Життєвий цикл замовлення покупця' }
+    { code: 'ORDER_STATUS', name: 'Статуси замовлень', description: 'Життєвий цикл замовлення покупця' },
+    { code: 'PAYMENT_STATUS', name: 'Статуси оплати', description: 'Не оплачено, Частково, Оплачено' },
+    { code: 'PRIORITY', name: 'Пріоритети', description: 'Терміновість виконання' }
   ]
+
 }
 
 const activeSection = ref('commerce')
@@ -282,9 +299,11 @@ const form = reactive({
   code: '',
   description: '',
   color: 'blue',
+  order: 0,
   is_active: true,
   is_fixed: false
 })
+
 
 const colors = [
   { value: 'blue', hex: '#3b82f6' },
@@ -382,9 +401,11 @@ const clearForm = () => {
   form.code = ''
   form.description = ''
   form.color = 'blue'
+  form.order = 0
   form.is_active = true
   form.is_fixed = false
 }
+
 
 const handleCommand = (cmd, item) => {
   if (cmd === 'edit') {
@@ -419,10 +440,12 @@ const submitForm = async () => {
           code: form.code,
           description: form.description, // Include description
           color: form.color,
+          order: form.order,
           is_active: form.is_active,
           is_fixed: form.is_fixed, // Include is_fixed
           category: activeDictionary.value
         }
+
         
         if (isEditMode.value) {
           await api.put(`/api/v1/dictionaries/${form.id}`, payload)
