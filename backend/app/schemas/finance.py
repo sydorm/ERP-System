@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
 from datetime import datetime
 from typing import Optional, List
-from g.Моделювання.R1.backend.app.models.finance import TransactionType
+from app.models.finance import TransactionType
 
 class FinancialTransactionBase(BaseModel):
     bank_account_id: str

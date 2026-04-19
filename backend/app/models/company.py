@@ -1,7 +1,7 @@
 """
 Company model - represents businesses (FOP/TOV)
 """
-from sqlalchemy import Column, String, Boolean, Enum, ForeignKey
+from sqlalchemy import Column, String, Boolean, Enum, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 import enum
 from .base import BaseModel

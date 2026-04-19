@@ -5,12 +5,12 @@ from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
 
-from g.Моделювання.R1.backend.app.db.session import get_db
-from g.Моделювання.R1.backend.app.models.finance import FinancialTransaction, TransactionType
-from g.Моделювання.R1.backend.app.models.company import Company, TaxGroup
-from g.Моделювання.R1.backend.app.models.bank_account import BankAccount
-from g.Моделювання.R1.backend.app.schemas.finance import FopIncomeAggregation, TaxCalendarEvent, FinancialTransactionCreate, FinancialTransaction as TransactionSchema
-from g.Моделювання.R1.backend.app.api.dependencies import get_current_user
+from app.db.session import get_db
+from app.models.finance import FinancialTransaction, TransactionType
+from app.models.company import Company, TaxGroup
+from app.models.bank_account import BankAccount
+from app.schemas.finance import FopIncomeAggregation, TaxCalendarEvent, FinancialTransactionCreate, FinancialTransaction as TransactionSchema
+from app.api.dependencies import get_current_user
 
 router = APIRouter(prefix="/finance", tags=["Finance"])
 
@@ -195,7 +195,7 @@ def create_transaction(
     
     # If transaction is linked to an order, potentially update order paid_amount
     if db_transaction.order_id and db_transaction.transaction_type == TransactionType.IN:
-        from g.Моделювання.R1.backend.app.models.order import Order
+        from app.models.order import Order
         order = db.query(Order).filter(Order.id == db_transaction.order_id).first()
         if order:
             order.paid_amount = (order.paid_amount or 0) + db_transaction.amount
