@@ -281,15 +281,8 @@ const getPriorityClass = (p) => ({
   'priority-critical': p === 'critical',
 })
 
-const getPriorityLabel = (p) =>
-  priorities.find(x => x.value === p)?.label || 'Звичайний'
 
-const getPaymentLabel = (s) =>
-  ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
 
-const getChannelLabel = (ch) =>
-  ({ instagram: 'Instagram', website: 'Сайт', referral: 'Сарафанка',
-     telegram: 'Telegram', olx: 'OLX', phone: 'Телефон' }[ch] || ch)
 
 // ─── Drag & Drop ──────────────────────────────────────────────────────────────
 const onDragStart = (order) => { dragOrderId.value = order.id }
