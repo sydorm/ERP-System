@@ -420,13 +420,18 @@ const handleCommand = (cmd, item) => {
 const handleToggle = async (item) => {
   try {
     const payload = { ...item }
-    await api.post(`/api/v1/dictionaries`, payload)
-    ElMessage.success(`Статус змінено: ${item.is_active ? 'Активний' : 'Неактивний'}`)
+    if (item.id) {
+      await api.put(`/api/v1/dictionaries/${item.id}`, payload)
+    } else {
+      await api.post(`/api/v1/dictionaries`, payload)
+    }
+    ElMessage.success('Збережено')
   } catch(e) {
-    item.is_active = !item.is_active // revert UI
-    ElMessage.error('Помилка зміни статусу')
+    if (item.id) item.is_active = !item.is_active // revert UI if it was a toggle
+    ElMessage.error(e.response?.data?.detail || 'Помилка збереження')
   }
 }
+
 
 const submitForm = async () => {
   if (!formRef.value) return
