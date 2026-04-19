@@ -157,6 +157,12 @@
 
       <!-- Main Content Area -->
       <el-main class="main-content">
+        <!-- GLOBAL TAX WARNING -->
+        <div v-if="taxWarningVisible" class="tax-limit-warning-banner">
+            <el-icon class="mr-2"><WarningFilled /></el-icon>
+            Увага! Дохід ФОП наближається до ліміту: <strong>{{ incomePercentage }}%</strong>. Решту ліміту: <strong>{{ formatCurrency(remainingLimit) }} грн</strong>.
+        </div>
+        
         <TabsBar />
         <div class="view-container">
           <router-view v-slot="{ Component }">
@@ -173,10 +179,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDark, useToggle } from '@vueuse/core'
+import api from '@/api'
 
 import TabsBar from '@/components/layout/TabsBar.vue'
 import {
@@ -195,7 +202,8 @@ import {
   SwitchButton,
   Monitor,
   Tools,
-  Tickets
+  Tickets,
+  WarningFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -237,6 +245,29 @@ const handleCommand = (command) => {
       break
   }
 }
+
+// Tax Warning Logic
+const taxWarningVisible = ref(false)
+const incomePercentage = ref(0)
+const remainingLimit = ref(0)
+
+onMounted(async () => {
+    try {
+        const res = await api.get('/api/v1/finance/fop-income')
+        if (res.data) {
+            incomePercentage.value = res.data.percentage
+            remainingLimit.value = res.data.remaining
+            // Show red banner ONLY if > 95%
+            if (incomePercentage.value >= 95) {
+                taxWarningVisible.value = true
+            }
+        }
+    } catch (e) {
+        console.error('Failed to check tax limit', e)
+    }
+})
+
+const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
 </script>
 
 <style scoped>
@@ -513,4 +544,29 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   flex-direction: column;
   overflow-y: auto;
 }
+
+.tax-limit-warning-banner {
+    background-color: #ef4444;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.tax-limit-warning-banner strong {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+.mr-2 { margin-right: 8px; }
 </style>
+

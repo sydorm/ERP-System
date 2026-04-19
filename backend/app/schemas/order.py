@@ -64,6 +64,8 @@ class OrderBase(BaseModel):
 
     internal_notes: Optional[str] = None
     reference_photo: Optional[str] = Field(None, max_length=500)
+    bank_account_id: Optional[UUID] = None
+
     
     # Additional IDs
     cancel_reason_id: Optional[UUID] = None
@@ -108,6 +110,8 @@ class OrderUpdate(BaseModel):
     manager_id: Optional[UUID] = None
     internal_notes: Optional[str] = None
     reference_photo: Optional[str] = Field(None, max_length=500)
+    bank_account_id: Optional[UUID] = None
+
     
     cancel_reason_id: Optional[UUID] = None
     client_type_id: Optional[UUID] = None

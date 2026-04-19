@@ -322,6 +322,18 @@
             </div>
           </div>
 
+          <div class="crm-field" v-if="form.payment_status !== 'unpaid'">
+            <label class="crm-label">Рахунок для зарахування</label>
+            <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" style="width:100%">
+              <el-option
+                v-for="acc in bankAccounts"
+                :key="acc.id"
+                :label="`${acc.bank_name} (${acc.iban.slice(-4)})`"
+                :value="acc.id"
+              />
+            </el-select>
+          </div>
+
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Дата заявки</label>
@@ -537,6 +549,7 @@ const leadSources = ref([])
 const paymentStatusesRes = ref([])
 const prioritiesRes = ref([])
 const deliveryMethods = ref([])
+const bankAccounts = ref([])
 
 const materialCheck = reactive({ has_issues: false, items: [] })
 
@@ -595,6 +608,10 @@ onMounted(async () => {
     paymentStatusesRes.value = ps.data
     prioritiesRes.value = pr.data
     deliveryMethods.value = dm.data
+    
+    // Fetch bank accounts for the default company
+    const accs = await api.get('/api/v1/companies/default/accounts')
+    bankAccounts.value = accs.data
   } catch (e) {
     console.error('Failed to load dictionaries', e)
   }

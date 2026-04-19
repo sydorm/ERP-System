@@ -22,6 +22,8 @@ from .calculator import CalcMaterial, CalcHardware, CalcService, CalcQuote
 from .audit_log import AuditLog
 from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 from .crm import CrmContact, CrmTask
+from .finance import FinancialTransaction, TransactionType
+
 
 __all__ = [
     "Base",
@@ -67,4 +69,7 @@ __all__ = [
     "ProductionOrderMaterial",
     "CrmContact",
     "CrmTask",
+    "FinancialTransaction",
+    "TransactionType",
 ]
+

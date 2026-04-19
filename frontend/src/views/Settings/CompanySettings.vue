@@ -175,6 +175,19 @@
                       </el-select>
                   </el-form-item>
 
+                  <el-row :gutter="12">
+                    <el-col :span="12">
+                      <el-form-item label="Ліміт доходу на рік (грн)">
+                        <el-input-number v-model="form.fop_income_limit" :min="0" style="width: 100%" />
+                      </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                       <el-form-item label="Військовий збір (%)">
+                         <el-input v-model="form.military_tax_rate" />
+                       </el-form-item>
+                    </el-col>
+                  </el-row>
+
                   <el-form-item>
                     <el-checkbox v-model="form.vat_payer" border>Платник ПДВ</el-checkbox>
                   </el-form-item>
@@ -183,11 +196,71 @@
                       <el-input v-model="form.ipn" placeholder="12 цифр" />
                   </el-form-item>
                 </el-form>
+
+                <!-- FOP INCOME WIDGET -->
+                <div class="income-widget mt-6" v-if="incomeData">
+                  <div class="widget-header">
+                    <h4>💳 Дохід ФОП за {{ currentYear }} рік</h4>
+                    <span class="total-amount">{{ formatCurrency(incomeData.total) }} грн</span>
+                  </div>
+                  
+                  <div class="progress-section">
+                    <div class="progress-labels">
+                      <span>Прогрес до ліміту</span>
+                      <span>{{ incomeData.percentage.toFixed(1) }}%</span>
+                    </div>
+                    <el-progress 
+                      :percentage="Math.min(incomeData.percentage, 100)" 
+                      :status="getProgressStatus(incomeData.percentage)"
+                      :stroke-width="12"
+                      :show-text="false"
+                    />
+                    <div class="progress-footer">
+                      <span>Залишок: <strong>{{ formatCurrency(incomeData.remaining) }} грн</strong></span>
+                      <span>Ліміт: {{ formatCurrency(incomeData.limit) }} грн</span>
+                    </div>
+                  </div>
+
+                  <div class="quarters-grid mt-4">
+                    <div v-for="(q, idx) in incomeData.quarters" :key="idx" class="q-item">
+                      <span class="q-name">Q{{ idx + 1 }}</span>
+                      <span class="q-val">{{ formatCurrency(q) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="accounts-breakdown mt-4">
+                    <p class="section-sub">По рахунках:</p>
+                    <div v-for="acc in incomeData.by_account" :key="acc.iban" class="acc-row">
+                      <div class="acc-info">
+                        <span class="acc-name">{{ acc.account_name }}</span>
+                        <span class="acc-iban">{{ acc.iban }}</span>
+                      </div>
+                      <span class="acc-val">{{ formatCurrency(acc.amount) }} грн</span>
+                    </div>
+                  </div>
+                </div>
              </el-col>
 
              <el-col :span="10">
+                <div class="tax-calendar-widget mb-6">
+                   <h4>📅 Податковий календар</h4>
+                   <div class="calendar-list">
+                      <div v-for="(event, idx) in calendarEvents" :key="idx" class="calendar-item">
+                         <div class="event-date">
+                            <span class="day">{{ event.date.split('-')[2] }}</span>
+                            <span class="month">{{ getMonthName(event.date.split('-')[1]) }}</span>
+                         </div>
+                         <div class="event-body">
+                            <p class="event-title">{{ event.title }}</p>
+                            <p class="event-amount" v-if="event.amount">{{ event.amount }}</p>
+                         </div>
+                      </div>
+                      <el-empty v-if="!calendarEvents.length" description="Подій немає" :image-size="60" />
+                   </div>
+                </div>
+
                 <div class="official-tax-widget">
-                   <h4>📊 Офіційні ставки (Дані ДПС)</h4>
+                   <h4>📊 Ставки та платежі</h4>
                    <div class="tax-info-card">
                       <div class="tax-item">
                          <span>ЄСВ (щомісячно):</span>
@@ -196,10 +269,6 @@
                       <div class="tax-item">
                          <span>Єдиний податок:</span>
                          <strong>{{ form.tax_rate_single || '—' }}</strong>
-                      </div>
-                      <div class="tax-item">
-                         <span>Військовий збір:</span>
-                         <strong>{{ form.military_tax_rate || '—' }}</strong>
                       </div>
                       <el-divider />
                       <div class="update-info">
@@ -292,6 +361,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Check, MagicStick, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import api from '@/api'
 import { 
   getCompanies, 
   updateCompanySettings, 
@@ -335,8 +405,13 @@ const form = reactive({
   tax_amount_esv: '',
   military_tax_rate: '',
   last_tax_update: '',
+  fop_income_limit: null,
   bank_accounts: []
 })
+
+const incomeData = ref(null)
+const calendarEvents = ref([])
+const currentYear = new Date().getFullYear()
 
 const bankForm = reactive({
   iban: '',
@@ -377,6 +452,22 @@ const selectCompany = (company) => {
         }
     })
     sameAddress.value = form.legal_address === form.physical_address
+    
+    // Fetch finance data
+    fetchFinanceData(company.id)
+}
+
+const fetchFinanceData = async (companyId) => {
+    try {
+        const [incomeRes, calendarRes] = await Promise.all([
+            api.get(`/api/v1/finance/fop-income?company_id=${companyId}`),
+            api.get(`/api/v1/finance/fop-calendar?company_id=${companyId}`)
+        ])
+        incomeData.value = incomeRes.data
+        calendarEvents.value = calendarRes.data
+    } catch (e) {
+        console.error('Failed to fetch finance data', e)
+    }
 }
 
 // Methods
@@ -499,6 +590,18 @@ const saveBankAccount = () => {
     
     bankModalVisible.value = false
 }
+
+// Finance Helpers
+const getProgressStatus = (pct) => {
+    if (pct >= 95) return 'exception'
+    if (pct >= 85) return 'warning'
+    return 'success'
+}
+
+const getMonthName = (m) => {
+    const months = ['січ', 'лют', 'бер', 'кві', 'тра', 'чер', 'лип', 'сер', 'вер', 'жов', 'лис', 'гру']
+    return months[parseInt(m) - 1] || m
+}
 </script>
 
 <style scoped>
@@ -605,4 +708,183 @@ const saveBankAccount = () => {
     display: flex;
     justify-content: flex-end;
 }
+
+/* FOP Income Widget Styles */
+.income-widget {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.widget-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #475569;
+}
+
+.total-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.progress-section {
+    margin-bottom: 24px;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.progress-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 8px;
+}
+
+.quarters-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+}
+
+.q-item {
+    text-align: center;
+}
+
+.q-item .q-name {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.q-item .q-val {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.accounts-breakdown .section-sub {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.acc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.acc-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.acc-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.acc-iban {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.acc-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Tax Calendar Styles */
+.tax-calendar-widget {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.tax-calendar-widget h4 {
+    margin: 0 0 16px 0;
+    font-size: 15px;
+    color: #475569;
+}
+
+.calendar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.calendar-item {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+}
+
+.event-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 45px;
+}
+
+.event-date .day {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.event-date .month {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.event-body .event-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.event-body .event-amount {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.mt-6 { margin-top: 24px; }
+.mb-6 { margin-bottom: 24px; }
 </style>

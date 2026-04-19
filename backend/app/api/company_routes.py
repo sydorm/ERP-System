@@ -135,3 +135,19 @@ async def fetch_tax_rates(
     db.commit()
     db.refresh(company)
     return company
+
+@router.get("/default/accounts", response_model=List[dict])
+async def get_default_company_accounts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get bank accounts for the default company."""
+    company = db.query(Company).filter(Company.is_default == True).first()
+    if not company:
+        company = db.query(Company).first()
+    
+    if not company:
+        return []
+    
+    # Simple list of dicts for now
+    return [{"id": str(acc.id), "iban": acc.iban, "bank_name": acc.bank_name, "is_primary": acc.is_primary} for acc in company.bank_accounts]

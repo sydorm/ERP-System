@@ -166,9 +166,29 @@ async def update_order(
 
     old_obj = AuditService.get_dict(order, relationships=["lines"])
 
-    update_data = order_in.dict(exclude_unset=True, exclude={"lines"})
+    # Handle payment transaction if paid_amount increases and bank_account_id is provided
+    new_paid_amount = update_data.get("paid_amount")
+    bank_account_id = update_data.get("bank_account_id")
+    
+    if new_paid_amount is not None and bank_account_id:
+        delta = Decimal(str(new_paid_amount)) - (order.paid_amount or Decimal("0"))
+        if delta > 0:
+            from app.models.finance import FinancialTransaction, TransactionType
+            transaction = FinancialTransaction(
+                company_id=current_user.company_id,
+                bank_account_id=bank_account_id,
+                order_id=order.id,
+                transaction_type=TransactionType.IN,
+                amount=delta,
+                description=f"Оплата замовлення {order.order_number}",
+                category="SALES"
+            )
+            db.add(transaction)
+
+    # Apply updates
     for field, value in update_data.items():
-        setattr(order, field, value)
+        if field != "bank_account_id": # This is a meta-field for the transaction
+            setattr(order, field, value)
 
     if order_in.lines is not None:
         db.query(OrderLine).filter(OrderLine.order_id == id).delete()

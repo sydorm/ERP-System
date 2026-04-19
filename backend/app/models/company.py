@@ -65,6 +65,10 @@ class Company(BaseModel):
     military_tax_rate = Column(String(20), nullable=True)  # Military tax / Військовий збір
     last_tax_update = Column(String(50), nullable=True)    # Timestamp of last official rate fetch
     
+    # FOP specific tracking
+    fop_income_limit = Column(Numeric(15, 2), nullable=True) # Customizable income limit
+
+    
     # Branding / Брендування
     logo_url = Column(String(255), nullable=True)          # Logo URL / Логотип
     stamp_url = Column(String(255), nullable=True)         # Stamp URL / Печатка
