@@ -592,6 +592,8 @@ const saveBankAccount = () => {
 }
 
 // Finance Helpers
+const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
+
 const getProgressStatus = (pct) => {
     if (pct >= 95) return 'exception'
     if (pct >= 85) return 'warning'
