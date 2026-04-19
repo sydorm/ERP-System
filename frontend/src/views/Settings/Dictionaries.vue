@@ -99,11 +99,8 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="order" label="Порядок" width="100" sortable>
-              <template #default="{ row }">
-                <el-input-number v-model="row.order" :min="0" :max="999" size="small" @change="handleToggle(row)" />
-              </template>
-            </el-table-column>
+
+
 
             <el-table-column label="Властивості" min-width="150">
 
@@ -178,9 +175,8 @@
           <el-input v-model="form.description" type="textarea" :rows="2" placeholder="Додаткова інформація" />
         </el-form-item>
 
-        <el-form-item label="Порядок сортування">
-          <el-input-number v-model="form.order" :min="0" :max="999" class="w-full" />
-        </el-form-item>
+
+
 
 
         <!-- Dynamic Fields based on active dictionary -->
