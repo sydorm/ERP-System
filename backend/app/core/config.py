@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     # API Settings
     PROJECT_NAME: str = "ERP System"
     API_V1_STR: str = "/api/v1"
+    ANTHROPIC_API_KEY: Optional[str] = None
     
     # Database
     DATABASE_URL: str = "postgresql://erp_user:erp_password@localhost:5432/erp_db"

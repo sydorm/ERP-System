@@ -1,7 +1,7 @@
 """
 Company model - represents businesses (FOP/TOV)
 """
-from sqlalchemy import Column, String, Boolean, Enum, ForeignKey, Numeric
+from sqlalchemy import Column, String, Boolean, Enum, ForeignKey, Numeric, JSON
 from sqlalchemy.orm import relationship
 import enum
 from .base import BaseModel
@@ -67,6 +67,7 @@ class Company(BaseModel):
     
     # FOP specific tracking
     fop_income_limit = Column(Numeric(15, 2), nullable=True) # Customizable income limit
+    tax_settings = Column(JSON, nullable=True)             # JSON storage for min_wage, PM, rates, etc.
 
     
     # Branding / Брендування
