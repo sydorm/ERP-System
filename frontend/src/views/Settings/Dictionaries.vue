@@ -172,11 +172,15 @@
 
 
             <el-table-column label="Властивості" min-width="150">
-
               <template #default="{ row }">
-                <div v-if="row.color" class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" :class="`bg-${row.color}`"></div>
-                  <span class="text-xs text-slate-500">{{ row.color }}</span>
+                <div class="flex items-center gap-3">
+                  <div v-if="row.color" class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: row.color.startsWith('#') ? row.color : `var(--el-color-${row.color})` }"></div>
+                    <span class="text-xs text-slate-500">{{ row.color }}</span>
+                  </div>
+                  <div v-if="row.icon" class="flex items-center gap-1">
+                    <span class="text-lg">{{ row.icon }}</span>
+                  </div>
                 </div>
               </template>
             </el-table-column>
@@ -243,6 +247,15 @@
         <el-form-item label="Опис (опціонально)">
           <el-input v-model="form.description" type="textarea" :rows="2" placeholder="Додаткова інформація" />
         </el-form-item>
+
+        <div class="grid grid-cols-2 gap-4">
+          <el-form-item label="Колір">
+            <el-color-picker v-model="form.color" />
+          </el-form-item>
+          <el-form-item label="Іконка (Емодзі або назва)">
+            <el-input v-model="form.icon" placeholder="напр. 📞 або Box" />
+          </el-form-item>
+        </div>
 
 
 

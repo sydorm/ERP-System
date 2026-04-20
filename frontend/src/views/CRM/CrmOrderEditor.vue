@@ -569,7 +569,17 @@ const leadSources = ref([])
 const paymentStatusesRes = ref([])
 const prioritiesRes = ref([])
 const bankAccounts = ref([])
-const communicationTypes = ref([])
+
+const defaultCommTypes = [
+  { code: 'CALL', name: 'Телефон', icon: '📞' },
+  { code: 'VIBER', name: 'Viber', icon: '💬' },
+  { code: 'TELEGRAM', name: 'Telegram', icon: '✈️' },
+  { code: 'INSTAGRAM', name: 'Instagram', icon: '📸' },
+  { code: 'SMS', name: 'SMS', icon: '📱' },
+  { code: 'EMAIL', name: 'Email', icon: '✉️' },
+  { code: 'MEET', name: 'Зустріч', icon: '🤝' },
+]
+const communicationTypes = ref([...defaultCommTypes])
 
 const materialCheck = reactive({ has_issues: false, items: [] })
 
@@ -617,30 +627,7 @@ const form = reactive({
 const clientName  = ref('')
 const clientPhone = ref('')
 
-onMounted(async () => {
-  try {
-    const [ls, ps, pr, dm, ct] = await Promise.all([
-      api.get('/api/v1/dictionaries/LEAD_SOURCE'),
-      api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
-      api.get('/api/v1/dictionaries/PRIORITY'),
-      api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
-      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE')
-    ])
-    leadSources.value = ls.data
-    paymentStatusesRes.value = ps.data
-    prioritiesRes.value = pr.data
-    deliveryMethods.value = dm.data
-    communicationTypes.value = ct.data
-    
-    // Fetch bank accounts for the default company
-    const accs = await api.get('/api/v1/companies/default/accounts')
-    bankAccounts.value = accs.data
-  } catch (e) {
-    console.error('Failed to load dictionaries', e)
-  }
-})
-
-// ─── Config ───────────────────────────────────────────────────────────────────
+// Config fetched during loadData
 const stages = [
   { key: 'new',        label: 'Нова заявка' },
   { key: 'processing', label: 'В обробці' },
@@ -1041,8 +1028,40 @@ const loadData = async () => {
         discount_percent: Number(o.discount_percent || 0),
       })
       if (form.product_id) await onProductChange(form.product_id)
-      const cp = counterparties.value.find(c => c.id === form.counterparty_id)
       if (cp) { clientName.value = cp.name; clientPhone.value = cp.phone || '' }
+      
+      // Load Dictionaries
+      try {
+        const [ls, ps, pr, dm, ct, accs] = await Promise.all([
+          api.get('/api/v1/dictionaries/LEAD_SOURCE'),
+          api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
+          api.get('/api/v1/dictionaries/PRIORITY'),
+          api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
+          api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
+          api.get('/api/v1/companies/default/accounts')
+        ])
+        leadSources.value = ls.data
+        paymentStatusesRes.value = ps.data
+        prioritiesRes.value = pr.data
+        deliveryMethods.value = dm.data
+        communicationTypes.value = ct.data
+        bankAccounts.value = accs.data
+      } catch (e) {
+        console.error('Failed to load some dictionaries', e)
+      }
+
+      // Ensure we have communication types even if API returns empty
+      if (!communicationTypes.value || communicationTypes.value.length === 0) {
+        communicationTypes.value = [...defaultCommTypes]
+      }
+
+      // Restore client info
+      const cp = counterparties.value.find(c => c.id === form.counterparty_id)
+      if (cp) {
+        clientName.value = cp.name
+        clientPhone.value = cp.phone || ''
+      }
+
       await loadContacts()
     }
   } catch {
