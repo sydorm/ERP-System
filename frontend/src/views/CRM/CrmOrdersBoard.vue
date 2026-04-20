@@ -246,8 +246,13 @@
         </div>
 
         <div class="crm-field">
-          <label class="crm-label">Коментар</label>
-          <el-input v-model="callForm.note" type="textarea" :rows="2" placeholder="Нотатка менеджера..." />
+          <label class="crm-label">{{ callForm.result === 'REFUSED' ? 'Причина відмови' : 'Коментар' }}</label>
+          <el-input 
+            v-model="callForm.note" 
+            type="textarea" 
+            :rows="2" 
+            :placeholder="callForm.result === 'REFUSED' ? 'Чому відмовився...' : 'Нотатка менеджера...'" 
+          />
         </div>
       </div>
       <template #footer>
