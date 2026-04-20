@@ -478,8 +478,12 @@ const confirmReschedule = async () => {
 const handleCall = (task) => {
   // Copy to clipboard
   if (task.client_phone) {
-    navigator.clipboard.writeText(task.client_phone)
-    ElMessage.success(`Номер ${task.client_phone} скопійовано`)
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(task.client_phone)
+      ElMessage.success(`Номер ${task.client_phone} скопійовано`)
+    } else {
+      console.warn('Clipboard API is not available (needs HTTPS)')
+    }
   }
   
   // Reset form
