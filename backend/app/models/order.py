@@ -66,6 +66,7 @@ class Order(BaseModel):
     delivery_method_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
     client_type_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
     payment_status_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    bank_account_id = Column(UUID(as_uuid=True), ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True)
 
     manager_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 

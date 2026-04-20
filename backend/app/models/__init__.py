@@ -23,6 +23,7 @@ from .audit_log import AuditLog
 from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 from .crm import CrmContact, CrmTask
 from .finance import FinancialTransaction, TransactionType
+from .notification import Notification
 
 
 __all__ = [
