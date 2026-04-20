@@ -434,15 +434,19 @@
             <div class="contact-result-list">
               <button
                 v-for="cr in contactResults"
-                :key="cr.value"
+                :key="cr.code"
                 class="contact-result-btn"
-                :class="[`cr-${cr.value}`, contactResult === cr.value ? 'active' : '']"
-                @click="contactResult = contactResult === cr.value ? null : cr.value"
-              >{{ cr.label }}</button>
+                :class="[{ active: contactResult === cr.code }, `cr-${cr.code}`]"
+                :style="contactResult === cr.code ? { borderColor: cr.color, background: cr.color + '15', color: cr.color } : {}"
+                @click="contactResult = contactResult === cr.code ? null : cr.code"
+              >
+                <span v-if="cr.icon" style="margin-right:8px">{{ cr.icon }}</span>
+                {{ cr.name }}
+              </button>
             </div>
           </div>
 
-          <div class="crm-field" v-if="contactResult === 'thinking'">
+          <div class="crm-field" v-if="contactResult === 'THINKING'">
             <label class="crm-label">Передзвонити</label>
             <el-date-picker
               v-model="contactNextAt"
@@ -454,7 +458,7 @@
             />
           </div>
 
-          <div class="crm-field" v-if="contactResult === 'refused'">
+          <div class="crm-field" v-if="contactResult === 'REFUSED'">
             <label class="crm-label">Причина відмови</label>
             <el-input v-model="contactNote" placeholder="Чому відмовився..." />
           </div>
@@ -471,7 +475,7 @@
               v-for="c in contacts"
               :key="c.id"
               class="contact-history-item"
-              :class="`chi-${c.result}`"
+              :style="{ borderLeft: `3px solid ${getContactResultColor(c.result)}` }"
             >
               <span class="chi-icon">
                 <span class="chi-comm-icon" v-if="c.communication_type">{{ getCommIcon(c.communication_type) }}</span>
@@ -582,6 +586,14 @@ const defaultCommTypes = [
 ]
 const communicationTypes = ref([...defaultCommTypes])
 
+const defaultContactResults = [
+  { code: 'NO_ANSWER', name: 'Не відповів', icon: '📵', color: '#f97316' },
+  { code: 'THINKING',  name: 'Думає',      icon: '🤔', color: '#eab308' },
+  { code: 'REFUSED',   name: 'Відмовився',  icon: '❌', color: '#ef4444' },
+  { code: 'CONFIRMED', name: 'Підтвердив замовлення', icon: '✅', color: '#22c55e' },
+]
+const contactResults = ref([...defaultContactResults])
+
 const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
@@ -644,12 +656,7 @@ const isPassedStage = (idx) => idx < stageIndex.value
 const priorities = computed(() => prioritiesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
 const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
 
-const contactResults = [
-  { value: 'no_answer', label: 'Не відповів' },
-  { value: 'thinking',  label: 'Думає' },
-  { value: 'refused',   label: 'Відмовився' },
-  { value: 'confirmed', label: 'Підтвердив замовлення' },
-]
+const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
 
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
@@ -848,15 +855,17 @@ const getCommIcon = (code) => {
   const ct = communicationTypes.value.find(i => i.code === code)
   return ct ? ct.icon : '📞'
 }
-const contactResultIcon = (res) => {
-  if (res === 'no_answer') return '📵'
-  if (res === 'thinking')  return '🤔'
-  if (res === 'refused')   return '❌'
-  if (res === 'confirmed') return '✅'
-  return '📞'
+const contactResultIcon = (code) => {
+  const cr = contactResults.value.find(i => i.code === code)
+  return cr ? cr.icon : '📞'
 }
-const contactResultLabel = (res) => {
-  return contactResults.find(r => r.value === res)?.label || res
+const contactResultLabel = (code) => {
+  const cr = contactResults.value.find(i => i.code === code)
+  return cr ? cr.name : code
+}
+const getContactResultColor = (code) => {
+  const cr = contactResults.value.find(i => i.code === code)
+  return cr ? cr.color : '#e2e8f0'
 }
 
 const logContact = async () => {
@@ -987,12 +996,13 @@ const loadData = async () => {
 
     // 1. Load Dictionaries (always needed, even for new orders)
     try {
-      const [ls, ps, pr, dm, ct, accs] = await Promise.all([
+      const [ls, ps, pr, dm, ct, cr, accs] = await Promise.all([
         api.get('/api/v1/dictionaries/LEAD_SOURCE'),
         api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
         api.get('/api/v1/dictionaries/PRIORITY'),
         api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
         api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
+        api.get('/api/v1/dictionaries/CONTACT_RESULT'),
         api.get('/api/v1/companies/default/accounts').catch(() => ({ data: [] }))
       ])
       leadSources.value = ls.data
@@ -1000,14 +1010,18 @@ const loadData = async () => {
       prioritiesRes.value = pr.data
       deliveryMethods.value = dm.data
       communicationTypes.value = ct.data
+      contactResults.value = cr.data
       bankAccounts.value = accs.data
     } catch (e) {
       console.warn('Non-critical dictionaries failed to load', e)
     }
 
-    // Ensure we have communication types even if API returns empty
+    // Ensure dictionaries have fallback data if API returns empty
     if (!communicationTypes.value || communicationTypes.value.length === 0) {
       communicationTypes.value = [...defaultCommTypes]
+    }
+    if (!contactResults.value || contactResults.value.length === 0) {
+      contactResults.value = [...defaultContactResults]
     }
 
     // 2. Load existing Order data
@@ -1055,14 +1069,7 @@ const loadData = async () => {
         discount_percent: Number(o.discount_percent || 0),
       })
       if (form.product_id) await onProductChange(form.product_id)
-      if (cp) { clientName.value = cp.name; clientPhone.value = cp.phone || '' }
-      
-      // Load Dictionaries
-      try {
-        const [ls, ps, pr, dm, ct, accs] = await Promise.all([
-          api.get('/api/v1/dictionaries/LEAD_SOURCE'),
-          api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
-          api.get('/api/v1/dictionaries/PRIORITY'),
+
       const cp = counterparties.value.find(c => c.id === form.counterparty_id)
       if (cp) {
         clientName.value = cp.name

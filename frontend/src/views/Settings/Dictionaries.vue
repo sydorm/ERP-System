@@ -346,7 +346,8 @@ const dictionariesMap = {
     { code: 'CANCEL_REASON', name: 'Причини скасування', description: 'Чому зірвалася угода' },
     { code: 'CLIENT_TYPE', name: 'Типи клієнтів', description: 'Класифікація покупців' },
     { code: 'PRICE_TYPE', name: 'Типи цін', description: 'Оптова, роздрібна, дилерська тощо' },
-    { code: 'COMMUNICATION_TYPE', name: 'Види комунікацій', description: 'Телефон, Viber, Telegram тощо' }
+    { code: 'COMMUNICATION_TYPE', name: 'Види комунікацій', description: 'Телефон, Viber, Telegram тощо' },
+    { code: 'CONTACT_RESULT', name: 'Результати контакту', description: 'Не відповів, Думає, Відмовився тощо' }
   ],
   'inventory': [
     { code: 'PRODUCT_CATEGORY', name: 'Категорії товарів', description: 'Деревоподібна структура номенклатури' },

@@ -213,23 +213,20 @@
           <label class="crm-label">Результат</label>
           <div class="call-result-grid">
             <button
-              v-for="cr in [
-                { v: 'no_answer', l: 'Не відповів', c: 'orange' },
-                { v: 'thinking',  l: 'Думає',      c: 'yellow' },
-                { v: 'refused',   l: 'Відмовився',  c: 'red' },
-                { v: 'confirmed', l: 'Підтвердив',  c: 'green' },
-              ]"
-              :key="cr.v"
+              v-for="cr in dictionaryStore.contactResults"
+              :key="cr.code"
               class="cr-grid-btn"
-              :class="{ active: callForm.result === cr.v, [`cr-${cr.c}`]: true }"
-              @click="callForm.result = cr.v"
+              :class="{ active: callForm.result === cr.code }"
+              :style="callForm.result === cr.code ? { borderColor: cr.color, background: cr.color + '15', color: cr.color } : {}"
+              @click="callForm.result = cr.code"
             >
-              {{ cr.l }}
+              <span v-if="cr.icon" style="margin-bottom:4px; font-size:1.5em">{{ cr.icon }}</span>
+              {{ cr.name }}
             </button>
           </div>
         </div>
 
-        <div class="crm-field" v-if="callForm.result === 'thinking'">
+        <div class="crm-field" v-if="callForm.result === 'THINKING'">
           <label class="crm-label">Коли передзвонити?</label>
           <el-date-picker
             v-model="callForm.next_contact_at"
@@ -531,21 +528,31 @@ const dictionaryStore = ref({
   leadSources: [],
   priorities: [],
   paymentStatuses: [],
-  communicationTypes: []
+  communicationTypes: [],
+  contactResults: []
 })
+
+const defaultContactResults = [
+  { code: 'NO_ANSWER', name: 'Не відповів', icon: '📵', color: '#f97316' },
+  { code: 'THINKING',  name: 'Думає',      icon: '🤔', color: '#eab308' },
+  { code: 'REFUSED',   name: 'Відмовився',  icon: '❌', color: '#ef4444' },
+  { code: 'CONFIRMED', name: 'Підтвердив замовлення', icon: '✅', color: '#22c55e' },
+]
 
 const fetchDictionaries = async () => {
   try {
-    const [ls, pr, ps, ct] = await Promise.all([
+    const [ls, pr, ps, ct, cr] = await Promise.all([
       api.get('/api/v1/dictionaries/LEAD_SOURCE'),
       api.get('/api/v1/dictionaries/PRIORITY'),
       api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
-      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE')
+      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
+      api.get('/api/v1/dictionaries/CONTACT_RESULT')
     ])
     dictionaryStore.value.leadSources = ls.data
     dictionaryStore.value.priorities = pr.data
     dictionaryStore.value.paymentStatuses = ps.data
     dictionaryStore.value.communicationTypes = ct.data
+    dictionaryStore.value.contactResults = cr.data.length ? cr.data : [...defaultContactResults]
   } catch (e) {
     console.error('Failed to load dictionaries', e)
   }
