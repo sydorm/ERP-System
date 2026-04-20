@@ -413,6 +413,23 @@
           </div>
 
           <div class="crm-field">
+            <label class="crm-label">Вид комунікації</label>
+            <div class="comm-type-list">
+              <button
+                v-for="ct in communicationTypes"
+                :key="ct.code"
+                class="comm-type-btn"
+                :class="{ active: contactCommType === ct.code }"
+                @click="contactCommType = ct.code"
+                type="button"
+              >
+                <span class="ct-icon">{{ ct.icon || '📞' }}</span>
+                <span class="ct-name">{{ ct.name }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="crm-field">
             <label class="crm-label">Результат контакту</label>
             <div class="contact-result-list">
               <button
@@ -456,7 +473,10 @@
               class="contact-history-item"
               :class="`chi-${c.result}`"
             >
-              <span class="chi-icon">{{ contactResultIcon(c.result) }}</span>
+              <span class="chi-icon">
+                <span class="chi-comm-icon" v-if="c.communication_type">{{ getCommIcon(c.communication_type) }}</span>
+                <span v-else>{{ contactResultIcon(c.result) }}</span>
+              </span>
               <div class="chi-body">
                 <span class="chi-label">{{ contactResultLabel(c.result) }}</span>
                 <span class="chi-note" v-if="c.note">{{ c.note }}</span>
@@ -548,8 +568,8 @@ const photoInput     = ref(null)
 const leadSources = ref([])
 const paymentStatusesRes = ref([])
 const prioritiesRes = ref([])
-const deliveryMethods = ref([])
 const bankAccounts = ref([])
+const communicationTypes = ref([])
 
 const materialCheck = reactive({ has_issues: false, items: [] })
 
@@ -558,6 +578,7 @@ const newClient = reactive({ name: '', phone: '', email: '' })
 // Communication
 const contacts      = ref([])
 const contactResult = ref(null)
+const contactCommType = ref('CALL')
 const contactNote   = ref('')
 const contactNextAt = ref(null)
 const savingContact = ref(false)
@@ -598,16 +619,18 @@ const clientPhone = ref('')
 
 onMounted(async () => {
   try {
-    const [ls, ps, pr, dm] = await Promise.all([
+    const [ls, ps, pr, dm, ct] = await Promise.all([
       api.get('/api/v1/dictionaries/LEAD_SOURCE'),
       api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
       api.get('/api/v1/dictionaries/PRIORITY'),
-      api.get('/api/v1/dictionaries/DELIVERY_METHOD')
+      api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
+      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE')
     ])
     leadSources.value = ls.data
     paymentStatusesRes.value = ps.data
     prioritiesRes.value = pr.data
     deliveryMethods.value = dm.data
+    communicationTypes.value = ct.data
     
     // Fetch bank accounts for the default company
     const accs = await api.get('/api/v1/companies/default/accounts')
@@ -835,12 +858,29 @@ const loadContacts = async () => {
   } catch { /* silent */ }
 }
 
+// ─── Communication helpers ────────────────────────────────────────────────────
+const getCommIcon = (code) => {
+  const ct = communicationTypes.value.find(i => i.code === code)
+  return ct ? ct.icon : '📞'
+}
+const contactResultIcon = (res) => {
+  if (res === 'no_answer') return '📵'
+  if (res === 'thinking')  return '🤔'
+  if (res === 'refused')   return '❌'
+  if (res === 'confirmed') return '✅'
+  return '📞'
+}
+const contactResultLabel = (res) => {
+  return contactResults.find(r => r.value === res)?.label || res
+}
+
 const logContact = async () => {
   if (!contactResult.value) return
   savingContact.value = true
   try {
     await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, {
       result: contactResult.value,
+      communication_type: contactCommType.value,
       note: contactNote.value || null,
       next_contact_at: contactNextAt.value || null,
     })
@@ -1270,6 +1310,22 @@ onMounted(loadData)
   font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px;
   background: #fee2e2; color: #991b1b;
 }
+.comm-type-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.comm-type-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 10px; min-width: 65px; border-radius: 12px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer;
+  transition: all 0.15s;
+}
+.comm-type-btn:hover { background: #eef2ff; border-color: #c7d2fe; }
+.comm-type-btn.active {
+  background: #eef2ff; border-color: #6366f1; transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
+}
+.ct-icon { font-size: 20px; }
+.ct-name { font-size: 10px; font-weight: 600; color: #64748b; text-align: center; line-height: 1.1; }
+.comm-type-btn.active .ct-name { color: #6366f1; }
+
 .contact-result-list { display: flex; flex-direction: column; gap: 5px; }
 .contact-result-btn {
   width: 100%; text-align: left;

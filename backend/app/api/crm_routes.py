@@ -45,6 +45,7 @@ async def log_contact(
     contact = CrmContact(
         order_id=order_id,
         result=data.result,
+        communication_type=data.communication_type,
         note=data.note,
         manager_id=current_user.id,
         contacted_at=datetime.utcnow(),

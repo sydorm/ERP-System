@@ -332,7 +332,8 @@ const dictionariesMap = {
     { code: 'LEAD_SOURCE', name: 'Джерела лідів', description: 'Звідки приходять клієнти' },
     { code: 'CANCEL_REASON', name: 'Причини скасування', description: 'Чому зірвалася угода' },
     { code: 'CLIENT_TYPE', name: 'Типи клієнтів', description: 'Класифікація покупців' },
-    { code: 'PRICE_TYPE', name: 'Типи цін', description: 'Оптова, роздрібна, дилерська тощо' }
+    { code: 'PRICE_TYPE', name: 'Типи цін', description: 'Оптова, роздрібна, дилерська тощо' },
+    { code: 'COMMUNICATION_TYPE', name: 'Види комунікацій', description: 'Телефон, Viber, Telegram тощо' }
   ],
   'inventory': [
     { code: 'PRODUCT_CATEGORY', name: 'Категорії товарів', description: 'Деревоподібна структура номенклатури' },

@@ -10,6 +10,7 @@ class CrmContact(BaseModel):
 
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     result = Column(String(50), nullable=False)  # no_answer/thinking/refused/confirmed
+    communication_type = Column(String(50), nullable=True) # CALL, VIBER, etc.
     note = Column(Text, nullable=True)
     manager_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     contacted_at = Column(DateTime, default=datetime.utcnow, nullable=False)

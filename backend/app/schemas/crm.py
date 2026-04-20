@@ -6,6 +6,7 @@ from datetime import datetime
 
 class CrmContactCreate(BaseModel):
     result: str  # no_answer / thinking / refused / confirmed
+    communication_type: Optional[str] = 'CALL'
     note: Optional[str] = None
     next_contact_at: Optional[datetime] = None  # required when result == "thinking"
 
@@ -14,6 +15,7 @@ class CrmContactResponse(BaseModel):
     id: UUID
     order_id: UUID
     result: str
+    communication_type: Optional[str] = None
     note: Optional[str] = None
     manager_id: Optional[UUID] = None
     contacted_at: datetime

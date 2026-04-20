@@ -51,8 +51,8 @@
             <span v-if="task.client_phone" class="task-phone">{{ task.client_phone }}</span>
           </div>
           <div class="task-actions">
-            <button class="task-btn task-call" @click="openTaskOrder(task)">Зателефонувати</button>
-            <button class="task-btn task-move" @click="rescheduleTask(task)">Перенести</button>
+            <button class="task-btn task-call" @click="handleCall(task)">Зателефонувати</button>
+            <button class="task-btn task-move" @click="openReschedule(task)">Перенести</button>
             <button class="task-btn task-done" @click="completeTask(task)">✓</button>
           </div>
         </div>
@@ -162,6 +162,99 @@
       </div>
     </div>
 
+    <!-- ===== RESCHEDULE DIALOG ===== -->
+    <el-dialog v-model="rescheduleVisible" title="Перенести завдання" width="400px" append-to-body>
+      <div class="reschedule-body">
+        <div class="quick-options">
+          <button class="quick-btn" @click="quickReschedule(60)">+1 год</button>
+          <button class="quick-btn" @click="quickReschedule(0, 10, 0)">Завтра 10:00</button>
+          <button class="quick-btn" @click="quickReschedule(0, 14, 0)">Завтра 14:00</button>
+        </div>
+        <div class="crm-field" style="margin-top:15px">
+          <label class="crm-label">Обрати дату та час вручну</label>
+          <el-date-picker
+            v-model="rescheduleTime"
+            type="datetime"
+            format="DD.MM.YYYY HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            style="width:100%"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="rescheduleVisible = false">Скасувати</el-button>
+          <el-button type="primary" @click="confirmReschedule">Підтвердити</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- ===== CALL RESULT DIALOG ===== -->
+    <el-dialog v-model="callVisible" title="Результат дзвінка" width="420px" append-to-body>
+      <div class="call-dialog-body" v-if="callTask">
+        <div class="call-client-info">
+          <span class="call-client-name">{{ callTask.client_name }}</span>
+          <span class="call-client-phone">{{ callTask.client_phone }}</span>
+        </div>
+
+        <div class="crm-field">
+          <label class="crm-label">Вид комунікації</label>
+          <el-select v-model="callForm.communication_type" style="width:100%">
+            <el-option
+              v-for="ct in dictionaryStore.communicationTypes"
+              :key="ct.code"
+              :label="`${ct.icon} ${ct.name}`"
+              :value="ct.code"
+            />
+          </el-select>
+        </div>
+
+        <div class="crm-field">
+          <label class="crm-label">Результат</label>
+          <div class="call-result-grid">
+            <button
+              v-for="cr in [
+                { v: 'no_answer', l: 'Не відповів', c: 'orange' },
+                { v: 'thinking',  l: 'Думає',      c: 'yellow' },
+                { v: 'refused',   l: 'Відмовився',  c: 'red' },
+                { v: 'confirmed', l: 'Підтвердив',  c: 'green' },
+              ]"
+              :key="cr.v"
+              class="cr-grid-btn"
+              :class="{ active: callForm.result === cr.v, [`cr-${cr.c}`]: true }"
+              @click="callForm.result = cr.v"
+            >
+              {{ cr.l }}
+            </button>
+          </div>
+        </div>
+
+        <div class="crm-field" v-if="callForm.result === 'thinking'">
+          <label class="crm-label">Коли передзвонити?</label>
+          <el-date-picker
+            v-model="callForm.next_contact_at"
+            type="datetime"
+            format="DD.MM.YYYY HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            style="width:100%"
+          />
+        </div>
+
+        <div class="crm-field">
+          <label class="crm-label">Коментар</label>
+          <el-input v-model="callForm.note" type="textarea" :rows="2" placeholder="Нотатка менеджера..." />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="callVisible = false">Закрити</el-button>
+          <el-button type="primary" @click="submitCallResult" :loading="savingCall" :disabled="!callForm.result">
+            Зберегти результат
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -185,6 +278,21 @@ const filterPriority = ref('')
 const filterManager  = ref('')
 const dragOrderId    = ref(null)
 const dragOverStage  = ref(null)
+
+// ─── Modals State ─────────────────────────────────────────────────────────────
+const rescheduleVisible = ref(false)
+const selectedTask      = ref(null)
+const rescheduleTime    = ref(null)
+
+const callVisible       = ref(false)
+const callTask          = ref(null)
+const callForm          = reactive({
+  result: null,
+  communication_type: 'CALL',
+  note: '',
+  next_contact_at: null,
+})
+const savingCall        = ref(false)
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const stages = [
@@ -328,14 +436,82 @@ const completeTask = async (task) => {
   }
 }
 
-const rescheduleTask = async (task) => {
-  const newTime = prompt('Новий час (YYYY-MM-DDTHH:mm:ss):')
-  if (!newTime) return
+// ─── Reschedule logic ─────────────────────────────────────────────────────────
+const openReschedule = (task) => {
+  selectedTask.value = task
+  rescheduleTime.value = task.scheduled_at
+  rescheduleVisible.value = true
+}
+
+const quickReschedule = (minutes, h, m) => {
+  const d = new Date()
+  if (minutes) {
+    d.setMinutes(d.getMinutes() + minutes)
+  } else {
+    d.setDate(d.getDate() + 1)
+    d.setHours(h, m, 0, 0)
+  }
+  rescheduleTime.value = d.toISOString().slice(0, 19)
+}
+
+const confirmReschedule = async () => {
+  if (!selectedTask.value || !rescheduleTime.value) return
   try {
-    await api.put(`/api/v1/crm/tasks/${task.id}/reschedule`, { scheduled_at: newTime })
+    await api.put(`/api/v1/crm/tasks/${selectedTask.value.id}/reschedule`, { scheduled_at: rescheduleTime.value })
     await fetchTasks()
+    rescheduleVisible.value = false
+    ElMessage.success('Завдання перенесено')
   } catch {
     ElMessage.error('Помилка')
+  }
+}
+
+// ─── Call logic ──────────────────────────────────────────────────────────────
+const handleCall = (task) => {
+  // Copy to clipboard
+  if (task.client_phone) {
+    navigator.clipboard.writeText(task.client_phone)
+    ElMessage.success(`Номер ${task.client_phone} скопійовано`)
+  }
+  
+  // Reset form
+  Object.assign(callForm, {
+    result: null,
+    communication_type: 'CALL',
+    note: '',
+    next_contact_at: null,
+  })
+  callTask.value = task
+  callVisible.value = true
+}
+
+const submitCallResult = async () => {
+  if (!callForm.result) return
+  savingCall.value = true
+  try {
+    const res = await api.post(`/api/v1/crm/orders/${callTask.value.order_id}/contacts`, {
+      result: callForm.result,
+      communication_type: callForm.communication_type,
+      note: callForm.note || null,
+      next_contact_at: callForm.next_contact_at || null,
+    })
+    
+    // Auto-complete task
+    await completeTask(callTask.value)
+    
+    ElMessage.success('Результат записано')
+    callVisible.value = false
+    
+    // If confirmed -> open order
+    if (callForm.result === 'confirmed') {
+      router.push(`/crm/orders/${callTask.value.order_id}`)
+    } else {
+      await fetchTasks()
+    }
+  } catch (e) {
+    ElMessage.error(e.response?.data?.detail || 'Помилка')
+  } finally {
+    savingCall.value = false
   }
 }
 
@@ -354,19 +530,22 @@ const openNewOrderInStage = (stage) => router.push(`/crm/orders/new?stage=${stag
 const dictionaryStore = ref({
   leadSources: [],
   priorities: [],
-  paymentStatuses: []
+  paymentStatuses: [],
+  communicationTypes: []
 })
 
 const fetchDictionaries = async () => {
   try {
-    const [ls, pr, ps] = await Promise.all([
+    const [ls, pr, ps, ct] = await Promise.all([
       api.get('/api/v1/dictionaries/LEAD_SOURCE'),
       api.get('/api/v1/dictionaries/PRIORITY'),
-      api.get('/api/v1/dictionaries/PAYMENT_STATUS')
+      api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
+      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE')
     ])
     dictionaryStore.value.leadSources = ls.data
     dictionaryStore.value.priorities = pr.data
     dictionaryStore.value.paymentStatuses = ps.data
+    dictionaryStore.value.communicationTypes = ct.data
   } catch (e) {
     console.error('Failed to load dictionaries', e)
   }
@@ -663,4 +842,42 @@ onMounted(fetchAll)
   background: #eef2ff;
   opacity: 0.6;
 }
+.cr-body { z-index: 2; padding: 12px; }
+
+/* ─── Modals ─────────────────────────────────────────────────────────────── */
+.reschedule-body { display: flex; flex-direction: column; gap: 12px; }
+.quick-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.quick-btn {
+  flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+  background: #f8fafc; font-size: 12px; font-weight: 600; color: #475569;
+  cursor: pointer; transition: all 0.12s;
+}
+.quick-btn:hover { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+.call-dialog-body { display: flex; flex-direction: column; gap: 15px; }
+.call-client-info {
+  background: #f8fafc; padding: 12px; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.call-client-name { font-weight: 700; color: #1e293b; font-size: 15px; }
+.call-client-phone { color: #6366f1; font-weight: 600; font-size: 13px; }
+
+.call-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cr-grid-btn {
+  padding: 10px; border-radius: 10px; border: 2px solid transparent;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  background: #f1f5f9; color: #475569;
+}
+.cr-grid-btn:hover { transform: translateY(-1px); }
+.cr-grid-btn.active { border-color: currentColor; background: #fff; }
+
+.cr-orange.active { color: #f97316; background: #fff7ed; border-color: #f97316; }
+.cr-yellow.active { color: #ca8a04; background: #fefce8; border-color: #ca8a04; }
+.cr-red.active    { color: #dc2626; background: #fef2f2; border-color: #dc2626; }
+.cr-green.active  { color: #16a34a; background: #f0fdf4; border-color: #16a34a; }
+
+.dialog-footer { display: flex; justify-content: flex-end; gap: 10px; }
+
+.crm-field { display: flex; flex-direction: column; gap: 6px; }
+.crm-label { font-size: 12px; font-weight: 600; color: #64748b; }
 </style>
