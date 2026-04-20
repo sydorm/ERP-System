@@ -839,9 +839,6 @@ const createNewClient = async () => {
 const goToPurchases = () => router.push('/purchases/orders/new')
 
 // ─── Communication helpers ────────────────────────────────────────────────────
-const contactResultLabel = (r) => contactResults.find(x => x.value === r)?.label || r
-const contactResultIcon = (r) =>
-  ({ no_answer: '📵', thinking: '🤔', refused: '❌', confirmed: '✅' }[r] || '•')
 const formatDateTime = (d) => {
   if (!d) return ''
   return new Date(d).toLocaleString('uk-UA', {
