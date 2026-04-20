@@ -165,19 +165,22 @@
     <!-- ===== RESCHEDULE DIALOG ===== -->
     <el-dialog v-model="rescheduleVisible" title="Перенести завдання" width="400px" append-to-body>
       <div class="reschedule-body">
-        <div class="quick-options">
-          <button class="quick-btn" @click="quickReschedule(60)">+1 год</button>
-          <button class="quick-btn" @click="quickReschedule(0, 10, 0)">Завтра 10:00</button>
-          <button class="quick-btn" @click="quickReschedule(0, 14, 0)">Завтра 14:00</button>
+        <div class="quick-reschedule-grid">
+          <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 год</button>
+          <button class="qr-btn" @click="quickReschedule({ h: 10, tomorrow: true })">Завтра 10:00</button>
+          <button class="qr-btn" @click="quickReschedule({ h: 14, tomorrow: true })">Завтра 14:00</button>
+          <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 дні</button>
         </div>
-        <div class="crm-field" style="margin-top:15px">
-          <label class="crm-label">Обрати дату та час вручну</label>
+
+        <div class="crm-field" style="margin-top:20px">
+          <label class="crm-label">Обрати вручну</label>
           <el-date-picker
             v-model="rescheduleTime"
             type="datetime"
             format="DD.MM.YYYY HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
             style="width:100%"
+            placeholder="Оберіть час"
           />
         </div>
       </div>
@@ -193,8 +196,13 @@
     <el-dialog v-model="callVisible" title="Результат дзвінка" width="420px" append-to-body>
       <div class="call-dialog-body" v-if="callTask">
         <div class="call-client-info">
-          <span class="call-client-name">{{ callTask.client_name }}</span>
-          <span class="call-client-phone">{{ callTask.client_phone }}</span>
+          <div class="call-info-left">
+            <span class="call-client-name">{{ callTask.client_name }}</span>
+            <span class="call-client-phone">{{ callTask.client_phone }}</span>
+          </div>
+          <div class="call-info-right">
+            <span class="call-order-num">{{ callTask.order_number }}</span>
+          </div>
         </div>
 
         <div class="crm-field">
@@ -440,13 +448,16 @@ const openReschedule = (task) => {
   rescheduleVisible.value = true
 }
 
-const quickReschedule = (minutes, h, m) => {
+const quickReschedule = (opts) => {
   const d = new Date()
-  if (minutes) {
-    d.setMinutes(d.getMinutes() + minutes)
-  } else {
+  if (opts.minutes) {
+    d.setMinutes(d.getMinutes() + opts.minutes)
+  } else if (opts.tomorrow) {
     d.setDate(d.getDate() + 1)
-    d.setHours(h, m, 0, 0)
+    if (opts.h !== undefined) d.setHours(opts.h, 0, 0, 0)
+  } else if (opts.days) {
+    d.setDate(d.getDate() + opts.days)
+    if (opts.h !== undefined) d.setHours(opts.h, 0, 0, 0)
   }
   rescheduleTime.value = d.toISOString().slice(0, 19)
 }
@@ -499,11 +510,11 @@ const submitCallResult = async () => {
     ElMessage.success('Результат записано')
     callVisible.value = false
     
-    // If confirmed -> open order
-    if (callForm.result === 'confirmed') {
+    // IF CONFIRMED -> Go to Order
+    if (callForm.result === 'CONFIRMED') {
       router.push(`/crm/orders/${callTask.value.order_id}`)
     } else {
-      await fetchTasks()
+      await fetchTasks() // refresh list
     }
   } catch (e) {
     ElMessage.error(e.response?.data?.detail || 'Помилка')
@@ -853,21 +864,44 @@ onMounted(fetchAll)
 
 /* ─── Modals ─────────────────────────────────────────────────────────────── */
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
-.quick-options { display: flex; gap: 8px; flex-wrap: wrap; }
-.quick-btn {
-  flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid #e2e8f0;
-  background: #f8fafc; font-size: 12px; font-weight: 600; color: #475569;
-  cursor: pointer; transition: all 0.12s;
+.quick-reschedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
-.quick-btn:hover { background: #6366f1; color: #fff; border-color: #6366f1; }
+.qr-btn {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.qr-btn:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #6366f1;
+}
 
-.call-dialog-body { display: flex; flex-direction: column; gap: 15px; }
 .call-client-info {
-  background: #f8fafc; padding: 12px; border-radius: 10px;
-  display: flex; flex-direction: column; gap: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
+.call-info-left { display: flex; flex-direction: column; gap: 2px; }
 .call-client-name { font-weight: 700; color: #1e293b; font-size: 15px; }
 .call-client-phone { color: #6366f1; font-weight: 600; font-size: 13px; }
+.call-order-num { 
+  background: #eef2ff; color: #6366f1; padding: 4px 10px; 
+  border-radius: 6px; font-weight: 700; font-size: 12px;
+}
 
 .call-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cr-grid-btn {
