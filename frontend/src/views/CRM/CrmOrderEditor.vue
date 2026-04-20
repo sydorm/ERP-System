@@ -569,6 +569,7 @@ const leadSources = ref([])
 const paymentStatusesRes = ref([])
 const prioritiesRes = ref([])
 const bankAccounts = ref([])
+const deliveryMethods = ref([])
 
 const defaultCommTypes = [
   { code: 'CALL', name: 'Телефон', icon: '📞' },
