@@ -985,6 +985,32 @@ const loadData = async () => {
     counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
     users.value          = usersRes.status   === 'fulfilled' ? usersRes.value.data   : []
 
+    // 1. Load Dictionaries (always needed, even for new orders)
+    try {
+      const [ls, ps, pr, dm, ct, accs] = await Promise.all([
+        api.get('/api/v1/dictionaries/LEAD_SOURCE'),
+        api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
+        api.get('/api/v1/dictionaries/PRIORITY'),
+        api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
+        api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
+        api.get('/api/v1/companies/default/accounts').catch(() => ({ data: [] }))
+      ])
+      leadSources.value = ls.data
+      paymentStatusesRes.value = ps.data
+      prioritiesRes.value = pr.data
+      deliveryMethods.value = dm.data
+      communicationTypes.value = ct.data
+      bankAccounts.value = accs.data
+    } catch (e) {
+      console.warn('Non-critical dictionaries failed to load', e)
+    }
+
+    // Ensure we have communication types even if API returns empty
+    if (!communicationTypes.value || communicationTypes.value.length === 0) {
+      communicationTypes.value = [...defaultCommTypes]
+    }
+
+    // 2. Load existing Order data
     if (orderId.value) {
       const res = await api.get(`/api/v1/orders/${orderId.value}`)
       const o = res.data
@@ -1037,26 +1063,6 @@ const loadData = async () => {
           api.get('/api/v1/dictionaries/LEAD_SOURCE'),
           api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
           api.get('/api/v1/dictionaries/PRIORITY'),
-          api.get('/api/v1/dictionaries/DELIVERY_METHOD'),
-          api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
-          api.get('/api/v1/companies/default/accounts')
-        ])
-        leadSources.value = ls.data
-        paymentStatusesRes.value = ps.data
-        prioritiesRes.value = pr.data
-        deliveryMethods.value = dm.data
-        communicationTypes.value = ct.data
-        bankAccounts.value = accs.data
-      } catch (e) {
-        console.error('Failed to load some dictionaries', e)
-      }
-
-      // Ensure we have communication types even if API returns empty
-      if (!communicationTypes.value || communicationTypes.value.length === 0) {
-        communicationTypes.value = [...defaultCommTypes]
-      }
-
-      // Restore client info
       const cp = counterparties.value.find(c => c.id === form.counterparty_id)
       if (cp) {
         clientName.value = cp.name
@@ -1065,8 +1071,8 @@ const loadData = async () => {
 
       await loadContacts()
     }
-  } catch {
-    ElMessage.error('Помилка завантаження')
+  } catch (err) {
+    ElMessage.error('Помилка завантаження: ' + (err.response?.data?.detail || err.message))
   } finally {
     loading.value = false
   }
