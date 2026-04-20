@@ -446,7 +446,7 @@
             </div>
           </div>
 
-          <div class="crm-field" v-if="contactResult === 'THINKING'">
+          <div class="crm-field" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
             <label class="crm-label">Передзвонити</label>
             <el-date-picker
               v-model="contactNextAt"

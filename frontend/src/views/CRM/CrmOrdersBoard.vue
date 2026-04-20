@@ -234,7 +234,7 @@
           </div>
         </div>
 
-        <div class="crm-field" v-if="callForm.result === 'THINKING'">
+        <div class="crm-field" v-if="['THINKING', 'NO_ANSWER'].includes(callForm.result)">
           <label class="crm-label">Коли передзвонити?</label>
           <el-date-picker
             v-model="callForm.next_contact_at"
