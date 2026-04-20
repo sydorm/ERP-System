@@ -656,8 +656,6 @@ const isPassedStage = (idx) => idx < stageIndex.value
 const priorities = computed(() => prioritiesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
 const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
 
-const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
-
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const selectedProduct = computed(() => products.value.find(p => p.id === form.product_id) || null)
