@@ -118,7 +118,72 @@
             <span v-else>🌙</span>
           </el-button>
 
-          <el-button :icon="Bell" circle />
+          <!-- Notifications Bell -->
+          <el-popover
+            placement="bottom-end"
+            :width="350"
+            trigger="click"
+            popper-class="notification-popover"
+          >
+            <template #reference>
+              <el-badge :value="notificationStore.unreadCount" :hidden="notificationStore.unreadCount === 0" class="notification-badge">
+                <el-button :icon="Bell" circle :class="{ 'bell-ringing': hasOverdueCalls }" />
+              </el-badge>
+            </template>
+            
+            <div class="notification-panel">
+              <div class="notification-header">
+                <h3>🔔 Сповіщення</h3>
+                <el-link type="primary" :underline="false" @click="notificationStore.readAll()">Прочитати все</el-link>
+              </div>
+              
+              <el-scrollbar max-height="400px">
+                <div v-if="notificationStore.notifications.length === 0" class="empty-notifications">
+                  Немає нових сповіщень
+                </div>
+                <div 
+                  v-for="n in notificationStore.notifications" 
+                  :key="n.id" 
+                  class="notification-item"
+                  :class="{ 'type-call': n.type === 'CALL', 'is-overdue': isOverdue(n) }"
+                >
+                  <div class="ni-icon">
+                    <span v-if="n.type === 'CALL'">🔴</span>
+                    <span v-else-if="n.type === 'INFO'">⚪</span>
+                    <span v-else>🟡</span>
+                  </div>
+                  <div class="ni-content">
+                    <div class="ni-title">
+                      <span v-if="n.type === 'CALL'" class="ni-time">{{ formatTime(n.created_at) }} — </span>
+                      {{ n.title }}
+                    </div>
+                    <div class="ni-message">{{ n.message }}</div>
+                    <div v-if="n.data && n.data.client_phone" class="ni-phone">
+                      {{ n.data.client_phone }}
+                    </div>
+                  </div>
+                  <div class="ni-actions">
+                    <el-button 
+                      v-if="n.type === 'CALL'" 
+                      type="primary" 
+                      size="small" 
+                      circle 
+                      :icon="Right" 
+                      @click="handleNotificationAction(n)"
+                    />
+                    <el-button 
+                      v-else
+                      size="small" 
+                      circle 
+                      :icon="Check" 
+                      @click="notificationStore.markAsRead(n.id)"
+                    />
+                  </div>
+                </div>
+              </el-scrollbar>
+            </div>
+          </el-popover>
+
           <el-dropdown @command="handleCommand">
             <div class="user-avatar">
               <el-avatar :size="40">
@@ -174,6 +239,11 @@
       </el-main>
     </el-container>
 
+    <CallResultDialog 
+      v-model="callDialogVisible" 
+      :task="currentCallTask" 
+      @success="notificationStore.fetchNotifications()" 
+    />
 
   </el-container>
 </template>
@@ -186,6 +256,9 @@ import { useDark, useToggle } from '@vueuse/core'
 import api from '@/api'
 
 import TabsBar from '@/components/layout/TabsBar.vue'
+import CallResultDialog from '@/components/crm/CallResultDialog.vue'
+import { useNotificationStore } from '@/stores/notification'
+
 import {
   HomeFilled,
   Box,
@@ -203,13 +276,16 @@ import {
   Monitor,
   Tools,
   Tickets,
-  WarningFilled
+  WarningFilled,
+  Right,
+  Check
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 const isCollapse = ref(false)
 const sidebarWidth = computed(() => isCollapse.value ? '64px' : '230px')
@@ -239,10 +315,43 @@ const handleCommand = (command) => {
       router.push('/settings')
       break
     case 'logout':
+      notificationStore.stopPolling()
       userStore.logout()
       ElMessage.success('Ви вийшли з системи')
       router.push('/login')
       break
+  }
+}
+
+// Notifications Logic
+const callDialogVisible = ref(false)
+const currentCallTask = ref(null)
+
+const hasOverdueCalls = computed(() => {
+  return notificationStore.notifications.some(n => n.type === 'CALL' && isOverdue(n))
+})
+
+const isOverdue = (n) => {
+  if (!n.created_at) return false
+  return new Date(n.created_at) < new Date()
+}
+
+const formatTime = (ts) => {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+}
+
+const handleNotificationAction = (n) => {
+  if (n.type === 'CALL') {
+    currentCallTask.value = {
+      id: n.data.task_id,
+      order_id: n.data.order_id,
+      order_number: n.data.order_number,
+      client_name: n.data.client_name,
+      client_phone: n.data.client_phone
+    }
+    callDialogVisible.value = true
   }
 }
 
@@ -534,6 +643,116 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
 .theme-toggle-btn {
   font-size: 16px;
   border-color: var(--el-border-color-light);
+}
+
+/* Notifications Styles */
+.notification-badge :deep(.el-badge__content) {
+  top: 5px;
+  right: 5px;
+}
+
+.bell-ringing {
+  animation: ring 2s infinite;
+  color: #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+
+@keyframes ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-15deg); }
+  30% { transform: rotate(10deg); }
+  40% { transform: rotate(-10deg); }
+  50% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+:global(.notification-popover) {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.notification-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.empty-notifications {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.notification-item {
+  display: flex;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  transition: background 0.2s;
+  cursor: default;
+}
+
+.notification-item:hover {
+  background: var(--el-fill-color-light);
+}
+
+.notification-item.is-overdue {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.ni-icon {
+  font-size: 16px;
+  padding-top: 2px;
+}
+
+.ni-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ni-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ni-time {
+  color: #ef4444;
+}
+
+.ni-message {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  margin-bottom: 4px;
+}
+
+.ni-phone {
+  font-size: 11px;
+  color: #4f46e5;
+  font-weight: 500;
+}
+
+.ni-actions {
+  display: flex;
+  align-items: center;
 }
 
 .view-container {

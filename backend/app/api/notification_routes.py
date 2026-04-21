@@ -16,7 +16,7 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 @router.get("", response_model=List[NotificationResponse])
 async def get_notifications(
-    unread: bool = False,
+    unread_only: bool = False,
     limit: int = 50,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -24,14 +24,16 @@ async def get_notifications(
     """
     Get notifications for the current user.
     """
+    from datetime import date, time as dt_time
     now = datetime.utcnow()
     yesterday = now - timedelta(days=1)
+    today_end = datetime.combine(date.today(), dt_time.max)
 
     query = db.query(Notification).filter(
         Notification.company_id == current_user.company_id,
         Notification.user_id == current_user.id,
     )
-    if unread:
+    if unread_only:
         query = query.filter(Notification.is_read == False)
     
     stored_notifications = query.order_by(desc(Notification.created_at)).limit(limit).all()
@@ -44,7 +46,7 @@ async def get_notifications(
         result.append(NotificationResponse.model_validate(n))
 
     # 2. Fetch dynamic CRM Tasks (Scheduled callbacks)
-    # We treat pending tasks whose time has come as notifications
+    # We treat pending tasks for today as notifications
     from app.models import Order, Counterparty, CrmTask
     tasks = (
         db.query(CrmTask)
@@ -52,7 +54,7 @@ async def get_notifications(
         .filter(
             CrmTask.manager_id == current_user.id,
             CrmTask.status == "pending",
-            CrmTask.scheduled_at <= now,
+            CrmTask.scheduled_at <= today_end,
             Order.company_id == current_user.company_id,
         )
         .all()

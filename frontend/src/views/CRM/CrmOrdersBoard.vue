@@ -5,7 +5,7 @@
     <div class="crm-board-header">
       <div class="crm-header-left">
         <h1 class="crm-title">CRM — Замовлення</h1>
-        <span class="crm-subtitle">{{ totalOrders }} замовлень</span>
+        <span class="crm-subtitle">{{ orders.length }} замовлень</span>
       </div>
       <div class="crm-header-right">
         <el-input
@@ -59,21 +59,6 @@
       </div>
     </div>
 
-    <!-- ===== TODAY FOLLOW-UPS BANNER ===== -->
-    <div class="crm-followup-banner" v-if="todayFollowUps.length">
-      <el-icon class="fu-icon"><Bell /></el-icon>
-      <span class="fu-text">
-        Сьогодні потрібно передзвонити:
-        <button
-          v-for="o in todayFollowUps.slice(0, 5)"
-          :key="o.id"
-          class="fu-chip"
-          @click="openEditor(o)"
-        >{{ o.order_number }} — {{ getCounterpartyName(o.counterparty_id) }}</button>
-        <span v-if="todayFollowUps.length > 5" class="fu-more">+{{ todayFollowUps.length - 5 }}</span>
-      </span>
-    </div>
-
     <!-- ===== KANBAN BOARD ===== -->
     <div class="crm-kanban" v-loading="loading">
       <div
@@ -107,346 +92,170 @@
             @dragend="dragOrderId = null"
             @click="openEditor(order)"
           >
-            <!-- Card top row -->
             <div class="card-top">
               <span class="card-number">{{ order.order_number }}</span>
-              <span class="card-priority-dot" :class="getPriorityClass(order.priority)" :title="getPriorityLabel(order.priority)" />
+              <span class="card-priority-dot" :class="getPriorityClass(order.priority)" />
             </div>
-
-            <!-- Client -->
             <div class="card-client">
-              <el-icon class="card-client-icon"><User /></el-icon>
+              <el-icon class="card-client-icon"><UserIcon /></el-icon>
               <span>{{ getCounterpartyName(order.counterparty_id) || '—' }}</span>
             </div>
-
-            <span 
-              v-if="order.lead_source_id || order.channel" 
-              class="card-channel-tag" 
-              :style="getChannelStyle(order.lead_source_id || order.channel)"
-            >
-              {{ getChannelLabel(order.lead_source_id || order.channel) }}
-            </span>
-
-
-            <!-- Amount + payment -->
             <div class="card-finance-row">
               <span class="card-amount">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span class="card-pay-badge" :class="`pay-${order.payment_status}`">
+              <span class="card-pay-badge" :class="'pay-' + order.payment_status">
                 {{ getPaymentLabel(order.payment_status) }}
               </span>
             </div>
-
-            <!-- Deadline -->
-            <div class="card-deadline" v-if="order.deadline_date" :class="getDeadlineClass(order.deadline_date)">
-              <el-icon><Clock /></el-icon>
-              {{ formatDate(order.deadline_date) }}
-            </div>
-
-            <!-- Footer: manager + date -->
-            <div class="card-footer">
-              <span class="card-date">{{ formatDate(order.order_date) }}</span>
-              <span class="card-manager" v-if="order.manager_id">
-                {{ getManagerInitials(order.manager_id) }}
-              </span>
-            </div>
           </div>
-
-          <!-- Drop placeholder -->
-          <div class="crm-drop-placeholder" v-if="dragOverStage === stage.key && dragOrderId" />
         </div>
-
-        <!-- Add card button -->
+        
         <button class="crm-add-card-btn" @click="openNewOrderInStage(stage.key)">
-          <el-icon><Plus /></el-icon> Додати
+          <el-icon><Plus /></el-icon> Додати замовлення
         </button>
       </div>
     </div>
 
-    <!-- ===== RESCHEDULE DIALOG ===== -->
-    <el-dialog v-model="rescheduleVisible" title="Перенести завдання" width="400px" append-to-body>
-      <div class="reschedule-body">
+    <!-- Modals -->
+    <el-dialog v-model="rescheduleVisible" title="Перенести передзвон" width="380px">
+      <div v-if="selectedTask" class="reschedule-body">
+        <label>Встановити час:</label>
+        <el-date-picker
+          v-model="rescheduleTime"
+          type="datetime"
+          placeholder="Оберіть дату та час"
+          format="DD.MM.YYYY HH:mm"
+          value-format="YYYY-MM-DDTHH:mm:ss"
+          style="width: 100%"
+        />
         <div class="quick-reschedule-grid">
           <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 год</button>
-          <button class="qr-btn" @click="quickReschedule({ h: 10, tomorrow: true })">Завтра 10:00</button>
-          <button class="qr-btn" @click="quickReschedule({ h: 14, tomorrow: true })">Завтра 14:00</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 10 })">Завтра 10:00</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 14 })">Завтра 14:00</button>
           <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 дні</button>
         </div>
-
-        <div class="crm-field" style="margin-top:20px">
-          <label class="crm-label">Обрати вручну</label>
-          <el-date-picker
-            v-model="rescheduleTime"
-            type="datetime"
-            format="DD.MM.YYYY HH:mm"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            style="width:100%"
-            placeholder="Оберіть час"
-          />
-        </div>
       </div>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="rescheduleVisible = false">Скасувати</el-button>
-          <el-button type="primary" @click="confirmReschedule">Підтвердити</el-button>
-        </div>
+        <el-button @click="rescheduleVisible = false">Скасувати</el-button>
+        <el-button type="primary" @click="confirmReschedule">Перенести</el-button>
       </template>
     </el-dialog>
 
-    <!-- ===== CALL RESULT DIALOG ===== -->
-    <el-dialog v-model="callVisible" title="Результат дзвінка" width="420px" append-to-body>
-      <div class="call-dialog-body" v-if="callTask">
-        <div class="call-client-info">
-          <div class="call-info-left">
-            <span class="call-client-name">{{ callTask.client_name }}</span>
-            <span class="call-client-phone">{{ callTask.client_phone }}</span>
-          </div>
-          <div class="call-info-right">
-            <span class="call-order-num">{{ callTask.order_number }}</span>
-          </div>
-        </div>
-
-        <div class="crm-field">
-          <label class="crm-label">Вид комунікації</label>
-          <el-select v-model="callForm.communication_type" style="width:100%">
-            <el-option
-              v-for="ct in dictionaryStore.communicationTypes"
-              :key="ct.code"
-              :label="`${ct.icon} ${ct.name}`"
-              :value="ct.code"
-            />
-          </el-select>
-        </div>
-
-        <div class="crm-field">
-          <label class="crm-label">Результат</label>
-          <div class="call-result-grid">
-            <button
-              v-for="cr in dictionaryStore.contactResults"
-              :key="cr.code"
-              class="cr-grid-btn"
-              :class="{ active: callForm.result === cr.code }"
-              :style="callForm.result === cr.code ? { borderColor: cr.color, background: cr.color + '15', color: cr.color } : {}"
-              @click="callForm.result = cr.code"
-            >
-              <span v-if="cr.icon" style="margin-bottom:4px; font-size:1.5em">{{ cr.icon }}</span>
-              {{ cr.name }}
-            </button>
-          </div>
-        </div>
-
-        <div class="crm-field" v-if="['THINKING', 'NO_ANSWER'].includes(callForm.result)">
-          <label class="crm-label">Коли передзвонити?</label>
-          <el-date-picker
-            v-model="callForm.next_contact_at"
-            type="datetime"
-            format="DD.MM.YYYY HH:mm"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            style="width:100%"
-          />
-        </div>
-
-        <div class="crm-field">
-          <label class="crm-label">{{ callForm.result === 'REFUSED' ? 'Причина відмови' : 'Коментар' }}</label>
-          <el-input 
-            v-model="callForm.note" 
-            type="textarea" 
-            :rows="2" 
-            :placeholder="callForm.result === 'REFUSED' ? 'Чому відмовився...' : 'Нотатка менеджера...'" 
-          />
-        </div>
-      </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="callVisible = false">Закрити</el-button>
-          <el-button type="primary" @click="submitCallResult" :loading="savingCall" :disabled="!callForm.result">
-            Зберегти результат
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    <!-- Call Results Dialog -->
+    <CallResultDialog 
+      v-model="callVisible" 
+      :task="callTask" 
+      @success="onCallSuccess" 
+    />
 
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Search, Plus, Bell, Clock, User } from '@element-plus/icons-vue'
 import api from '@/api'
+import { Search, Plus, Bell, Right, Check, User as UserIcon } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
 const router = useRouter()
-
-// ─── State ────────────────────────────────────────────────────────────────────
-const loading     = ref(false)
-const orders      = ref([])
+const orders = ref([])
 const counterparties = ref([])
-const users       = ref([])
-const todayTasks     = ref([])
-const searchQuery    = ref('')
+const users = ref([])
+const todayTasks = ref([])
+const loading = ref(false)
+const searchQuery = ref('')
 const filterPriority = ref('')
-const filterManager  = ref('')
-const dragOrderId    = ref(null)
-const dragOverStage  = ref(null)
+const filterManager = ref('')
 
-// ─── Modals State ─────────────────────────────────────────────────────────────
 const rescheduleVisible = ref(false)
-const selectedTask      = ref(null)
-const rescheduleTime    = ref(null)
+const rescheduleTime = ref('')
+const selectedTask = ref(null)
 
-const callVisible       = ref(false)
-const callTask          = ref(null)
-const callForm          = reactive({
-  result: null,
-  communication_type: 'CALL',
-  note: '',
-  next_contact_at: null,
-})
-const savingCall        = ref(false)
+const callVisible = ref(false)
+const callTask = ref(null)
 
-// ─── Config ───────────────────────────────────────────────────────────────────
 const stages = [
-  { key: 'new',        label: 'Нова заявка',            color: '#94a3b8' },
-  { key: 'processing', label: 'В обробці',               color: '#6366f1' },
-  { key: 'confirmed',  label: 'Підтверджено',            color: '#0ea5e9' },
-  { key: 'payment',    label: 'Оплата',                  color: '#f59e0b' },
-  { key: 'production', label: 'У виробництві',           color: '#8b5cf6' },
-  { key: 'done',       label: 'Виконано',                color: '#10b981' },
+  { key: 'new', label: 'Нові', color: '#6366f1' },
+  { key: 'processing', label: 'В роботі', color: '#f59e0b' },
+  { key: 'shipping', label: 'Доставка', color: '#10b981' },
+  { key: 'delivered', label: 'Виконано', color: '#3b82f6' },
+  { key: 'cancelled', label: 'Скасовано', color: '#94a3b8' }
 ]
 
 const priorities = [
-  { value: 'low',      label: 'Низький' },
-  { value: 'normal',   label: 'Звичайний' },
-  { value: 'urgent',   label: 'Терміновий' },
-  { value: 'critical', label: 'Критичний' },
+  { value: 'normal', label: 'Звичайний' },
+  { value: 'urgent', label: 'Терміновий' },
+  { value: 'critical', label: 'Критичний' }
 ]
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
-const totalOrders = computed(() => orders.value.length)
+const fetchAll = async () => {
+  loading.value = true
+  try {
+    const [ordersRes, cpRes, usersRes, tasksRes] = await Promise.all([
+      api.get('/api/v1/orders?limit=500'),
+      api.get('/api/v1/counterparties?limit=500'),
+      api.get('/users/colleagues'),
+      api.get('/api/v1/crm/tasks/today')
+    ])
+    orders.value = ordersRes.data
+    counterparties.value = cpRes.data
+    users.value = usersRes.data
+    todayTasks.value = tasksRes.data
+  } catch (e) {
+    ElMessage.error('Помилка завантаження')
+  } finally {
+    loading.value = false
+  }
+}
 
-const todayFollowUps = computed(() => {
-  const today = new Date().toISOString().slice(0, 10)
-  return orders.value.filter(o =>
-    (o.next_contact_date === today) ||
-    (o.next_contact_at && o.next_contact_at.slice(0, 10) === today)
-  )
-})
+const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || id
+const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
+const formatTaskTime = (ts) => new Date(ts).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
 
-const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date(new Date().toDateString())
-
-const ordersInStage = (stageKey) =>
-  orders.value.filter(o => o.crm_stage === stageKey)
-
-const filteredOrdersInStage = (stageKey) => {
-  let list = ordersInStage(stageKey)
+const ordersInStage = (stage) => orders.value.filter(o => o.crm_stage === stage)
+const filteredOrdersInStage = (stage) => {
+  let list = ordersInStage(stage)
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
-    list = list.filter(o =>
-      o.order_number.toLowerCase().includes(q) ||
-      (getCounterpartyName(o.counterparty_id) || '').toLowerCase().includes(q)
+    list = list.filter(o => 
+      o.order_number.toLowerCase().includes(q) || 
+      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q)
     )
   }
-  if (filterPriority.value) {
-    list = list.filter(o => o.priority === filterPriority.value)
-  }
-  if (filterManager.value) {
-    list = list.filter(o => o.manager_id === filterManager.value)
-  }
+  if (filterPriority.value) list = list.filter(o => o.priority === filterPriority.value)
+  if (filterManager.value) list = list.filter(o => o.manager_id === filterManager.value)
   return list
 }
+const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (o.total_amount || 0), 0)
 
-const stageTotal = (stageKey) =>
-  ordersInStage(stageKey).reduce((s, o) => s + (+o.total_amount || 0), 0)
+const getPriorityClass = (p) => `priority-${p}`
+const getPaymentLabel = (s) => ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
+const isOverdue = (o) => o.deadline && new Date(o.deadline) < new Date()
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const getCounterpartyName = (id) =>
-  counterparties.value.find(c => c.id === id)?.name || '—'
+const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
+const openNewOrder = () => router.push('/crm/orders/new')
+const openNewOrderInStage = (s) => router.push(`/crm/orders/new?stage=${s}`)
 
-const getManagerInitials = (id) => {
-  const u = users.value.find(u => u.id === id)
-  if (!u) return ''
-  const name = u.full_name || u.email || ''
-  return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
-}
-
-const formatCurrency = (v) =>
-  Number(v || 0).toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-
-const formatDate = (d) => {
-  if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day}.${m}.${y}`
-}
-
-const isOverdue = (order) => {
-  if (!order.deadline_date) return false
-  return order.deadline_date < new Date().toISOString().slice(0, 10) && order.crm_stage !== 'done'
-}
-
-const getDeadlineClass = (d) => {
-  if (!d) return ''
-  const today = new Date().toISOString().slice(0, 10)
-  const diff = Math.ceil((new Date(d) - new Date(today)) / 86400000)
-  if (diff < 0) return 'deadline-overdue'
-  if (diff <= 2) return 'deadline-soon'
-  return ''
-}
-
-const getPriorityClass = (p) => ({
-  'priority-low': p === 'low',
-  'priority-normal': p === 'normal' || !p,
-  'priority-urgent': p === 'urgent',
-  'priority-critical': p === 'critical',
-})
-
-
-
-
-// ─── Drag & Drop ──────────────────────────────────────────────────────────────
-const onDragStart = (order) => { dragOrderId.value = order.id }
-
-const onDrop = async (targetStage) => {
-  dragOverStage.value = null
-  if (!dragOrderId.value) return
-  const order = orders.value.find(o => o.id === dragOrderId.value)
-  if (!order || order.crm_stage === targetStage) { dragOrderId.value = null; return }
-
-  const prevStage = order.crm_stage
-  order.crm_stage = targetStage // optimistic update
-
-  try {
-    await api.patch(`/api/v1/orders/${order.id}/stage?stage=${targetStage}`)
-  } catch {
-    order.crm_stage = prevStage
-    ElMessage.error('Не вдалося змінити етап')
+const handleCall = (task) => {
+  if (task.client_phone && navigator.clipboard) {
+    navigator.clipboard.writeText(task.client_phone)
+    ElMessage.success(`Номер скопійовано`)
   }
-  dragOrderId.value = null
+  callTask.value = task
+  callVisible.value = true
 }
 
-// ─── Task helpers ─────────────────────────────────────────────────────────────
-const formatTaskTime = (dt) => {
-  if (!dt) return ''
-  const d = new Date(dt)
-  const today = new Date().toDateString()
-  if (d.toDateString() === today) {
-    return d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
-  }
-  return d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' }) +
-    ' ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
-}
-
-const openTaskOrder = (task) => router.push(`/crm/orders/${task.order_id}`)
+const onCallSuccess = () => fetchAll()
 
 const completeTask = async (task) => {
   try {
     await api.put(`/api/v1/crm/tasks/${task.id}/complete`)
-    todayTasks.value = todayTasks.value.filter(t => t.id !== task.id)
-  } catch {
-    ElMessage.error('Помилка')
-  }
+    fetchAll()
+  } catch { ElMessage.error('Помилка') }
 }
 
-// ─── Reschedule logic ─────────────────────────────────────────────────────────
 const openReschedule = (task) => {
   selectedTask.value = task
   rescheduleTime.value = task.scheduled_at
@@ -455,479 +264,95 @@ const openReschedule = (task) => {
 
 const quickReschedule = (opts) => {
   const d = new Date()
-  if (opts.minutes) {
-    d.setMinutes(d.getMinutes() + opts.minutes)
-  } else if (opts.tomorrow) {
-    d.setDate(d.getDate() + 1)
-    if (opts.h !== undefined) d.setHours(opts.h, 0, 0, 0)
-  } else if (opts.days) {
-    d.setDate(d.getDate() + opts.days)
-    if (opts.h !== undefined) d.setHours(opts.h, 0, 0, 0)
-  }
+  if (opts.minutes) d.setMinutes(d.getMinutes() + opts.minutes)
+  else if (opts.tomorrow) { d.setDate(d.getDate() + 1); d.setHours(opts.h, 0, 0, 0) }
+  else if (opts.days) { d.setDate(d.getDate() + opts.days); d.setHours(opts.h, 0, 0, 0) }
   rescheduleTime.value = d.toISOString().slice(0, 19)
 }
 
 const confirmReschedule = async () => {
-  if (!selectedTask.value || !rescheduleTime.value) return
   try {
     await api.put(`/api/v1/crm/tasks/${selectedTask.value.id}/reschedule`, { scheduled_at: rescheduleTime.value })
-    await fetchTasks()
     rescheduleVisible.value = false
     ElMessage.success('Завдання перенесено')
-  } catch {
-    ElMessage.error('Помилка')
+    fetchAll()
+  } catch { ElMessage.error('Помилка') }
+}
+
+const dragOrderId = ref(null)
+const dragOverStage = ref(null)
+const onDragStart = (o) => dragOrderId.value = o.id
+const onDrop = async (stage) => {
+  const oid = dragOrderId.value
+  const order = orders.value.find(o => o.id === oid)
+  if (order && order.crm_stage !== stage) {
+    order.crm_stage = stage
+    try {
+      await api.patch(`/api/v1/orders/${oid}`, { crm_stage: stage })
+    } catch { ElMessage.error('Помилка оновлення статусу') }
   }
-}
-
-// ─── Call logic ──────────────────────────────────────────────────────────────
-const handleCall = (task) => {
-  // Copy to clipboard
-  if (task.client_phone) {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(task.client_phone)
-      ElMessage.success(`Номер ${task.client_phone} скопійовано`)
-    } else {
-      console.warn('Clipboard API is not available (needs HTTPS)')
-    }
-  }
-  
-  // Reset form
-  Object.assign(callForm, {
-    result: null,
-    communication_type: 'CALL',
-    note: '',
-    next_contact_at: null,
-  })
-  callTask.value = task
-  callVisible.value = true
-}
-
-const submitCallResult = async () => {
-  if (!callForm.result) return
-  savingCall.value = true
-  try {
-    const res = await api.post(`/api/v1/crm/orders/${callTask.value.order_id}/contacts`, {
-      result: callForm.result,
-      communication_type: callForm.communication_type,
-      note: callForm.note || null,
-      next_contact_at: callForm.next_contact_at || null,
-    })
-    
-    // Auto-complete task
-    await completeTask(callTask.value)
-    
-    ElMessage.success('Результат записано')
-    callVisible.value = false
-    
-    // IF CONFIRMED -> Go to Order
-    if (callForm.result === 'CONFIRMED') {
-      router.push(`/crm/orders/${callTask.value.order_id}`)
-    } else {
-      await fetchTasks() // refresh list
-    }
-  } catch (e) {
-    ElMessage.error(e.response?.data?.detail || 'Помилка')
-  } finally {
-    savingCall.value = false
-  }
-}
-
-const fetchTasks = async () => {
-  try {
-    const res = await api.get('/api/v1/crm/tasks/today')
-    todayTasks.value = res.data
-  } catch { /* silent */ }
-}
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
-const openEditor   = (order) => router.push(`/crm/orders/${order.id}`)
-const openNewOrder = () => router.push('/crm/orders/new')
-const openNewOrderInStage = (stage) => router.push(`/crm/orders/new?stage=${stage}`)
-
-const dictionaryStore = ref({
-  leadSources: [],
-  priorities: [],
-  paymentStatuses: [],
-  communicationTypes: [],
-  contactResults: []
-})
-
-const defaultContactResults = [
-  { code: 'NO_ANSWER', name: 'Не відповів', icon: '📵', color: '#f97316' },
-  { code: 'THINKING',  name: 'Думає',      icon: '🤔', color: '#eab308' },
-  { code: 'REFUSED',   name: 'Відмовився',  icon: '❌', color: '#ef4444' },
-  { code: 'CONFIRMED', name: 'Підтвердив замовлення', icon: '✅', color: '#22c55e' },
-]
-
-const fetchDictionaries = async () => {
-  try {
-    const [ls, pr, ps, ct, cr] = await Promise.all([
-      api.get('/api/v1/dictionaries/LEAD_SOURCE'),
-      api.get('/api/v1/dictionaries/PRIORITY'),
-      api.get('/api/v1/dictionaries/PAYMENT_STATUS'),
-      api.get('/api/v1/dictionaries/COMMUNICATION_TYPE'),
-      api.get('/api/v1/dictionaries/CONTACT_RESULT')
-    ])
-    dictionaryStore.value.leadSources = ls.data
-    dictionaryStore.value.priorities = pr.data
-    dictionaryStore.value.paymentStatuses = ps.data
-    dictionaryStore.value.communicationTypes = ct.data
-    dictionaryStore.value.contactResults = cr.data.length ? cr.data : [...defaultContactResults]
-  } catch (e) {
-    console.error('Failed to load dictionaries', e)
-  }
-}
-
-// ─── Fetch ────────────────────────────────────────────────────────────────────
-const fetchAll = async () => {
-  loading.value = true
-  try {
-    const [ordersRes, cpRes, usersRes] = await Promise.allSettled([
-      api.get('/api/v1/orders?limit=500'),
-      api.get('/api/v1/counterparties?limit=500'),
-      api.get('/users/colleagues'),
-    ])
-    orders.value         = ordersRes.status === 'fulfilled' ? ordersRes.value.data : []
-    counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
-    users.value          = usersRes.status === 'fulfilled' ? usersRes.value.data : []
-    
-    await Promise.all([fetchTasks(), fetchDictionaries()])
-  } catch (e) {
-    ElMessage.error('Помилка завантаження даних: ' + (e?.response?.data?.detail || e?.message || ''))
-  } finally {
-    loading.value = false
-  }
-}
-
-const getChannelLabel = (ch) => {
-  const source = dictionaryStore.value.leadSources.find(s => s.id === ch || s.code === ch)
-  return source ? source.name : ch
-}
-
-const getChannelStyle = (ch) => {
-  const source = dictionaryStore.value.leadSources.find(s => s.id === ch || s.code === ch)
-  if (source && source.color) {
-    return {
-      backgroundColor: `${source.color}20`, // low opacity bg
-      color: source.color,
-      borderColor: source.color
-    }
-  }
-  return {}
-}
-
-const getPriorityLabel = (p) => {
-  const prio = dictionaryStore.value.priorities.find(s => s.id === p || s.code === p)
-  return prio ? prio.name : (priorities.find(x => x.value === p)?.label || 'Звичайний')
-}
-
-const getPaymentLabel = (s) => {
-  const status = dictionaryStore.value.paymentStatuses.find(i => i.id === s || i.code === s)
-  return status ? status.name : ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
+  dragOverStage.value = null
 }
 
 onMounted(fetchAll)
 </script>
 
-
 <style scoped>
-/* ─── Page Layout ─────────────────────────────────────────────────────────── */
-.crm-board-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background: #f1f5f9;
-  font-family: 'Inter', sans-serif;
-}
-
-/* ─── Header ──────────────────────────────────────────────────────────────── */
-.crm-board-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
+.crm-board-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f1f5f9; }
+.crm-board-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: #fff; border-bottom: 1px solid #e2e8f0; }
 .crm-header-left { display: flex; align-items: baseline; gap: 10px; }
 .crm-title { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0; }
 .crm-subtitle { font-size: 13px; color: #94a3b8; }
 .crm-header-right { display: flex; align-items: center; gap: 8px; }
 .crm-search { width: 220px; }
 .crm-filter-sel { width: 140px; }
-.crm-new-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 16px; border-radius: 8px; border: none;
-  background: #6366f1; color: #fff; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: background 0.15s;
-}
-.crm-new-btn:hover { background: #4f46e5; }
-
-/* ─── Tasks Panel ─────────────────────────────────────────────────────────── */
-.crm-tasks-panel {
-  background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px;
-  flex-shrink: 0;
-}
-.tasks-panel-head {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-}
-.tasks-icon  { color: #6366f1; font-size: 15px; }
-.tasks-title { font-size: 13px; font-weight: 700; color: #1e293b; }
-.tasks-count {
-  font-size: 11px; font-weight: 700; background: #6366f1; color: #fff;
-  padding: 1px 8px; border-radius: 99px;
-}
-.tasks-list  { display: flex; flex-direction: column; gap: 5px; }
-.task-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 10px; border-radius: 8px; background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
+.crm-new-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 8px; border: none; background: #6366f1; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.crm-tasks-panel { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; }
+.tasks-panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tasks-icon { color: #6366f1; }
+.tasks-title { font-size: 13px; font-weight: 700; }
+.tasks-count { font-size: 11px; background: #6366f1; color: #fff; padding: 1px 8px; border-radius: 99px; }
+.tasks-list { display: flex; flex-direction: column; gap: 5px; }
+.task-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
 .task-row.task-overdue { background: #fff1f2; border-color: #fca5a5; }
-.task-time  { font-size: 12px; font-weight: 700; color: #6366f1; width: 50px; flex-shrink: 0; }
-.overdue-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #ef4444; color: #fff; font-size: 11px; font-weight: 800;
-}
-.task-info  { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.task-client { font-size: 13px; font-weight: 600; color: #1e293b; }
-.task-order  { font-size: 11px; color: #6366f1; background: #eef2ff; padding: 1px 7px; border-radius: 99px; }
-.task-phone  { font-size: 11px; color: #64748b; }
-.task-actions { display: flex; gap: 5px; flex-shrink: 0; }
-.task-btn {
-  padding: 4px 10px; border-radius: 6px; border: none;
-  font-size: 11px; font-weight: 600; cursor: pointer; transition: opacity 0.12s;
-}
-.task-btn:hover { opacity: .85; }
+.task-time { font-size: 12px; font-weight: 700; color: #6366f1; width: 60px; }
+.overdue-badge { background: #ef4444; color: #fff; padding: 0 6px; border-radius: 10px; font-size: 11px; }
+.task-info { flex: 1; display: flex; gap: 8px; align-items: center; }
+.task-client { font-weight: 600; font-size: 13px; }
+.task-order { font-size: 11px; color: #6366f1; background: #eef2ff; padding: 1px 6px; border-radius: 10px; }
+.task-phone { font-size: 11px; color: #64748b; }
+.task-actions { display: flex; gap: 5px; }
+.task-btn { padding: 4px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; }
 .task-call { background: #dbeafe; color: #1e40af; }
 .task-move { background: #f1f5f9; color: #475569; }
 .task-done { background: #d1fae5; color: #065f46; }
-
-/* ─── Follow-up Banner ────────────────────────────────────────────────────── */
-.crm-followup-banner {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 24px;
-  background: #fef3c7; border-bottom: 1px solid #fcd34d;
-  flex-shrink: 0;
-}
-.fu-icon { color: #d97706; font-size: 16px; }
-.fu-text { font-size: 13px; color: #92400e; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.fu-chip {
-  display: inline-block; padding: 2px 10px; border-radius: 99px;
-  background: #fbbf24; color: #78350f; font-size: 12px; font-weight: 600;
-  border: none; cursor: pointer;
-}
-.fu-chip:hover { background: #f59e0b; }
-.fu-more { color: #b45309; font-size: 12px; }
-
-/* ─── Kanban Board ────────────────────────────────────────────────────────── */
-.crm-kanban {
-  display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  overflow-x: auto;
-  flex: 1;
-  align-items: flex-start;
-}
-
-/* ─── Column ──────────────────────────────────────────────────────────────── */
-.crm-column {
-  flex: 0 0 260px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 2px solid transparent;
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  transition: border-color 0.15s, background 0.15s;
-}
-.crm-column.drag-target {
-  border-color: #6366f1;
-  background: #eef2ff;
-}
-
-.crm-col-header {
-  padding: 12px 14px 8px;
-  border-top: 3px solid;
-  border-radius: 10px 10px 0 0;
-}
-.crm-col-title-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.crm-col-title { font-size: 13px; font-weight: 600; color: #1e293b; flex: 1; }
-.crm-col-count {
-  font-size: 11px; font-weight: 700;
-  background: #e2e8f0; color: #64748b;
-  padding: 1px 7px; border-radius: 99px;
-}
-.crm-col-amount { font-size: 11px; color: #94a3b8; padding-left: 14px; }
-
-.crm-cards-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 80px;
-}
-
-.crm-add-card-btn {
-  display: flex; align-items: center; gap: 4px; justify-content: center;
-  width: 100%; padding: 8px; border: none; background: transparent;
-  color: #94a3b8; font-size: 12px; cursor: pointer; border-radius: 0 0 10px 10px;
-  transition: background 0.12s, color 0.12s;
-}
-.crm-add-card-btn:hover { background: #e2e8f0; color: #475569; }
-
-/* ─── Card ────────────────────────────────────────────────────────────────── */
-.crm-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 10px 12px;
-  cursor: pointer;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #e2e8f0;
-  transition: box-shadow 0.15s, transform 0.1s;
-  user-select: none;
-}
-.crm-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); transform: translateY(-1px); }
-.crm-card.card-overdue { border-left-color: #f43f5e !important; }
-
-/* Priority border colors */
-.crm-card.priority-low    { border-left-color: #94a3b8; }
-.crm-card.priority-normal { border-left-color: #6366f1; }
-.crm-card.priority-urgent { border-left-color: #f59e0b; }
-.crm-card.priority-critical { border-left-color: #ef4444; }
-
+.crm-kanban { display: flex; gap: 16px; padding: 16px 24px; overflow-x: auto; flex: 1; align-items: flex-start; }
+.crm-column { flex: 0 0 280px; background: #f8fafc; border-radius: 12px; max-height: 100%; display: flex; flex-direction: column; border: 2px solid transparent; }
+.crm-column.drag-target { border-color: #6366f1; background: #eef2ff; }
+.crm-col-header { padding: 12px 16px; border-top: 3px solid; border-radius: 10px 10px 0 0; }
+.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.crm-col-title { font-weight: 600; font-size: 14px; }
+.crm-col-count { font-size: 11px; background: #e2e8f0; padding: 1px 8px; border-radius: 10px; float: right; }
+.crm-col-amount { display: block; font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.crm-cards-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
+.crm-card { background: #fff; border-radius: 10px; padding: 12px; border: 1px solid #e2e8f0; border-left: 3px solid #e2e8f0; cursor: pointer; transition: transform 0.1s; }
+.crm-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.priority-critical { border-left-color: #ef4444; }
 .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .card-number { font-size: 12px; font-weight: 700; color: #6366f1; }
-
-.card-priority-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.card-priority-dot.priority-low    { background: #94a3b8; }
-.card-priority-dot.priority-normal { background: #6366f1; }
-.card-priority-dot.priority-urgent { background: #f59e0b; }
+.card-priority-dot { width: 8px; height: 8px; border-radius: 50%; }
 .card-priority-dot.priority-critical { background: #ef4444; }
-
-.card-client {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 13px; font-weight: 500; color: #1e293b;
-  margin-bottom: 5px;
-}
-.card-client-icon { font-size: 13px; color: #94a3b8; flex-shrink: 0; }
-
-.card-channel-tag {
-  display: inline-block; padding: 1px 8px; border-radius: 99px;
-  font-size: 10px; font-weight: 600; margin-bottom: 6px;
-}
-.channel-instagram { background: #fce7f3; color: #9d174d; }
-.channel-website   { background: #dbeafe; color: #1e40af; }
-.channel-referral  { background: #d1fae5; color: #065f46; }
-.channel-telegram  { background: #e0f2fe; color: #0369a1; }
-.channel-olx       { background: #fef3c7; color: #92400e; }
-.channel-phone     { background: #f3e8ff; color: #6b21a8; }
-
-.card-finance-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 4px;
-}
-.card-amount { font-size: 13px; font-weight: 700; color: #1e293b; }
-.card-pay-badge {
-  font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 99px;
-}
-.pay-unpaid  { background: #fee2e2; color: #991b1b; }
-.pay-partial { background: #fef3c7; color: #92400e; }
-.pay-paid    { background: #d1fae5; color: #065f46; }
-
-.card-deadline {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 11px; color: #64748b; margin-bottom: 4px;
-}
-.deadline-overdue { color: #dc2626; font-weight: 600; }
-.deadline-soon    { color: #d97706; font-weight: 600; }
-
-.card-footer {
-  display: flex; justify-content: space-between; align-items: center;
-  border-top: 1px solid #f1f5f9; padding-top: 5px; margin-top: 3px;
-}
-.card-date { font-size: 10px; color: #94a3b8; }
-.card-manager {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: #6366f1; color: #fff;
-  font-size: 9px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-
-.crm-drop-placeholder {
-  height: 60px;
-  border: 2px dashed #6366f1;
-  border-radius: 8px;
-  background: #eef2ff;
-  opacity: 0.6;
-}
-.cr-body { z-index: 2; padding: 12px; }
-
-/* ─── Modals ─────────────────────────────────────────────────────────────── */
+.card-client { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.card-client-icon { font-size: 13px; color: #94a3b8; }
+.card-finance-row { display: flex; justify-content: space-between; align-items: center; }
+.card-amount { font-weight: 700; font-size: 13px; }
+.card-pay-badge { font-size: 10px; padding: 1px 8px; border-radius: 10px; }
+.pay-unpaid { background: #fee2e2; color: #991b1b; }
+.pay-paid { background: #d1fae5; color: #065f46; }
+.crm-add-card-btn { padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
+.crm-add-card-btn:hover { color: #6366f1; }
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
-.quick-reschedule-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.qr-btn {
-  padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.qr-btn:hover {
-  background: #eef2ff;
-  border-color: #6366f1;
-  color: #6366f1;
-}
-
-.call-client-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f8fafc;
-  padding: 12px 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-.call-info-left { display: flex; flex-direction: column; gap: 2px; }
-.call-client-name { font-weight: 700; color: #1e293b; font-size: 15px; }
-.call-client-phone { color: #6366f1; font-weight: 600; font-size: 13px; }
-.call-order-num { 
-  background: #eef2ff; color: #6366f1; padding: 4px 10px; 
-  border-radius: 6px; font-weight: 700; font-size: 12px;
-}
-
-.call-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.cr-grid-btn {
-  padding: 10px; border-radius: 10px; border: 2px solid transparent;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
-  background: #f1f5f9; color: #475569;
-}
-.cr-grid-btn:hover { transform: translateY(-1px); }
-.cr-grid-btn.active { border-color: currentColor; background: #fff; }
-
-.cr-orange.active { color: #f97316; background: #fff7ed; border-color: #f97316; }
-.cr-yellow.active { color: #ca8a04; background: #fefce8; border-color: #ca8a04; }
-.cr-red.active    { color: #dc2626; background: #fef2f2; border-color: #dc2626; }
-.cr-green.active  { color: #16a34a; background: #f0fdf4; border-color: #16a34a; }
-
-.dialog-footer { display: flex; justify-content: flex-end; gap: 10px; }
-
-.crm-field { display: flex; flex-direction: column; gap: 6px; }
-.crm-label { font-size: 12px; font-weight: 600; color: #64748b; }
+.quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qr-btn { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 12px; font-weight: 600; }
+.qr-btn:hover { background: #eef2ff; border-color: #6366f1; color: #6366f1; }
 </style>
