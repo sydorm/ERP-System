@@ -137,47 +137,48 @@
                 <el-link type="primary" :underline="false" @click="notificationStore.readAll()">Прочитати все</el-link>
               </div>
               
-              <el-scrollbar max-height="400px">
+              <el-scrollbar max-height="500px">
                 <div v-if="notificationStore.notifications.length === 0" class="empty-notifications">
-                  Немає нових сповіщень
+                  <span class="empty-icon">🔔</span>
+                  <p>Немає нових сповіщень</p>
                 </div>
-                <div 
-                  v-for="n in notificationStore.notifications" 
-                  :key="n.id" 
-                  class="notification-item"
-                  :class="{ 'type-call': n.type === 'CALL', 'is-overdue': isOverdue(n) }"
-                >
-                  <div class="ni-icon">
-                    <span v-if="n.type === 'CALL'">🔴</span>
-                    <span v-else-if="n.type === 'INFO'">⚪</span>
-                    <span v-else>🟡</span>
-                  </div>
-                  <div class="ni-content">
-                    <div class="ni-title">
-                      <span v-if="n.type === 'CALL'" class="ni-time">{{ formatTime(n.created_at) }} — </span>
-                      {{ n.title }}
+                
+                <div v-else class="notification-groups">
+                  <div v-for="(group, dateName) in groupedNotifications" :key="dateName" class="notification-group">
+                    <div class="group-header">{{ dateName }}</div>
+                    
+                    <div 
+                      v-for="n in group" 
+                      :key="n.id" 
+                      class="notification-item"
+                      :class="{ 
+                        'is-urgent': n.type === 'CALL' || n.type === 'DEADLINE_OVERDUE',
+                        'is-warning': n.type === 'STALE_LEAD' || n.type === 'DEADLINE_SOON'
+                      }"
+                    >
+                      <div class="ni-dot" :class="'priority-' + getPriorityClass(n.type)"></div>
+                      
+                      <div class="ni-content">
+                        <div class="ni-title">
+                          <span v-if="n.type === 'CALL'" class="ni-time">{{ formatTime(n.created_at) }} — </span>
+                          {{ n.title }}
+                        </div>
+                        <div class="ni-message">{{ n.message }}</div>
+                        <div v-if="n.data && n.data.client_phone" class="ni-phone">
+                          {{ n.data.client_phone }}
+                        </div>
+                      </div>
+
+                      <div class="ni-actions">
+                        <el-button 
+                          @click="handleNotificationAction(n)"
+                          size="small" 
+                          circle
+                          class="action-btn"
+                          :icon="ArrowRight"
+                        />
+                      </div>
                     </div>
-                    <div class="ni-message">{{ n.message }}</div>
-                    <div v-if="n.data && n.data.client_phone" class="ni-phone">
-                      {{ n.data.client_phone }}
-                    </div>
-                  </div>
-                  <div class="ni-actions">
-                    <el-button 
-                      v-if="n.type === 'CALL'" 
-                      type="primary" 
-                      size="small" 
-                      circle 
-                      :icon="Right" 
-                      @click="handleNotificationAction(n)"
-                    />
-                    <el-button 
-                      v-else
-                      size="small" 
-                      circle 
-                      :icon="Check" 
-                      @click="notificationStore.markAsRead(n.id)"
-                    />
                   </div>
                 </div>
               </el-scrollbar>
@@ -278,7 +279,8 @@ import {
   Tickets,
   WarningFilled,
   Right,
-  Check
+  Check,
+  ArrowRight
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -286,6 +288,51 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
+
+// Notification grouping and actions
+const groupedNotifications = computed(() => {
+  const groups = {}
+  const now = new Date()
+  const todayStr = now.toLocaleDateString()
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toLocaleDateString()
+  
+  notificationStore.notifications.forEach(n => {
+    const d = new Date(n.created_at)
+    const dateStr = d.toLocaleDateString()
+    
+    let key = 'РАНІШЕ'
+    if (dateStr === todayStr) key = 'СЬОГОДНІ'
+    else if (dateStr === yesterdayStr) key = 'ВЧОРА'
+    
+    if (!groups[key]) groups[key] = []
+    groups[key].push(n)
+  })
+  return groups
+})
+
+const getPriorityClass = (type) => {
+  if (['CALL', 'DEADLINE_OVERDUE'].includes(type)) return 'red'
+  if (['DEADLINE_SOON', 'STALE_LEAD'].includes(type)) return 'yellow'
+  if (type === 'SUCCESS') return 'green'
+  return 'white'
+}
+
+const handleNotificationAction = (n) => {
+  if (n.type === 'CALL') {
+    currentCallTask.value = {
+      id: n.data.task_id,
+      order_id: n.data.real_order_id,
+      order_number: n.data.order_number,
+      client_phone: n.data.client_phone
+    }
+    callDialogVisible.value = true
+  } else if (n.data?.order_id) {
+    // Redirect to CRM editor as requested
+    router.push({ name: 'crm-order-edit', params: { id: n.data.order_id } })
+  }
+}
 
 const isCollapse = ref(false)
 const sidebarWidth = computed(() => isCollapse.value ? '64px' : '230px')
@@ -328,7 +375,9 @@ const callDialogVisible = ref(false)
 const currentCallTask = ref(null)
 
 const hasOverdueCalls = computed(() => {
-  return notificationStore.notifications.some(n => n.type === 'CALL' && isOverdue(n))
+  return notificationStore.notifications.some(n => 
+    (n.type === 'CALL' || n.type === 'DEADLINE_OVERDUE') && isOverdue(n)
+  )
 })
 
 const isOverdue = (n) => {
@@ -340,19 +389,6 @@ const formatTime = (ts) => {
   if (!ts) return ''
   const d = new Date(ts)
   return d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
-}
-
-const handleNotificationAction = (n) => {
-  if (n.type === 'CALL') {
-    currentCallTask.value = {
-      id: n.data.task_id,
-      order_id: n.data.order_id,
-      order_number: n.data.order_number,
-      client_name: n.data.client_name,
-      client_phone: n.data.client_phone
-    }
-    callDialogVisible.value = true
-  }
 }
 
 // Tax Warning Logic
@@ -688,40 +724,50 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   background: var(--el-bg-color);
 }
 
-.notification-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+.notification-groups {
+  padding: 0;
 }
 
-.empty-notifications {
-  padding: 40px 20px;
-  text-align: center;
+.group-header {
+  padding: 8px 16px;
+  background: var(--el-fill-color-lighter);
+  font-size: 11px;
+  font-weight: 700;
   color: var(--el-text-color-secondary);
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .notification-item {
   display: flex;
-  padding: 12px 16px;
+  padding: 14px 16px;
   gap: 12px;
   border-bottom: 1px solid var(--el-border-color-extra-light);
-  transition: background 0.2s;
+  transition: all 0.2s;
   cursor: default;
+  position: relative;
 }
 
 .notification-item:hover {
   background: var(--el-fill-color-light);
 }
 
-.notification-item.is-overdue {
-  background: rgba(239, 68, 68, 0.05);
+.notification-item.is-urgent {
+  background: rgba(239, 68, 68, 0.03);
 }
 
-.ni-icon {
-  font-size: 16px;
-  padding-top: 2px;
+.ni-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
 }
+
+.priority-red { background-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+.priority-yellow { background-color: #f59e0b; }
+.priority-green { background-color: #10b981; }
+.priority-white { background-color: #9ca3af; }
 
 .ni-content {
   flex: 1;
@@ -731,28 +777,53 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
 .ni-title {
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  line-height: 1.4;
+  color: var(--el-text-color-primary);
 }
 
 .ni-time {
   color: #ef4444;
+  font-weight: 700;
 }
 
 .ni-message {
   font-size: 12px;
   color: var(--el-text-color-regular);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  line-height: 1.4;
 }
 
 .ni-phone {
   font-size: 11px;
   color: #4f46e5;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .ni-actions {
   display: flex;
   align-items: center;
+  margin-left: 8px;
+}
+
+.action-btn {
+  opacity: 0.6;
+  border: none;
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 1;
+  background: var(--el-fill-color);
+  transform: translateX(2px);
+}
+
+.empty-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+  opacity: 0.5;
 }
 
 .view-container {
