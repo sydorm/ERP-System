@@ -250,7 +250,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDark, useToggle } from '@vueuse/core'
@@ -397,6 +397,9 @@ const incomePercentage = ref(0)
 const remainingLimit = ref(0)
 
 onMounted(async () => {
+    // Start notifications
+    notificationStore.startPolling()
+
     try {
         const res = await api.get('/api/v1/finance/fop-income')
         if (res.data) {
@@ -410,6 +413,10 @@ onMounted(async () => {
     } catch (e) {
         console.error('Failed to check tax limit', e)
     }
+})
+
+onBeforeUnmount(() => {
+    notificationStore.stopPolling()
 })
 
 const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
