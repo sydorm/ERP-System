@@ -2,9 +2,12 @@ import os
 import uuid
 from sqlalchemy import create_engine, text
 
-# Database connection URL
-# Adjust this if your DB environment variables are different
-DB_URL = "postgresql://sudor:sudor@localhost:5432/sudordb"
+import os
+import sqlalchemy
+from sqlalchemy import create_engine, text
+
+# Get DB URL from environment (standard for Docker setup)
+DB_URL = os.getenv("DATABASE_URL", "postgresql://erp_user:erp_password@db:5432/erp_db")
 
 engine = create_engine(DB_URL)
 
