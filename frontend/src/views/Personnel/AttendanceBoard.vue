@@ -142,7 +142,7 @@ const fetchData = async () => {
     // 3. Fetch Attendance for month
     const start = dayjs(selectedMonth.value).startOf('month').format('YYYY-MM-DD')
     const end = dayjs(selectedMonth.value).endOf('month').format('YYYY-MM-DD')
-    const attRes = await api.get('/api/v1/payroll/attendance', {
+    const attRes = await api.get('/api/v1/attendance', {
       params: { start_date: start, end_date: end, department_id: filterDepartment.value }
     })
     attendanceData.value = attRes.data
@@ -219,7 +219,7 @@ const saveChanges = async () => {
 
   saving.value = true
   try {
-    await api.post('/api/v1/payroll/attendance/upsert', { records: toSave })
+    await api.post('/api/v1/attendance/upsert', { records: toSave })
     ElMessage.success('Зміни збережено')
     fetchData()
   } catch (e) {
