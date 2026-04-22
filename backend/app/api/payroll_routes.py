@@ -1,0 +1,205 @@
+from typing import List, Optional
+from uuid import UUID
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, func
+
+from app.db.session import get_db
+from app.models import AttendanceRecord, PayrollTransaction, Employee, Department, User, DictionaryItem
+from app.schemas.payroll import (
+    AttendanceRecordResponse, AttendanceBulkUpsert,
+    PayrollTransactionCreate, PayrollTransactionResponse,
+    EmployeeBalanceResponse
+)
+from app.api.dependencies import get_current_active_user
+
+router = APIRouter()
+
+def check_payroll_admin(user: User):
+    if not (user.is_superuser or user.role == 'admin' or user.permissions.get('payroll.admin')):
+        raise HTTPException(status_code=403, detail="Доступ лише для адміністраторів зарплат")
+
+# --- Attendance ---
+
+@router.get("/attendance", response_model=List[AttendanceRecordResponse])
+async def get_attendance(
+    start_date: date,
+    end_date: date,
+    department_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    # Determine permission/scope
+    is_admin = current_user.is_superuser or current_user.role == 'admin' or current_user.permissions.get('payroll.admin')
+    
+    # Check if user is a shop head
+    shop_head_dept_ids = []
+    if current_user.employee_id:
+        head_depts = db.query(Department).filter(Department.head_id == current_user.employee_id).all()
+        shop_head_dept_ids = [d.id for d in head_depts]
+
+    if not is_admin and not shop_head_dept_ids:
+        # Managers/Workers don't see attendance for now as per TZ
+        raise HTTPException(status_code=403, detail="Доступ заборонено")
+
+    query = db.query(AttendanceRecord).join(Employee).filter(
+        Employee.company_id == current_user.company_id,
+        AttendanceRecord.date >= start_date,
+        AttendanceRecord.date <= end_date
+    )
+
+    if not is_admin:
+        # Restriction for shop head
+        if department_id:
+            if department_id not in shop_head_dept_ids:
+                raise HTTPException(status_code=403, detail="Ви не маєте доступу до цього підрозділу")
+            query = query.filter(Employee.department_id == department_id)
+        else:
+            query = query.filter(Employee.department_id.in_(shop_head_dept_ids))
+    elif department_id:
+        query = query.filter(Employee.department_id == department_id)
+
+    records = query.all()
+    # Populate status names
+    for r in records:
+        r.status_name = r.status.name if r.status else None
+    return records
+
+@router.post("/attendance/upsert", status_code=status.HTTP_201_CREATED)
+async def upsert_attendance(
+    bulk_in: AttendanceBulkUpsert,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    # Check permissions (only Admin or Shop Head for their dept)
+    is_admin = current_user.is_superuser or current_user.role == 'admin' or current_user.permissions.get('payroll.admin')
+    
+    shop_head_dept_ids = []
+    if current_user.employee_id:
+        head_depts = db.query(Department).filter(Department.head_id == current_user.employee_id).all()
+        shop_head_dept_ids = [d.id for d in head_depts]
+
+    for rec in bulk_in.records:
+        # Permission check per record
+        emp = db.query(Employee).filter(Employee.id == rec.employee_id).first()
+        if not emp: continue
+        
+        if not is_admin and emp.department_id not in shop_head_dept_ids:
+            # Skip records for departments they don't lead
+            continue
+
+        existing = db.query(AttendanceRecord).filter(
+            AttendanceRecord.employee_id == rec.employee_id,
+            AttendanceRecord.date == rec.date
+        ).first()
+
+        if existing:
+            existing.status_id = rec.status_id
+            existing.notes = rec.notes
+        else:
+            new_rec = AttendanceRecord(
+                employee_id=rec.employee_id,
+                date=rec.date,
+                status_id=rec.status_id,
+                notes=rec.notes
+            )
+            db.add(new_rec)
+            
+    db.commit()
+    return {"status": "ok"}
+
+
+# --- Payroll ---
+
+@router.get("/payroll/balance", response_model=List[EmployeeBalanceResponse])
+async def get_payroll_balances(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    check_payroll_admin(current_user)
+    
+    employees = db.query(Employee).filter(
+        Employee.company_id == current_user.company_id,
+        Employee.is_deleted == False
+    ).all()
+    
+    results = []
+    for emp in employees:
+        # Sum accruals (Positive amount, transaction_type='ACCRUAL')
+        # Sum payments (Negative amount, transaction_type='PAYMENT')
+        accrual_sum = db.query(func.sum(PayrollTransaction.amount)).filter(
+            PayrollTransaction.employee_id == emp.id,
+            PayrollTransaction.transaction_type == 'ACCRUAL'
+        ).scalar() or 0
+        
+        payment_sum = db.query(func.sum(PayrollTransaction.amount)).filter(
+            PayrollTransaction.employee_id == emp.id,
+            PayrollTransaction.transaction_type == 'PAYMENT'
+        ).scalar() or 0
+        
+        results.append(EmployeeBalanceResponse(
+            employee_id=emp.id,
+            full_name=emp.full_name,
+            department_name=emp.department.name if emp.department else None,
+            total_accrued=accrual_sum,
+            total_paid=abs(payment_sum),
+            balance=accrual_sum + payment_sum # payment_sum is negative
+        ))
+        
+    return results
+
+@router.get("/payroll/transactions", response_model=List[PayrollTransactionResponse])
+async def list_payroll_transactions(
+    employee_id: Optional[UUID] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    check_payroll_admin(current_user)
+    
+    query = db.query(PayrollTransaction).join(Employee).filter(
+        Employee.company_id == current_user.company_id
+    )
+    
+    if employee_id:
+        query = query.filter(PayrollTransaction.employee_id == employee_id)
+    if start_date:
+        query = query.filter(PayrollTransaction.date >= start_date)
+    if end_date:
+        query = query.filter(PayrollTransaction.date <= end_date)
+        
+    objs = query.order_by(PayrollTransaction.date.desc()).all()
+    
+    for obj in objs:
+        obj.category_name = obj.category.name if obj.category else None
+        obj.creator_name = obj.creator.full_name if obj.creator else None
+        obj.production_order_number = obj.production_order.order_number if obj.production_order else None
+        
+    return objs
+
+@router.post("/payroll/transaction", response_model=PayrollTransactionResponse)
+async def create_payroll_transaction(
+    trans_in: PayrollTransactionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    check_payroll_admin(current_user)
+    
+    # Ensure amount sign matches type
+    amount = trans_in.amount
+    if trans_in.transaction_type == 'ACCRUAL' and amount < 0:
+        amount = abs(amount)
+    elif trans_in.transaction_type == 'PAYMENT' and amount > 0:
+        amount = -amount
+        
+    db_trans = PayrollTransaction(
+        **trans_in.dict(exclude={'amount'}),
+        amount=amount,
+        created_by=current_user.id
+    )
+    db.add(db_trans)
+    db.commit()
+    db.refresh(db_trans)
+    return db_trans

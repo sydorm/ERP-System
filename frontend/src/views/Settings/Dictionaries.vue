@@ -365,7 +365,9 @@ const dictionariesMap = {
     { code: 'PRODUCTION_STAGE', name: 'Виробничі етапи', description: 'Зварювання, Фарбування, Збірка тощо' },
     { code: 'ACCRUAL_TYPE', name: 'Типи нарахування ЗП', description: 'Відрядна, Погодинна, Фіксована тощо' },
     { code: 'ROLE_TYPE', name: 'Типи ролей', description: 'Основна, Суміщення' },
-    { code: 'EMPLOYEE_STATUS', name: 'Статуси співробітників', description: 'Активний, У відпустці, Звільнений' }
+    { code: 'EMPLOYEE_STATUS', name: 'Статуси співробітників', description: 'Активний, У відпустці, Звільнений' },
+    { code: 'ATTENDANCE_STATUS', name: 'Статуси відвідуваності', description: 'П, В, Л, О (Табель)' },
+    { code: 'PAYMENT_METHOD', name: 'Методи виплати', description: 'Готівка, Карта тощо' }
   ]
 
 }

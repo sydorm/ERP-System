@@ -231,6 +231,18 @@ const router = createRouter({
                     component: () => import('@/views/Personnel/DepartmentsList.vue'),
                     meta: { title: 'Підрозділи' }
                 },
+                {
+                    path: '/personnel/payroll',
+                    name: 'payroll-manager',
+                    component: () => import('@/views/Personnel/PayrollManager.vue'),
+                    meta: { title: 'Нарахування ЗП' }
+                },
+                {
+                    path: '/personnel/attendance',
+                    name: 'attendance-board',
+                    component: () => import('@/views/Personnel/AttendanceBoard.vue'),
+                    meta: { title: 'Табель' }
+                },
                 // CRM routes
                 {
                     path: '/crm',

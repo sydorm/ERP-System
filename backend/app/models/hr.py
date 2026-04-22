@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Date, DateTime, Numeric, Text
+from sqlalchemy import Column, String, Boolean, ForeignKey, Date, DateTime, Numeric, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
@@ -77,3 +77,55 @@ class EmployeeRole(BaseModel):
     role_dict = relationship("DictionaryItem", foreign_keys=[role_id])
     role_type_dict = relationship("DictionaryItem", foreign_keys=[role_type_id])
     accrual_type_dict = relationship("DictionaryItem", foreign_keys=[accrual_type_id])
+
+
+class AttendanceRecord(BaseModel):
+    """
+    Daily attendance tracking
+    """
+    __tablename__ = "attendance_records"
+
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)
+    
+    # Link to status (П, В, Л, О etc.) from Dictionaries
+    status_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
+    
+    notes = Column(String(255), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('employee_id', 'date', name='uix_employee_attendance_date'),
+    )
+
+    # Relationships
+    employee = relationship("Employee", backref="attendance")
+    status = relationship("DictionaryItem")
+
+
+class PayrollTransaction(BaseModel):
+    """
+    Financial records for payroll: Accruals (+) and Payments (-)
+    """
+    __tablename__ = "payroll_transactions"
+
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Transaction Info
+    amount = Column(Numeric(precision=15, scale=2), nullable=False)
+    transaction_type = Column(String(50), nullable=False) # 'ACCRUAL' or 'PAYMENT'
+    date = Column(Date, nullable=False, index=True)
+    
+    # Category (Dictionary: ACCRUAL_TYPE or PAYMENT_METHOD)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
+    
+    # Links to other entities
+    production_order_id = Column(UUID(as_uuid=True), ForeignKey("production_orders.id", ondelete="SET NULL"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    description = Column(String(500), nullable=True)
+
+    # Relationships
+    employee = relationship("Employee", backref="payroll_transactions")
+    category = relationship("DictionaryItem")
+    production_order = relationship("ProductionOrder")
+    creator = relationship("User")

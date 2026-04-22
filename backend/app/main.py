@@ -158,6 +158,9 @@ app.include_router(notification_router, prefix="/api/v1", tags=["Notifications"]
 from app.api.hr_routes import router as hr_router
 app.include_router(hr_router, prefix="/api/v1", tags=["Personnel"])
 
+from app.api.payroll_routes import router as payroll_router
+app.include_router(payroll_router, prefix="/api/v1", tags=["Payroll"])
+
 # Ensure uploads directory exists and mount it for static file serving
 import os
 from fastapi.staticfiles import StaticFiles

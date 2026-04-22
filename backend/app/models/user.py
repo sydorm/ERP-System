@@ -30,9 +30,11 @@ class User(BaseModel):
     
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
     
     # Relationships
     company = relationship("Company", back_populates="users")
+    employee = relationship("Employee", backref="user")
     created_orders = relationship("Order", back_populates="created_by_user", foreign_keys="Order.created_by", overlaps="manager")
     
     @property

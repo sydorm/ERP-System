@@ -78,8 +78,8 @@
           </template>
           <el-menu-item index="/personnel/employees">Співробітники</el-menu-item>
           <el-menu-item index="/personnel/departments">Підрозділи</el-menu-item>
-          <el-menu-item index="/personnel/payroll" disabled>Нарахування ЗП</el-menu-item>
-          <el-menu-item index="/personnel/attendance" disabled>Табель</el-menu-item>
+          <el-menu-item index="/personnel/payroll">Нарахування ЗП</el-menu-item>
+          <el-menu-item index="/personnel/attendance">Табель</el-menu-item>
           <el-menu-item index="/personnel/hr-reports" disabled>Звіти по ЗП</el-menu-item>
         </el-sub-menu>
 
