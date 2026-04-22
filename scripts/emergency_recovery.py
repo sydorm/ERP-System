@@ -136,6 +136,18 @@ def recovery():
         run_sql("ALTER TABLE payroll_transactions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()")
     except: pass
 
+    run_sql("""
+    CREATE TABLE IF NOT EXISTS production_order_assignments (
+        id UUID PRIMARY KEY,
+        production_order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
+        employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+        stage_id UUID NOT NULL,
+        quantity NUMERIC(15, 3),
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+    )
+    """)
+
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
 if __name__ == "__main__":

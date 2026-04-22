@@ -90,3 +90,25 @@ class ProductionOrderMaterial(BaseModel):
 
     def __repr__(self):
         return f"<ProductionOrderMaterial {self.component_id} req={self.required_quantity}>"
+
+
+class ProductionOrderWorkerAssignment(BaseModel):
+    """
+    Workers assigned to specific stages of a production order.
+    Used for automated payroll accruals.
+    """
+    __tablename__ = "production_order_assignments"
+
+    production_order_id = Column(UUID(as_uuid=True), ForeignKey("production_orders.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    
+    # Stage Link (from PRODUCTION_STAGE dictionary)
+    stage_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
+    
+    # How much did they produce (defaults to order qty if null)
+    quantity = Column(Numeric(15, 3), nullable=True)
+
+    # Relations
+    production_order = relationship("ProductionOrder", backref="assignments")
+    employee = relationship("Employee")
+    stage = relationship("DictionaryItem")
