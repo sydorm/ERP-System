@@ -10,7 +10,7 @@ from app.models import AttendanceRecord, PayrollTransaction, Employee, Departmen
 from app.schemas.payroll import (
     AttendanceRecordResponse, AttendanceBulkUpsert,
     PayrollTransactionCreate, PayrollTransactionResponse,
-    EmployeeBalanceResponse
+    EmployeeBalanceResponse, PayrollSummaryItem, DepartmentSummaryItem
 )
 from app.api.dependencies import get_current_active_user
 
