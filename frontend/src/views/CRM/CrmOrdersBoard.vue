@@ -176,11 +176,12 @@ const callVisible = ref(false)
 const callTask = ref(null)
 
 const stages = [
-  { key: 'new', label: 'Нові', color: '#6366f1' },
-  { key: 'processing', label: 'В роботі', color: '#f59e0b' },
-  { key: 'shipping', label: 'Доставка', color: '#10b981' },
-  { key: 'delivered', label: 'Виконано', color: '#3b82f6' },
-  { key: 'cancelled', label: 'Скасовано', color: '#94a3b8' }
+  { key: 'new', label: 'Нова заявка', color: '#6366f1' },
+  { key: 'processing', label: 'В обробці', color: '#f59e0b' },
+  { key: 'confirmed', label: 'Підтверджено', color: '#22c55e' },
+  { key: 'payment', label: 'Оплата', color: '#8b5cf6' },
+  { key: 'production', label: 'У виробництві', color: '#ec4899' },
+  { key: 'done', label: 'Виконано', color: '#3b82f6' }
 ]
 
 const priorities = [
@@ -228,7 +229,7 @@ const filteredOrdersInStage = (stage) => {
   if (filterManager.value) list = list.filter(o => o.manager_id === filterManager.value)
   return list
 }
-const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (o.total_amount || 0), 0)
+const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
 const getPriorityClass = (p) => `priority-${p}`
 const getPaymentLabel = (s) => ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
