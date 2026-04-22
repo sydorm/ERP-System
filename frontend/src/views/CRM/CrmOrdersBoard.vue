@@ -28,22 +28,21 @@
     </div>
 
     <!-- ===== MY TASKS TODAY ===== -->
-    <div class="crm-tasks-panel" v-if="todayTasks.length">
+    <div class="crm-tasks-panel" v-if="overdueTasks.length">
       <div class="tasks-panel-head">
         <el-icon class="tasks-icon"><Bell /></el-icon>
-        <span class="tasks-title">Мої задачі на сьогодні</span>
-        <span class="tasks-count">{{ todayTasks.length }}</span>
+        <span class="tasks-title">Мої задачі на сьогодні (горить)</span>
+        <span class="tasks-count">{{ overdueTasks.length }}</span>
       </div>
       <div class="tasks-list">
         <div
-          v-for="task in todayTasks"
+          v-for="task in overdueTasks"
           :key="task.id"
-          class="task-row"
-          :class="{ 'task-overdue': isTaskOverdue(task) }"
+          class="task-row task-overdue"
         >
           <div class="task-time">
-            <span v-if="isTaskOverdue(task)" class="overdue-badge">!</span>
-            <span v-else>{{ formatTaskTime(task.scheduled_at) }}</span>
+            <span class="overdue-badge">!</span>
+            <span class="task-time-val">{{ formatTaskTime(task.scheduled_at) }}</span>
           </div>
           <div class="task-info">
             <span class="task-client">{{ task.client_name || '—' }}</span>
@@ -174,6 +173,10 @@ const selectedTask = ref(null)
 
 const callVisible = ref(false)
 const callTask = ref(null)
+
+const overdueTasks = computed(() => {
+  return todayTasks.value.filter(t => isTaskOverdue(t))
+})
 
 const stages = [
   { key: 'new', label: 'Нова заявка', color: '#6366f1' },
