@@ -32,30 +32,46 @@ def recovery():
     run_sql("""
     CREATE TABLE IF NOT EXISTS departments (
         id UUID PRIMARY KEY,
+        company_id UUID NOT NULL,
         name VARCHAR(255) NOT NULL,
-        manager_id UUID,
+        head_id UUID,
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
     )
     """)
+    # Add company_id if it's missed in an existing table
+    try:
+        run_sql("ALTER TABLE departments ADD COLUMN IF NOT EXISTS company_id UUID")
+        run_sql("ALTER TABLE departments ALTER COLUMN company_id SET NOT NULL")
+    except: pass
 
     # 3. Ensure employees table exists
     print("Checking employees table...")
     run_sql("""
     CREATE TABLE IF NOT EXISTS employees (
         id UUID PRIMARY KEY,
+        company_id UUID NOT NULL,
         full_name VARCHAR(255) NOT NULL,
         department_id UUID REFERENCES departments(id),
         position VARCHAR(255),
         status_id UUID,
         hire_date DATE,
+        birth_date DATE,
         phone VARCHAR(50),
         email VARCHAR(255),
+        notes TEXT,
+        photo_url VARCHAR(500),
+        is_deleted BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
     )
     """)
+    try:
+        run_sql("ALTER TABLE employees ADD COLUMN IF NOT EXISTS company_id UUID")
+        run_sql("ALTER TABLE employees ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE")
+        run_sql("UPDATE employees SET is_deleted = FALSE WHERE is_deleted IS NULL")
+    except: pass
 
     # 4. CRITICAL: Check if production_orders exists (to satisfy FKs)
     # If not exists, we create a stub to allow the app to work
@@ -68,7 +84,23 @@ def recovery():
     )
     """)
 
-    # 5. Create Attendance and Payroll tables
+    # 5. Ensure employee_roles table exists
+    print("Checking employee_roles table...")
+    run_sql("""
+    CREATE TABLE IF NOT EXISTS employee_roles (
+        id UUID PRIMARY KEY,
+        employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+        role_id UUID NOT NULL,
+        role_type_id UUID NOT NULL,
+        accrual_type_id UUID NOT NULL,
+        rate NUMERIC(15, 2) DEFAULT 0.0 NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE NOT NULL,
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+    )
+    """)
+
+    # 6. Create Attendance and Payroll tables
     print("Checking HR v2 tables...")
     run_sql("""
     CREATE TABLE IF NOT EXISTS attendance_records (
