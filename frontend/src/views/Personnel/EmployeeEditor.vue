@@ -154,6 +154,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft, UserFilled, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
@@ -248,16 +249,27 @@ const saveEmployee = async () => {
     if (valid) {
       saving.value = true
       try {
+        const payload = {
+          ...form.value,
+          birth_date: form.value.birth_date ? dayjs(form.value.birth_date).format('YYYY-MM-DD') : null,
+          hire_date: form.value.hire_date ? dayjs(form.value.hire_date).format('YYYY-MM-DD') : null,
+          roles: form.value.roles.map(r => ({
+            ...r,
+            rate: parseFloat(r.rate) || 0
+          }))
+        }
+
         if (isEdit.value) {
-          await api.put(`/api/v1/employees/${route.params.id}`, form.value)
+          await api.put(`/api/v1/employees/${route.params.id}`, payload)
           ElMessage.success('Дані оновлено')
         } else {
-          await api.post('/api/v1/employees', form.value)
+          await api.post('/api/v1/employees', payload)
           ElMessage.success('Співробітника створено')
         }
         router.push('/personnel/employees')
       } catch (error) {
-        ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
+        console.error('Save error:', error.response?.data)
+        ElMessage.error(error.response?.data?.detail?.[0]?.msg || error.response?.data?.detail || 'Помилка збереження')
       } finally {
         saving.value = false
       }
