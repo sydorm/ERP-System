@@ -114,6 +114,7 @@ def recovery():
     )
     """)
     try:
+        run_sql("ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS notes VARCHAR(255)")
         run_sql("ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()")
     except: pass
 
