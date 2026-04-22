@@ -9,6 +9,18 @@ from app.api.dependencies import get_current_active_user
 
 router = APIRouter()
 
+@router.get("/dictionaries/items", response_model=List[DictionaryItemResponse])
+async def get_dictionary_items_by_type(
+    type: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Generic endpoint to get dictionary items by type query parameter.
+    Matches frontend pattern: /api/v1/dictionaries/items?type=CATEGORY
+    """
+    return await get_dictionary_items(category=type, db=db, current_user=current_user)
+
 @router.get("/dictionaries/{category}", response_model=List[DictionaryItemResponse])
 async def get_dictionary_items(
     category: str,
