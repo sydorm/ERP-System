@@ -188,7 +188,7 @@ async def update_order(
 
     # Apply updates
     for field, value in update_data.items():
-        if field != "bank_account_id": # This is a meta-field for the transaction
+        if field not in ["bank_account_id", "lines"]: # meta-fields or special handling
             setattr(order, field, value)
 
     if order_in.lines is not None:
