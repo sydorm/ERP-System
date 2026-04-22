@@ -206,6 +206,31 @@ const router = createRouter({
                     component: () => import('@/views/Production/ProductionOrderEditor.vue'),
                     meta: { title: 'Редагування завдання' }
                 },
+                // Personnel routes
+                {
+                    path: '/personnel/employees',
+                    name: 'employees-list',
+                    component: () => import('@/views/Personnel/EmployeesList.vue'),
+                    meta: { title: 'Співробітники' }
+                },
+                {
+                    path: '/personnel/employees/new',
+                    name: 'employee-new',
+                    component: () => import('@/views/Personnel/EmployeeEditor.vue'),
+                    meta: { title: 'Новий співробітник' }
+                },
+                {
+                    path: '/personnel/employees/:id',
+                    name: 'employee-edit',
+                    component: () => import('@/views/Personnel/EmployeeEditor.vue'),
+                    meta: { title: 'Картка співробітника' }
+                },
+                {
+                    path: '/personnel/departments',
+                    name: 'departments-list',
+                    component: () => import('@/views/Personnel/DepartmentsList.vue'),
+                    meta: { title: 'Підрозділи' }
+                },
                 // CRM routes
                 {
                     path: '/crm',

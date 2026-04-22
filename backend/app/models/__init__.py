@@ -24,6 +24,7 @@ from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMat
 from .crm import CrmContact, CrmTask
 from .finance import FinancialTransaction, TransactionType
 from .notification import Notification
+from .hr import Department, Employee, EmployeeRole
 
 
 __all__ = [
@@ -72,5 +73,8 @@ __all__ = [
     "CrmTask",
     "FinancialTransaction",
     "TransactionType",
+    "Department",
+    "Employee",
+    "EmployeeRole",
 ]
 

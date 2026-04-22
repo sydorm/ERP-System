@@ -71,6 +71,18 @@
           <el-menu-item index="/finance/payments" v-if="userStore.hasPermission('finance.payments.view')">Платежі</el-menu-item>
         </el-sub-menu>
 
+        <el-sub-menu index="personnel">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>Персонал</span>
+          </template>
+          <el-menu-item index="/personnel/employees">Співробітники</el-menu-item>
+          <el-menu-item index="/personnel/departments">Підрозділи</el-menu-item>
+          <el-menu-item index="/personnel/payroll" disabled>Нарахування ЗП</el-menu-item>
+          <el-menu-item index="/personnel/attendance" disabled>Табель</el-menu-item>
+          <el-menu-item index="/personnel/hr-reports" disabled>Звіти по ЗП</el-menu-item>
+        </el-sub-menu>
+
         <el-menu-item index="/reports" v-if="userStore.hasPermission('reports.view')">
           <el-icon><DataAnalysis /></el-icon>
           <template #title>Звіти</template>

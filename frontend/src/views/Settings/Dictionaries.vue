@@ -331,6 +331,7 @@ const sections = [
   { id: 'commerce', name: 'Комерція' },
   { id: 'inventory', name: 'Номенклатура' },
   { id: 'tags', name: 'Теги та Статуси' },
+  { id: 'production', name: 'Виробництво' },
   { id: 'numbering', name: 'Нумерація' }
 ]
 
@@ -359,6 +360,12 @@ const dictionariesMap = {
     { code: 'ORDER_STATUS', name: 'Статуси замовлень', description: 'Життєвий цикл замовлення покупця' },
     { code: 'PAYMENT_STATUS', name: 'Статуси оплати', description: 'Не оплачено, Частково, Оплачено' },
     { code: 'PRIORITY', name: 'Пріоритети', description: 'Терміновість виконання' }
+  ],
+  'production': [
+    { code: 'PRODUCTION_STAGE', name: 'Виробничі етапи', description: 'Зварювання, Фарбування, Збірка тощо' },
+    { code: 'ACCRUAL_TYPE', name: 'Типи нарахування ЗП', description: 'Відрядна, Погодинна, Фіксована тощо' },
+    { code: 'ROLE_TYPE', name: 'Типи ролей', description: 'Основна, Суміщення' },
+    { code: 'EMPLOYEE_STATUS', name: 'Статуси співробітників', description: 'Активний, У відпустці, Звільнений' }
   ]
 
 }
