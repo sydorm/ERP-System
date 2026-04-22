@@ -113,6 +113,9 @@ def recovery():
         UNIQUE(employee_id, date)
     )
     """)
+    try:
+        run_sql("ALTER TABLE attendance_records ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()")
+    except: pass
 
     run_sql("""
     CREATE TABLE IF NOT EXISTS payroll_transactions (
@@ -125,9 +128,13 @@ def recovery():
         production_order_id UUID REFERENCES production_orders(id) ON DELETE SET NULL,
         created_by UUID,
         description VARCHAR(500),
-        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
     )
     """)
+    try:
+        run_sql("ALTER TABLE payroll_transactions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()")
+    except: pass
 
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
