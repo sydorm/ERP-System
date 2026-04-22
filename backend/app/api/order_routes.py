@@ -165,6 +165,7 @@ async def update_order(
         raise HTTPException(status_code=404, detail="Order not found")
 
     old_obj = AuditService.get_dict(order, relationships=["lines"])
+    update_data = order_in.dict(exclude_unset=True)
 
     # Handle payment transaction if paid_amount increases and bank_account_id is provided
     new_paid_amount = update_data.get("paid_amount")
