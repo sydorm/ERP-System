@@ -144,10 +144,45 @@ def recovery():
         employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
         stage_id UUID NOT NULL,
         quantity NUMERIC(15, 3),
+        status_id UUID,
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
     )
     """)
+    try:
+        run_sql("ALTER TABLE production_order_assignments ADD COLUMN IF NOT EXISTS status_id UUID")
+    except: pass
+
+    # 7. Seed Holidays for 2026
+    print("Seeding Ukrainian Holidays for 2026...")
+    # Get first company id
+    with engine.connect() as conn:
+        res = conn.execute(text("SELECT id FROM companies LIMIT 1")).fetchone()
+        if res:
+            comp_id = res[0]
+            holidays = [
+                ('2026-01-01', 'Новий рік'),
+                ('2026-04-12', 'Великдень'),
+                ('2026-04-13', 'Великодній понеділок (перенесення)'),
+                ('2026-05-01', 'День праці'),
+                ('2026-06-28', 'День Конституції України'),
+                ('2026-06-29', 'День Конституції (перенесення)'),
+                ('2026-08-24', 'День Незалежності України'),
+                ('2026-10-01', 'День захисників і захисниць України'),
+                ('2026-12-25', 'Різдво Христове')
+            ]
+            for h_date, h_name in holidays:
+                run_sql("""
+                INSERT INTO dictionary_items (id, company_id, category, type, code, name, is_fixed, is_active)
+                VALUES (:id, :cid, 'HOLIDAY', 'HOLIDAY', :code, :name, true, true)
+                ON CONFLICT (id) DO NOTHING
+                """, {
+                    "id": str(uuid.uuid5(uuid.NAMESPACE_DNS, f"holiday-2026-{h_date}")),
+                    "cid": comp_id,
+                    "code": h_date,
+                    "name": h_name
+                })
+            print(f"OK: Holidays for 2026 seeded for company {comp_id}")
 
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
