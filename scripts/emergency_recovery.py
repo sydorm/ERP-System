@@ -184,6 +184,29 @@ def recovery():
                 })
             print(f"OK: Holidays for 2026 seeded for company {comp_id}")
 
+            # 8. Seed Attendance Statuses if missing
+            print("Seeding Attendance Statuses...")
+            statuses = [
+                ('П', 'Працював', '#67C23A'),
+                ('В', 'Вихідний', '#909399'),
+                ('Л', 'Лікарняний', '#E6A23C'),
+                ('ВП', 'Відпустка', '#409EFF'),
+                ('!', 'Відсутній без причини', '#F56C6C')
+            ]
+            for code, name, color in statuses:
+                run_sql("""
+                INSERT INTO dictionary_items (id, company_id, category, type, code, name, color, is_fixed, is_active)
+                VALUES (:id, :cid, 'ATTENDANCE_STATUS', 'ATTENDANCE_STATUS', :code, :name, :color, true, true)
+                ON CONFLICT (id) DO NOTHING
+                """, {
+                    "id": str(uuid.uuid5(uuid.NAMESPACE_DNS, f"att-status-{code}")),
+                    "cid": comp_id,
+                    "code": code,
+                    "name": name,
+                    "color": color
+                })
+            print("OK: Attendance Statuses seeded.")
+
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
 if __name__ == "__main__":

@@ -334,7 +334,7 @@ const fetchData = async () => {
     
     // Map status names to IDs for backend saving
     statusList.forEach(s => {
-      const match = statusRes.data.find(db => db.name === s.code)
+      const match = statusRes.data.find(db => db.code === s.code)
       if (match) s.saId = match.id
     })
 
