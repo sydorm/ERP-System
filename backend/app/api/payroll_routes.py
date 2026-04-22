@@ -203,3 +203,83 @@ async def create_payroll_transaction(
     db.commit()
     db.refresh(db_trans)
     return db_trans
+
+# --- Reports ---
+
+@router.get("/reports/summary", response_model=List[PayrollSummaryItem])
+async def get_payroll_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    check_payroll_admin(current_user)
+    
+    # Group transactions by month
+    from sqlalchemy import extract
+    
+    # Query for accruals
+    accruals = db.query(
+        func.to_char(PayrollTransaction.date, 'YYYY-MM').label('month'),
+        func.sum(PayrollTransaction.amount).label('total')
+    ).join(Employee).filter(
+        Employee.company_id == current_user.company_id,
+        PayrollTransaction.transaction_type == 'ACCRUAL'
+    ).group_by('month').all()
+    
+    # Query for payments
+    payments = db.query(
+        func.to_char(PayrollTransaction.date, 'YYYY-MM').label('month'),
+        func.sum(PayrollTransaction.amount).label('total')
+    ).join(Employee).filter(
+        Employee.company_id == current_user.company_id,
+        PayrollTransaction.transaction_type == 'PAYMENT'
+    ).group_by('month').all()
+    
+    # Merge results
+    summary_dict = {}
+    for m, val in accruals:
+        if m not in summary_dict: summary_dict[m] = {'accrued': 0, 'paid': 0}
+        summary_dict[m]['accrued'] = val
+        
+    for m, val in payments:
+        if m not in summary_dict: summary_dict[m] = {'accrued': 0, 'paid': 0}
+        summary_dict[m]['paid'] = abs(val) # payment_sum is negative in DB
+        
+    results = [
+        PayrollSummaryItem(period=m, total_accrued=data['accrued'], total_paid=data['paid'])
+        for m, data in sorted(summary_dict.items(), reverse=True)
+    ]
+    return results
+
+@router.get("/reports/by-department", response_model=List[DepartmentSummaryItem])
+async def get_payroll_by_department(
+    month: Optional[str] = None, # YYYY-MM
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    check_payroll_admin(current_user)
+    
+    query = db.query(
+        Department.name.label('dept_name'),
+        func.sum(PayrollTransaction.amount).label('amount'),
+        PayrollTransaction.transaction_type
+    ).join(Employee, Employee.department_id == Department.id)\
+     .join(PayrollTransaction, PayrollTransaction.employee_id == Employee.id)\
+     .filter(Employee.company_id == current_user.company_id)
+     
+    if month:
+        query = query.filter(func.to_char(PayrollTransaction.date, 'YYYY-MM') == month)
+        
+    results = query.group_by(Department.name, PayrollTransaction.transaction_type).all()
+    
+    dept_dict = {}
+    for name, amount, t_type in results:
+        if name not in dept_dict: dept_dict[name] = {'accrued': 0, 'paid': 0}
+        if t_type == 'ACCRUAL':
+            dept_dict[name]['accrued'] += amount
+        else:
+            dept_dict[name]['paid'] += abs(amount)
+            
+    return [
+        DepartmentSummaryItem(department_name=name, total_accrued=data['accrued'], total_paid=data['paid'])
+        for name, data in dept_dict.items()
+    ]

@@ -207,7 +207,7 @@
               
               <el-table-column label="Потрібно" width="120" align="right">
                 <template #default="scope">
-                  <el-input-number
+                   <el-input-number
                     v-model="scope.row.required_quantity"
                     :min="0"
                     :step="0.1"
@@ -231,6 +231,71 @@
           </div>
         </el-tab-pane>
 
+        <!-- WORKERS (Personnel v3) -->
+        <el-tab-pane name="workers">
+          <template #label><el-icon><User /></el-icon>&nbsp;Виконавці <el-badge v-if="form.assignments.length" :value="form.assignments.length" class="tab-badge" type="success"/></template>
+          
+          <div class="tab-content-card">
+            <div class="actions-bar mb-3">
+              <el-button type="primary" :icon="Plus" size="small" @click="addWorker">Призначити виконавця</el-button>
+            </div>
+            
+            <el-table :data="form.assignments" border size="small" class="erp-dense-table" stripe>
+              <el-table-column label="N" width="50" type="index" align="center" />
+              
+              <el-table-column label="Співробітник" min-width="200">
+                <template #default="scope">
+                  <el-select v-model="scope.row.employee_id" filterable placeholder="Оберіть..." class="w-full" size="small">
+                    <el-option 
+                      v-for="e in employees" 
+                      :key="e.id" 
+                      :label="`${e.first_name} ${e.last_name}`" 
+                      :value="e.id" 
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="Етап / Робота" min-width="180">
+                <template #default="scope">
+                  <el-select v-model="scope.row.stage_id" placeholder="Оберіть етап..." class="w-full" size="small">
+                    <el-option 
+                      v-for="st in productionStages" 
+                      :key="st.id" 
+                      :label="st.name" 
+                      :value="st.id" 
+                    />
+                  </el-select>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="К-ть (для ЗП)" width="120">
+                <template #default="scope">
+                  <el-input-number 
+                    v-model="scope.row.quantity" 
+                    :min="0" 
+                    :placeholder="form.lines.length ? form.lines[0].quantity : 'Весь обсяг'"
+                    size="small"
+                    class="w-full"
+                    :controls="false"
+                  />
+                </template>
+              </el-table-column>
+
+              <el-table-column label="" width="50" align="center">
+                <template #default="scope">
+                  <el-button type="danger" :icon="Delete" circle plain size="small" @click="removeWorker(scope.$index)" />
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <div class="mt-4 p-4 bg-blue-50 text-blue-800 text-sm rounded-md border border-blue-200">
+              <el-icon class="mr-1"><InfoFilled /></el-icon>
+              При завершенні замовлення система автоматично нарахує зарплату вказаним працівникам згідно їхніх персональних ставок для вибраних етапів.
+            </div>
+          </div>
+        </el-tab-pane>
+
       </el-tabs>
     </div>
     
@@ -240,7 +305,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Plus, Delete, Refresh, Box, List, Document } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Refresh, Box, List, Document, User, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 
@@ -254,6 +319,8 @@ const submitting = ref(false)
 const products = ref([])
 const warehouses = ref([])
 const specsCache = ref({}) // product_id -> specs[]
+const employees = ref([])
+const productionStages = ref([])
 
 const form = ref({
   order_number: '',
@@ -265,29 +332,32 @@ const form = ref({
   warehouse_id: '',
   comment: '',
   lines: [],
-  materials: []
+  materials: [],
+  assignments: []
 })
 
 // --- Data loading ---
 const fetchStaticData = async () => {
   try {
-    const [prodRes, whRes, compRes] = await Promise.all([
+    const [prodRes, whRes, compRes, empRes, dictRes] = await Promise.all([
       api.get('/api/v1/products?limit=1000'),
       api.get('/api/v1/warehouses'),
-      api.get('/api/v1/companies')
+      api.get('/api/v1/companies'),
+      api.get('/api/v1/employees'),
+      api.get('/api/v1/dictionaries/PRODUCTION_STAGE')
     ])
     products.value = prodRes.data
     warehouses.value = whRes.data
+    employees.value = empRes.data
+    productionStages.value = dictRes.data?.items || []
     
     if (!isEditMode.value) {
       if (whRes.data.length > 0) form.value.warehouse_id = whRes.data[0].id
       if (compRes.data.length > 0) form.value.company_id = compRes.data[0].id
       
-      // If we are passing components from query (created from Order base)
       const qBase = route.query.base_order
       if (qBase) {
         form.value.base_order_id = qBase
-        // We'd ideally fetch the base order and populate lines, but for now just linked.
         try {
             const bRes = await api.get(`/api/v1/orders/${qBase}`)
             form.value.lines = bRes.data.lines.map(l => ({
@@ -297,7 +367,6 @@ const fetchStaticData = async () => {
                 quantity: l.quantity,
                 produced_quantity: 0
             }))
-            // trigger recalculation!
             recalculateMaterials()
         } catch(e) {}
       }
@@ -311,7 +380,6 @@ const loadOrder = async () => {
   try {
     const { data } = await api.get(`/api/v1/production/${route.params.id}`)
     
-    // Ensure specs are loaded for products inside
     const uniqueIds = [...new Set(data.lines.map(l => l.product_id).filter(Boolean))]
     await Promise.all(uniqueIds.map(async pid => {
         if (!specsCache.value[pid]) {
@@ -328,12 +396,10 @@ const loadOrder = async () => {
   }
 }
 
-// --- Specification logic (similar to OrderEditor) ---
 const getProductSpecifications = async (productId) => {
   const { data } = await api.get(`/api/v1/specifications/product/${productId}`)
   return data
 }
-
 const getSpecsForProduct = (pid) => specsCache.value[pid] || []
 
 const handleProductChange = async (productId, line) => {
@@ -354,11 +420,9 @@ const handleProductChange = async (productId, line) => {
   }
 }
 
-// Helper calculation engine exactly from OrderEditor
 const calculateQuantity = (item, product, variantValues = []) => {
   let result = 0
   const dims = { W: 0, H: 0, L: 0, Kg: 0 }
-  
   if (variantValues && variantValues.length) {
     variantValues.forEach(val => {
        if (val.dimension_code === 'width_cm') dims.W = parseFloat(val.custom_value || val.value?.value || 0)
@@ -367,17 +431,13 @@ const calculateQuantity = (item, product, variantValues = []) => {
        if (val.dimension_code === 'weight_kg') dims.Kg = parseFloat(val.custom_value || val.value?.value || 0)
     })
   }
-
-  if (item.calc_type === 'fixed') {
-    result = item.quantity
-  }
+  if (item.calc_type === 'fixed') result = item.quantity
   else if (item.calc_type === 'stepped' && item.step_rules && item.step_rules.length > 0) {
     const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
     let applicableRule = null
     for (const rule of item.step_rules) {
       if (dimVal >= rule.min_val && dimVal <= rule.max_val) {
-        applicableRule = rule
-        break
+        applicableRule = rule; break
       }
     }
     result = applicableRule ? applicableRule.qty : item.quantity
@@ -399,73 +459,55 @@ const calculateQuantity = (item, product, variantValues = []) => {
       const { W, H, L, Kg } = dims
       result = eval(item.calc_formula)
     } catch (e) { result = 0 }
-  } else {
-      result = item.quantity
-  }
-
-  if (item.calc_waste_factor) {
-    result *= (1 + parseFloat(item.calc_waste_factor))
-  }
+  } else result = item.quantity
+  if (item.calc_waste_factor) result *= (1 + parseFloat(item.calc_waste_factor))
   return result
 }
 
 const recalculateMaterials = () => {
     const bom = []
-    
     form.value.lines.forEach(line => {
         if (!line.product_id || !line.quantity) return
         const specs = specsCache.value[line.product_id] || []
         if (!specs.length) return
-        
         const spec = line.specification_id ? specs.find(s => s.id === line.specification_id) : (specs.find(s => s.is_default) || specs[0])
         if (!spec || !spec.items) return
-        
         const product = products.value.find(p => p.id === line.product_id)
-        
         spec.items.forEach(item => {
             const qtyPerUnit = parseFloat(calculateQuantity(item, product, [])) || 0
             if (qtyPerUnit <= 0) return
-            
             const totalQty = qtyPerUnit * line.quantity
             const existing = bom.find(b => b.component_id === item.component_id)
-            
-            if (existing) {
-                existing.required_quantity += totalQty
-            } else {
-                bom.push({
+            if (existing) existing.required_quantity += totalQty
+            else bom.push({
                     component_id: item.component_id,
                     required_quantity: totalQty,
                     unit_of_measure: item.unit_of_measure || 'шт',
                     cost_estimate: 0
                 })
-            }
         })
     })
-    
-    // Replace current materials entirely. In a real system you might merge with manual edits.
     form.value.materials = bom
     ElMessage.success('Матеріали перераховано згідно специфікацій.')
 }
 
 const goBack = () => router.push('/production/orders')
 
-// --- Lines Logic ---
 const addLine = () => form.value.lines.push({ product_id: '', quantity: 1, specification_id: null })
 const removeLine = (idx) => { form.value.lines.splice(idx, 1); recalculateMaterials() }
 const addMaterial = () => form.value.materials.push({ component_id: '', required_quantity: 1, unit_of_measure: 'шт' })
 const removeMaterial = (idx) => form.value.materials.splice(idx, 1)
 
-// --- Saving ---
+const addWorker = () => form.value.assignments.push({ employee_id: '', stage_id: '', quantity: null })
+const removeWorker = (idx) => form.value.assignments.splice(idx, 1)
+
 const saveOrder = async (actionStatus) => {
     if (!form.value.warehouse_id || !form.value.company_id || form.value.lines.length === 0) {
         ElMessage.warning('Заповніть Склад та додайте Продукцію')
         return
     }
-    
     if (actionStatus) form.value.status = actionStatus
-    
     const payload = { ...form.value }
-    
     submitting.value = true
     try {
         if (isEditMode.value) {
@@ -475,7 +517,7 @@ const saveOrder = async (actionStatus) => {
             const res = await api.post('/api/v1/production/', payload)
             ElMessage.success('Створено')
             router.push(`/production/orders/${res.data.id}`)
-            return // skip reload to avoid state flashing
+            return
         }
         await loadOrder()
     } catch(err) {
@@ -498,7 +540,6 @@ const getVariantLabel = (line) => {
 }
 const openVariantSelector = () => ElMessage.info('Вибір характеристик реалізовано тільки в Замовленні покупця наразі.')
 
-// Status configs
 const statusLabel = computed(() => {
     const s = form.value.status
     if (s === 'draft') return 'Чернетка'
@@ -508,7 +549,6 @@ const statusLabel = computed(() => {
     if (s === 'cancelled') return 'Скасовано'
     return s
 })
-
 const statusType = computed(() => {
     const s = form.value.status
     if (s === 'draft') return 'info'
@@ -521,9 +561,7 @@ const statusType = computed(() => {
 
 onMounted(async () => {
   await fetchStaticData()
-  if (isEditMode.value) {
-    await loadOrder()
-  }
+  if (isEditMode.value) await loadOrder()
 })
 </script>
 

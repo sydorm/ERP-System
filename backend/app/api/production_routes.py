@@ -8,10 +8,12 @@ from decimal import Decimal
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
-from app.models.production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
+from app.models.production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial, ProductionOrderWorkerAssignment
+from app.models.hr import Employee, EmployeeRole, PayrollTransaction
 from app.models.document_sequence import DocumentSequence
 from app.schemas.production import ProductionOrderCreate, ProductionOrderUpdate, ProductionOrderResponse
 from app.models.user import User
+from app.models.dictionary import DictionaryItem
 from app.services.posting_service import PostingService, PostingEntry
 from app.models.register import RegisterType
 
@@ -59,6 +61,17 @@ def create_production_order(
         db.add(db_order)
         db.flush()
         
+        # Save Worker Assignments
+        if order_in.assignments:
+            for assign_in in order_in.assignments:
+                db_assign = ProductionOrderWorkerAssignment(
+                    production_order_id=db_order.id,
+                    employee_id=assign_in.employee_id,
+                    stage_id=assign_in.stage_id,
+                    quantity=assign_in.quantity
+                )
+                db.add(db_assign)
+                
         for line_in in order_in.lines:
             db_line = ProductionOrderLine(
                 production_order_id=db_order.id,
@@ -219,6 +232,7 @@ def update_production_order(
         update_data = order_in.model_dump(exclude_unset=True)
         lines_data = update_data.pop("lines", None)
         materials_data = update_data.pop("materials", None)
+        assignments_data = update_data.pop("assignments", None)
         
         for field, value in update_data.items():
             setattr(db_order, field, value)
@@ -247,9 +261,51 @@ def update_production_order(
                     cost_estimate=mat_in.get("cost_estimate")
                 )
                 db.add(db_mat)
-        
+
+        if assignments_data is not None:
+            db.query(ProductionOrderWorkerAssignment).filter(ProductionOrderWorkerAssignment.production_order_id == db_order.id).delete()
+            for assign_in in assignments_data:
+                db_assign = ProductionOrderWorkerAssignment(
+                    production_order_id=db_order.id,
+                    employee_id=assign_in["employee_id"],
+                    stage_id=assign_in["stage_id"],
+                    quantity=assign_in.get("quantity")
+                )
+                db.add(db_assign)
+
         db.flush()
         
+        # --- Handle Automated Payroll Accruals (Personnel v3) ---
+        if db_order.status == "completed":
+            # 1. Get accrual type dictionary item (Category: ACCRUAL_TYPE, Code: PRODUCTION)
+            # Fallback if not found: use any accrual category linked to the employee role
+            for assign in db_order.assignments:
+                # Find employee rate for this specific stage
+                role = db.query(EmployeeRole).filter(
+                    EmployeeRole.employee_id == assign.employee_id,
+                    EmployeeRole.role_id == assign.stage_id,
+                    EmployeeRole.is_active == True
+                ).first()
+                
+                if role:
+                    # Calculate quantity (order quantity if not specified on assignment)
+                    # For simplicity, we use total quantity of first line if assignment quantity is null
+                    calc_qty = assign.quantity or (db_order.lines[0].quantity if db_order.lines else 1)
+                    total_amount = role.rate * Decimal(str(calc_qty))
+                    
+                    # Create Payroll Transaction
+                    new_accrual = PayrollTransaction(
+                        employee_id=assign.employee_id,
+                        amount=total_amount,
+                        transaction_type='ACCRUAL',
+                        date=sa.func.current_date(),
+                        category_id=role.accrual_type_id,
+                        production_order_id=db_order.id,
+                        created_by=current_user.id,
+                        description=f"Автоматичне нарахування: {db_order.order_number} (Етап: {assign.stage.name if assign.stage else '?'})"
+                    )
+                    db.add(new_accrual)
+
         # --- Handle Posting (Stock Movements) ---
         if db_order.status == "completed":
             entries = []

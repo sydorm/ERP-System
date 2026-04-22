@@ -80,7 +80,7 @@
           <el-menu-item index="/personnel/departments">Підрозділи</el-menu-item>
           <el-menu-item index="/personnel/payroll">Нарахування ЗП</el-menu-item>
           <el-menu-item index="/personnel/attendance">Табель</el-menu-item>
-          <el-menu-item index="/personnel/hr-reports" disabled>Звіти по ЗП</el-menu-item>
+          <el-menu-item index="/personnel/hr-reports">Звіти по ЗП</el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="/reports" v-if="userStore.hasPermission('reports.view')">

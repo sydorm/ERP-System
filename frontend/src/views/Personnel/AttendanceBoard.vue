@@ -129,12 +129,12 @@ const fetchData = async () => {
       attendanceStatuses.value = dictRes.data
     }
     if (departments.value.length === 0) {
-      const deptRes = await api.get('/api/v1/hr/departments')
+      const deptRes = await api.get('/api/v1/departments')
       departments.value = deptRes.data
     }
 
     // 2. Fetch Employees
-    const empRes = await api.get('/api/v1/hr/employees', {
+    const empRes = await api.get('/api/v1/employees', {
       params: { department_id: filterDepartment.value }
     })
     employees.value = empRes.data

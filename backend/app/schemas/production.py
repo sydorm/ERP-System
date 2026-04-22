@@ -45,6 +45,22 @@ class ProductionOrderLineResponse(ProductionOrderLineBase):
     class Config:
         from_attributes = True
 
+# --- Production Order Assignment ---
+class ProductionOrderAssignmentBase(BaseModel):
+    employee_id: UUID
+    stage_id: UUID
+    quantity: Optional[float] = None
+
+class ProductionOrderAssignmentCreate(ProductionOrderAssignmentBase):
+    pass
+
+class ProductionOrderAssignmentResponse(ProductionOrderAssignmentBase):
+    id: UUID
+    production_order_id: UUID
+    
+    class Config:
+        from_attributes = True
+
 # --- Production Order ---
 class ProductionOrderBase(BaseModel):
     due_date: Optional[datetime] = None
@@ -57,10 +73,12 @@ class ProductionOrderBase(BaseModel):
 class ProductionOrderCreate(ProductionOrderBase):
     lines: List[ProductionOrderLineCreate]
     materials: List[ProductionOrderMaterialCreate] = [] # Optional initially, can be calculated
+    assignments: List[ProductionOrderAssignmentCreate] = []
 
 class ProductionOrderUpdate(ProductionOrderBase):
     lines: Optional[List[ProductionOrderLineCreate]] = None
     materials: Optional[List[ProductionOrderMaterialCreate]] = None
+    assignments: Optional[List[ProductionOrderAssignmentCreate]] = None
     status: Optional[str] = None
 
 class ProductionOrderResponse(ProductionOrderBase):
@@ -72,6 +90,7 @@ class ProductionOrderResponse(ProductionOrderBase):
     
     lines: List[ProductionOrderLineResponse] = []
     materials: List[ProductionOrderMaterialResponse] = []
+    assignments: List[ProductionOrderAssignmentResponse] = []
     
     class Config:
         from_attributes = True

@@ -63,3 +63,15 @@ class EmployeeBalanceResponse(BaseModel):
     balance: Decimal
 
     model_config = ConfigDict(from_attributes=True)
+
+# --- Reporting ---
+
+class PayrollSummaryItem(BaseModel):
+    period: str  # e.g. "2024-04"
+    total_accrued: Decimal
+    total_paid: Decimal
+
+class DepartmentSummaryItem(BaseModel):
+    department_name: str
+    total_accrued: Decimal
+    total_paid: Decimal

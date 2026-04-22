@@ -243,6 +243,12 @@ const router = createRouter({
                     component: () => import('@/views/Personnel/AttendanceBoard.vue'),
                     meta: { title: 'Табель' }
                 },
+                {
+                    path: '/personnel/hr-reports',
+                    name: 'payroll-reports',
+                    component: () => import('@/views/Personnel/PayrollReports.vue'),
+                    meta: { title: 'Звіти по ЗП' }
+                },
                 // CRM routes
                 {
                     path: '/crm',
