@@ -134,6 +134,48 @@
           </el-table>
        </el-card>
 
+       <!-- PRODUCTION STAGES BLOCK -->
+       <el-card shadow="never" class="mt-4 pb-4">
+          <div class="flex justify-between items-center mb-4">
+             <h4 class="m-0">Виробничі етапи</h4>
+             <el-button type="primary" size="small" @click="addStage" plain :icon="Plus">Додати етап</el-button>
+          </div>
+          
+          <el-table :data="specForm.stages" stripe style="width: 100%" class="stages-table">
+             <el-table-column label="Етап" min-width="200">
+                <template #default="scope">
+                   <el-select v-model="scope.row.stage_id" placeholder="Виберіть етап..." class="w-full" clearable>
+                      <el-option v-for="s in productionStages" :key="s.id" :label="s.name" :value="s.id" />
+                   </el-select>
+                </template>
+             </el-table-column>
+             
+             <el-table-column label="Час (год)" width="150">
+                <template #default="scope">
+                   <el-input-number v-model="scope.row.duration_hours" :min="0" :step="0.5" :precision="2" class="w-full" :controls="false" />
+                </template>
+             </el-table-column>
+             
+             <el-table-column label="Роль (Хто виконує)" min-width="200">
+                <template #default="scope">
+                   <el-select v-model="scope.row.role_id" placeholder="Виберіть роль..." class="w-full" clearable>
+                      <el-option v-for="s in productionStages" :key="s.id" :label="s.name" :value="s.id" />
+                   </el-select>
+                </template>
+             </el-table-column>
+             
+             <el-table-column label="Дії" width="60" align="center">
+                <template #default="scope">
+                   <el-button link type="danger" :icon="Delete" @click="removeStage(scope.$index)" />
+                </template>
+             </el-table-column>
+          </el-table>
+          
+          <div v-if="specForm.stages && specForm.stages.length > 0" class="mt-3 text-right text-gray-500 text-sm">
+            Загальний час техпроцесу: <span class="font-bold text-indigo-600">{{ totalStagesDuration }} год</span>
+          </div>
+       </el-card>
+
     </div>
 
     <!-- Test Calculation Preview Dialog -->
