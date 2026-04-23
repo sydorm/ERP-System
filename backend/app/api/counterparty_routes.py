@@ -11,6 +11,7 @@ from app.schemas.counterparty import (
     ContactCreate, ContactResponse,
     CounterpartyMaterialCreate, CounterpartyMaterialResponse
 )
+from app.api.dependencies import get_current_active_user
 from app.models import (
     Counterparty, User, Product,
     CounterpartyBankAccount, CounterpartyContact, CounterpartyMaterial
