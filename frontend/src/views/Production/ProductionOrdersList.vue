@@ -1,493 +1,502 @@
 <template>
-  <div class="erp-page-container">
-    <!-- Header -->
-    <div class="erp-toolbar">
-      <div class="toolbar-left">
-        <h1 class="page-title">Завдання на виробництво ({{ orders.length }})</h1>
+  <div class="orders-page">
+    <div class="fixed-top-area">
+      <!-- ===== STAT CARDS (CRM Style) ===== -->
+      <div class="kimi-stats-row">
+        <!-- Всього в роботі -->
+        <div class="kimi-stat-card kimi-stat-indigo">
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Всього в роботі</p>
+            <p class="kimi-stat-value text-indigo-600">{{ stats.in_progress }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+            <el-icon><Document /></el-icon>
+          </div>
+        </div>
+        <!-- Прострочено -->
+        <div class="kimi-stat-card kimi-stat-rose">
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Прострочено</p>
+            <p class="kimi-stat-value text-rose-600">{{ stats.overdue }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
+            <el-icon><Clock /></el-icon>
+          </div>
+        </div>
+        <!-- Готово сьогодні -->
+        <div class="kimi-stat-card kimi-stat-emerald">
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Готово сьогодні</p>
+            <p class="kimi-stat-value text-emerald-600">{{ stats.completed_today }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+            <el-icon><Check /></el-icon>
+          </div>
+        </div>
+        <!-- Заплановано -->
+        <div class="kimi-stat-card kimi-stat-amber">
+          <div class="kimi-stat-info">
+            <p class="kimi-stat-label">Заплановано</p>
+            <p class="kimi-stat-value text-amber-600">{{ stats.planned }}</p>
+          </div>
+          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+            <el-icon><Calendar /></el-icon>
+          </div>
+        </div>
       </div>
-      <div class="toolbar-right">
-        <el-button type="primary" :icon="Plus" @click="createNew">Створити завдання</el-button>
-        <el-button :icon="Refresh" @click="fetchData">Оновити</el-button>
-      </div>
-    </div>
 
-    <!-- Stats Cards (CRM style) -->
-    <div class="stats-overview mb-4">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <div class="stat-card blue">
-            <div class="stat-label">Всього в роботі</div>
-            <div class="stat-value">{{ stats.in_progress }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card red">
-            <div class="stat-label">Прострочено</div>
-            <div class="stat-value">{{ stats.overdue }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card green">
-            <div class="stat-label">Готово сьогодні</div>
-            <div class="stat-value">{{ stats.ready_today }}</div>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="stat-card gray">
-            <div class="stat-label">Заплановано</div>
-            <div class="stat-value">{{ stats.planned }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- Filters Bar -->
-    <div class="erp-filters-bar mb-4">
-      <el-row :gutter="10" align="middle" style="width: 100%">
-        <el-col :span="6">
-          <el-input 
-            v-model="filters.search" 
-            placeholder="Пошук за номером, виробом..." 
-            clearable 
-            :prefix-icon="Search" 
+      <!-- ===== FILTER BAR (CRM Style) ===== -->
+      <div class="kimi-filter-bar">
+        <div class="kimi-filter-left">
+          <el-input
+            v-model="searchQuery"
+            placeholder="Пошук за номером, виробом..."
+            :prefix-icon="Search"
+            clearable
+            class="kimi-search-input"
           />
-        </el-col>
-        <el-col :span="4">
-          <el-select v-model="filters.status" placeholder="Всі статуси" clearable style="width: 100%">
-            <el-option label="🔵 Заплановано" value="draft" />
-            <el-option label="🟡 В роботі" value="in_progress" />
-            <el-option label="🟢 Готово" value="completed" />
-            <el-option label="⚫ Скасовано" value="cancelled" />
-            <el-option label="🔴 Прострочено" value="overdue" />
+          <el-select
+            v-model="filterStatus"
+            placeholder="Всі статуси"
+            clearable
+            style="width:155px"
+            class="kimi-status-select"
+          >
+            <el-option label="Всі статуси" value="" />
+            <el-option label="Заплановано" value="draft" />
+            <el-option label="В роботі" value="in_progress" />
+            <el-option label="Готово" value="completed" />
+            <el-option label="Скасовано" value="cancelled" />
           </el-select>
-        </el-col>
-        <el-col :span="5">
-          <el-select v-model="filters.master_id" placeholder="Майстер" clearable style="width: 100%">
+          
+          <el-select
+            v-model="filterMaster"
+            placeholder="Майстер"
+            clearable
+            style="width:155px"
+            class="kimi-status-select"
+          >
             <el-option v-for="m in masters" :key="m.id" :label="m.full_name" :value="m.id" />
           </el-select>
-        </el-col>
-        <el-col :span="7">
+
           <el-date-picker
-            v-model="filters.dateRange"
+            v-model="dateRange"
             type="daterange"
-            range-separator="-"
+            range-separator="—"
             start-placeholder="Від"
             end-placeholder="До"
-            style="width: 100%"
+            format="DD.MM.YYYY"
+            value-format="YYYY-MM-DD"
+            clearable
+            class="kimi-date-picker"
           />
-        </el-col>
-      </el-row>
+
+          <button class="kimi-adv-btn">
+            <el-icon><Filter /></el-icon>
+            <span class="adv-btn-label">Фільтри</span>
+          </button>
+          
+          <button class="kimi-adv-btn">
+            <el-icon><Setting /></el-icon>
+            <span class="adv-btn-label">Стовпці</span>
+          </button>
+
+          <el-button class="kimi-refresh-btn" @click="fetchData" title="Оновити">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
+        <div class="kimi-filter-right">
+          <button class="kimi-primary-btn" @click="createNew">
+            <el-icon><Plus /></el-icon> Створити завдання
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="erp-table-container" v-loading="loading">
+    <!-- ===== TABLE CARD ===== -->
+    <div class="table-card scrollable-table-area mt-2">
       <el-table
+        v-loading="loading"
         :data="filteredOrders"
+        size="small"
+        height="100%"
         style="width: 100%"
-        class="erp-table"
-        stripe
-        hover
-        @row-dblclick="handleRowDblClick"
+        class="orders-table"
+        row-class-name="kimi-row"
+        header-row-class-name="kimi-header-row"
+        @row-click="handleRowClick"
       >
-        <el-table-column label="№ завдання" width="130">
-          <template #default="{ row }">
-            <span class="code-text" @click.stop="editOrder(row)">#{{ row.order_number }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column type="selection" width="40" align="center" />
         
-        <el-table-column label="Замовлення (CRM)" width="160">
-          <template #default="{ row }">
-            <div v-if="row.source_id" class="doc-badge clickable" @click.stop="openSource(row)">
-              <el-icon><Document /></el-icon> №{{ row.order_number }}
-            </div>
-            <span v-else class="text-gray-400">-</span>
+        <el-table-column label="№" width="46" align="center">
+          <template #default="{ $index }">
+            <span class="row-num text-slate-400">{{ $index + 1 }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Виріб" min-width="200">
+        <el-table-column label="НОМЕР / ДАТА" width="160" prop="order_number">
           <template #default="{ row }">
-            <div class="product-info">
-              <span class="product-name">{{ getProductName(row) }}</span>
-              <small class="client-name" v-if="row.client">{{ row.client.name }}</small>
+            <div class="num-date-cell">
+              <span class="kimi-text-sm kimi-font-medium kimi-text-indigo-600">{{ row.order_number }}</span>
+              <span class="kimi-text-xxs kimi-text-slate-400">{{ formatDateSimple(row.order_date) }}</span>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="Майстер" width="180">
+        <el-table-column label="КЛІЄНТ" min-width="160">
           <template #default="{ row }">
-            <div class="user-avatar-tag" v-if="getMainMaster(row)">
-               <el-avatar :size="24" :src="getMainMaster(row).photo_url">{{ getMainMaster(row).full_name?.charAt(0) }}</el-avatar>
-               <span>{{ getMainMaster(row).full_name }}</span>
-            </div>
-            <span v-else class="text-gray-400">Не призначено</span>
+            <span class="kimi-text-sm font-medium">{{ getClientName(row.client_id) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Етап (поточний)" min-width="180">
+        <el-table-column label="ВИРІБ" min-width="180">
           <template #default="{ row }">
-            <div class="current-stage" v-if="row.status === 'in_progress' || row.status === 'draft'">
-              <el-tag size="small" :type="getStageTagType(row)" effect="light">
-                 {{ getCurrentStageName(row) }}
-              </el-tag>
-            </div>
-            <span v-else-if="row.status === 'completed'" class="text-success">Всі етапи завершено</span>
-            <span v-else>-</span>
+            <div class="kimi-text-sm">{{ getProductName(row) }}</div>
           </template>
         </el-table-column>
 
-        <el-table-column label="Дедлайн" width="120">
+        <el-table-column label="МАЙСТЕР" min-width="160">
           <template #default="{ row }">
-             <span :class="getDeadlineClass(row.due_date, row.status)">
-               {{ formatDateSimple(row.due_date) }}
-             </span>
+            <span class="kimi-text-sm">{{ getMasterName(row) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Статус" width="140" align="center">
+        <el-table-column label="ЕТАП" width="140">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" effect="dark" class="status-badge" round>
-              {{ getStatusLabel(row.status) }}
+            <el-tag v-if="getCurrentStage(row)" size="small" effect="plain" type="info">
+              {{ getCurrentStage(row) }}
             </el-tag>
+            <span v-else class="text-xs text-gray-400">—</span>
           </template>
         </el-table-column>
 
-        <el-table-column fixed="right" label="Дії" width="80" align="center">
+        <el-table-column label="ДЕДЛАЙН" width="130" align="center">
           <template #default="{ row }">
-            <el-dropdown trigger="click" @click.stop>
-              <span class="el-dropdown-link">
-                <el-icon><MoreFilled /></el-icon>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item :icon="Edit" @click="editOrder(row)">Відкрити</el-dropdown-item>
-                  <el-dropdown-item :icon="Printer">Друк тех. карти</el-dropdown-item>
-                  <el-dropdown-item divided type="danger" :icon="Delete" @confirm="deleteOrder(row)">Видалити</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div v-if="row.due_date" class="date-cell" :class="getDateClass(row.due_date, row.status)">
+              <span class="date-cell-dot" />
+              <span class="date-cell-text">{{ formatDateSimple(row.due_date) }}</span>
+            </div>
+            <span v-else class="kimi-text-xs text-slate-400">—</span>
           </template>
         </el-table-column>
-        
+
+        <el-table-column label="СТАТУС" width="140" align="center">
+          <template #default="{ row }">
+            <span class="kimi-badge" :class="getStatusBadgeClass(row.status, row.due_date)">
+              {{ getStatusLabel(row.status, row.due_date) }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="ДІЇ" width="100" align="center" fixed="right">
+          <template #default="{ row }">
+            <div @click.stop class="kimi-actions-col">
+              <button class="kimi-ghost-btn" @click.stop="() => handleEdit(row)" title="Редагувати">
+                <el-icon class="kimi-text-indigo-400"><Edit /></el-icon>
+              </button>
+              <button class="kimi-ghost-btn" @click.stop="() => handleDelete(row)" title="Видалити">
+                <el-icon class="kimi-text-rose-400"><Delete /></el-icon>
+              </button>
+            </div>
+          </template>
+        </el-table-column>
+
         <template #empty>
           <el-empty description="Немає завдань на виробництво">
              <el-button type="primary" :icon="Plus" @click="createNew">Створити перше завдання</el-button>
           </el-empty>
         </template>
       </el-table>
+
+      <!-- PAGINATION -->
+      <div class="pagination-footer">
+        <span class="total-hint">Показано {{ filteredOrders.length }} з {{ orders.length }}</span>
+        <div class="custom-pagination-container">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="orders.length"
+            background
+            layout="prev, pager, next"
+            class="custom-pagination-numeric"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
-  Plus, Refresh, Search, Edit, Delete, Document, User, MoreFilled, Printer 
+  Plus, Search, Refresh, Edit, Delete, Clock, Check, Calendar, Document, Filter, Setting
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
 
 const router = useRouter()
-const orders = ref([])
 const loading = ref(false)
+const orders = ref([])
 const masters = ref([])
+const clients = ref([])
+const products = ref([])
 
-const filters = reactive({
-  search: '',
-  status: '',
-  master_id: '',
-  dateRange: null
+// Filters
+const searchQuery = ref('')
+const filterStatus = ref('')
+const filterMaster = ref('')
+const dateRange = ref(null)
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+// Stats
+const stats = computed(() => {
+  const now = dayjs().startOf('day')
+  return {
+    in_progress: orders.value.filter(o => ['in_progress', 'released'].includes(o.status)).length,
+    overdue: orders.value.filter(o => o.status !== 'completed' && o.due_date && dayjs(o.due_date).isBefore(now)).length,
+    completed_today: orders.value.filter(o => o.status === 'completed' && dayjs(o.updated_at).isSame(now, 'day')).length,
+    planned: orders.value.filter(o => o.status === 'draft').length
+  }
 })
 
-const stats = reactive({
-  in_progress: 0,
-  overdue: 0,
-  ready_today: 0,
-  planned: 0
-})
-
-// Computed
 const filteredOrders = computed(() => {
-  return orders.value.filter(o => {
-    // 1. Search
-    const q = filters.search.toLowerCase()
-    const matchesSearch = !q || 
-      (o.order_number && o.order_number.toLowerCase().includes(q)) ||
-      (getProductName(o).toLowerCase().includes(q))
-    
-    // 2. Status (Special handling for 'overdue')
-    let matchesStatus = true
-    if (filters.status === 'overdue') {
-      matchesStatus = o.status !== 'completed' && o.due_date && dayjs(o.due_date).isBefore(dayjs(), 'day')
-    } else if (filters.status) {
-      matchesStatus = o.status === filters.status
-    }
-    
-    // 3. Master
-    const matchesMaster = !filters.master_id || 
-      o.assignments?.some(a => a.employee_id === filters.master_id)
-      
-    // 4. Date Range
-    let matchesDate = true
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      const start = dayjs(filters.dateRange[0]).startOf('day')
-      const end = dayjs(filters.dateRange[1]).endOf('day')
-      const docDate = dayjs(o.order_date)
-      matchesDate = docDate.isAfter(start) && docDate.isBefore(end)
-    }
-    
-    return matchesSearch && matchesStatus && matchesMaster && matchesDate
-  })
+  let list = [...orders.value]
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(o => o.order_number?.toLowerCase().includes(q))
+  }
+  if (filterStatus.value) {
+    list = list.filter(o => o.status === filterStatus.value)
+  }
+  if (filterMaster.value) {
+    list = list.filter(o => o.assignments?.some(a => a.employee_id === filterMaster.value))
+  }
+  if (dateRange.value) {
+    const [start, end] = dateRange.value
+    list = list.filter(o => o.order_date >= start && o.order_date <= end)
+  }
+  return list.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
 })
 
-// Methods
+// HELPERS
+const formatDateSimple = (d) => d ? dayjs(d).format('DD.MM.YY') : '-'
+
+const getClientName = (id) => clients.value.find(c => c.id === id)?.name || 'Вручну'
+
+const getProductName = (row) => {
+  if (row.lines?.length > 0) {
+    const prodId = row.lines[0].product_id
+    return products.value.find(p => p.id === prodId)?.name || 'Виріб #' + prodId
+  }
+  return '-'
+}
+
+const getMasterName = (row) => {
+  if (row.assignments?.length > 0) {
+    const empId = row.assignments[0].employee_id
+    return masters.value.find(m => m.id === empId)?.full_name || 'Не призначено'
+  }
+  return '—'
+}
+
+const getCurrentStage = (row) => {
+  if (row.assignments?.length > 0) {
+    const active = row.assignments.find(a => a.status !== 'completed')
+    return active ? (active.stage_label || active.stage?.name) : 'Всі завершені'
+  }
+  return null
+}
+
+const getDateClass = (date, status) => {
+  if (!date || status === 'completed') return ''
+  const d = dayjs(date)
+  const now = dayjs().startOf('day')
+  if (d.isBefore(now)) return 'date-overdue'
+  if (d.isSame(now.add(1, 'day'), 'day')) return 'date-today' 
+  return ''
+}
+
+const getStatusBadgeClass = (status, dueDate) => {
+  if (status === 'completed') return 'kimi-status-emerald'
+  if (status === 'cancelled') return 'kimi-status-slate'
+  if (status === 'in_progress') return 'kimi-status-blue'
+  
+  const now = dayjs().startOf('day')
+  if (dueDate && dayjs(dueDate).isBefore(now) && status !== 'completed') return 'kimi-status-rose'
+  
+  return 'kimi-status-slate' // Planned / Draft
+}
+
+const getStatusLabel = (status, dueDate) => {
+  const now = dayjs().startOf('day')
+  if (dueDate && dayjs(dueDate).isBefore(now) && status !== 'completed') return 'ПРОСТРОЧЕНО'
+  
+  const map = {
+    draft: 'ЗАПЛАНОВАНО',
+    released: 'В РОБОТІ',
+    in_progress: 'В РОБОТІ',
+    completed: 'ГОТОВО',
+    cancelled: 'СКАСОВАНО'
+  }
+  return map[status] || status.toUpperCase()
+}
+
+// ACTIONS
+const createNew = () => router.push('/production/orders/new')
+const handleEdit = (row) => router.push(`/production/orders/${row.id}`)
+const handleRowClick = (row) => handleEdit(row)
+
+const handleDelete = (row) => {
+  ElMessageBox.confirm(`Видалити завдання ${row.order_number}?`, 'Увага', { type: 'warning' })
+    .then(async () => {
+      await api.delete(`/api/v1/production/${row.id}`)
+      ElMessage.success('Видалено')
+      fetchData()
+    })
+}
+
 const fetchData = async () => {
   loading.value = true
   try {
-    const [ordersRes, mastersRes] = await Promise.all([
-      api.get('/api/v1/production'),
-      api.get('/api/v1/employees') // Fetching all and we'll filter production dept later if needed
+    const [ordersRes, mastersRes, clientsRes, productsRes] = await Promise.all([
+      api.get('/api/v1/production/'),
+      api.get('/api/v1/employees/'),
+      api.get('/api/v1/counterparties/'),
+      api.get('/api/v1/products/')
     ])
     orders.value = ordersRes.data
     masters.value = mastersRes.data
-    calculateStats()
-  } catch (error) {
-    console.error('Failed to load production orders', error)
+    clients.value = clientsRes.data
+    products.value = productsRes.data
+  } catch (e) {
     ElMessage.error('Помилка завантаження даних')
   } finally {
     loading.value = false
   }
 }
 
-const calculateStats = () => {
-  stats.in_progress = orders.value.filter(o => o.status === 'in_progress').length
-  stats.planned = orders.value.filter(o => o.status === 'draft').length
-  stats.ready_today = orders.value.filter(o => o.status === 'completed' && dayjs(o.completed_at).isSame(dayjs(), 'day')).length
-  stats.overdue = orders.value.filter(o => o.status !== 'completed' && o.due_date && dayjs(o.due_date).isBefore(dayjs(), 'day')).length
-}
-
-const getProductName = (row) => {
-  if (row.lines && row.lines.length > 0) {
-    return row.lines[0].product?.name || 'Виріб #' + (row.lines[0].product_id?.substring(0,4))
-  }
-  return 'Швидке замовлення'
-}
-
-const getMainMaster = (row) => {
-  // Return first assigned worker or main master
-  return row.assignments?.[0]?.employee
-}
-
-const getCurrentStageName = (row) => {
-  if (row.status === 'draft') return 'Очікує запуску'
-  const pending = row.assignments?.find(a => a.status !== 'completed')
-  return pending?.stage?.name || 'Завершення...'
-}
-
-const getStageTagType = (row) => {
-  if (row.status === 'draft') return 'info'
-  return 'warning'
-}
-
-const getStatusLabel = (status) => {
-  const map = {
-    draft: 'Заплановано',
-    in_progress: 'В роботі',
-    completed: 'Готово',
-    cancelled: 'Скасовано'
-  }
-  return map[status] || status
-}
-
-const getStatusType = (status) => {
-  const map = {
-    draft: 'primary',
-    in_progress: 'warning',
-    completed: 'success',
-    cancelled: 'info'
-  }
-  return map[status] || 'info'
-}
-
-const isOverdue = (date) => {
-  if (!date) return false
-  return dayjs(date).isBefore(dayjs(), 'day')
-}
-
-const isTomorrow = (date) => {
-  if (!date) return false
-  return dayjs(date).isSame(dayjs().add(1, 'day'), 'day')
-}
-
-const getDeadlineClass = (date, status) => {
-  if (status === 'completed' || !date) return ''
-  if (isOverdue(date)) return 'deadline-overdue'
-  if (isTomorrow(date)) return 'deadline-tomorrow'
-  return ''
-}
-
-const formatDateSimple = (date) => (date ? dayjs(date).format('DD.MM.YY') : '-')
-
-const createNew = () => router.push('/production/orders/new')
-const editOrder = (row) => router.push(`/production/orders/${row.id}`)
-const handleRowDblClick = (row) => editOrder(row)
-
-const openSource = (row) => {
-  if (row.source_type === 'crm' && row.source_id) {
-    router.push(`/crm/orders/${row.source_id}`)
-  }
-}
-
-const deleteOrder = async (row) => {
-  try {
-    await api.delete(`/api/v1/production/${row.id}`)
-    ElMessage.success('Завдання видалено')
-    fetchData()
-  } catch (err) {
-    ElMessage.error('Помилка видалення')
-  }
-}
-
-onMounted(() => {
-  fetchData()
-})
-</script>
-
-<script>
-// Extra exports for icons if needed
-export default {
-  name: 'ProductionOrdersList'
-}
+onMounted(fetchData)
 </script>
 
 <style scoped>
-.stats-overview {
-  margin-top: 10px;
+.orders-page { 
+  display: flex; flex-direction: column; height: calc(100vh - 60px); 
+  padding: 0 20px 20px; background: #f1f5f9; 
 }
 
-.stat-card {
-  background: white;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.05);
-  border-left: 5px solid #eee;
-  transition: all 0.3s ease;
-}
+.fixed-top-area { flex-shrink: 0; padding-top: 20px; }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.1);
+/* ===== KIMI STATS ===== */
+.kimi-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.kimi-stat-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: transform 0.2s;
 }
+.kimi-stat-card:hover { transform: translateY(-2px); }
 
-.stat-card.blue { 
-  background: #ecf5ff;
-  border-left-color: #409EFF; 
-  color: #409EFF;
-}
-.stat-card.orange { 
-  background: #fdf6ec;
-  border-left-color: #E6A23C; 
-  color: #E6A23C;
-}
-.stat-card.green { 
-  background: #f0f9eb;
-  border-left-color: #67C23A; 
-  color: #67C23A;
-}
-.stat-card.gray { 
-  background: #f4f4f5;
-  border-left-color: #909399; 
-  color: #909399;
-}
+.kimi-stat-indigo { background: linear-gradient(to bottom right, #eef2ff, #fff); }
+.kimi-stat-rose { background: linear-gradient(to bottom right, #fff1f2, #fff); }
+.kimi-stat-emerald { background: linear-gradient(to bottom right, #ecfdf5, #fff); }
+.kimi-stat-amber { background: linear-gradient(to bottom right, #fffbeb, #fff); }
 
-.stat-card.red {
-  background: #fef0f0;
-  border-left-color: #F56C6C;
-  color: #F56C6C;
-}
+.kimi-stat-label { font-size: 13px; color: #64748b; font-weight: 500; margin: 0; }
+.kimi-stat-value { font-size: 24px; font-weight: 700; margin: 4px 0 0 0; }
 
-.stat-label {
-  font-size: 13px;
-  color: #909399;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+.text-indigo-600 { color: #4f46e5; }
+.text-rose-600 { color: #e11d48; }
+.text-emerald-600 { color: #059669; }
+.text-amber-600 { color: #d97706; }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #303133;
+.kimi-stat-icon-wrapper {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
 }
+.bg-indigo-100 { background: #e0e7ff; }
+.bg-rose-100 { background: #ffe4e6; }
+.bg-emerald-100 { background: #d1fae5; }
+.bg-amber-100 { background: #fef3c7; }
 
-.code-text {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  color: #409eff;
-  cursor: pointer;
+/* ===== FILTER BAR ===== */
+.kimi-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.kimi-filter-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+
+.kimi-search-input { max-width: 320px; }
+.kimi-search-input :deep(.el-input__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+.kimi-status-select :deep(.el-select__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+.kimi-date-picker { width: 220px !important; }
+.kimi-date-picker :deep(.el-input__wrapper) { border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+.kimi-adv-btn {
+  display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 32px;
+  border: 1px solid #e2e8f0; border-radius: 6px; background: #fff;
+  color: #64748b; font-size: 13px; cursor: pointer; transition: all 0.15s;
 }
+.kimi-adv-btn:hover { border-color: #4f46e5; color: #4f46e5; }
 
-.product-info {
-  display: flex;
-  flex-direction: column;
+.kimi-refresh-btn { border-radius: 6px !important; height: 32px; }
+
+.kimi-primary-btn {
+  background: #4f46e5; color: #fff; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 500; padding: 8px 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
+.kimi-primary-btn:hover { background: #4338ca; }
 
-.product-name {
-  font-weight: 500;
-  color: #303133;
+/* ===== TABLE ===== */
+.table-card { 
+  background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; 
+  flex: 1; display: flex; flex-direction: column;
 }
-
-.client-name {
-  color: #909399;
-  font-size: 11px;
+.orders-table :deep(.kimi-header-row th) { 
+  background: #f8fafc !important; color: #64748b; font-size: 11px; 
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0 !important;
 }
+.orders-table :deep(.kimi-row td) { padding: 8px 0 !important; cursor: pointer; }
 
-.doc-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #f0f7ff;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #409eff;
-  border: 1px solid #d9ecff;
+.kimi-text-sm { font-size: 13px; }
+.kimi-text-xxs { font-size: 10px; }
+.kimi-font-medium { font-weight: 500; }
+.kimi-text-indigo-600 { color: #4f46e5; }
+.kimi-text-slate-400 { color: #94a3b8; }
+
+.kimi-badge { 
+  display: inline-flex; align-items: center; padding: 2px 10px; 
+  border-radius: 14px; font-size: 10px; font-weight: 700; white-space: nowrap;
 }
+.kimi-status-blue { background: #dbeafe; color: #2563eb; }
+.kimi-status-emerald { background: #d1fae5; color: #059669; }
+.kimi-status-rose { background: #ffe4e6; color: #e11d48; }
+.kimi-status-slate { background: #f1f5f9; color: #475569; }
 
-.doc-badge.clickable {
-  cursor: pointer;
+/* DATE CELL */
+.date-cell { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 6px; }
+.date-cell-dot { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; }
+.date-cell-text { font-size: 12px; font-weight: 500; }
+
+.date-overdue { background: #fff1f2; }
+.date-overdue .date-cell-text { color: #dc2626; font-weight: 700; }
+.date-overdue .date-cell-dot { background: #dc2626; }
+
+.date-today { background: #fffbeb; }
+.date-today .date-cell-text { color: #d97706; font-weight: 700; }
+.date-today .date-cell-dot { background: #d97706; }
+
+.kimi-actions-col { display: flex; gap: 4px; justify-content: center; }
+.kimi-ghost-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; }
+.kimi-ghost-btn:hover { background: #f1f5f9; }
+.kimi-text-indigo-400 { color: #818cf8; }
+.kimi-text-rose-400 { color: #fb7185; }
+
+.pagination-footer { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 12px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;
 }
-
-.doc-badge.clickable:hover {
-  background: #ecf5ff;
-}
-
-.user-avatar-tag {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.status-badge {
-  min-width: 100px;
-  font-weight: 600;
-  font-size: 11px;
-}
-
-.deadline-overdue {
-  color: #f56c6c;
-  font-weight: 700;
-}
-
-.deadline-tomorrow {
-  color: #e6a23c;
-  font-weight: 700;
-}
-
-.mb-4 { margin-bottom: 20px; }
-.ml-2 { margin-left: 8px; }
-.text-gray-400 { color: #c0c4cc; }
-.text-success { color: #67c23a; }
+.total-hint { font-size: 12px; color: #64748b; }
 </style>
