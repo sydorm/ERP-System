@@ -428,7 +428,7 @@ const onSourceOrderChange = (orderId) => {
 const onProductSelect = async () => {
   if (!activeProductId.value) return
   try {
-    const res = await api.get(`/api/v1/specifications/product/${activeProductId.value}`)
+    const res = await api.get(`/api/v1/products/${activeProductId.value}/specifications`)
     currentSpecs.value = res.data
     if (res.data.length > 0) {
       const def = res.data.find(s => s.is_default) || res.data[0]
