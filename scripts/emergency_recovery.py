@@ -207,37 +207,71 @@ def recovery():
                 })
             print("OK: Attendance Statuses seeded.")
 
-            # 9. Update ProductionOrder table with ALL missing fields
-            print("Updating production_orders table structure (full sync)...")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS due_date TIMESTAMP;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS comment TEXT;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_type VARCHAR(20) DEFAULT 'quick';")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_id UUID;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS client_id UUID;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';")
-            
-            # Critical relations
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS company_id UUID;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS warehouse_id UUID;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS base_order_id UUID;")
-            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS created_by UUID;")
-            
-            # Ensure order_number and order_date are not null for existing rows
-            run_sql("UPDATE production_orders SET order_number = 'P' || substr(id::text, 1, 8) WHERE order_number IS NULL;")
-            run_sql("UPDATE production_orders SET order_date = CURRENT_TIMESTAMP WHERE order_date IS NULL;")
-            # run_sql("ALTER TABLE production_orders ALTER COLUMN order_number SET NOT NULL;")
-            
-            # Add foreign key for client if not exists
-            try:
-                run_sql("ALTER TABLE production_orders ADD CONSTRAINT fk_production_orders_client FOREIGN KEY (client_id) REFERENCES counterparties(id) ON DELETE SET NULL;")
-            except Exception as e:
-                # likely already exists, ignore
-                pass
-            print("OK: ProductionOrder table updated.")
+    # 9. Update ProductionOrder table with ALL missing fields
+    print("Updating production_orders table structure (full technical sync)...")
+    try:
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS due_date TIMESTAMP;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS comment TEXT;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_type VARCHAR(20) DEFAULT 'quick';")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_id UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS client_id UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS company_id UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS warehouse_id UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS base_order_id UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS created_by UUID;")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();")
+        run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();")
+        
+        # Repair nulls
+        run_sql("UPDATE production_orders SET order_number = 'P' || substr(id::text, 1, 8) WHERE order_number IS NULL;")
+        run_sql("UPDATE production_orders SET order_date = NOW() WHERE order_date IS NULL;")
+        run_sql("UPDATE production_orders SET status = 'draft' WHERE status IS NULL;")
+        run_sql("UPDATE production_orders SET source_type = 'quick' WHERE source_type IS NULL;")
+        run_sql("UPDATE production_orders SET priority = 'normal' WHERE priority IS NULL;")
+        run_sql("UPDATE production_orders SET created_at = NOW() WHERE created_at IS NULL;")
+        run_sql("UPDATE production_orders SET updated_at = NOW() WHERE updated_at IS NULL;")
+        
+        # Missing tables check
+        run_sql("""
+        CREATE TABLE IF NOT EXISTS production_order_lines (
+            id UUID PRIMARY KEY,
+            production_order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
+            product_id UUID NOT NULL,
+            variant_id UUID,
+            specification_id UUID,
+            quantity NUMERIC(15, 3) NOT NULL DEFAULT 1,
+            produced_quantity NUMERIC(15, 3) NOT NULL DEFAULT 0,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+        )
+        """)
+        run_sql("""
+        CREATE TABLE IF NOT EXISTS production_order_materials (
+            id UUID PRIMARY KEY,
+            production_order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
+            component_id UUID NOT NULL,
+            required_quantity NUMERIC(15, 4) NOT NULL,
+            issued_quantity NUMERIC(15, 4) DEFAULT 0,
+            unit_of_measure VARCHAR(50),
+            cost_estimate NUMERIC(15, 2),
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+        )
+        """)
+        
+        # Add foreign key for client if not exists
+        try:
+            run_sql("ALTER TABLE production_orders ADD CONSTRAINT fk_production_orders_client FOREIGN KEY (client_id) REFERENCES counterparties(id) ON DELETE SET NULL;")
+        except Exception:
+            pass
+        print("OK: ProductionOrder tables and columns fully synced.")
+    except Exception as e:
+        print(f"Error during production tables sync: {e}")
 
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
