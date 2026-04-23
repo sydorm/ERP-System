@@ -240,15 +240,22 @@ const getHolidayName = (day) => {
 // 4. Working with records
 const getRecord = (empId, day) => {
   const key = `${empId}_${day}`
+  
+  // 1. Check local modifications first
   if (modifiedRecords.value[key] !== undefined) {
     const mod = modifiedRecords.value[key]
     return mod ? { status_code: mod.code } : null
   }
+  
+  // 2. Check persistent data from DB
   const dbRec = attendanceData.value.find(r => 
     r.employee_id === empId && dayjs(r.date).date() === day
   )
+  
   if (dbRec) {
-    return { status_code: dbRec.status_name }
+    // Backend might return Code (П) or Label (Працював). We need to ensure we return a Code.
+    const status = statusList.find(s => s.code === dbRec.status_name || s.label === dbRec.status_name)
+    return { status_code: status ? status.code : dbRec.status_name }
   }
   return null
 }
@@ -449,9 +456,34 @@ const saveChanges = async () => {
   saving.value = true
   try {
     await api.post('/api/v1/attendance/upsert', { records: toSave })
+    
+    // Optimistic Update: Move modified records to permanent attendanceData locally
+    for (const [key, status] of Object.entries(modifiedRecords.value)) {
+      if (!status) continue
+      const [empId, dayStr] = key.split('_')
+      const day = parseInt(dayStr)
+      const date = selectedMonth.value.date(day).format('YYYY-MM-DD')
+      
+      const existingIdx = attendanceData.value.findIndex(r => 
+        r.employee_id === empId && dayjs(r.date).isSame(date, 'day')
+      )
+      
+      if (existingIdx > -1) {
+        attendanceData.value[existingIdx].status_name = status.code
+      } else {
+        attendanceData.value.push({
+          employee_id: empId,
+          date: date,
+          status_name: status.code
+        })
+      }
+    }
+    
+    modifiedRecords.value = {}
     ElMessage.success('Дані збережено успішно')
-    fetchData()
+    // No need for fetchData() anymore as we updated local state
   } catch (err) {
+    console.error(err)
     ElMessage.error('Помилка збереження')
   } finally {
     saving.value = false
