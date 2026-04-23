@@ -681,59 +681,67 @@ const findMatchingVariant = () => {
 }
 
 const initData = async () => {
+  loading.value = true
   try {
-    const [pRes, wRes, eRes, sRes, dRes, rolesRes, brigRes] = await Promise.all([
+    const results = await Promise.allSettled([
       api.get('/api/v1/products'), api.get('/api/v1/warehouses'),
       api.get('/api/v1/employees'), api.get('/api/v1/orders'),
       api.get('/api/v1/dictionaries/PRODUCTION_STAGE'), api.get('/api/v1/employees/roles'),
       api.get('/api/v1/brigades')
     ])
-    products.value = pRes.data; warehouses.value = wRes.data; employees.value = eRes.data;
-    salesOrders.value = sRes.data; productionStages.value = dRes.data?.items || [];
-    employeeRoles.value = rolesRes.data || []; brigades.value = brigRes.data;
+    
+    if (results[0].status === 'fulfilled') products.value = results[0].value.data;
+    if (results[1].status === 'fulfilled') warehouses.value = results[1].value.data;
+    if (results[2].status === 'fulfilled') employees.value = results[2].value.data;
+    if (results[3].status === 'fulfilled') salesOrders.value = results[3].value.data;
+    if (results[4].status === 'fulfilled') productionStages.value = results[4].value.data || [];
+    if (results[5].status === 'fulfilled') employeeRoles.value = results[5].value.data || [];
+    if (results[6].status === 'fulfilled') brigades.value = results[6].value.data || [];
 
     if (isEditMode.value) {
-      const res = await api.get(`/api/v1/production/${route.params.id}`)
-      Object.assign(form, res.data)
-      activeProductId.value = form.lines[0]?.product_id
-      activeQuantity.value = form.lines[0]?.quantity
-      
-      // Load attributes and selections
-      const p = products.value.find(x => x.id === activeProductId.value)
-      if (p && p.category) {
-        await fetchCategoryAttributes(p.category)
+      try {
+        const res = await api.get(`/api/v1/production/${route.params.id}`)
+        Object.assign(form, res.data)
+        activeProductId.value = form.lines[0]?.product_id
+        activeQuantity.value = form.lines[0]?.quantity
         
-        const variantId = form.lines[0]?.variant_id
-        if (variantId && p.variants) {
-          const variant = p.variants.find(v => v.id === variantId)
-          if (variant && variant.values) {
-            variant.values.forEach(v => {
-              if (v.attribute?.type === 'DIMENSIONS') {
-                const parts = (v.text_value || '').split('x')
-                if (parts.length === 2 && dimSelections.value[v.attribute_id]) {
-                  dimSelections.value[v.attribute_id].w = parseInt(parts[0])
-                  dimSelections.value[v.attribute_id].h = parseInt(parts[1])
+        const p = (products.value || []).find(x => x.id === activeProductId.value)
+        if (p && p.category) {
+          await fetchCategoryAttributes(p.category)
+          const variantId = form.lines[0]?.variant_id
+          if (variantId && p.variants) {
+            const variant = p.variants.find(v => v.id === variantId)
+            if (variant && variant.values) {
+              variant.values.forEach(v => {
+                if (v.attribute?.type === 'DIMENSIONS') {
+                  const parts = (v.text_value || '').split('x')
+                  if (parts.length === 2 && dimSelections.value[v.attribute_id]) {
+                    dimSelections.value[v.attribute_id].w = parseInt(parts[0])
+                    dimSelections.value[v.attribute_id].h = parseInt(parts[1])
+                  }
+                } else {
+                  selections.value[v.attribute_id] = v.option_id || v.text_value
                 }
-              } else {
-                selections.value[v.attribute_id] = v.option_id || v.text_value
-              }
-            })
+              })
+            }
           }
         }
+      } catch (e) {
+        console.error('Failed to load order for editing', e)
+        ElMessage.error('Не вдалося завантажити дані завдання для редагування.')
       }
-      
-      activities.value = [{ content: 'Завдання створено', timestamp: form.created_at, type: 'info' }]
     } else {
       // Defaults for new order
-      if (userStore.user?.company_id) {
-        form.company_id = userStore.user.company_id
-      }
-      const defaultWH = warehouses.value.find(w => w.is_default) || warehouses.value[0]
-      if (defaultWH) {
-        form.warehouse_id = defaultWH.id
-      }
+      if (userStore.user?.company_id) form.company_id = userStore.user.company_id
+      const defaultWH = (warehouses.value || []).find(w => w.is_default) || warehouses.value?.[0]
+      if (defaultWH) form.warehouse_id = defaultWH.id
     }
-  } catch (e) { ElMessage.error('Помилка завантаження') }
+  } catch (e) {
+    console.error('Init error:', e)
+    ElMessage.error('Помилка ініціалізації')
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(initData)
