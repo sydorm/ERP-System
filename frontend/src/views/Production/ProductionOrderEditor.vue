@@ -104,21 +104,22 @@
                   </template>
                 </el-table-column>
                 
-                <el-table-column label="Майстер" min-width="180">
+                <el-table-column label="Виконавець" min-width="200">
                   <template #default="scope">
                     <el-select 
-                      v-model="scope.row.employee_id" 
+                      v-model="scope.row.performer_id" 
                       filterable 
                       size="small" 
                       placeholder="Призначити..." 
                       class="w-full"
                       :disabled="scope.row.status === 'completed'"
+                      @change="(val) => onPerformerChange(val, scope.row)"
                     >
                       <el-option 
-                        v-for="e in getQualifiedEmployees(scope.row.stage_id, scope.row.brigade_id)" 
-                        :key="e.id" 
-                        :label="e.full_name" 
-                        :value="e.id"
+                        v-for="p in getFilteredPerformers(scope.row.stage_id)" 
+                        :key="p.id" 
+                        :label="p.name" 
+                        :value="p.id"
                       />
                     </el-select>
                   </template>
@@ -528,7 +529,9 @@ const onProductSelect = async () => {
     }
     
     recalculateEverything()
-  } catch (e) { ElMessage.error('Помилка завантаження специфікацій') }
+  } catch (e) { 
+    ElMessage.error('Помилка завантаження специфікацій') 
+  }
 }
 
 const fetchCategoryAttributes = async (category) => {
@@ -575,24 +578,29 @@ const recalculateEverything = () => {
       unit_of_measure: item.unit_of_measure,
       stock_qty: 0
     }))
-
-    // 2. Recalculate Production Stages (v2 integration)
+ 
+    // 2. Recalculate Production Stages
     if (spec.stages && spec.stages.length > 0) {
-      form.assignments = spec.stages.map(s => ({
-        stage_id: s.stage_id,
-        stage_label: s.stage?.name || 'Етап',
-        brigade_id: s.brigade_id,
-        employee_id: findBestMaster(s.brigade_id),
-        planned_hours: Number(s.duration_hours || 0) * activeQuantity.value,
-        status: 'pending'
-      }))
+      form.assignments = spec.stages.map(s => {
+        const p_id = s.employee_id || s.brigade_id
+        return {
+          stage_id: s.stage_id,
+          stage_label: s.stage?.name || 'Етап',
+          brigade_id: s.brigade_id,
+          employee_id: s.employee_id,
+          performer_id: p_id,
+          planned_hours: Number(s.duration_hours || 0) * activeQuantity.value,
+          status: 'pending'
+        }
+      })
     } else {
-      // Fallback: Generate generic stages if BOM has no stages defined
-      const stages = productionStages.value.slice(0, 4)
-      form.assignments = stages.map(s => ({
+      // Fallback
+      form.assignments = productionStages.value.slice(0, 4).map(s => ({
         stage_id: s.id,
         stage_label: s.name,
-        employee_id: findBestMaster(s.id),
+        performer_id: null,
+        employee_id: null,
+        brigade_id: null,
         planned_hours: Number(1.0 * activeQuantity.value),
         status: 'pending'
       }))
@@ -600,33 +608,43 @@ const recalculateEverything = () => {
   }
 }
 
-const findBestMaster = (brigadeId) => {
-  if (!brigadeId) return null
-  const brigade = brigades.value.find(b => b.id === brigadeId)
-  if (!brigade || !brigade.members || brigade.members.length === 0) return null
-  
-  // 1. Try to find active "main" master
-  const main = brigade.members.find(m => m.role_type === 'main' && m.is_active)
-  if (main) return main.employee_id
-  
-  // 2. Try to find any active "reserve" master
-  const reserve = brigade.members.find(m => m.role_type === 'reserve' && m.is_active)
-  if (reserve) return reserve.employee_id
-  
-  return null
+const getFilteredPerformers = (stageId) => {
+  const result = []
+  // 1. Add Brigades
+  brigades.value.forEach(b => {
+    result.push({
+      id: b.id,
+      name: `👥 ${b.name}`,
+      is_brigade: true
+    })
+  })
+  // 2. Add Employees
+  employees.value.forEach(e => {
+    result.push({
+      id: e.id,
+      name: `👤 ${e.full_name}`,
+      is_brigade: false
+    })
+  })
+  return result
 }
 
-const getQualifiedEmployees = (stageId, brigadeId) => {
-  if (brigadeId) {
-    const brigade = brigades.value.find(b => b.id === brigadeId)
-    if (brigade && brigade.members) {
-      const memberIds = brigade.members.filter(m => m.is_active).map(m => m.employee_id)
-      return employees.value.filter(e => memberIds.includes(e.id))
-    }
+const onPerformerChange = (val, row) => {
+  if (!val) {
+    row.brigade_id = null
+    row.employee_id = null
+    return
   }
-  // Fallback to role-based if no brigade (legacy support)
-  return employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
+  const isBrigade = brigades.value.some(b => b.id === val)
+  if (isBrigade) {
+    row.brigade_id = val
+    row.employee_id = null
+  } else {
+    row.employee_id = val
+    row.brigade_id = null
+  }
 }
+
 
 const getStockClass = (row) => parseFloat(row.stock_qty || 0) >= parseFloat(row.required_quantity) ? 'text-green-600' : 'text-red-600'
 
