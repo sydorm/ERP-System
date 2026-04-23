@@ -21,6 +21,23 @@ import uuid
 router = APIRouter()
 
 
+def populate_product_summary(orders: List[Order], db: Session) -> None:
+    """Populate product_summary for a list of orders based on their lines."""
+    for order in orders:
+        product_names = []
+        for line in order.lines:
+            product = db.query(Product).filter(Product.id == line.product_id).first()
+            if product:
+                product_names.append(product.name)
+        
+        if not product_names:
+            order.product_summary = "—"
+        elif len(product_names) == 1:
+            order.product_summary = product_names[0]
+        else:
+            order.product_summary = f"{product_names[0]} (+{len(product_names)-1})"
+
+
 @router.get("/orders", response_model=List[OrderResponse])
 async def list_orders(
     skip: int = 0,
@@ -49,7 +66,9 @@ async def list_orders(
     if manager_id:
         query = query.filter(Order.manager_id == manager_id)
 
-    return query.order_by(Order.order_date.desc()).offset(skip).limit(limit).all()
+    orders = query.order_by(Order.order_date.desc()).offset(skip).limit(limit).all()
+    populate_product_summary(orders, db)
+    return orders
 
 
 @router.post("/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
@@ -147,6 +166,8 @@ async def get_order(
     ).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    
+    populate_product_summary([order], db)
     return order
 
 
@@ -224,6 +245,7 @@ async def update_order(
 
     db.commit()
     db.refresh(order)
+    populate_product_summary([order], db)
 
     new_obj = AuditService.get_dict(order, relationships=["lines"])
     AuditService.compare_and_log(

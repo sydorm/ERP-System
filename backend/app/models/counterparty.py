@@ -1,7 +1,8 @@
 """
 Counterparty model - represents customers and suppliers
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey, Integer
+from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, Text, Numeric
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
@@ -29,9 +30,20 @@ class Counterparty(BaseModel):
     address = Column(String(500), nullable=True)
     default_contract = Column(String(255), nullable=True)
     
-    # Supplier Information
+    # Customer specific
+    acquisition_channel_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
+    city = Column(String(255), nullable=True)
+    np_department = Column(String(255), nullable=True)
+    discount_percent = Column(Integer, nullable=True, default=0)
+    notes = Column(Text, nullable=True)
+    tags = Column(postgresql.JSONB, nullable=True)  # Using JSONB for tags
+    
+    # Supplier specific
     delivery_days = Column(Integer, nullable=True, default=0)
     payment_terms = Column(String(255), nullable=True)
+    min_order_amount = Column(Numeric(15, 2), nullable=True, default=0.0)
+    contact_person = Column(String(255), nullable=True)
+    supplied_materials = Column(Text, nullable=True)
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)
@@ -43,6 +55,7 @@ class Counterparty(BaseModel):
     # Relationships
     company = relationship("Company", back_populates="counterparties")
     orders = relationship("Order", back_populates="counterparty")
+    acquisition_channel = relationship("DictionaryItem")
     
     def __repr__(self):
         type_str = []

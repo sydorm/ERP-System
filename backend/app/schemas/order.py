@@ -127,6 +127,7 @@ class OrderResponse(OrderBase):
     created_by: Optional[UUID] = None
     contact_attempts: int = 0
     lines: List[OrderLineResponse]
+    product_summary: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
