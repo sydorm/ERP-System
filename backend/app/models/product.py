@@ -1,7 +1,7 @@
 """
 Product model - represents items/nomenclature
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Numeric
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Numeric, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from decimal import Decimal
