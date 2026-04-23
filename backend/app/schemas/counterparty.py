@@ -16,6 +16,10 @@ class CounterpartyBase(BaseModel):
     address: Optional[str] = Field(None, max_length=500)
     default_contract: Optional[str] = Field(None, max_length=255)
     
+    # Procurement settings
+    delivery_days: Optional[int] = Field(0, ge=0)
+    payment_terms: Optional[str] = Field(None, max_length=255)
+    
     is_active: bool = True
 
 class CounterpartyCreate(CounterpartyBase):
@@ -35,6 +39,9 @@ class CounterpartyUpdate(BaseModel):
     email: Optional[str] = None
     address: Optional[str] = Field(None, max_length=500)
     default_contract: Optional[str] = Field(None, max_length=255)
+    
+    delivery_days: Optional[int] = None
+    payment_terms: Optional[str] = None
     
     is_active: Optional[bool] = None
 

@@ -8,8 +8,68 @@ from app.models.user import User
 from app.schemas.purchase_order import PurchaseOrderCreate, PurchaseOrderUpdate, PurchaseOrderResponse
 from app.api.dependencies import get_current_active_user
 from app.services.sequence_service import SequenceService
+from app.models import Product, AccumulationRegister, RegisterType, Counterparty
+from sqlalchemy import func
 
 router = APIRouter()
+
+@router.get("/purchase-orders/procurement-alerts")
+async def get_procurement_alerts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Find products where current stock < min_stock
+    """
+    # 1. Get all products with track_inventory=True and min_stock > 0
+    products = db.query(Product).filter(
+        Product.company_id == current_user.company_id,
+        Product.track_inventory == True,
+        Product.min_stock > 0,
+        Product.is_deleted == False
+    ).all()
+    
+    if not products:
+        return []
+        
+    product_ids = [p.id for p in products]
+    
+    # 2. Get current stock levels from AccumulationRegister
+    stock_levels = db.query(
+        AccumulationRegister.product_id,
+        func.sum(AccumulationRegister.quantity).label("total_qty")
+    ).filter(
+        AccumulationRegister.company_id == current_user.company_id,
+        AccumulationRegister.product_id.in_(product_ids),
+        AccumulationRegister.register_type == RegisterType.STOCK
+    ).group_by(AccumulationRegister.product_id).all()
+    
+    stock_map = {str(s.product_id): float(s.total_qty) for s in stock_levels}
+    
+    # 3. Filter products needing order
+    alerts = []
+    for p in products:
+        current_qty = stock_map.get(str(p.id), 0.0)
+        if current_qty < float(p.min_stock):
+            # Calculate how much to order (to reach optimal_stock if defined, else at least min_stock)
+            to_order = float(p.optimal_stock) - current_qty
+            if to_order <= 0:
+                to_order = float(p.min_stock) - current_qty
+                
+            alerts.append({
+                "product_id": p.id,
+                "sku": p.sku,
+                "name": p.name,
+                "unit": p.unit_of_measure,
+                "current_stock": current_qty,
+                "min_stock": float(p.min_stock),
+                "optimal_stock": float(p.optimal_stock),
+                "to_order": to_order,
+                "default_supplier_id": p.default_supplier_id,
+                "delivery_days": p.delivery_days
+            })
+            
+    return alerts
 
 @router.get("/purchase-orders", response_model=List[PurchaseOrderResponse])
 async def list_purchase_orders(

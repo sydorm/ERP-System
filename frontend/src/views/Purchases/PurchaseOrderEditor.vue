@@ -452,7 +452,12 @@ const statusLabel = computed(() => ({
 const goBack = () => router.push('/purchases/orders')
 
 const handleCreateBasedOn = (command) => {
-  if (command === 'receipt') ElMessage.info('Створення Прибуткової накладної (в розробці)')
+  if (command === 'receipt') {
+    router.push({
+      path: '/purchases/receipts/new',
+      query: { base_order_id: form.id }
+    })
+  }
   if (command === 'payment') ElMessage.info('Створення Вихідного платежу (в розробці)')
 }
 
@@ -500,6 +505,14 @@ const onSupplierChange = (supplierId) => {
   if (supplier) {
     if (supplier.address && !delivery.address) delivery.address = supplier.address
     if (supplier.phone && !delivery.contact_phone) delivery.contact_phone = supplier.phone
+    
+    // Auto-calculate expected arrival date
+    const days = supplier.delivery_days || 0
+    if (days > 0 && form.order_date) {
+        const orderDate = new Date(form.order_date)
+        orderDate.setDate(orderDate.getDate() + days)
+        form.expected_date = orderDate.toISOString().split('T')[0]
+    }
   }
 }
 

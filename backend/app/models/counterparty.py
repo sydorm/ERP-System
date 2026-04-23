@@ -29,6 +29,10 @@ class Counterparty(BaseModel):
     address = Column(String(500), nullable=True)
     default_contract = Column(String(255), nullable=True)
     
+    # Supplier Information
+    delivery_days = Column(Integer, nullable=True, default=0)
+    payment_terms = Column(String(255), nullable=True)
+    
     # Status
     is_active = Column(Boolean, default=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False, server_default='false')

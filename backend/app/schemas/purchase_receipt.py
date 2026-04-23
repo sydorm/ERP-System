@@ -26,6 +26,7 @@ class PurchaseReceiptBase(BaseModel):
     warehouse_id: UUID
     currency: str = "UAH"
     total_amount: Decimal = Decimal("0.00")
+    base_order_id: Optional[UUID] = None
 
 class PurchaseReceiptCreate(PurchaseReceiptBase):
     lines: List[PurchaseReceiptLineCreate]
@@ -41,6 +42,7 @@ class PurchaseReceiptUpdate(BaseModel):
 class PurchaseReceiptResponse(PurchaseReceiptBase):
     id: UUID
     status: PurchaseReceiptStatus
+    base_order_id: Optional[UUID] = None
     lines: List[PurchaseReceiptLineResponse]
     
     model_config = ConfigDict(from_attributes=True)

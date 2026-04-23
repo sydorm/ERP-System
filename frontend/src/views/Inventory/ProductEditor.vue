@@ -76,10 +76,11 @@
             />
           </el-tab-pane>
 
-          <el-tab-pane label="Постачальники" name="suppliers">
-            <div class="empty-tab">
-              <el-empty description="Розділ Постачальники буде доступний в наступній версії" />
-            </div>
+          <el-tab-pane label="Закупівлі та Постачальники" name="procurement">
+            <ProcurementTab
+              v-model="form"
+              :suppliers="suppliers"
+            />
           </el-tab-pane>
 
           <el-tab-pane label="Альтернативи" name="alternatives">
@@ -137,6 +138,7 @@ import SpecificationTab from './ProductTabs/SpecificationTab.vue'
 import InventoryTab from './ProductTabs/InventoryTab.vue'
 import FilesTab from './ProductTabs/FilesTab.vue'
 import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
+import ProcurementTab from './ProductTabs/ProcurementTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -167,7 +169,13 @@ const form = reactive({
     width_cm: 0,
     tags: [],
     notes: '',
-    variants: []
+    variants: [],
+    
+    // Procurement & Stock Management
+    min_stock: 0.0,
+    optimal_stock: 0.0,
+    default_supplier_id: null,
+    delivery_days: 0
 })
 
 const productCharacteristics = ref([])
@@ -180,6 +188,7 @@ const currencyOptions = computed(() => dictStore.getCategory('CURRENCY'))
 
 // Data
 const stockLevels = ref([])
+const suppliers = ref([])
 const hasSpecification = ref(false)
 
 const goBack = () => {
@@ -210,6 +219,15 @@ const fetchCategoryAttributes = async () => {
         }))
     } catch (e) {
         console.error('Failed to load category attributes', e)
+    }
+}
+
+const fetchSuppliers = async () => {
+    try {
+        const res = await api.get('/api/v1/counterparties', { params: { is_supplier: true } })
+        suppliers.value = res.data
+    } catch (e) {
+        console.error('Failed to load suppliers', e)
     }
 }
 
@@ -316,6 +334,7 @@ watch(() => form.category, fetchCategoryAttributes)
 onMounted(() => {
     fetchDictionaries()
     fetchProduct()
+    fetchSuppliers()
 })
 </script>
 

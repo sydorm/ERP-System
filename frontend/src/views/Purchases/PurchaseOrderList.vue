@@ -1,6 +1,8 @@
 <template>
   <div class="orders-page">
     <div class="fixed-top-area">
+      <!-- ===== PROCUREMENT ALERT DASHBOARD ===== -->
+      <WhatToOrder @order-created="fetchOrders" />
 
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">
@@ -282,6 +284,7 @@
 <script setup>
 import { ref, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import WhatToOrder from './WhatToOrder.vue'
 import {
   Plus, Search, Download, MoreFilled,
   Document, Wallet, Check, Close, Select,

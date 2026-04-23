@@ -26,6 +26,7 @@ from .finance import FinancialTransaction, TransactionType
 from .notification import Notification
 from .hr import Department, Employee, EmployeeRole, AttendanceRecord, PayrollTransaction
 from .brigade import Brigade, BrigadeMember
+from .supplier_price import SupplierPrice
 
 
 __all__ = [
@@ -81,5 +82,6 @@ __all__ = [
     "PayrollTransaction",
     "Brigade",
     "BrigadeMember",
+    "SupplierPrice",
 ]
 

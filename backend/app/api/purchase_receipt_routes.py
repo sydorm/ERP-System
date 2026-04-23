@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
 from app.models import PurchaseReceipt, PurchaseReceiptLine, PurchaseReceiptStatus, User
 from app.schemas.purchase_receipt import PurchaseReceiptCreate, PurchaseReceiptUpdate, PurchaseReceiptResponse
@@ -37,12 +37,20 @@ async def create_purchase_receipt(
         warehouse_id=receipt_data.warehouse_id,
         currency=receipt_data.currency,
         total_amount=receipt_data.total_amount,
+        base_order_id=receipt_data.base_order_id,
         company_id=current_user.company_id,
         created_by=current_user.id,
         status=PurchaseReceiptStatus.POSTED # Auto-post for now in simplified flow
     )
     db.add(receipt)
     db.flush()
+    
+    # 1a. Update Parent Order Status if exists
+    if receipt_data.base_order_id:
+        from app.models.purchase_order import PurchaseOrder, PurchaseOrderStatus
+        db.query(PurchaseOrder).filter(
+            PurchaseOrder.id == receipt_data.base_order_id
+        ).update({"status": PurchaseOrderStatus.DONE})
     
     # 2. Add Lines
     for line_data in receipt_data.lines:

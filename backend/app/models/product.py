@@ -40,6 +40,12 @@ class Product(BaseModel):
     height_cm = Column(Numeric(10, 2), nullable=True)
     weight_kg = Column(Numeric(10, 2), nullable=True)
     
+    # Stock Management
+    min_stock = Column(Numeric(15, 3), nullable=True, default=0.0)
+    optimal_stock = Column(Numeric(15, 3), nullable=True, default=0.0)
+    default_supplier_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="SET NULL"), nullable=True)
+    delivery_days = Column(Integer, nullable=True, default=0)
+
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     

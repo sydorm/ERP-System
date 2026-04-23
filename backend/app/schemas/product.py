@@ -23,6 +23,12 @@ class ProductBase(BaseModel):
     width_cm: Optional[Decimal] = None
     height_cm: Optional[Decimal] = None
     weight_kg: Optional[Decimal] = None
+    
+    # Procurement & Stock Management
+    min_stock: Optional[Decimal] = Field(Decimal("0.00"), ge=0)
+    optimal_stock: Optional[Decimal] = Field(Decimal("0.00"), ge=0)
+    default_supplier_id: Optional[UUID] = None
+    delivery_days: Optional[int] = Field(0, ge=0)
 
 class ProductCreate(ProductBase):
     """Schema for creating a product"""
@@ -45,6 +51,12 @@ class ProductUpdate(BaseModel):
     width_cm: Optional[Decimal] = None
     height_cm: Optional[Decimal] = None
     weight_kg: Optional[Decimal] = None
+    
+    # Procurement & Stock Management
+    min_stock: Optional[Decimal] = None
+    optimal_stock: Optional[Decimal] = None
+    default_supplier_id: Optional[UUID] = None
+    delivery_days: Optional[int] = None
     
     variants: Optional[List[ProductVariantCreate]] = None
 

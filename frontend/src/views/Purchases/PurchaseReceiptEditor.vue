@@ -109,6 +109,7 @@ const form = reactive({
   supplier_id: '',
   warehouse_id: '',
   currency: 'UAH',
+  base_order_id: null,
   lines: []
 })
 
@@ -156,6 +157,20 @@ const fetchData = async () => {
     if (isEditMode.value) {
       const res = await api.get(`/api/v1/purchase-receipts/${route.params.id}`)
       Object.assign(form, res.data)
+    } else if (route.query.base_order_id) {
+       // Filling from purchase order
+       const res = await api.get(`/api/v1/purchase-orders/${route.query.base_order_id}`)
+       const order = res.data
+       form.base_order_id = order.id
+       form.supplier_id = order.supplier_id
+       form.warehouse_id = order.warehouse_id
+       form.currency = order.currency
+       form.lines = (order.lines || []).map(l => ({
+           product_id: l.product_id,
+           quantity: Number(l.quantity),
+           price: Number(l.price),
+           total: Number(l.total)
+       }))
     }
   } catch (e) {
     ElMessage.error('Помилка завантаження даних')

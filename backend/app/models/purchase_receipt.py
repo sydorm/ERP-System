@@ -26,6 +26,9 @@ class PurchaseReceipt(BaseModel):
     total_amount = Column(Numeric(15, 2), nullable=False, default=Decimal("0.00"))
     currency = Column(String(3), default="UAH")
     
+    # Links
+    base_order_id = Column(UUID(as_uuid=True), ForeignKey("purchase_orders.id", ondelete="SET NULL"), nullable=True)
+    
     # Foreign Keys
     supplier_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="RESTRICT"), nullable=False)
     warehouse_id = Column(UUID(as_uuid=True), ForeignKey("warehouses.id", ondelete="RESTRICT"), nullable=False)
