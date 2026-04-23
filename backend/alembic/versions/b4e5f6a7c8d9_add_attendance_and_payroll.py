@@ -17,9 +17,15 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Check if column already exists before adding
+    bind = op.get_bind()
+    inspect_obj = sa.inspect(bind)
+    columns = [c['name'] for c in inspect_obj.get_columns('users')]
+    
     # 1. Update Users table - link to employee
-    op.add_column('users', sa.Column('employee_id', sa.UUID(), nullable=True))
-    op.create_foreign_key('fk_users_employee_id_employees', 'users', 'employees', ['employee_id'], ['id'], ondelete='SET NULL')
+    if 'employee_id' not in columns:
+        op.add_column('users', sa.Column('employee_id', sa.UUID(), nullable=True))
+        op.create_foreign_key('fk_users_employee_id_employees', 'users', 'employees', ['employee_id'], ['id'], ondelete='SET NULL')
 
     # 2. Attendance Records
     op.create_table(
