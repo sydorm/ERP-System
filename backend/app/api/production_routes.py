@@ -20,23 +20,25 @@ from app.models.register import RegisterType
 router = APIRouter()
 
 def get_next_production_order_number(db: Session, company_id: uuid.UUID) -> str:
+    # Note: DocumentSequence currently doesn't have company_id, so it's global per document_type
     seq = db.query(DocumentSequence).filter(
-        DocumentSequence.company_id == company_id,
         DocumentSequence.document_type == "production_order"
     ).with_for_update().first()
     
     if not seq:
         seq = DocumentSequence(
-            company_id=company_id,
             document_type="production_order",
             prefix="PRD-",
-            current_value=0
+            next_number=1,
+            padding=5
         )
         db.add(seq)
+        db.flush()
         
-    seq.current_value += 1
+    num = seq.next_number
+    seq.next_number += 1
     db.flush()
-    return f"{seq.prefix}{seq.current_value:05d}"
+    return f"{seq.prefix}{num:0{seq.padding}d}"
     
 @router.post("/", response_model=ProductionOrderResponse)
 def create_production_order(
