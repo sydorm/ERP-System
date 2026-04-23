@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
@@ -13,10 +13,14 @@ router = APIRouter()
 
 @router.get("/purchase-receipts", response_model=List[PurchaseReceiptResponse])
 async def list_purchase_receipts(
+    supplier_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    return db.query(PurchaseReceipt).filter(PurchaseReceipt.company_id == current_user.company_id).all()
+    query = db.query(PurchaseReceipt).filter(PurchaseReceipt.company_id == current_user.company_id)
+    if supplier_id:
+        query = query.filter(PurchaseReceipt.supplier_id == supplier_id)
+    return query.all()
 
 @router.post("/purchase-receipts", response_model=PurchaseReceiptResponse, status_code=status.HTTP_201_CREATED)
 async def create_purchase_receipt(

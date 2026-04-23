@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -135,10 +135,14 @@ async def get_procurement_alerts(
 
 @router.get("/purchase-orders", response_model=List[PurchaseOrderResponse])
 async def list_purchase_orders(
+    supplier_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    return db.query(PurchaseOrder).filter(PurchaseOrder.company_id == current_user.company_id).all()
+    query = db.query(PurchaseOrder).filter(PurchaseOrder.company_id == current_user.company_id)
+    if supplier_id:
+        query = query.filter(PurchaseOrder.supplier_id == supplier_id)
+    return query.all()
 
 @router.post("/purchase-orders", response_model=PurchaseOrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_purchase_order(

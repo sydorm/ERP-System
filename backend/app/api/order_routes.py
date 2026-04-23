@@ -48,6 +48,7 @@ async def list_orders(
     payment_status: Optional[str] = None,
     priority: Optional[str] = None,
     manager_id: Optional[UUID] = None,
+    counterparty_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -65,6 +66,8 @@ async def list_orders(
         query = query.filter(Order.priority == priority)
     if manager_id:
         query = query.filter(Order.manager_id == manager_id)
+    if counterparty_id:
+        query = query.filter(Order.counterparty_id == counterparty_id)
 
     orders = query.order_by(Order.order_date.desc()).offset(skip).limit(limit).all()
     populate_product_summary(orders, db)

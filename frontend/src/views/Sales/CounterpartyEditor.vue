@@ -237,7 +237,7 @@
               <el-col :span="8">
                 <el-card shadow="never" class="finance-card">
                   <div class="f-stat">
-                    <span class="f-label">Продажі</span>
+                    <span class="f-label">Всього продажів</span>
                     <span class="f-value text-success">{{ formatCurrency(financeSummary.totalSales) }}</span>
                   </div>
                 </el-card>
@@ -245,7 +245,7 @@
               <el-col :span="8">
                 <el-card shadow="never" class="finance-card">
                   <div class="f-stat">
-                    <span class="f-label">Закупівлі</span>
+                    <span class="f-label">Всього закупівель</span>
                     <span class="f-value text-warning">{{ formatCurrency(financeSummary.totalPurchases) }}</span>
                   </div>
                 </el-card>
@@ -253,7 +253,7 @@
               <el-col :span="8">
                 <el-card shadow="never" class="finance-card">
                   <div class="f-stat">
-                    <span class="f-label">Баланс</span>
+                    <span class="f-label">Баланс (Сальдо)</span>
                     <span class="f-value" :class="financeSummary.balance >= 0 ? 'text-success' : 'text-danger'">
                       {{ formatCurrency(financeSummary.balance) }}
                     </span>
@@ -269,9 +269,9 @@
                   <template #default="{ row }">{{ formatDate(row.date) }}</template>
                 </el-table-column>
                 <el-table-column prop="reference" label="Документ" width="140" />
-                <el-table-column prop="type" label="Тип" width="120">
+                <el-table-column prop="type" label="Тип" width="160">
                   <template #default="{ row }">
-                    <el-tag :type="row.type === 'Продаж' ? 'success' : 'warning'" size="small" plain>{{ row.type }}</el-tag>
+                    <el-tag :type="row.type.includes('Продаж') ? 'success' : 'warning'" size="small" plain>{{ row.type }}</el-tag>
                   </template>
                 </el-table-column>
                 <el-table-column label="Сума" width="150" align="right">
@@ -357,12 +357,12 @@ const financeOperations = computed(() => {
   const ops = []
   salesOrders.value.forEach(o => ops.push({
     id: o.id, date: o.order_date, reference: o.order_number, 
-    type: 'Продаж', amount: Number(o.total_amount), 
+    type: 'Замовлення (Продаж)', amount: Number(o.total_amount), 
     is_paid: o.payment_status === 'paid', sort_date: new Date(o.order_date)
   }))
   purchaseReceipts.value.forEach(r => ops.push({
     id: r.id, date: r.receipt_date, reference: r.receipt_number, 
-    type: 'Закупівля', amount: -Number(r.total_amount), 
+    type: 'Прибуткова накладна', amount: -Number(r.total_amount), 
     is_paid: r.status === 'done', sort_date: new Date(r.receipt_date)
   }))
   return ops.sort((a, b) => b.sort_date - a.sort_date)
