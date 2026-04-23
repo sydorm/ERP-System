@@ -374,6 +374,8 @@ const getCellColor = (empId, day) => {
   return status ? status.color : 'transparent'
 }
 
+const isDayModified = (empId, day) => modifiedRecords.value[`${empId}_${day}`] !== undefined
+
 const setAttendance = (empId, day, status) => {
   if (!status) {
     modifiedRecords.value[`${empId}_${day}`] = null
