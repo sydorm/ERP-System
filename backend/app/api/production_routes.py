@@ -56,7 +56,11 @@ def create_production_order(
             company_id=order_in.company_id,
             warehouse_id=order_in.warehouse_id,
             created_by=current_user.id,
-            comment=order_in.comment
+            comment=order_in.comment,
+            source_type=order_in.source_type,
+            source_id=order_in.source_id,
+            client_id=order_in.client_id,
+            priority=order_in.priority
         )
         db.add(db_order)
         db.flush()

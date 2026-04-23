@@ -2,6 +2,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
+from app.schemas.counterparty import CounterpartyResponse
 
 # --- Production Order Material ---
 class ProductionOrderMaterialBase(BaseModel):
@@ -92,6 +93,8 @@ class ProductionOrderResponse(ProductionOrderBase):
     order_date: datetime
     created_by: Optional[UUID] = None
     completed_at: Optional[datetime] = None
+    
+    client: Optional[CounterpartyResponse] = None
     
     lines: List[ProductionOrderLineResponse] = []
     materials: List[ProductionOrderMaterialResponse] = []
