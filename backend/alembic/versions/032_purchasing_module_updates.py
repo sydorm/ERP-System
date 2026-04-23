@@ -40,23 +40,6 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['counterparties.id'], ['counterparties.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_supplier_prices_company_id'), 'supplier_prices', ['company_id'], unique=False)
-    # Corrected FK constraint name in create_table call for supplier_id
-    op.drop_table('supplier_prices') # Re-doing correctly
-    
-    op.create_table('supplier_prices',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('product_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('supplier_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('company_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('price', sa.Numeric(precision=15, scale=2), nullable=False, server_default='0.0'),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['supplier_id'], ['counterparties.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
