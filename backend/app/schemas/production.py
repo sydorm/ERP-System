@@ -70,6 +70,11 @@ class ProductionOrderBase(BaseModel):
     warehouse_id: UUID
     comment: Optional[str] = None
 
+    source_type: str = "quick"
+    source_id: Optional[UUID] = None
+    client_id: Optional[UUID] = None
+    priority: str = "normal"
+
 class ProductionOrderCreate(ProductionOrderBase):
     lines: List[ProductionOrderLineCreate]
     materials: List[ProductionOrderMaterialCreate] = [] # Optional initially, can be calculated

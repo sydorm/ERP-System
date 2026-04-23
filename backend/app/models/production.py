@@ -19,6 +19,12 @@ class ProductionOrder(BaseModel):
     due_date = Column(DateTime, nullable=True)
     status = Column(String(50), nullable=False, default="draft", index=True)  # draft, released, in_progress, completed, cancelled
     
+    # Multi-link for source & client
+    source_type = Column(String(20), nullable=False, default="quick") # crm, quick
+    source_id = Column(UUID(as_uuid=True), nullable=True) # Reference to CRM order if type is crm
+    client_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="SET NULL"), nullable=True)
+    priority = Column(String(20), nullable=False, default="normal") # normal, urgent, critical
+
     # Relationships to other docs
     base_order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
@@ -35,6 +41,7 @@ class ProductionOrder(BaseModel):
     warehouse = relationship("Warehouse")
     creator = relationship("User")
     base_order = relationship("Order")
+    client = relationship("Counterparty")
     
     lines = relationship("ProductionOrderLine", back_populates="production_order", cascade="all, delete-orphan")
     materials = relationship("ProductionOrderMaterial", back_populates="production_order", cascade="all, delete-orphan")

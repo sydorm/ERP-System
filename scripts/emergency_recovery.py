@@ -207,6 +207,21 @@ def recovery():
                 })
             print("OK: Attendance Statuses seeded.")
 
+            # 9. Update ProductionOrder table with CRM standard fields
+            print("Updating production_orders table structure...")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_type VARCHAR(20) DEFAULT 'quick';")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_id UUID;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS client_id UUID;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';")
+            
+            # Add foreign key for client if not exists
+            try:
+                run_sql("ALTER TABLE production_orders ADD CONSTRAINT fk_production_orders_client FOREIGN KEY (client_id) REFERENCES counterparties(id) ON DELETE SET NULL;")
+            except Exception as e:
+                # likely already exists, ignore
+                pass
+            print("OK: ProductionOrder table updated.")
+
     print("SUCCESS: Recovery script finished. Try to reload the page.")
 
 if __name__ == "__main__":
