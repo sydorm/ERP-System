@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from app.db.session import get_db
 
 from app.schemas.counterparty import (
     CounterpartyCreate, CounterpartyUpdate, CounterpartyResponse,
