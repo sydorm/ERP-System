@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 from app.schemas.counterparty import CounterpartyResponse
+from app.schemas.dictionary import DictionaryItemResponse
 
 # --- Production Order Material ---
 class ProductionOrderMaterialBase(BaseModel):
@@ -61,6 +62,7 @@ class ProductionOrderAssignmentCreate(ProductionOrderAssignmentBase):
 class ProductionOrderAssignmentResponse(ProductionOrderAssignmentBase):
     id: UUID
     production_order_id: UUID
+    stage: Optional[DictionaryItemResponse] = None
     
     class Config:
         from_attributes = True

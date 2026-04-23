@@ -45,6 +45,7 @@ class ProductionOrder(BaseModel):
     
     lines = relationship("ProductionOrderLine", back_populates="production_order", cascade="all, delete-orphan")
     materials = relationship("ProductionOrderMaterial", back_populates="production_order", cascade="all, delete-orphan")
+    assignments = relationship("ProductionOrderWorkerAssignment", back_populates="production_order", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<ProductionOrder {self.order_number}>"
@@ -119,6 +120,6 @@ class ProductionOrderWorkerAssignment(BaseModel):
     status = Column(String(20), nullable=False, default="pending") # pending, in_progress, completed
 
     # Relations
-    production_order = relationship("ProductionOrder", backref="assignments")
+    production_order = relationship("ProductionOrder", back_populates="assignments")
     employee = relationship("Employee")
     stage = relationship("DictionaryItem")

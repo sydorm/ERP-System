@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy as sa
 import uuid
@@ -94,7 +94,7 @@ def create_production_order(
             # --- AUTO-CALCULATE MATERIALS ---
             # If materials list is empty, try to explode the specification
             if not order_in.materials and line_in.specification_id:
-                from app.models.specification import ProductSpecification, SpecificationItem
+                from app.models.specification import ProductSpecification, SpecificationItem, ProductSpecificationStage
                 from app.models.product import Product
                 from app.services.specification_service import SpecificationService
                 from sqlalchemy.orm import joinedload
@@ -106,7 +106,8 @@ def create_production_order(
                 
                 # Get the specification
                 spec = db.query(ProductSpecification).options(
-                    joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+                    joinedload(ProductSpecification.items).joinedload(SpecificationItem.component),
+                    joinedload(ProductSpecification.stages).joinedload(ProductSpecificationStage.stage)
                 ).filter(ProductSpecification.id == line_in.specification_id).first()
                 
                 if spec:
@@ -151,6 +152,20 @@ def create_production_order(
                             cost_estimate=0 # Will be updated later if needed
                         )
                         db.add(db_mat)
+                        
+                    # --- AUTO-POPULATE STAGES ---
+                    # If assignments were not provided, get them from specification
+                    if not order_in.assignments and spec.stages:
+                        for spec_stage in spec.stages:
+                            db_assign = ProductionOrderWorkerAssignment(
+                                production_order_id=db_order.id,
+                                stage_id=spec_stage.stage_id,
+                                brigade_id=spec_stage.brigade_id,
+                                quantity=line_in.quantity,
+                                planned_hours=spec_stage.duration_hours * Decimal(str(line_in.quantity)),
+                                status="pending"
+                            )
+                            db.add(db_assign)
             
         # If materials were provided manually, use them
         if order_in.materials:
@@ -212,7 +227,9 @@ def get_production_orders(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    orders = db.query(ProductionOrder).order_by(ProductionOrder.created_at.desc()).offset(skip).limit(limit).all()
+    orders = db.query(ProductionOrder).options(
+        joinedload(ProductionOrder.assignments).joinedload(ProductionOrderWorkerAssignment.stage)
+    ).order_by(ProductionOrder.created_at.desc()).offset(skip).limit(limit).all()
     return orders
 
 @router.get("/{order_id}", response_model=ProductionOrderResponse)
@@ -221,7 +238,11 @@ def get_production_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    order = db.query(ProductionOrder).filter(ProductionOrder.id == order_id).first()
+    order = db.query(ProductionOrder).options(
+        joinedload(ProductionOrder.assignments).joinedload(ProductionOrderWorkerAssignment.stage),
+        joinedload(ProductionOrder.lines),
+        joinedload(ProductionOrder.materials)
+    ).filter(ProductionOrder.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Production order not found")
     return order
@@ -233,7 +254,11 @@ def update_production_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_order = db.query(ProductionOrder).filter(ProductionOrder.id == order_id).first()
+    db_order = db.query(ProductionOrder).options(
+        joinedload(ProductionOrder.assignments).joinedload(ProductionOrderWorkerAssignment.stage),
+        joinedload(ProductionOrder.lines),
+        joinedload(ProductionOrder.materials)
+    ).filter(ProductionOrder.id == order_id).first()
     if not db_order:
         raise HTTPException(status_code=404, detail="Production order not found")
         
