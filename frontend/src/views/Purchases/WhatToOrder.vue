@@ -111,7 +111,12 @@ const emit = defineEmits(['order-created'])
 const fetchAlerts = async () => {
   try {
     const res = await api.get('/api/v1/purchase-orders/procurement-alerts')
-    alerts.value = res.data
+    // Support both old array format and new object format for backward compatibility during migration
+    if (Array.isArray(res.data)) {
+      alerts.value = res.data
+    } else {
+      alerts.value = res.data.critical || []
+    }
   } catch (e) {
     console.error('Failed to fetch procurement alerts', e)
   }

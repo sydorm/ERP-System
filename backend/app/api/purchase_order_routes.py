@@ -9,6 +9,7 @@ from app.schemas.purchase_order import PurchaseOrderCreate, PurchaseOrderUpdate,
 from app.api.dependencies import get_current_active_user
 from app.services.sequence_service import SequenceService
 from app.models import Product, AccumulationRegister, RegisterType, Counterparty
+from app.models.production import ProductionOrder, ProductionOrderMaterial
 from sqlalchemy import func
 
 router = APIRouter()
@@ -19,18 +20,17 @@ async def get_procurement_alerts(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Find products where current stock < min_stock
+    Find products where (current stock - reservations) < min_stock
     """
     # 1. Get all products with track_inventory=True and min_stock > 0
     products = db.query(Product).filter(
         Product.company_id == current_user.company_id,
         Product.track_inventory == True,
-        Product.min_stock > 0,
         Product.is_deleted == False
     ).all()
     
     if not products:
-        return []
+        return {"critical": [], "soon": [], "drafts": []}
         
     product_ids = [p.id for p in products]
     
@@ -46,30 +46,93 @@ async def get_procurement_alerts(
     
     stock_map = {str(s.product_id): float(s.total_qty) for s in stock_levels}
     
-    # 3. Filter products needing order
-    alerts = []
+    # 3. Get Reservations from active Production Orders
+    # Reservations = Sum(required_quantity - issued_quantity) for active orders
+    reservations = db.query(
+        ProductionOrderMaterial.component_id,
+        func.sum(ProductionOrderMaterial.required_quantity - ProductionOrderMaterial.issued_quantity).label("reserved_qty")
+    ).join(ProductionOrder).filter(
+        ProductionOrder.company_id == current_user.company_id,
+        ProductionOrder.status.in_(["draft", "released", "in_progress"]),
+        ProductionOrderMaterial.component_id.in_(product_ids)
+    ).group_by(ProductionOrderMaterial.component_id).all()
+    
+    res_map = {str(r.component_id): float(r.reserved_qty) for r in reservations}
+    
+    # 4. Filter products needing order
+    critical = []
+    soon = []
+    
     for p in products:
         current_qty = stock_map.get(str(p.id), 0.0)
-        if current_qty < float(p.min_stock):
-            # Calculate how much to order (to reach optimal_stock if defined, else at least min_stock)
-            to_order = float(p.optimal_stock) - current_qty
+        reserved_qty = res_map.get(str(p.id), 0.0)
+        real_balance = current_qty - reserved_qty
+        
+        min_stock = float(p.min_stock) if p.min_stock else 0.0
+        optimal_stock = float(p.optimal_stock) if p.optimal_stock else 0.0
+        
+        if min_stock == 0 and optimal_stock == 0:
+            continue
+
+        if real_balance < min_stock:
+            # CRITICAL
+            to_order = optimal_stock - real_balance
             if to_order <= 0:
-                to_order = float(p.min_stock) - current_qty
-                
-            alerts.append({
+                to_order = min_stock - real_balance
+            if to_order < 0: to_order = 0
+            
+            critical.append({
                 "product_id": p.id,
                 "sku": p.sku,
                 "name": p.name,
                 "unit": p.unit_of_measure,
                 "current_stock": current_qty,
-                "min_stock": float(p.min_stock),
-                "optimal_stock": float(p.optimal_stock),
+                "reserved": reserved_qty,
+                "real_balance": real_balance,
+                "min_stock": min_stock,
+                "optimal_stock": optimal_stock,
                 "to_order": to_order,
                 "default_supplier_id": p.default_supplier_id,
                 "delivery_days": p.delivery_days
             })
+        elif real_balance < (min_stock * 1.5): # Threshold for "Soon"
+            # SOON
+            soon.append({
+                "product_id": p.id,
+                "sku": p.sku,
+                "name": p.name,
+                "unit": p.unit_of_measure,
+                "current_stock": current_qty,
+                "reserved": reserved_qty,
+                "real_balance": real_balance,
+                "min_stock": min_stock,
+                "optimal_stock": optimal_stock,
+                "to_order": optimal_stock - real_balance if optimal_stock > real_balance else 0,
+                "default_supplier_id": p.default_supplier_id,
+                "delivery_days": p.delivery_days
+            })
             
-    return alerts
+    # 5. Get Drafts
+    drafts_list = db.query(PurchaseOrder).filter(
+        PurchaseOrder.company_id == current_user.company_id,
+        PurchaseOrder.status == "draft"
+    ).all()
+    
+    drafts = []
+    for d in drafts_list:
+        drafts.append({
+            "id": d.id,
+            "order_number": d.order_number,
+            "supplier_id": d.supplier_id,
+            "total_amount": float(d.total_amount),
+            "line_count": len(d.lines)
+        })
+
+    return {
+        "critical": critical,
+        "soon": soon,
+        "drafts": drafts
+    }
 
 @router.get("/purchase-orders", response_model=List[PurchaseOrderResponse])
 async def list_purchase_orders(

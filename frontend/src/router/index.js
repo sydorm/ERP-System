@@ -152,6 +152,12 @@ const router = createRouter({
                 },
                 // Purchase routes
                 {
+                    path: '/purchases/planning',
+                    name: 'purchase-planning',
+                    component: () => import('@/views/Purchases/PurchasesPlanning.vue'),
+                    meta: { title: 'Планування закупівель' }
+                },
+                {
                     path: '/purchases/orders',
                     name: 'purchase-orders',
                     component: () => import('@/views/Purchases/PurchaseOrderList.vue'),

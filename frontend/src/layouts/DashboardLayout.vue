@@ -49,6 +49,7 @@
             <el-icon><Briefcase /></el-icon>
             <span>Закупівлі</span>
           </template>
+          <el-menu-item index="/purchases/planning">Планування</el-menu-item>
           <el-menu-item index="/purchases/orders" v-if="userStore.hasPermission('purchases.orders.view')">Замовлення</el-menu-item>
           <el-menu-item index="/purchases/receipts" v-if="userStore.hasPermission('purchases.receipts.view')">Прибуткові накладні</el-menu-item>
         </el-sub-menu>
