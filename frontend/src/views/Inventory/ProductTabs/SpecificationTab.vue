@@ -438,6 +438,9 @@ import { Clock } from '@element-plus/icons-vue'
 
 const dictStore = useDictionaryStore()
 const uomOptions = ref([])
+const productionStages = ref([])
+const brigadesList = ref([])
+const employeesList = ref([])
 
 onMounted(async () => {
     loading.value = true
@@ -445,12 +448,14 @@ onMounted(async () => {
         const results = await Promise.allSettled([
             dictStore.fetchCategory('UOM'),
             dictStore.fetchCategory('PRODUCTION_STAGE'),
-            api.get('/api/v1/brigades')
+            api.get('/api/v1/brigades'),
+            api.get('/api/v1/employees')
         ])
 
         if (results[0].status === 'fulfilled') uomOptions.value = results[0].value;
         if (results[1].status === 'fulfilled') productionStages.value = results[1].value;
         if (results[2].status === 'fulfilled') brigadesList.value = results[2].value.data;
+        if (results[3].status === 'fulfilled') employeesList.value = results[3].value.data;
         
         await loadSpecifications()
         await loadProductAttributes()
@@ -461,10 +466,12 @@ onMounted(async () => {
     }
 })
 
-// Helper to filter brigades by stage
-const getFilteredBrigades = (stageId) => {
-    if (!stageId) return brigadesList.value
-    return brigadesList.value.filter(b => b.stage_id === stageId || !b.stage_id)
+// Helper to filter performers (brigades + employees) by stage
+const getFilteredPerformers = (stageId) => {
+    const brigades = (brigadesList.value || []).filter(b => !stageId || b.stage_id === stageId || !b.stage_id)
+       .map(b => ({ id: b.id, name: `👥 ${b.name}`, type: 'brigade' }))
+    const employees = (employeesList.value || []).map(e => ({ id: e.id, name: `👤 ${e.full_name}`, type: 'employee' }))
+    return [...brigades, ...employees]
 }
 
 const getUomName = (code) => {
