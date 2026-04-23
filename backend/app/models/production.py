@@ -111,9 +111,12 @@ class ProductionOrderWorkerAssignment(BaseModel):
     
     # Stage Link (from PRODUCTION_STAGE dictionary)
     stage_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
+    brigade_id = Column(UUID(as_uuid=True), ForeignKey("brigades.id", ondelete="SET NULL"), nullable=True)
     
     # How much did they produce (defaults to order qty if null)
     quantity = Column(Numeric(15, 3), nullable=True)
+    planned_hours = Column(Numeric(15, 2), nullable=False, default=0.0)
+    status = Column(String(20), nullable=False, default="pending") # pending, in_progress, completed
 
     # Relations
     production_order = relationship("ProductionOrder", backref="assignments")

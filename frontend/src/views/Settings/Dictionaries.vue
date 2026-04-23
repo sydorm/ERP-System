@@ -82,6 +82,9 @@
         <!-- CUSTOM COMPONENT FOR ATTRIBUTES -->
         <ProductAttributesManager v-if="activeDictionary === 'PRODUCT_ATTRIBUTES'" />
 
+        <!-- CUSTOM COMPONENT FOR BRIGADES -->
+        <BrigadesManager v-else-if="activeDictionary === 'BRIGADES'" />
+
         <!-- NUMBERING UI -->
         <template v-else-if="activeSection === 'numbering'">
           <div class="p-12 max-w-2xl mx-auto w-full" v-if="seqForm.id">
@@ -302,6 +305,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
 import ProductAttributesManager from './ProductAttributesManager.vue'
+import BrigadesManager from './BrigadesManager.vue'
 
 const dictStore = useDictionaryStore()
 
@@ -362,6 +366,7 @@ const dictionariesMap = {
     { code: 'PRIORITY', name: 'Пріоритети', description: 'Терміновість виконання' }
   ],
   'production': [
+    { code: 'BRIGADES', name: 'Бригади', description: 'Виробничі колективи та майстри' },
     { code: 'PRODUCTION_STAGE', name: 'Виробничі етапи', description: 'Зварювання, Фарбування, Збірка тощо' },
     { code: 'ACCRUAL_TYPE', name: 'Типи нарахування ЗП', description: 'Відрядна, Погодинна, Фіксована тощо' },
     { code: 'ROLE_TYPE', name: 'Типи ролей', description: 'Основна, Суміщення' },

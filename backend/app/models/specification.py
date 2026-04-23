@@ -81,13 +81,13 @@ class ProductSpecificationStage(BaseModel):
     specification_id = Column(UUID(as_uuid=True), ForeignKey("product_specifications.id", ondelete="CASCADE"), nullable=False, index=True)
     stage_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
     duration_hours = Column(Numeric(15, 2), nullable=False, default=0.0)
-    role_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False) # e.g. "Welder" role
+    brigade_id = Column(UUID(as_uuid=True), ForeignKey("brigades.id", ondelete="RESTRICT"), nullable=True) # References the Brigade
     sort_order = Column(Integer, default=0, nullable=False)
 
     # Relationships
     specification = relationship("ProductSpecification", back_populates="stages")
     stage = relationship("DictionaryItem", foreign_keys=[stage_id])
-    role = relationship("DictionaryItem", foreign_keys=[role_id])
+    brigade = relationship("Brigade")
 
     def __repr__(self):
         return f"<SpecStage {self.stage_id} {self.duration_hours}h>"

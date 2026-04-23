@@ -115,7 +115,7 @@
                       :disabled="scope.row.status === 'completed'"
                     >
                       <el-option 
-                        v-for="e in getQualifiedEmployees(scope.row.stage_id)" 
+                        v-for="e in getQualifiedEmployees(scope.row.stage_id, scope.row.brigade_id)" 
                         :key="e.id" 
                         :label="e.full_name" 
                         :value="e.id"
@@ -324,6 +324,7 @@ const warehouses = ref([])
 const employees = ref([])
 const salesOrders = ref([])
 const productionStages = ref([])
+const brigades = ref([])
 const currentSpecs = ref([])
 const employeeRoles = ref([])
 
@@ -472,7 +473,8 @@ const recalculateEverything = () => {
       form.assignments = spec.stages.map(s => ({
         stage_id: s.stage_id,
         stage_label: s.stage?.name || 'Етап',
-        employee_id: findBestMaster(s.role_id || s.stage_id),
+        brigade_id: s.brigade_id,
+        employee_id: findBestMaster(s.brigade_id),
         planned_hours: parseFloat(s.duration_hours || 0) * activeQuantity.value,
         status: 'pending'
       }))
@@ -490,12 +492,33 @@ const recalculateEverything = () => {
   }
 }
 
-const findBestMaster = (stageId) => {
-  const qualified = employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
-  return qualified.length > 0 ? qualified[0].id : null
+const findBestMaster = (brigadeId) => {
+  if (!brigadeId) return null
+  const brigade = brigades.value.find(b => b.id === brigadeId)
+  if (!brigade || !brigade.members || brigade.members.length === 0) return null
+  
+  // 1. Try to find active "main" master
+  const main = brigade.members.find(m => m.role_type === 'main' && m.is_active)
+  if (main) return main.employee_id
+  
+  // 2. Try to find any active "reserve" master
+  const reserve = brigade.members.find(m => m.role_type === 'reserve' && m.is_active)
+  if (reserve) return reserve.employee_id
+  
+  return null
 }
 
-const getQualifiedEmployees = (stageId) => employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
+const getQualifiedEmployees = (stageId, brigadeId) => {
+  if (brigadeId) {
+    const brigade = brigades.value.find(b => b.id === brigadeId)
+    if (brigade && brigade.members) {
+      const memberIds = brigade.members.filter(m => m.is_active).map(m => m.employee_id)
+      return employees.value.filter(e => memberIds.includes(e.id))
+    }
+  }
+  // Fallback to role-based if no brigade (legacy support)
+  return employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
+}
 
 const getStockClass = (row) => parseFloat(row.stock_qty || 0) >= parseFloat(row.required_quantity) ? 'text-green-600' : 'text-red-600'
 
@@ -521,14 +544,15 @@ const formatDateTime = (d) => d ? dayjs(d).format('DD.MM HH:mm') : ''
 
 const initData = async () => {
   try {
-    const [pRes, wRes, eRes, sRes, dRes, rolesRes] = await Promise.all([
+    const [pRes, wRes, eRes, sRes, dRes, rolesRes, brigRes] = await Promise.all([
       api.get('/api/v1/products'), api.get('/api/v1/warehouses'),
       api.get('/api/v1/employees'), api.get('/api/v1/orders'),
-      api.get('/api/v1/dictionaries/PRODUCTION_STAGE'), api.get('/api/v1/employees/roles')
+      api.get('/api/v1/dictionaries/PRODUCTION_STAGE'), api.get('/api/v1/employees/roles'),
+      api.get('/api/v1/brigades')
     ])
     products.value = pRes.data; warehouses.value = wRes.data; employees.value = eRes.data;
     salesOrders.value = sRes.data; productionStages.value = dRes.data?.items || [];
-    employeeRoles.value = rolesRes.data || []
+    employeeRoles.value = rolesRes.data || []; brigades.value = brigRes.data;
 
     if (isEditMode.value) {
       const res = await api.get(`/api/v1/production/${route.params.id}`)

@@ -80,7 +80,7 @@ class SpecificationItemResponse(SpecificationItemBase):
 class SpecificationStageBase(BaseModel):
     stage_id: UUID
     duration_hours: Decimal = Field(default=Decimal("0.0"), ge=0)
-    role_id: UUID # Dictionary item (PRODUCTION_STAGE or similar)
+    brigade_id: Optional[UUID] = None # Link to Brigade
     sort_order: int = 0
 
 class SpecificationStageCreate(SpecificationStageBase):
@@ -93,10 +93,17 @@ class DictionaryItemBasicInfo(BaseModel):
     class Config:
         from_attributes = True
 
+class BrigadeBasicInfo(BaseModel):
+    id: UUID
+    name: str
+
+    class Config:
+        from_attributes = True
+
 class SpecificationStageResponse(SpecificationStageBase):
     id: UUID
     stage: Optional[DictionaryItemBasicInfo] = None
-    role: Optional[DictionaryItemBasicInfo] = None
+    brigade: Optional[BrigadeBasicInfo] = None
     
     class Config:
         from_attributes = True

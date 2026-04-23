@@ -156,10 +156,10 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Роль (Хто виконує)" min-width="200">
+             <el-table-column label="Бригада (Хто виконує)" min-width="200">
                 <template #default="scope">
-                   <el-select v-model="scope.row.role_id" placeholder="Виберіть роль..." class="w-full" clearable>
-                      <el-option v-for="s in productionStages" :key="s.id" :label="s.name" :value="s.id" />
+                   <el-select v-model="scope.row.brigade_id" placeholder="Виберіть бригаду..." class="w-full" clearable>
+                      <el-option v-for="b in brigadesList" :key="b.id" :label="b.name" :value="b.id" />
                    </el-select>
                 </template>
              </el-table-column>
@@ -442,6 +442,7 @@ const uomOptions = ref([])
 onMounted(async () => {
     uomOptions.value = await dictStore.fetchCategory('UOM')
     productionStages.value = await dictStore.fetchCategory('PRODUCTION_STAGE')
+    brigadesList.value = (await api.get('/api/v1/brigades')).data
     loadSpecifications()
     loadProductAttributes()
 })
@@ -489,6 +490,7 @@ const specForm = ref({
 })
 
 const productionStages = ref([])
+const brigadesList = ref([])
 const getStageName = (id) => {
     const s = productionStages.value.find(x => x.id === id)
     return s ? s.name : 'Unknown'

@@ -25,6 +25,7 @@ from .crm import CrmContact, CrmTask
 from .finance import FinancialTransaction, TransactionType
 from .notification import Notification
 from .hr import Department, Employee, EmployeeRole, AttendanceRecord, PayrollTransaction
+from .brigade import Brigade, BrigadeMember
 
 
 __all__ = [
@@ -78,5 +79,7 @@ __all__ = [
     "EmployeeRole",
     "AttendanceRecord",
     "PayrollTransaction",
+    "Brigade",
+    "BrigadeMember",
 ]
 
