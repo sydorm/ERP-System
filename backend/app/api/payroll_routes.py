@@ -97,12 +97,20 @@ async def upsert_attendance(
         if existing:
             existing.status_id = rec.status_id
             existing.notes = rec.notes
+            existing.start_time = rec.start_time
+            existing.end_time = rec.end_time
+            existing.break_hours = rec.break_hours
+            existing.actual_hours = rec.actual_hours
         else:
             new_rec = AttendanceRecord(
                 employee_id=rec.employee_id,
                 date=rec.date,
                 status_id=rec.status_id,
-                notes=rec.notes
+                notes=rec.notes,
+                start_time=rec.start_time,
+                end_time=rec.end_time,
+                break_hours=rec.break_hours,
+                actual_hours=rec.actual_hours
             )
             db.add(new_rec)
             

@@ -18,28 +18,34 @@
             <span class="stat-value">{{ workingDaysCount }}</span>
           </div>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="4">
+          <div class="stat-card">
+            <span class="stat-label">Відпрацьовано</span>
+            <span class="stat-value">{{ totalActualHours }} год</span>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card">
+            <span class="stat-label">Норма годин</span>
+            <span class="stat-value">{{ totalWorkingHoursNorm }} год</span>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card" :class="{ 'highlight-danger': totalHoursDiff < 0 }">
+            <span class="stat-label">Різниця</span>
+            <span class="stat-value">{{ totalHoursDiff > 0 ? '+' : '' }}{{ totalHoursDiff }} год</span>
+          </div>
+        </el-col>
+        <el-col :span="4">
           <div class="stat-card">
             <span class="stat-label">Середня явка</span>
             <span class="stat-value">{{ avgAttendance }}%</span>
           </div>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="4">
           <div class="stat-card highlight-danger">
-            <span class="stat-label">Пропуски без причини (!)</span>
+            <span class="stat-label">Пропуски (!)</span>
             <span class="stat-value">{{ totalAbsencesWithoutReason }}</span>
-          </div>
-        </el-col>
-        <el-col :span="5">
-          <div class="stat-card highlight-warning">
-            <span class="stat-label">На лікарняному зараз</span>
-            <span class="stat-value">{{ currentSickCount }}</span>
-          </div>
-        </el-col>
-        <el-col :span="5">
-          <div class="stat-card highlight-info">
-            <span class="stat-label">У відпустці зараз</span>
-            <span class="stat-value">{{ currentVacationCount }}</span>
           </div>
         </el-col>
       </el-row>
@@ -125,40 +131,24 @@
                 }"
               >
                 <!-- Status Picker Popover with Holiday Tooltip -->
-                <el-tooltip 
-                  :disabled="!getHolidayName(day)" 
-                  :content="getHolidayName(day)" 
-                  placement="top"
-                >
-                  <el-popover placement="bottom" :width="180" trigger="click">
-                    <template #reference>
-                      <div class="status-cell" :style="{ backgroundColor: getCellColor(emp.id, day) }">
-                        {{ getCellText(emp.id, day) }}
-                      </div>
-                    </template>
-                    <div class="status-picker">
-                      <div 
-                        v-for="status in statusList" 
-                        :key="status.code" 
-                        class="picker-option"
-                        :style="{ backgroundColor: status.color }"
-                        @click="setAttendance(emp.id, day, status)"
-                      >
-                        {{ status.code }} - {{ status.label }}
-                      </div>
-                      <div class="picker-option clear-opt" @click="setAttendance(emp.id, day, null)">
-                        Очистити
-                      </div>
+                  <div class="status-cell" :style="{ backgroundColor: getCellColor(emp.id, day) }" @click="openDetails(emp, day)">
+                    {{ getCellText(emp.id, day) }}
+                    <div v-if="getRecord(emp.id, day)?.actual_hours > 0" class="cell-hours">
+                      {{ getRecord(emp.id, day).actual_hours }}
                     </div>
-                  </el-popover>
-                </el-tooltip>
+                  </div>
               </td>
               <td class="summary-col">
-                <div class="row-stats" v-if="employeeStats[emp.id]">
-                  <span class="stat-p">Р:{{ employeeStats[emp.id].P }}</span>
-                  <span class="stat-v">В:{{ employeeStats[emp.id].V }}</span>
-                  <span class="stat-l">Х:{{ employeeStats[emp.id].L }}</span>
-                </div>
+                  <div class="row-stats" v-if="employeeStats[emp.id]">
+                    <div class="row-stats-top">
+                      <span class="stat-p">П:{{ employeeStats[emp.id].P }}</span>
+                      <span class="stat-v">В:{{ employeeStats[emp.id].V }}</span>
+                      <span class="stat-l">Л:{{ employeeStats[emp.id].L }}</span>
+                    </div>
+                    <div class="row-stats-hours">
+                      Год: {{ employeeStats[emp.id].hours }}/{{ workingDaysCount * 8 }}
+                    </div>
+                  </div>
               </td>
             </tr>
           </tbody>
@@ -174,6 +164,96 @@
         </table>
       </div>
     </el-card>
+    <!-- 4. Detailed Day Dialog -->
+    <el-dialog
+      v-model="detailsVisible"
+      :title="`Деталі дня: ${detailsForm.employee_name} — ${detailsForm.date_display}`"
+      width="400px"
+      append-to-body
+    >
+      <div class="details-dialog-form">
+        <el-form label-position="top">
+          <el-form-item label="Статус">
+            <el-radio-group v-model="detailsForm.status_id" class="status-radio-group">
+              <el-radio-button 
+                v-for="status in statusList" 
+                :key="status.code" 
+                :label="status.saId"
+              >
+                {{ status.code }}
+              </el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="Початок">
+                <el-time-select
+                  v-model="detailsForm.start_time"
+                  start="06:00"
+                  step="00:15"
+                  end="22:00"
+                  placeholder="08:00"
+                  @change="calculateHours"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Кінець">
+                <el-time-select
+                  v-model="detailsForm.end_time"
+                  start="06:00"
+                  step="00:15"
+                  end="22:00"
+                  placeholder="17:00"
+                  @change="calculateHours"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="Перерва (год)">
+                <el-input-number 
+                  v-model="detailsForm.break_hours" 
+                  :precision="1" 
+                  :step="0.5" 
+                  :min="0" 
+                  :max="4"
+                  @change="calculateHours"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Відпрацьовано">
+                <el-input-number 
+                  v-model="detailsForm.actual_hours" 
+                  :precision="1" 
+                  :step="0.5" 
+                  disabled
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-form-item label="Примітка">
+            <el-input 
+              v-model="detailsForm.notes" 
+              type="textarea" 
+              rows="2" 
+              placeholder="Причина відсутності, запізнення тощо..."
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="detailsVisible = false">Скасувати</el-button>
+        <el-button type="primary" @click="saveDetails">Зберегти</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -198,6 +278,21 @@ const departments = ref([])
 const holidayList = ref([]) // From DB
 const attendanceData = ref([])
 const modifiedRecords = ref({}) // { "empId_day": statusObject }
+
+// 2. Dialog state
+const detailsVisible = ref(false)
+const detailsForm = ref({
+  employee_id: null,
+  employee_name: '',
+  day: null,
+  date_display: '',
+  status_id: null,
+  start_time: '08:00',
+  end_time: '17:00',
+  break_hours: 1.0,
+  actual_hours: 8.0,
+  notes: ''
+})
 
 // 2. Constants / Dictionaries
 const statusList = [
@@ -243,8 +338,7 @@ const getRecord = (empId, day) => {
   
   // 1. Check local modifications first
   if (modifiedRecords.value[key] !== undefined) {
-    const mod = modifiedRecords.value[key]
-    return mod ? { status_code: mod.code } : null
+    return modifiedRecords.value[key]
   }
   
   // 2. Check persistent data from DB
@@ -255,7 +349,15 @@ const getRecord = (empId, day) => {
   if (dbRec) {
     // Backend might return Code (П) or Label (Працював). We need to ensure we return a Code.
     const status = statusList.find(s => s.code === dbRec.status_name || s.label === dbRec.status_name)
-    return { status_code: status ? status.code : dbRec.status_name }
+    return { 
+      status_id: dbRec.status_id,
+      status_code: status ? status.code : dbRec.status_name,
+      start_time: dbRec.start_time,
+      end_time: dbRec.end_time,
+      break_hours: dbRec.break_hours,
+      actual_hours: dbRec.actual_hours,
+      notes: dbRec.notes
+    }
   }
   return null
 }
@@ -272,10 +374,76 @@ const getCellColor = (empId, day) => {
   return status ? status.color : 'transparent'
 }
 
-const isDayModified = (empId, day) => modifiedRecords.value[`${empId}_${day}`] !== undefined
-
 const setAttendance = (empId, day, status) => {
-  modifiedRecords.value[`${empId}_${day}`] = status
+  if (!status) {
+    modifiedRecords.value[`${empId}_${day}`] = null
+    return
+  }
+  
+  const isWeekend = isHolidayOrWeekend(day)
+  modifiedRecords.value[`${empId}_${day}`] = {
+    status_id: status.saId,
+    status_code: status.code,
+    start_time: isWeekend ? null : '08:00',
+    end_time: isWeekend ? null : '17:00',
+    break_hours: isWeekend ? 0 : 1.0,
+    actual_hours: isWeekend ? 0 : 8.0,
+    notes: ''
+  }
+}
+
+const openDetails = (emp, day) => {
+  const rec = getRecord(emp.id, day)
+  const isWeekend = isHolidayOrWeekend(day)
+  
+  detailsForm.value = {
+    employee_id: emp.id,
+    employee_name: emp.full_name,
+    day: day,
+    date_display: selectedMonth.value.date(day).format('DD MMMM'),
+    status_id: rec?.status_id || (isWeekend ? statusList.find(s => s.code === 'В').saId : statusList.find(s => s.code === 'П').saId),
+    start_time: rec?.start_time || (isWeekend ? null : '08:00'),
+    end_time: rec?.end_time || (isWeekend ? null : '17:00'),
+    break_hours: rec?.break_hours !== undefined ? parseFloat(rec.break_hours) : (isWeekend ? 0 : 1.0),
+    actual_hours: rec?.actual_hours !== undefined ? parseFloat(rec.actual_hours) : (isWeekend ? 0 : 8.0),
+    notes: rec?.notes || ''
+  }
+  detailsVisible.value = true
+}
+
+const calculateHours = () => {
+  const status = statusList.find(s => s.saId === detailsForm.value.status_id)
+  if (status && status.code !== 'П') {
+    detailsForm.value.actual_hours = 0
+    return
+  }
+
+  if (!detailsForm.value.start_time || !detailsForm.value.end_time) {
+    detailsForm.value.actual_hours = 0
+    return
+  }
+
+  const start = dayjs(`2000-01-01 ${detailsForm.value.start_time}`)
+  const end = dayjs(`2000-01-01 ${detailsForm.value.end_time}`)
+  
+  let diff = end.diff(start, 'minute') / 60
+  diff -= (detailsForm.value.break_hours || 0)
+  
+  detailsForm.value.actual_hours = Math.max(0, parseFloat(diff.toFixed(1)))
+}
+
+const saveDetails = () => {
+  const status = statusList.find(s => s.saId === detailsForm.value.status_id)
+  modifiedRecords.value[`${detailsForm.value.employee_id}_${detailsForm.value.day}`] = {
+    status_id: detailsForm.value.status_id,
+    status_code: status ? status.code : '?',
+    start_time: detailsForm.value.start_time,
+    end_time: detailsForm.value.end_time,
+    break_hours: detailsForm.value.break_hours,
+    actual_hours: detailsForm.value.actual_hours,
+    notes: detailsForm.value.notes
+  }
+  detailsVisible.value = false
 }
 
 // 5. Statistics Calculations
@@ -295,11 +463,30 @@ const avgAttendance = computed(() => {
   employees.value.forEach(emp => {
     for (let d = 1; d <= daysInMonth.value; d++) {
       if (isHolidayOrWeekend(d)) continue
-      const txt = getCellText(emp.id, d)
-      if (txt === 'П') totalPresent++
+      const rec = getRecord(emp.id, d)
+      if (rec && rec.status_code === 'П') totalPresent++
     }
   })
   return totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0
+})
+
+const totalActualHours = computed(() => {
+  let total = 0
+  employees.value.forEach(emp => {
+    for (let d = 1; d <= daysInMonth.value; d++) {
+      const rec = getRecord(emp.id, d)
+      if (rec && rec.actual_hours) total += parseFloat(rec.actual_hours)
+    }
+  })
+  return parseFloat(total.toFixed(1))
+})
+
+const totalWorkingHoursNorm = computed(() => {
+  return employees.value.length * workingDaysCount.value * 8
+})
+
+const totalHoursDiff = computed(() => {
+  return parseFloat((totalActualHours.value - totalWorkingHoursNorm.value).toFixed(1))
 })
 
 const totalAbsencesWithoutReason = computed(() => {
@@ -333,12 +520,16 @@ const currentVacationCount = computed(() => {
 const employeeStats = computed(() => {
   const map = {}
   employees.value.forEach(emp => {
-    const stats = { P: 0, V: 0, L: 0 }
+    const stats = { P: 0, V: 0, L: 0, hours: 0 }
     for (let d = 1; d <= daysInMonth.value; d++) {
-      const txt = getCellText(emp.id, d)
-      if (txt === 'П') stats.P++
-      else if (txt === 'В') stats.V++
-      else if (txt === 'Л') stats.L++
+      const rec = getRecord(emp.id, d)
+      if (!rec) continue
+      
+      if (rec.status_code === 'П') stats.P++
+      else if (rec.status_code === 'В') stats.V++
+      else if (rec.status_code === 'Л') stats.L++
+      
+      if (rec.actual_hours) stats.hours += parseFloat(rec.actual_hours)
     }
     map[emp.id] = stats
   })
@@ -444,7 +635,12 @@ const saveChanges = async () => {
     toSave.push({
       employee_id: empId,
       date: selectedMonth.value.date(parseInt(day)).format('YYYY-MM-DD'),
-      status_id: status.saId
+      status_id: status.status_id,
+      start_time: status.start_time,
+      end_time: status.end_time,
+      break_hours: status.break_hours,
+      actual_hours: status.actual_hours,
+      notes: status.notes
     })
   }
 
@@ -469,12 +665,24 @@ const saveChanges = async () => {
       )
       
       if (existingIdx > -1) {
-        attendanceData.value[existingIdx].status_name = status.code
+        attendanceData.value[existingIdx].status_name = status.status_code
+        attendanceData.value[existingIdx].status_id = status.status_id
+        attendanceData.value[existingIdx].start_time = status.start_time
+        attendanceData.value[existingIdx].end_time = status.end_time
+        attendanceData.value[existingIdx].break_hours = status.break_hours
+        attendanceData.value[existingIdx].actual_hours = status.actual_hours
+        attendanceData.value[existingIdx].notes = status.notes
       } else {
         attendanceData.value.push({
           employee_id: empId,
           date: date,
-          status_name: status.code
+          status_name: status.status_code,
+          status_id: status.status_id,
+          start_time: status.start_time,
+          end_time: status.end_time,
+          break_hours: status.break_hours,
+          actual_hours: status.actual_hours,
+          notes: status.notes
         })
       }
     }
@@ -673,13 +881,21 @@ onMounted(fetchData)
   width: 100%;
   height: 50px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: white;
   font-weight: bold;
-  font-size: 15px;
+  font-size: 14px;
   transition: all 0.2s;
+  position: relative;
+}
+
+.cell-hours {
+  font-size: 9px;
+  opacity: 0.9;
+  margin-top: -2px;
 }
 
 .status-cell:hover {
@@ -692,10 +908,25 @@ onMounted(fetchData)
 
 .row-stats {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
+  padding: 4px;
+}
+
+.row-stats-top {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.row-stats-hours {
+  color: #1a1d1f;
+  font-size: 10px;
+  border-top: 1px solid #efefef;
+  padding-top: 2px;
 }
 
 .stat-p { color: #2d661c; }
@@ -708,30 +939,19 @@ onMounted(fetchData)
   font-size: 12px;
 }
 
-.status-picker {
+.details-dialog-form {
+  padding: 10px 0;
+}
+
+.status-radio-group {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
 }
 
-.picker-option {
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: white;
-  font-weight: 600;
-  font-size: 12px;
-  transition: transform 0.1s;
-}
-
-.picker-option:hover {
-  transform: scale(1.02);
-}
-
-.clear-opt {
-  background: #f4f4f5;
-  color: #606266;
-  text-align: center;
+.status-radio-group :deep(.el-radio-button__inner) {
+  width: 60px;
+  padding: 8px 0;
 }
 
 .mt-4 { margin-top: 16px; }

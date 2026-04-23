@@ -91,6 +91,11 @@ class AttendanceRecord(BaseModel):
     # Link to status (П, В, Л, О etc.) from Dictionaries
     status_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
     
+    start_time = Column(String(5), nullable=True)
+    end_time = Column(String(5), nullable=True)
+    break_hours = Column(Numeric(precision=5, scale=2), default=1.0)
+    actual_hours = Column(Numeric(precision=5, scale=2), default=0.0)
+    
     notes = Column(String(255), nullable=True)
 
     __table_args__ = (

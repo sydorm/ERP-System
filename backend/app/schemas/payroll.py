@@ -10,6 +10,10 @@ class AttendanceRecordBase(BaseModel):
     employee_id: UUID
     date: date
     status_id: UUID
+    start_time: Optional[str] = Field(None, max_length=5)
+    end_time: Optional[str] = Field(None, max_length=5)
+    break_hours: Optional[Decimal] = Decimal("1.0")
+    actual_hours: Optional[Decimal] = Decimal("0.0")
     notes: Optional[str] = Field(None, max_length=255)
 
 class AttendanceRecordCreate(AttendanceRecordBase):
@@ -25,6 +29,10 @@ class AttendanceUpsert(BaseModel):
     employee_id: UUID
     date: date
     status_id: UUID
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    break_hours: Optional[Decimal] = None
+    actual_hours: Optional[Decimal] = None
     notes: Optional[str] = None
 
 class AttendanceBulkUpsert(BaseModel):
