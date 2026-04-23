@@ -31,7 +31,7 @@ async def list_specifications(
         ),
         joinedload(ProductSpecification.stages).options(
             joinedload(ProductSpecificationStage.stage),
-            joinedload(ProductSpecificationStage.role)
+            joinedload(ProductSpecificationStage.brigade)
         )
     ).filter(
         ProductSpecification.product_id == product_id
@@ -91,7 +91,7 @@ async def create_specification(
             specification_id=db_spec.id,
             stage_id=stage_in.stage_id,
             duration_hours=stage_in.duration_hours,
-            role_id=stage_in.role_id,
+            brigade_id=stage_in.brigade_id,
             sort_order=stage_in.sort_order
         )
         db.add(db_stage)
@@ -153,7 +153,7 @@ async def update_specification(
                 specification_id=db_spec.id,
                 stage_id=stage_in.stage_id,
                 duration_hours=stage_in.duration_hours,
-                role_id=stage_in.role_id,
+                brigade_id=stage_in.brigade_id,
                 sort_order=stage_in.sort_order
             )
             db.add(db_stage)
