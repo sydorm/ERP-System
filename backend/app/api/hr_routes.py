@@ -149,6 +149,25 @@ async def create_employee(
     db.refresh(emp)
     return emp
 
+@router.get("/employees/roles", response_model=List[EmployeeRoleResponse])
+async def list_employees_roles(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    # Query all roles for employees of the current company
+    roles = db.query(EmployeeRole).join(Employee).filter(
+        Employee.company_id == current_user.company_id,
+        Employee.is_deleted == False
+    ).all()
+    
+    # Enrich with dictionary names
+    for role in roles:
+        role.role_name = role.role_dict.name if role.role_dict else None
+        role.role_type_name = role.role_type_dict.name if role.role_type_dict else None
+        role.accrual_type_name = role.accrual_type_dict.name if role.accrual_type_dict else None
+        
+    return roles
+
 @router.get("/employees/{id}", response_model=EmployeeResponse)
 async def get_employee(
     id: UUID,
@@ -223,22 +242,3 @@ async def delete_employee(
     emp.is_deleted = True
     db.commit()
     return None
-
-@router.get("/employees/roles", response_model=List[EmployeeRoleResponse])
-async def list_employees_roles(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    # Query all roles for employees of the current company
-    roles = db.query(EmployeeRole).join(Employee).filter(
-        Employee.company_id == current_user.company_id,
-        Employee.is_deleted == False
-    ).all()
-    
-    # Enrich with dictionary names
-    for role in roles:
-        role.role_name = role.role_dict.name if role.role_dict else None
-        role.role_type_name = role.role_type_dict.name if role.role_type_dict else None
-        role.accrual_type_name = role.accrual_type_dict.name if role.accrual_type_dict else None
-        
-    return roles
