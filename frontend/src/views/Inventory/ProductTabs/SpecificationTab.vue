@@ -516,8 +516,6 @@ const specForm = ref({
     stages: []
 })
 
-const productionStages = ref([])
-const brigadesList = ref([])
 const getStageName = (id) => {
     const s = productionStages.value.find(x => x.id === id)
     return s ? s.name : 'Unknown'
