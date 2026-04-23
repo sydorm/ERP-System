@@ -289,7 +289,7 @@
                         ></span>
                         <span>{{ opt.value }}</span>
                       </div>
-                    </option>
+                    </el-option>
                   </el-select>
                 </el-col>
               </el-row>
