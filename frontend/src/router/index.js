@@ -152,16 +152,33 @@ const router = createRouter({
                 },
                 // Purchase routes
                 {
-                    path: '/purchases/planning',
-                    name: 'purchase-planning',
-                    component: () => import('@/views/Purchases/PurchasesPlanning.vue'),
-                    meta: { title: 'Планування закупівель' }
-                },
-                {
-                    path: '/purchases/orders',
-                    name: 'purchase-orders',
-                    component: () => import('@/views/Purchases/PurchaseOrderList.vue'),
-                    meta: { title: 'Замовлення постачальникам' }
+                    path: '/purchases',
+                    component: () => import('@/views/Purchases/Purchases.vue'),
+                    meta: { title: 'Закупівлі', requiresAuth: true },
+                    children: [
+                        {
+                            path: '',
+                            redirect: '/purchases/orders'
+                        },
+                        {
+                            path: 'planning',
+                            name: 'purchase-planning',
+                            component: () => import('@/views/Purchases/PurchasesPlanning.vue'),
+                            meta: { title: 'Планування' }
+                        },
+                        {
+                            path: 'orders',
+                            name: 'purchase-orders',
+                            component: () => import('@/views/Purchases/PurchaseOrderList.vue'),
+                            meta: { title: 'Замовлення' }
+                        },
+                        {
+                            path: 'receipts',
+                            name: 'purchase-receipts',
+                            component: () => import('@/views/Purchases/PurchaseReceiptsList.vue'),
+                            meta: { title: 'Прибуткові накладні' }
+                        }
+                    ]
                 },
                 {
                     path: '/purchases/orders/new',
@@ -174,12 +191,6 @@ const router = createRouter({
                     name: 'purchase-order-edit',
                     component: () => import('@/views/Purchases/PurchaseOrderEditor.vue'),
                     meta: { title: 'Редагування замовлення' }
-                },
-                {
-                    path: '/purchases/receipts',
-                    name: 'purchase-receipts',
-                    component: () => import('@/views/Purchases/PurchaseReceiptsList.vue'),
-                    meta: { title: 'Прибуткові накладні' }
                 },
                 {
                     path: '/purchases/receipts/new',
