@@ -380,6 +380,7 @@ const route = useRoute()
 const router = useRouter()
 const isEditMode = computed(() => !!route.params.id)
 const submitting = ref(false)
+const loading = ref(false)
 const activeSubTab = ref('stages')
 
 // --- DATA ---
