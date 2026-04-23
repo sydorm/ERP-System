@@ -9,26 +9,27 @@
           type="warning" 
           size="small" 
           :loading="submitting" 
-          @click="saveOrder('released')" 
+          @click="saveOrder('in_progress')" 
           class="erp-btn-primary"
         >
-          Передати в роботу →
+          Запустити у виробництво →
         </el-button>
         <el-button 
-          v-if="['released', 'in_progress'].includes(form.status)"
+          v-if="form.status === 'in_progress'"
           type="success" 
           size="small" 
           :loading="submitting" 
           @click="saveOrder('completed')" 
           class="erp-btn-primary"
+          :disabled="!allStagesCompleted"
         >
-          Оприбуткувати / Завершити
+          Прийняти на склад / Готово
         </el-button>
-        <el-button size="small" @click="saveOrder()" class="erp-btn" :loading="submitting">Записати чернетку</el-button>
+        <el-button size="small" @click="saveOrder()" class="erp-btn" :loading="submitting">Зберегти зміни</el-button>
         
         <div class="erp-doc-info">
           <span class="erp-doc-title">
-            {{ isEditMode ? 'Завдання на виробництво №' + form.order_number : 'Нове завдання на виробництво' }}
+            {{ isEditMode ? 'Виробниче завдання №' + form.order_number : 'Нове завдання на виробництво' }}
           </span>
         </div>
       </div>
@@ -48,150 +49,71 @@
     <!-- STATUS STEPPER -->
     <div class="erp-stepper-container">
       <el-steps :active="statusStepIndex" finish-status="success" simple>
-        <el-step title="Чернетка" />
+        <el-step title="Заплановано" />
         <el-step title="В роботі" />
         <el-step title="Готово" />
-        <el-step title="Відвантажено" />
+        <el-step title="Передано" />
       </el-steps>
     </div>
 
     <div class="production-body">
-      <!-- LEFT SIDE: MAIN FORM -->
+      <!-- LEFT SIDE: MAIN CARD WITH TABS -->
       <div class="production-main">
         
-        <!-- BLOCK: Source -->
-        <div class="form-section-card">
-          <div class="section-header">
-            <el-icon><Link /></el-icon>
-            <span>Джерело</span>
-          </div>
-          <div class="section-body">
-            <div class="source-selector">
-              <el-radio-group v-model="form.source_type" @change="onSourceTypeChange">
-                <el-radio label="crm">З CRM замовлення</el-radio>
-                <el-radio label="quick">Швидке замовлення (вручну)</el-radio>
-              </el-radio-group>
-              
-              <div v-if="form.source_type === 'crm'" class="mt-4 source-link-fields">
-                <el-select 
-                  v-model="form.source_id" 
-                  filterable 
-                  placeholder="Оберіть замовлення CRM..." 
-                  class="w-full"
-                  @change="onSourceOrderChange"
-                >
-                  <el-option 
-                    v-for="o in salesOrders" 
-                    :key="o.id" 
-                    :label="`Замовлення №${o.order_number} від ${formatDate(o.order_date)}`" 
-                    :value="o.id"
-                  />
-                </el-select>
+        <div class="form-section-card info-summary-bar">
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <div class="summary-item">
+                <span class="label">Замовлення:</span>
+                <span class="value">{{ form.source_id ? '№' + form.order_number : 'Вручну' }}</span>
               </div>
-            </div>
-            
-            <div class="mt-6 client-selection">
-              <span class="field-label req">Клієнт (Контрагент):</span>
-              <el-select 
-                v-model="form.client_id" 
-                filterable 
-                placeholder="Пошук по контрагентах..." 
-                class="w-full mt-1"
-                :disabled="form.source_type === 'crm'"
-              >
-                <el-option v-for="c in counterparties" :key="c.id" :label="c.name" :value="c.id" />
-              </el-select>
-            </div>
-          </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="summary-item">
+                <span class="label">Виріб:</span>
+                <span class="value">{{ activeProductName }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="summary-item">
+                <span class="label">Пріоритет:</span>
+                <el-tag :type="getPriorityType(form.priority)" size="small" effect="dark">{{ priorityLabel }}</el-tag>
+              </div>
+            </el-col>
+          </el-row>
         </div>
 
-        <!-- BLOCK: Product -->
-        <div class="form-section-card mt-4">
-          <div class="section-header">
-            <el-icon><Box /></el-icon>
-            <span>Виріб та специфікація</span>
-          </div>
-          <div class="section-body">
-            <div class="product-grid">
-              <div class="field-block">
-                <span class="field-label req">Виріб:</span>
-                <el-select 
-                  v-model="activeProductId" 
-                  filterable 
-                  placeholder="Вибрати з номенклатури..." 
-                  class="w-full mt-1"
-                  @change="onProductSelect"
-                >
-                  <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-                </el-select>
-              </div>
-              <div class="field-block">
-                <span class="field-label">Характеристики:</span>
-                <div class="char-display mt-2">
-                  <el-tag v-if="selectedVariantLabel" type="info" size="small">{{ selectedVariantLabel }}</el-tag>
-                  <span v-else class="text-xs text-gray-400 italic">підтягуються автоматично</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="product-grid mt-4">
-              <div class="field-block">
-                <span class="field-label">Специфікація (BOM):</span>
-                <el-select 
-                  v-model="activeSpecId" 
-                  placeholder="Основна" 
-                  class="w-full mt-1"
-                  @change="recalculateEverything"
-                >
-                  <el-option 
-                    v-for="s in currentSpecs" 
-                    :key="s.id" 
-                    :label="s.name + (s.is_default ? ' (Авто)' : '')" 
-                    :value="s.id" 
-                  />
-                </el-select>
-              </div>
-              <div class="field-block" style="max-width: 120px;">
-                <span class="field-label req">К-сть:</span>
-                <el-input-number 
-                  v-model="activeQuantity" 
-                  :min="0.001" 
-                  class="w-full mt-1" 
-                  :controls="false"
-                  @change="recalculateEverything"
-                />
-              </div>
-            </div>
-
-            <div class="field-block mt-4">
-              <span class="field-label">Коментар до завдання:</span>
-              <el-input 
-                v-model="form.comment" 
-                type="textarea" 
-                :rows="2" 
-                placeholder="Особливі побажання майстру..." 
-                class="mt-1"
-              />
-            </div>
-          </div>
-        </div>
-
-        <el-tabs v-model="activeSubTab" class="mt-4 production-tabs">
+        <el-tabs v-model="activeSubTab" class="mt-4 production-tabs custom-tabs-card">
           <!-- TAB: Production Stages -->
           <el-tab-pane name="stages">
             <template #label>
-              <el-icon><Tools /></el-icon>&nbsp;Виробничі етапи
+              <el-badge :value="pendingStagesCount" :hidden="pendingStagesCount === 0" type="warning">
+                <el-icon><Tools /></el-icon>&nbsp;Етапи
+              </el-badge>
             </template>
             <div class="tab-content-card">
-              <el-table :data="form.assignments" border size="small" :empty-text="'Немає даних. Виберіть виріб для автоматичного заповнення етапів.'">
-                <el-table-column label="Етап" prop="stage_label" min-width="150">
+              <el-table :data="form.assignments" border size="default" :row-class-name="getStageRowClass">
+                <el-table-column label="Етап" min-width="150">
                   <template #default="scope">
-                    <span class="font-medium">{{ scope.row.stage_label }}</span>
+                    <div class="stage-cell">
+                      <el-icon v-if="scope.row.status === 'completed'" color="#67C23A"><SuccessFilled /></el-icon>
+                      <el-icon v-else-if="isCurrentStage(scope.$index)" color="#E6A23C" class="is-loading"><Loading /></el-icon>
+                      <el-icon v-else color="#909399"><Clock /></el-icon>
+                      <span class="ml-2 font-bold">{{ scope.row.stage_label || scope.row.stage?.name }}</span>
+                    </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="Майстер" min-width="200">
+                
+                <el-table-column label="Майстер" min-width="180">
                   <template #default="scope">
-                    <el-select v-model="scope.row.employee_id" filterable size="small" placeholder="Виберіть майстра..." class="w-full">
+                    <el-select 
+                      v-model="scope.row.employee_id" 
+                      filterable 
+                      size="small" 
+                      placeholder="Призначити..." 
+                      class="w-full"
+                      :disabled="scope.row.status === 'completed'"
+                    >
                       <el-option 
                         v-for="e in getQualifiedEmployees(scope.row.stage_id)" 
                         :key="e.id" 
@@ -201,9 +123,31 @@
                     </el-select>
                   </template>
                 </el-table-column>
-                <el-table-column label="Час" width="120" align="center">
+
+                <el-table-column label="Час" width="100" align="center">
                   <template #default="scope">
                     <span class="text-gray-600">{{ scope.row.planned_hours || 0 }} год</span>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="Статус" width="130" align="center">
+                  <template #default="scope">
+                    <el-tag v-if="scope.row.status === 'completed'" type="success" effect="plain" size="small">✅ Готово</el-tag>
+                    <el-tag v-else-if="isCurrentStage(scope.$index)" type="warning" effect="dark" size="small">🟡 В роботі</el-tag>
+                    <el-tag v-else type="info" effect="plain" size="small">⏳ Очікує</el-tag>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="Дії" width="120" align="center">
+                  <template #default="scope">
+                    <el-button 
+                      v-if="scope.row.status !== 'completed' && isCurrentStage(scope.$index)"
+                      type="success" 
+                      size="small" 
+                      @click="completeStage(scope.$index)"
+                    >
+                      Закрити
+                    </el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -216,43 +160,116 @@
               <el-icon><List /></el-icon>&nbsp;Матеріали
             </template>
             <div class="tab-content-card">
-              <el-table :data="form.materials" border size="small" :empty-text="'Немає даних. Виберіть виріб зі специфікацією.'">
+              <el-table :data="form.materials" border size="default">
                 <el-table-column label="Матеріал" prop="component_name" min-width="200" />
                 <el-table-column label="Потрібно" width="120" align="right">
                   <template #default="scope">
-                    {{ Number(scope.row.required_quantity).toFixed(3) }} {{ scope.row.unit_of_measure }}
+                    {{ Number(scope.row.required_quantity).toFixed(2) }} {{ scope.row.unit_of_measure }}
                   </template>
                 </el-table-column>
                 <el-table-column label="На складі" width="120" align="right">
                   <template #default="scope">
-                    <span :class="getStockClass(scope.row)">{{ Number(scope.row.stock_qty || 0).toFixed(3) }} {{ scope.row.unit_of_measure }}</span>
+                    <span :class="getStockClass(scope.row)">{{ Number(scope.row.stock_qty || 0).toFixed(2) }} {{ scope.row.unit_of_measure }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Статус" width="100" align="center">
+                <el-table-column label="Статус" width="120" align="center">
                   <template #default="scope">
-                    <el-tooltip v-if="Number(scope.row.stock_qty || 0) < Number(scope.row.required_quantity)" content="Треба замовити" placement="top">
-                      <el-icon color="#F56C6C" size="18"><CircleCloseFilled /></el-icon>
-                    </el-tooltip>
-                    <el-icon v-else color="#67C23A" size="18"><SuccessFilled /></el-icon>
+                    <el-tag v-if="parseFloat(scope.row.stock_qty || 0) >= parseFloat(scope.row.required_quantity)" type="success" size="small">✅ є</el-tag>
+                    <el-tag v-else-if="parseFloat(scope.row.stock_qty || 0) > 0" type="warning" size="small">🟡 мало</el-tag>
+                    <el-tag v-else type="danger" size="small">🔴 немає</el-tag>
                   </template>
                 </el-table-column>
               </el-table>
             </div>
           </el-tab-pane>
+
+          <!-- TAB: History -->
+          <el-tab-pane name="history">
+            <template #label>
+              <el-icon><Calendar /></el-icon>&nbsp;Історія
+            </template>
+            <div class="tab-content-card p-6">
+              <el-timeline>
+                <el-timeline-item
+                  v-for="(activity, index) in activities"
+                  :key="index"
+                  :timestamp="formatDateTime(activity.timestamp)"
+                  :type="activity.type"
+                  :color="activity.color"
+                >
+                  <div class="history-content">
+                    <strong>{{ activity.content }}</strong>
+                    <p v-if="activity.user" class="text-xs text-gray-500">Виконавець: {{ activity.user }}</p>
+                  </div>
+                </el-timeline-item>
+              </el-timeline>
+            </div>
+          </el-tab-pane>
         </el-tabs>
+
+        <!-- Basic Info (Hidden in tabs but available for creation) -->
+        <div v-if="!isEditMode || activeSubTab === 'stages'" class="form-section-card mt-4">
+          <div class="section-header">
+            <el-icon><InfoFilled /></el-icon>
+            <span>Основні дані</span>
+          </div>
+          <div class="section-body">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="field-block">
+                  <span class="field-label">Джерело:</span>
+                  <el-radio-group v-model="form.source_type" @change="onSourceTypeChange" :disabled="isEditMode">
+                    <el-radio label="crm">Замовлення CRM</el-radio>
+                    <el-radio label="quick">Швидке (вручну)</el-radio>
+                  </el-radio-group>
+                </div>
+              </el-col>
+              <el-col :span="12" v-if="form.source_type === 'crm'">
+                <div class="field-block">
+                  <el-select v-model="form.source_id" placeholder="Оберіть замовлення CRM..." class="w-full" @change="onSourceOrderChange" :disabled="isEditMode">
+                    <el-option v-for="o in salesOrders" :key="o.id" :label="'№' + o.order_number" :value="o.id" />
+                  </el-select>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20" class="mt-4">
+               <el-col :span="12">
+                  <span class="field-label req">Виріб:</span>
+                  <el-select v-model="activeProductId" filterable placeholder="Вибрати виріб..." class="w-full mt-1" @change="onProductSelect" :disabled="isEditMode">
+                    <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+                  </el-select>
+               </el-col>
+               <el-col :span="6">
+                  <span class="field-label req">К-сть:</span>
+                  <el-input-number v-model="activeQuantity" :min="1" class="w-full mt-1" @change="recalculateEverything" :disabled="isEditMode" />
+               </el-col>
+               <el-col :span="6">
+                  <span class="field-label">Пріоритет:</span>
+                  <el-select v-model="form.priority" class="w-full mt-1">
+                    <el-option label="Звичайний" value="normal" />
+                    <el-option label="Терміновий" value="urgent" />
+                    <el-option label="Критичний" value="critical" />
+                  </el-select>
+               </el-col>
+            </el-row>
+            <div class="mt-4">
+              <span class="field-label">Коментар до завдання:</span>
+              <el-input v-model="form.comment" type="textarea" :rows="2" class="mt-1" placeholder="Замітка для майстрів..." />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- RIGHT SIDE: SUMMARY PANELS -->
+      <!-- RIGHT SIDE: SUMMARY & ACTIONS -->
       <div class="production-sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-card-title">Параметри виконання</div>
+          <div class="sidebar-card-title">Виконання</div>
           <div class="sidebar-body">
             <div class="field-block">
-              <span class="field-label">Дедлайн (завершити до):</span>
+              <span class="field-label">Дедлайн:</span>
               <el-date-picker 
                 v-model="form.due_date" 
                 type="date" 
-                placeholder="Оберіть дату..." 
                 class="w-full mt-1" 
                 format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
@@ -260,19 +277,8 @@
             </div>
             
             <div class="field-block mt-4">
-              <span class="field-label">Пріоритет замовлення:</span>
-              <el-select v-model="form.priority" class="w-full mt-1">
-                <el-option label="Звичайний" value="normal" />
-                <el-option label="Терміновий" value="urgent" />
-                <el-option label="Критичний" value="critical" />
-              </el-select>
-            </div>
-
-            <div class="field-block mt-4">
-              <span class="field-label">Склад виробництва:</span>
-              <el-select v-model="form.warehouse_id" class="w-full mt-1">
-                <el-option v-for="wh in warehouses" :key="wh.id" :label="wh.name" :value="wh.id" />
-              </el-select>
+              <span class="field-label text-xs uppercase text-gray-400">Прогрес:</span>
+              <el-progress :percentage="totalProgress" :status="totalProgress === 100 ? 'success' : ''" class="mt-2" />
             </div>
           </div>
         </div>
@@ -280,45 +286,27 @@
         <div class="sidebar-card mt-4 summary-box" :class="priorityClass">
           <div class="summary-rows">
             <div class="sum-row">
-              <span>Всього часу:</span>
-              <span class="val">{{ totalPlannedHours || 0 }} год</span>
+               <span>Загальний час:</span>
+               <span class="val">{{ totalPlannedHours }} год</span>
             </div>
             <div class="sum-row">
-              <span>Матеріали:</span>
-              <span v-if="hasMaterialShortage" class="val text-orange-600">⚠️ не всі є</span>
-              <span v-else class="val text-green-600">✅ в наявності</span>
+               <span>Виконано:</span>
+               <span class="val">{{ completedHours }} год</span>
             </div>
-          </div>
-          <div class="sum-divider"></div>
-          <div class="priority-indicator">
-            Пріоритет: <strong>{{ priorityLabel }}</strong>
           </div>
         </div>
 
-        <div class="sidebar-card mt-4 history-card">
-          <div class="sidebar-card-title">Історія подій</div>
-          <el-timeline class="mt-4">
-            <el-timeline-item
-              v-for="(activity, index) in activities"
-              :key="index"
-              :timestamp="formatDateTime(activity.timestamp)"
-              :type="activity.type"
-            >
-              {{ activity.content }}
-            </el-timeline-item>
-          </el-timeline>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
-  ArrowLeft, Plus, MoreFilled, Printer, CircleClose, 
-  Link, Box, Tools, List, SuccessFilled, CircleCloseFilled
+  ArrowLeft, Plus, MoreFilled, Printer, CircleClose, Loading,
+  Tools, List, Calendar, InfoFilled, Clock, SuccessFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -332,7 +320,6 @@ const activeSubTab = ref('stages')
 
 // --- DATA ---
 const products = ref([])
-const counterparties = ref([])
 const warehouses = ref([])
 const employees = ref([])
 const salesOrders = ref([])
@@ -340,7 +327,6 @@ const productionStages = ref([])
 const currentSpecs = ref([])
 const employeeRoles = ref([])
 
-// Form state
 const form = reactive({
   order_number: 'Авто',
   order_date: new Date().toISOString(),
@@ -358,70 +344,90 @@ const form = reactive({
   assignments: []
 })
 
-// UI-helper refs for active product
 const activeProductId = ref(null)
-const activeVariantId = ref(null)
-const activeSpecId = ref(null)
 const activeQuantity = ref(1)
-
-const activities = ref([
-  { content: 'Завдання створено', timestamp: new Date().toISOString(), type: 'primary' }
-])
+const activeSpecId = ref(null)
+const activities = ref([])
 
 // --- COMPUTED ---
-const statusStepIndex = computed(() => {
-  const s = form.status
-  if (s === 'draft') return 1
-  if (['released', 'in_progress'].includes(s)) return 2
-  if (s === 'completed') return 3
-  if (s === 'shipped') return 4
-  return 0
-})
-
-const selectedVariantLabel = computed(() => {
-  if (!activeVariantId.value) return null
+const activeProductName = computed(() => {
   const p = products.value.find(x => x.id === activeProductId.value)
-  if (!p || !p.variants) return null
-  const v = p.variants.find(x => x.id === activeVariantId.value)
-  return v ? (v.name || v.sku) : null
+  return p ? p.name : 'Виріб не обрано'
 })
 
-const totalPlannedHours = computed(() => {
-  return form.assignments.reduce((sum, a) => sum + (a.planned_hours || 0), 0)
+const statusStepIndex = computed(() => {
+  const map = { draft: 1, in_progress: 2, completed: 3, shipped: 4 }
+  return map[form.status] || 0
 })
 
-const hasMaterialShortage = computed(() => {
-  return form.materials.some(m => Number(m.stock_qty || 0) < Number(m.required_quantity))
+const pendingStagesCount = computed(() => {
+  return form.assignments.filter(a => a.status !== 'completed').length
 })
 
-const priorityLabel = computed(() => {
-  const map = { normal: 'Звичайний', urgent: 'Терміновий', critical: 'Критичний' }
-  return map[form.priority] || 'Звичайний'
+const allStagesCompleted = computed(() => {
+  return form.assignments.length > 0 && pendingStagesCount.value === 0
 })
 
-const priorityClass = computed(() => {
-  return `priority-${form.priority}`
+const totalProgress = computed(() => {
+  if (form.assignments.length === 0) return 0
+  const done = form.assignments.filter(a => a.status === 'completed').length
+  return Math.round((done / form.assignments.length) * 100)
 })
+
+const totalPlannedHours = computed(() => form.assignments.reduce((sum, a) => sum + (a.planned_hours || 0), 0))
+const completedHours = computed(() => form.assignments.filter(a => a.status === 'completed').reduce((sum, a) => sum + (a.planned_hours || 0), 0))
+
+const priorityLabel = computed(() => ({ normal: 'Звичайний', urgent: 'Терміновий', critical: 'Критичний' }[form.priority]))
+const priorityClass = computed(() => `priority-${form.priority}`)
 
 // --- METHODS ---
 const goBack = () => router.push('/production/orders')
 
+const isCurrentStage = (index) => {
+  if (form.status !== 'in_progress') return false
+  const firstPendingIndex = form.assignments.findIndex(a => a.status !== 'completed')
+  return index === firstPendingIndex
+}
+
+const getStageRowClass = ({ row, rowIndex }) => {
+  if (row.status === 'completed') return 'stage-completed'
+  if (isCurrentStage(rowIndex)) return 'stage-active'
+  return ''
+}
+
+const completeStage = async (index) => {
+  const stage = form.assignments[index]
+  stage.status = 'completed'
+  
+  activities.value.unshift({
+    content: `Етап "${stage.stage_label || stage.stage?.name}" закрито`,
+    timestamp: new Date().toISOString(),
+    type: 'success',
+    user: employees.value.find(e => e.id === stage.employee_id)?.full_name || 'Невідомий'
+  })
+
+  // Auto-activate next stage info message
+  if (index < form.assignments.length - 1) {
+    ElMessage.success(`Етап закрито. Наступний: ${form.assignments[index+1].stage_label || form.assignments[index+1].stage?.name}`)
+  } else {
+    ElMessage.success('Всі етапи завершено! Можна закривати завдання.')
+  }
+  
+  // Save changes locally and potentially to server
+  if (isEditMode.value) await saveOrder()
+}
+
 const onSourceTypeChange = () => {
   form.source_id = null
-  if (form.source_type === 'quick') form.client_id = null
+  form.client_id = null
 }
 
 const onSourceOrderChange = (orderId) => {
   const order = salesOrders.value.find(o => o.id === orderId)
-  if (order) {
-    form.client_id = order.counterparty_id
-    if (order.lines && order.lines.length > 0) {
-      const line = order.lines[0]
-      activeProductId.value = line.product_id
-      activeVariantId.value = line.variant_id
-      activeQuantity.value = line.quantity
-      onProductSelect()
-    }
+  if (order && order.lines?.length > 0) {
+    activeProductId.value = order.lines[0].product_id
+    activeQuantity.value = order.lines[0].quantity
+    onProductSelect()
   }
 }
 
@@ -430,304 +436,117 @@ const onProductSelect = async () => {
   try {
     const res = await api.get(`/api/v1/products/${activeProductId.value}/specifications`)
     currentSpecs.value = res.data
-    if (res.data.length > 0) {
-      const def = res.data.find(s => s.is_default) || res.data[0]
-      activeSpecId.value = def.id
-    }
+    activeSpecId.value = res.data.find(s => s.is_default)?.id || res.data[0]?.id
     recalculateEverything()
-  } catch (e) {
-    ElMessage.error('Помилка завантаження специфікацій')
-  }
+  } catch (e) { ElMessage.error('Помилка завантаження специфікацій') }
 }
 
 const recalculateEverything = () => {
-  if (!activeProductId.value || !activeSpecId.value) return
+  if (!activeProductId.value) return
   
   const spec = currentSpecs.value.find(s => s.id === activeSpecId.value)
-  if (!spec) return
+  
+  form.lines = [{ product_id: activeProductId.value, quantity: activeQuantity.value, specification_id: activeSpecId.value }]
+  
+  if (spec) {
+    form.materials = (spec.items || []).map(item => ({
+      component_id: item.component_id,
+      component_name: item.component?.name || 'Матеріал',
+      required_quantity: item.quantity * activeQuantity.value,
+      unit_of_measure: item.unit_of_measure,
+      stock_qty: 0 // In real app, fetch stock
+    }))
+  }
 
-  // 1. Line
-  form.lines = [{
-    product_id: activeProductId.value,
-    variant_id: activeVariantId.value,
-    specification_id: activeSpecId.value,
-    quantity: activeQuantity.value,
-    produced_quantity: 0
-  }]
-
-  // 2. Materials
-  form.materials = (spec.items || []).map(item => ({
-    component_id: item.component_id,
-    component_name: item.component?.name || 'Компонент',
-    required_quantity: (item.quantity || 1) * activeQuantity.value,
-    unit_of_measure: item.unit_of_measure || 'шт',
-    stock_qty: 0
+  // Generate generic stages if no BOM v2 yet
+  const stages = productionStages.value.slice(0, 4) // Stub for v1
+  form.assignments = stages.map(s => ({
+    stage_id: s.id,
+    stage_label: s.name,
+    employee_id: findBestMaster(s.id),
+    planned_hours: 1.5,
+    status: 'pending'
   }))
-
-  // 3. Stages & Assignments
-  const stages = productionStages.value.filter(s => s.is_active)
-  form.assignments = stages.map(s => {
-    const stageId = s.id
-    const assignedEmpId = findBestMaster(stageId)
-    return {
-      stage_id: stageId,
-      stage_label: s.name,
-      employee_id: assignedEmpId,
-      planned_hours: 1.0
-    }
-  })
 }
 
 const findBestMaster = (stageId) => {
-  const qualified = getQualifiedEmployees(stageId)
-  if (qualified.length === 1) return qualified[0].id
-  
-  // Try to find by Main role (using placeholder is_main for now)
-  const mainRole = qualified.find(e => {
-    const roles = employeeRoles.value.filter(r => r.employee_id === e.id && r.role_id === stageId)
-    // Here we should check the ROLE_TYPE dictionary, but for simplicity:
-    return roles.length > 0 && roles[0].is_active
-  })
-  return mainRole ? mainRole.id : null
+  const qualified = employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
+  return qualified.length > 0 ? qualified[0].id : null
 }
 
-const getQualifiedEmployees = (stageId) => {
-  return employees.value.filter(e => {
-    return employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId)
-  })
-}
+const getQualifiedEmployees = (stageId) => employees.value.filter(e => employeeRoles.value.some(r => r.employee_id === e.id && r.role_id === stageId))
 
-const getStockClass = (row) => {
-  if (Number(row.stock_qty || 0) >= Number(row.required_quantity)) return 'text-green-600 font-bold'
-  return 'text-red-600 font-bold'
-}
-
-const formatDate = (d) => d ? dayjs(d).format('DD.MM.YYYY') : ''
-const formatDateTime = (d) => d ? dayjs(d).format('DD.MM.YYYY HH:mm') : ''
+const getStockClass = (row) => parseFloat(row.stock_qty || 0) >= parseFloat(row.required_quantity) ? 'text-green-600' : 'text-red-600'
 
 const saveOrder = async (targetStatus) => {
-  if (!activeProductId.value) {
-    ElMessage.warning('Оберіть виріб для виробництва')
-    return
-  }
-  
   if (targetStatus) form.status = targetStatus
-  
   submitting.value = true
   try {
-    const payload = { ...form }
     if (isEditMode.value) {
-      await api.put(`/api/v1/production/${route.params.id}`, payload)
-      ElMessage.success('Завдання збережено')
+      await api.put(`/api/v1/production/${route.params.id}`, form)
+      ElMessage.success('Збережено')
     } else {
-      const res = await api.post('/api/v1/production/', payload)
-      ElMessage.success('Завдання створено')
+      const res = await api.post('/api/v1/production/', form)
+      ElMessage.success('Коментар: Завдання створено')
       router.push(`/production/orders/${res.data.id}`)
     }
-  } catch (e) {
-    ElMessage.error(e.response?.data?.detail || 'Помилка системи')
-  } finally {
-    submitting.value = false
-  }
+  } catch (e) { ElMessage.error('Помилка збереження') }
+  finally { submitting.value = false }
 }
 
-const handleCancel = () => {
-  ElMessageBox.confirm('Ви впевнені, що хочете скасувати це завдання?', 'Попередження', {
-    confirmButtonText: 'Так, скасувати',
-    cancelButtonText: 'Ні',
-    type: 'warning'
-  }).then(async () => {
-    await saveOrder('cancelled')
-    ElMessage.info('Завдання скасовано')
-  })
-}
-
+const handleCancel = () => ElMessageBox.confirm('Скасувати завдання?', 'Увага', { type: 'warning' }).then(() => saveOrder('cancelled'))
 const handlePrint = () => window.print()
+const formatDateTime = (d) => d ? dayjs(d).format('DD.MM HH:mm') : ''
 
 const initData = async () => {
   try {
-    const [pRes, cRes, wRes, eRes, sRes, dRes, rolesRes] = await Promise.all([
-      api.get('/api/v1/products?limit=1000'),
-      api.get('/api/v1/counterparties'),
-      api.get('/api/v1/warehouses'),
-      api.get('/api/v1/employees'),
-      api.get('/api/v1/orders?limit=100'),
-      api.get('/api/v1/dictionaries/PRODUCTION_STAGE'),
-      api.get('/api/v1/employees/roles')
+    const [pRes, wRes, eRes, sRes, dRes, rolesRes] = await Promise.all([
+      api.get('/api/v1/products'), api.get('/api/v1/warehouses'),
+      api.get('/api/v1/employees'), api.get('/api/v1/orders'),
+      api.get('/api/v1/dictionaries/PRODUCTION_STAGE'), api.get('/api/v1/employees/roles')
     ])
-    products.value = pRes.data
-    counterparties.value = cRes.data
-    warehouses.value = wRes.data
-    employees.value = eRes.data
-    salesOrders.value = sRes.data
-    productionStages.value = dRes.data?.items || []
+    products.value = pRes.data; warehouses.value = wRes.data; employees.value = eRes.data;
+    salesOrders.value = sRes.data; productionStages.value = dRes.data?.items || [];
     employeeRoles.value = rolesRes.data || []
 
     if (isEditMode.value) {
-      const orderRes = await api.get(`/api/v1/production/${route.params.id}`)
-      Object.assign(form, orderRes.data)
-      if (form.lines.length > 0) {
-        activeProductId.value = form.lines[0].product_id
-        activeVariantId.value = form.lines[0].variant_id
-        activeSpecId.value = form.lines[0].specification_id
-        activeQuantity.value = form.lines[0].quantity
-        await onProductSelect()
-      }
-    } else {
-      if (warehouses.value.length > 0) form.warehouse_id = warehouses.value[0].id
-      if (products.value.length > 0 && route.query.company_id) form.company_id = route.query.company_id
-      
-      const qBase = route.query.base_order
-      if (qBase) {
-        form.source_type = 'crm'
-        form.source_id = qBase
-        onSourceOrderChange(qBase)
-      }
+      const res = await api.get(`/api/v1/production/${route.params.id}`)
+      Object.assign(form, res.data)
+      activeProductId.value = form.lines[0]?.product_id
+      activeQuantity.value = form.lines[0]?.quantity
+      activities.value = [{ content: 'Завдання створено', timestamp: form.created_at, type: 'info' }]
     }
-  } catch (e) {
-    ElMessage.error('Помилка завантаження даних')
-  }
+  } catch (e) { ElMessage.error('Помилка завантаження') }
 }
 
 onMounted(initData)
 </script>
 
 <style scoped>
-.production-body {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
-  align-items: start;
-  margin-top: 20px;
-}
+.production-body { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-top: 20px; }
+.form-section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+.info-summary-bar { padding: 15px 20px; border-bottom: 2px solid #409EFF; }
+.summary-item .label { font-size: 11px; color: #909399; text-transform: uppercase; display: block; }
+.summary-item .value { font-weight: 700; color: #303133; font-size: 16px; }
 
-.form-section-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-}
+.section-header { padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.section-body { padding: 16px; }
 
-.section-header {
-  padding: 10px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #374151;
-}
+.tab-content-card { background: #fff; padding: 0; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; border-top: none; }
 
-.section-body {
-  padding: 16px;
-}
+.stage-cell { display: flex; align-items: center; }
+.stage-active { background-color: #fdf6ec !important; }
+.stage-completed { opacity: 0.7; background-color: #f0f9eb !important; }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
+.sidebar-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+.sidebar-card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px; }
 
-.field-block {
-  display: flex;
-  flex-direction: column;
-}
+.priority-critical { border: 2px solid #ef4444 !important; animation: pulse-red 2s infinite; }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-.field-label {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
+.field-label { font-size: 12px; color: #6b7280; font-weight: 500; }
+.req::after { content: '*'; color: #ef4444; }
 
-.req::after {
-  content: '*';
-  color: #ef4444;
-  margin-left: 2px;
-}
-
-.sidebar-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.sidebar-card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
-  padding-bottom: 8px;
-}
-
-.summary-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sum-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #4b5563;
-}
-
-.sum-row .val {
-  font-weight: 600;
-  color: #111827;
-}
-
-.sum-divider {
-  height: 1px;
-  background: #f3f4f6;
-  margin: 12px 0;
-}
-
-.priority-indicator {
-  font-size: 13px;
-}
-
-/* Pulsating animation for critical priority */
-@keyframes pulse-red {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-.priority-critical {
-  border: 2px solid #ef4444 !important;
-  animation: pulse-red 2s infinite;
-}
-
-.priority-urgent {
-  border: 1px solid #f59e0b !important;
-}
-
-.priority-normal {
-  border: 1px solid #3b82f6 !important;
-}
-
-.erp-stepper-container {
-  background: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  margin-top: 20px;
-}
-
-.tab-content-card {
-  background: #fff;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 0 0 8px 8px;
-  border-top: none;
-}
-
-:deep(.el-steps--simple) {
-  padding: 0;
-  background: transparent;
-}
+.custom-tabs-card :deep(.el-tabs__header) { margin-bottom: 0; }
+.history-content p { margin: 4px 0 0 0; }
 </style>
