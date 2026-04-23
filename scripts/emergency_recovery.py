@@ -207,14 +207,24 @@ def recovery():
                 })
             print("OK: Attendance Statuses seeded.")
 
-            # 9. Update ProductionOrder table with CRM standard fields
-            print("Updating production_orders table structure...")
+            # 9. Update ProductionOrder table with ALL missing fields
+            print("Updating production_orders table structure (full sync)...")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS due_date TIMESTAMP;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS comment TEXT;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_type VARCHAR(20) DEFAULT 'quick';")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS source_id UUID;")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS client_id UUID;")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';")
+            
+            # Critical relations
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS company_id UUID;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS warehouse_id UUID;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS base_order_id UUID;")
+            run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS created_by UUID;")
             
             # Ensure order_number and order_date are not null for existing rows
             run_sql("UPDATE production_orders SET order_number = 'P' || substr(id::text, 1, 8) WHERE order_number IS NULL;")
