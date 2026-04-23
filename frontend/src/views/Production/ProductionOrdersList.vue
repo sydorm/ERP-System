@@ -60,6 +60,23 @@
             </el-tag>
           </template>
         </el-table-column>
+
+        <el-table-column label="Клієнт" min-width="180">
+          <template #default="{ row }">
+            <span v-if="row.client_id" class="client-link">
+              <el-icon><User /></el-icon> {{ row.client?.name || 'Завантаження...' }}
+            </span>
+            <span v-else class="text-gray-400">Швидке зам.</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Пріоритет" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getPriorityType(row.priority)" size="small" :class="{ 'pulse-row': row.priority === 'critical' }">
+              {{ getPriorityLabel(row.priority) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         
         <el-table-column label="Пов'язаний документ" min-width="180">
           <template #default="{ row }">
@@ -116,7 +133,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Refresh, Search, Edit, Delete, Document } from '@element-plus/icons-vue'
+import { Plus, Refresh, Search, Edit, Delete, Document, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
@@ -217,6 +234,17 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
+const getPriorityLabel = (p) => {
+  const map = { normal: 'Звичайний', urgent: 'Терміновий', critical: 'Критичний' }
+  return map[p] || 'Звичайний'
+}
+
+const getPriorityType = (p) => {
+  if (p === 'critical') return 'danger'
+  if (p === 'urgent') return 'warning'
+  return 'primary'
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -246,6 +274,23 @@ onMounted(() => {
   min-width: 80px;
   text-align: center;
   font-weight: 500;
+}
+
+.client-link {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pulse-row {
+  animation: pulse-mini 2s infinite;
+}
+
+@keyframes pulse-mini {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 .doc-badge {
