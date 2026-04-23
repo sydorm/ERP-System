@@ -158,8 +158,8 @@
              
              <el-table-column label="Виконавець" min-width="200">
                 <template #default="scope">
-                    <el-select v-model="scope.row.brigade_id" placeholder="Виберіть бригаду..." class="w-full" clearable>
-                       <el-option v-for="b in getFilteredBrigades(scope.row.stage_id)" :key="b.id" :label="b.name" :value="b.id" />
+                    <el-select v-model="scope.row.brigade_id" placeholder="Виберіть виконавця..." class="w-full" clearable>
+                       <el-option v-for="p in getFilteredPerformers(scope.row.stage_id)" :key="p.id" :label="p.name" :value="p.id" />
                     </el-select>
                 </template>
              </el-table-column>
