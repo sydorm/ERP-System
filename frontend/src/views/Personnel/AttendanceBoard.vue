@@ -154,10 +154,10 @@
                 </el-tooltip>
               </td>
               <td class="summary-col">
-                <div class="row-stats">
-                  <span class="stat-p">Р: {{ getRowStats(emp.id).P }}</span>
-                  <span class="stat-v">В: {{ getRowStats(emp.id).V }}</span>
-                  <span class="stat-l">Х: {{ getRowStats(emp.id).L }}</span>
+                <div class="row-stats" v-if="employeeStats[emp.id]">
+                  <span class="stat-p">Р:{{ employeeStats[emp.id].P }}</span>
+                  <span class="stat-v">В:{{ employeeStats[emp.id].V }}</span>
+                  <span class="stat-l">Х:{{ employeeStats[emp.id].L }}</span>
                 </div>
               </td>
             </tr>
@@ -204,7 +204,7 @@ const statusList = [
   { code: 'П', label: 'Працював', color: '#67C23A', saId: null }, // Green
   { code: 'В', label: 'Вихідний', color: '#909399', saId: null }, // Grey
   { code: 'Л', label: 'Лікарняний', color: '#E6A23C', saId: null }, // Yellow
-  { code: 'ВП', label: 'Відпустка', color: '#409EFF', saId: null }, // Blue
+  { code: 'Вд', label: 'Відпустка', color: '#409EFF', saId: null }, // Blue
   { code: '!', label: 'Без причини', color: '#F56C6C', saId: null }  // Red
 ]
 
@@ -318,9 +318,24 @@ const currentVacationCount = computed(() => {
   let count = 0
   const today = dayjs().date()
   employees.value.forEach(emp => {
-    if (getCellText(emp.id, today) === 'ВП') count++
+    if (getCellText(emp.id, today) === 'Вд') count++
   })
   return count
+})
+
+const employeeStats = computed(() => {
+  const map = {}
+  employees.value.forEach(emp => {
+    const stats = { P: 0, V: 0, L: 0 }
+    for (let d = 1; d <= daysInMonth.value; d++) {
+      const txt = getCellText(emp.id, d)
+      if (txt === 'П') stats.P++
+      else if (txt === 'В') stats.V++
+      else if (txt === 'Л') stats.L++
+    }
+    map[emp.id] = stats
+  })
+  return map
 })
 
 const getRowStats = (empId) => {
@@ -335,12 +350,12 @@ const getRowStats = (empId) => {
 }
 
 const getColumnStats = (day) => {
-  if (employees.value.length === 0) return '0/0'
+  if (employees.value.length === 0) return '0%'
   let present = 0
   employees.value.forEach(emp => {
     if (getCellText(emp.id, day) === 'П') present++
   })
-  return `${present}/${employees.value.length}`
+  return Math.round((present / employees.value.length) * 100) + '%'
 }
 
 // 6. Data Fetching
@@ -651,9 +666,9 @@ onMounted(fetchData)
   font-weight: 600;
 }
 
-.stat-p { color: #67C23A; }
-.stat-v { color: #909399; }
-.stat-l { color: #E6A23C; }
+.stat-p { color: #2d661c; }
+.stat-v { color: #4b5563; }
+.stat-l { color: #92400e; }
 
 .footer-summary {
   background: #f9fafb;
