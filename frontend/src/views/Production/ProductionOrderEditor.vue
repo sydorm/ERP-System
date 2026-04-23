@@ -376,8 +376,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
 
+import { useUserStore } from '@/stores/user'
+
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const isEditMode = computed(() => !!route.params.id)
 const submitting = ref(false)
 const loading = ref(false)
