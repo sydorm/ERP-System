@@ -583,7 +583,7 @@ const recalculateEverything = () => {
         stage_label: s.stage?.name || 'Етап',
         brigade_id: s.brigade_id,
         employee_id: findBestMaster(s.brigade_id),
-        planned_hours: parseFloat(s.duration_hours || 0) * activeQuantity.value,
+        planned_hours: Number(s.duration_hours || 0) * activeQuantity.value,
         status: 'pending'
       }))
     } else {
@@ -593,7 +593,7 @@ const recalculateEverything = () => {
         stage_id: s.id,
         stage_label: s.name,
         employee_id: findBestMaster(s.id),
-        planned_hours: 1.0 * activeQuantity.value,
+        planned_hours: Number(1.0 * activeQuantity.value),
         status: 'pending'
       }))
     }

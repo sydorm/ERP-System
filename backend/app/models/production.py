@@ -107,7 +107,7 @@ class ProductionOrderWorkerAssignment(BaseModel):
     __tablename__ = "production_order_assignments"
 
     production_order_id = Column(UUID(as_uuid=True), ForeignKey("production_orders.id", ondelete="CASCADE"), nullable=False)
-    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=True)
     
     # Stage Link (from PRODUCTION_STAGE dictionary)
     stage_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
