@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
@@ -158,9 +158,9 @@
              
              <el-table-column label="Виконавець" min-width="200">
                 <template #default="scope">
-                   <el-select v-model="scope.row.brigade_id" placeholder="Виберіть бригаду..." class="w-full" clearable>
-                      <el-option v-for="b in brigadesList" :key="b.id" :label="b.name" :value="b.id" />
-                   </el-select>
+                    <el-select v-model="scope.row.brigade_id" placeholder="Виберіть бригаду..." class="w-full" clearable>
+                       <el-option v-for="b in getFilteredBrigades(scope.row.stage_id)" :key="b.id" :label="b.name" :value="b.id" />
+                    </el-select>
                 </template>
              </el-table-column>
              
@@ -440,12 +440,32 @@ const dictStore = useDictionaryStore()
 const uomOptions = ref([])
 
 onMounted(async () => {
-    uomOptions.value = await dictStore.fetchCategory('UOM')
-    productionStages.value = await dictStore.fetchCategory('PRODUCTION_STAGE')
-    brigadesList.value = (await api.get('/api/v1/brigades')).data
-    loadSpecifications()
-    loadProductAttributes()
+    loading.value = true
+    try {
+        const results = await Promise.allSettled([
+            dictStore.fetchCategory('UOM'),
+            dictStore.fetchCategory('PRODUCTION_STAGE'),
+            api.get('/api/v1/brigades')
+        ])
+
+        if (results[0].status === 'fulfilled') uomOptions.value = results[0].value;
+        if (results[1].status === 'fulfilled') productionStages.value = results[1].value;
+        if (results[2].status === 'fulfilled') brigadesList.value = results[2].value.data;
+        
+        await loadSpecifications()
+        await loadProductAttributes()
+    } catch (e) {
+        console.error('Specification tab init error', e)
+    } finally {
+        loading.value = false
+    }
 })
+
+// Helper to filter brigades by stage
+const getFilteredBrigades = (stageId) => {
+    if (!stageId) return brigadesList.value
+    return brigadesList.value.filter(b => b.stage_id === stageId || !b.stage_id)
+}
 
 const getUomName = (code) => {
     if (!code) return 'шт'
