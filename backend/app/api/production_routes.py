@@ -72,7 +72,10 @@ def create_production_order(
                     production_order_id=db_order.id,
                     employee_id=assign_in.employee_id,
                     stage_id=assign_in.stage_id,
-                    quantity=assign_in.quantity
+                    brigade_id=assign_in.brigade_id,
+                    quantity=assign_in.quantity,
+                    planned_hours=assign_in.planned_hours,
+                    status=assign_in.status
                 )
                 db.add(db_assign)
                 
@@ -273,7 +276,10 @@ def update_production_order(
                     production_order_id=db_order.id,
                     employee_id=assign_in["employee_id"],
                     stage_id=assign_in["stage_id"],
-                    quantity=assign_in.get("quantity")
+                    brigade_id=assign_in.get("brigade_id"),
+                    quantity=assign_in.get("quantity"),
+                    planned_hours=assign_in.get("planned_hours", 0.0),
+                    status=assign_in.get("status", "pending")
                 )
                 db.add(db_assign)
 

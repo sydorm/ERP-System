@@ -58,7 +58,7 @@
             <el-icon><Tools /></el-icon>
             <span>Виробництво</span>
           </template>
-          <el-menu-item index="/production/orders">Завдання на виробництво</el-menu-item>
+          <el-menu-item index="/production/orders">Завдання</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="finance" v-if="userStore.hasPermission('finance.view')">

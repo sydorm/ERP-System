@@ -232,6 +232,69 @@
                 </div>
               </el-col>
             </el-row>
+
+            <!-- Product Characteristics Section -->
+            <div v-if="productAttributes.length > 0" class="mt-6 characteristics-section">
+              <div class="field-label mb-2 flex items-center gap-2">
+                <el-icon><Operation /></el-icon>
+                <span>Характеристики виробу:</span>
+              </div>
+              <el-row :gutter="20">
+                <el-col v-for="attr in productAttributes" :key="attr.id" :span="8" class="mb-4">
+                  <span class="field-label">{{ attr.name }}:</span>
+                  
+                  <!-- DIMENSIONS: W x H -->
+                  <div v-if="attr.type === 'DIMENSIONS'" class="dims-row mt-1">
+                    <el-input-number
+                      v-model="dimSelections[attr.id].w"
+                      :min="0" :precision="0" :controls="false"
+                      placeholder="Ш"
+                      class="dim-input"
+                    />
+                    <span class="dims-sep">×</span>
+                    <el-input-number
+                      v-model="dimSelections[attr.id].h"
+                      :min="0" :precision="0" :controls="false"
+                      placeholder="В"
+                      class="dim-input"
+                    />
+                    <span class="dims-unit">мм</span>
+                  </div>
+
+                  <!-- COLOR / OTHER: Dropdown -->
+                  <el-select
+                    v-else
+                    v-model="selections[attr.id]"
+                    :placeholder="'Оберіть ' + attr.name.toLowerCase() + '...'"
+                    class="w-full mt-1"
+                    filterable
+                    :allow-create="attr.allow_manual_input"
+                    default-first-option
+                  >
+                    <template #prefix>
+                      <el-icon v-if="attr.type === 'COLOR'"><Brush /></el-icon>
+                      <el-icon v-else><Operation /></el-icon>
+                    </template>
+                    <el-option
+                      v-for="opt in (attr.options || [])"
+                      :key="opt.id"
+                      :label="opt.value"
+                      :value="opt.id"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span
+                          v-if="opt.color_code"
+                          class="w-3 h-3 rounded-full border"
+                          :style="{ backgroundColor: opt.color_code }"
+                        ></span>
+                        <span>{{ opt.value }}</span>
+                      </div>
+                    </option>
+                  </el-select>
+                </el-col>
+              </el-row>
+            </div>
+
             <el-row :gutter="20" class="mt-4">
                <el-col :span="12">
                   <span class="field-label req">Виріб:</span>
@@ -306,7 +369,8 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
   ArrowLeft, Plus, MoreFilled, Printer, CircleClose, Loading,
-  Tools, List, Calendar, InfoFilled, Clock, SuccessFilled
+  Tools, List, Calendar, InfoFilled, Clock, SuccessFilled,
+  Brush, Operation, EditPen
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -327,6 +391,13 @@ const productionStages = ref([])
 const brigades = ref([])
 const currentSpecs = ref([])
 const employeeRoles = ref([])
+
+// Characteristics state
+const productAttributes = ref([])
+const attributeLoading = ref(false)
+const selections = ref({})
+const dimSelections = ref({})
+const currentProduct = computed(() => products.value.find(p => p.id === activeProductId.value))
 
 const form = reactive({
   order_number: 'Авто',
@@ -443,8 +514,41 @@ const onProductSelect = async () => {
     const res = await api.get(`/api/v1/products/${activeProductId.value}/specifications`)
     currentSpecs.value = res.data
     activeSpecId.value = res.data.find(s => s.is_default)?.id || res.data[0]?.id
+    
+    // Fetch attributes if product has category
+    const p = products.value.find(x => x.id === activeProductId.value)
+    if (p && p.category) {
+      await fetchCategoryAttributes(p.category)
+    } else {
+      productAttributes.value = []
+    }
+    
     recalculateEverything()
   } catch (e) { ElMessage.error('Помилка завантаження специфікацій') }
+}
+
+const fetchCategoryAttributes = async (category) => {
+  attributeLoading.value = true
+  try {
+    const res = await api.get(`/api/v1/attributes/category/${category}`)
+    productAttributes.value = (res.data || []).map(ca => ({
+      ...ca.attribute,
+      is_required: ca.is_required
+    }))
+    
+    // Initialize selections
+    selections.value = {}
+    dimSelections.value = {}
+    productAttributes.value.forEach(attr => {
+      if (attr.type === 'DIMENSIONS') {
+        dimSelections.value[attr.id] = { w: null, h: null }
+      }
+    })
+  } catch (e) {
+    console.error('Failed to load attributes', e)
+  } finally {
+    attributeLoading.value = false
+  }
 }
 
 const recalculateEverything = () => {
@@ -523,15 +627,37 @@ const getQualifiedEmployees = (stageId, brigadeId) => {
 const getStockClass = (row) => parseFloat(row.stock_qty || 0) >= parseFloat(row.required_quantity) ? 'text-green-600' : 'text-red-600'
 
 const saveOrder = async (targetStatus) => {
+  if (!activeProductId.value || !activeQuantity.value) {
+    ElMessage.warning('Оберіть виріб та кількість')
+    return
+  }
+  
+  if (!form.company_id || !form.warehouse_id) {
+    ElMessage.error('Помилка даних: не вказано компанію або склад. Спробуйте перезавантажити сторінку.')
+    return
+  }
+
   if (targetStatus) form.status = targetStatus
   submitting.value = true
   try {
     if (isEditMode.value) {
+      // Handle variant assignment
+      const variant = findMatchingVariant()
+      if (variant) {
+        form.lines[0].variant_id = variant.id
+      }
+      
       await api.put(`/api/v1/production/${route.params.id}`, form)
       ElMessage.success('Збережено')
     } else {
+      // Handle variant assignment
+      const variant = findMatchingVariant()
+      if (variant) {
+        form.lines[0].variant_id = variant.id
+      }
+
       const res = await api.post('/api/v1/production/', form)
-      ElMessage.success('Коментар: Завдання створено')
+      ElMessage.success('Завдання створено')
       router.push(`/production/orders/${res.data.id}`)
     }
   } catch (e) { ElMessage.error('Помилка збереження') }
@@ -541,6 +667,18 @@ const saveOrder = async (targetStatus) => {
 const handleCancel = () => ElMessageBox.confirm('Скасувати завдання?', 'Увага', { type: 'warning' }).then(() => saveOrder('cancelled'))
 const handlePrint = () => window.print()
 const formatDateTime = (d) => d ? dayjs(d).format('DD.MM HH:mm') : ''
+
+// Helpers for characteristics
+const findMatchingVariant = () => {
+  if (!currentProduct.value?.variants || productAttributes.value.length === 0) return null
+  
+  return currentProduct.value.variants.find(v => {
+    return productAttributes.value.every(a => {
+      // For now simple check of option_id
+      return v.values?.some(vv => vv.attribute_id === a.id && vv.option_id === selections.value[a.id])
+    })
+  })
+}
 
 const initData = async () => {
   try {
@@ -559,7 +697,41 @@ const initData = async () => {
       Object.assign(form, res.data)
       activeProductId.value = form.lines[0]?.product_id
       activeQuantity.value = form.lines[0]?.quantity
+      
+      // Load attributes and selections
+      const p = products.value.find(x => x.id === activeProductId.value)
+      if (p && p.category) {
+        await fetchCategoryAttributes(p.category)
+        
+        const variantId = form.lines[0]?.variant_id
+        if (variantId && p.variants) {
+          const variant = p.variants.find(v => v.id === variantId)
+          if (variant && variant.values) {
+            variant.values.forEach(v => {
+              if (v.attribute?.type === 'DIMENSIONS') {
+                const parts = (v.text_value || '').split('x')
+                if (parts.length === 2 && dimSelections.value[v.attribute_id]) {
+                  dimSelections.value[v.attribute_id].w = parseInt(parts[0])
+                  dimSelections.value[v.attribute_id].h = parseInt(parts[1])
+                }
+              } else {
+                selections.value[v.attribute_id] = v.option_id || v.text_value
+              }
+            })
+          }
+        }
+      }
+      
       activities.value = [{ content: 'Завдання створено', timestamp: form.created_at, type: 'info' }]
+    } else {
+      // Defaults for new order
+      if (userStore.user?.company_id) {
+        form.company_id = userStore.user.company_id
+      }
+      const defaultWH = warehouses.value.find(w => w.is_default) || warehouses.value[0]
+      if (defaultWH) {
+        form.warehouse_id = defaultWH.id
+      }
     }
   } catch (e) { ElMessage.error('Помилка завантаження') }
 }
@@ -591,6 +763,21 @@ onMounted(initData)
 
 .field-label { font-size: 12px; color: #6b7280; font-weight: 500; }
 .req::after { content: '*'; color: #ef4444; }
+
+.characteristics-section {
+  padding-top: 15px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.dims-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.dim-input { width: 80px !important; }
+.dims-sep { font-size: 16px; color: #94a3b8; font-weight: 600; }
+.dims-unit { font-size: 12px; color: #94a3b8; }
 
 .custom-tabs-card :deep(.el-tabs__header) { margin-bottom: 0; }
 .history-content p { margin: 4px 0 0 0; }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
@@ -156,7 +156,7 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Бригада (Хто виконує)" min-width="200">
+             <el-table-column label="Виконавець" min-width="200">
                 <template #default="scope">
                    <el-select v-model="scope.row.brigade_id" placeholder="Виберіть бригаду..." class="w-full" clearable>
                       <el-option v-for="b in brigadesList" :key="b.id" :label="b.name" :value="b.id" />

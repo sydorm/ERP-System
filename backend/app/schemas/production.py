@@ -48,9 +48,12 @@ class ProductionOrderLineResponse(ProductionOrderLineBase):
 
 # --- Production Order Assignment ---
 class ProductionOrderAssignmentBase(BaseModel):
-    employee_id: UUID
+    employee_id: Optional[UUID] = None
     stage_id: UUID
+    brigade_id: Optional[UUID] = None
     quantity: Optional[float] = None
+    planned_hours: float = 0.0
+    status: str = "pending"
 
 class ProductionOrderAssignmentCreate(ProductionOrderAssignmentBase):
     pass
