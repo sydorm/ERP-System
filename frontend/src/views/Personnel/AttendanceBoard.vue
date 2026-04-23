@@ -90,8 +90,20 @@
             <tr>
               <th class="sticky-col name-col">Співробітник</th>
               <th v-for="day in daysInMonth" :key="day" :class="{ 'is-weekend': isHolidayOrWeekend(day) }">
-                <div class="day-num">{{ day }}</div>
-                <div class="day-week">{{ getDayOfWeek(day) }}</div>
+                <el-tooltip 
+                  v-if="getHolidayName(day)" 
+                  :content="getHolidayName(day)" 
+                  placement="top"
+                >
+                  <div class="day-header-content">
+                    <div class="day-num">{{ day }}</div>
+                    <div class="day-week">{{ getDayOfWeek(day) }}</div>
+                  </div>
+                </el-tooltip>
+                <div v-else class="day-header-content">
+                  <div class="day-num">{{ day }}</div>
+                  <div class="day-week">{{ getDayOfWeek(day) }}</div>
+                </div>
               </th>
               <th class="summary-col">Підсумок</th>
             </tr>
@@ -112,28 +124,34 @@
                   'is-modified': isDayModified(emp.id, day)
                 }"
               >
-                <!-- Status Picker Popover -->
-                <el-popover placement="bottom" :width="180" trigger="click">
-                  <template #reference>
-                    <div class="status-cell" :style="{ backgroundColor: getCellColor(emp.id, day) }">
-                      {{ getCellText(emp.id, day) }}
+                <!-- Status Picker Popover with Holiday Tooltip -->
+                <el-tooltip 
+                  :disabled="!getHolidayName(day)" 
+                  :content="getHolidayName(day)" 
+                  placement="top"
+                >
+                  <el-popover placement="bottom" :width="180" trigger="click">
+                    <template #reference>
+                      <div class="status-cell" :style="{ backgroundColor: getCellColor(emp.id, day) }">
+                        {{ getCellText(emp.id, day) }}
+                      </div>
+                    </template>
+                    <div class="status-picker">
+                      <div 
+                        v-for="status in statusList" 
+                        :key="status.code" 
+                        class="picker-option"
+                        :style="{ backgroundColor: status.color }"
+                        @click="setAttendance(emp.id, day, status)"
+                      >
+                        {{ status.code }} - {{ status.label }}
+                      </div>
+                      <div class="picker-option clear-opt" @click="setAttendance(emp.id, day, null)">
+                        Очистити
+                      </div>
                     </div>
-                  </template>
-                  <div class="status-picker">
-                    <div 
-                      v-for="status in statusList" 
-                      :key="status.code" 
-                      class="picker-option"
-                      :style="{ backgroundColor: status.color }"
-                      @click="setAttendance(emp.id, day, status)"
-                    >
-                      {{ status.code }} - {{ status.label }}
-                    </div>
-                    <div class="picker-option clear-opt" @click="setAttendance(emp.id, day, null)">
-                      Очистити
-                    </div>
-                  </div>
-                </el-popover>
+                  </el-popover>
+                </el-tooltip>
               </td>
               <td class="summary-col">
                 <div class="row-stats">
@@ -212,6 +230,12 @@ const isHolidayOrWeekend = (day) => {
 }
 
 const getDayOfWeek = (day) => selectedMonth.value.date(day).format('dd')
+
+const getHolidayName = (day) => {
+  const dateStr = selectedMonth.value.date(day).format('YYYY-MM-DD')
+  const holiday = holidayList.value.find(h => h.code === dateStr)
+  return holiday ? holiday.name : null
+}
 
 // 4. Working with records
 const getRecord = (empId, day) => {
