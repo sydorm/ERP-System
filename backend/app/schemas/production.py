@@ -89,8 +89,8 @@ class ProductionOrderUpdate(ProductionOrderBase):
 
 class ProductionOrderResponse(ProductionOrderBase):
     id: UUID
-    order_number: str
-    order_date: datetime
+    order_number: Optional[str] = None
+    order_date: Optional[datetime] = None
     created_by: Optional[UUID] = None
     completed_at: Optional[datetime] = None
     

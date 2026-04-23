@@ -216,8 +216,9 @@ def recovery():
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS client_id UUID;")
             run_sql("ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal';")
             
-            # Ensure order_number is not null for existing rows
+            # Ensure order_number and order_date are not null for existing rows
             run_sql("UPDATE production_orders SET order_number = 'P' || substr(id::text, 1, 8) WHERE order_number IS NULL;")
+            run_sql("UPDATE production_orders SET order_date = CURRENT_TIMESTAMP WHERE order_date IS NULL;")
             # run_sql("ALTER TABLE production_orders ALTER COLUMN order_number SET NOT NULL;")
             
             # Add foreign key for client if not exists
