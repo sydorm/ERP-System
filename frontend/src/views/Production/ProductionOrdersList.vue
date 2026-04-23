@@ -3,12 +3,11 @@
     <!-- Header -->
     <div class="erp-toolbar">
       <div class="toolbar-left">
-        <h1 class="page-title">Завдання на виробництво</h1>
-        <el-tag effect="plain" type="info" round class="ml-2">{{ orders.length }} документів</el-tag>
+        <h1 class="page-title">Завдання на виробництво ({{ orders.length }})</h1>
       </div>
       <div class="toolbar-right">
         <el-button type="primary" :icon="Plus" @click="createNew">Створити завдання</el-button>
-        <el-button :icon="Refresh" circle @click="fetchData" />
+        <el-button :icon="Refresh" @click="fetchData">Оновити</el-button>
       </div>
     </div>
 
@@ -22,7 +21,7 @@
           </div>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card orange">
+          <div class="stat-card red">
             <div class="stat-label">Прострочено</div>
             <div class="stat-value">{{ stats.overdue }}</div>
           </div>
@@ -138,7 +137,7 @@
 
         <el-table-column label="Дедлайн" width="120">
           <template #default="{ row }">
-             <span :class="{'deadline-overdue': isOverdue(row.due_date) && row.status !== 'completed'}">
+             <span :class="getDeadlineClass(row.due_date, row.status)">
                {{ formatDateSimple(row.due_date) }}
              </span>
           </template>
@@ -170,7 +169,9 @@
         </el-table-column>
         
         <template #empty>
-          <el-empty description="Немає завдань на виробництво" />
+          <el-empty description="Немає завдань на виробництво">
+             <el-button type="primary" :icon="Plus" @click="createNew">Створити перше завдання</el-button>
+          </el-empty>
         </template>
       </el-table>
     </div>
@@ -314,6 +315,18 @@ const isOverdue = (date) => {
   return dayjs(date).isBefore(dayjs(), 'day')
 }
 
+const isTomorrow = (date) => {
+  if (!date) return false
+  return dayjs(date).isSame(dayjs().add(1, 'day'), 'day')
+}
+
+const getDeadlineClass = (date, status) => {
+  if (status === 'completed' || !date) return ''
+  if (isOverdue(date)) return 'deadline-overdue'
+  if (isTomorrow(date)) return 'deadline-tomorrow'
+  return ''
+}
+
 const formatDateSimple = (date) => (date ? dayjs(date).format('DD.MM.YY') : '-')
 
 const createNew = () => router.push('/production/orders/new')
@@ -367,10 +380,32 @@ export default {
   box-shadow: 0 4px 16px 0 rgba(0,0,0,0.1);
 }
 
-.stat-card.blue { border-left-color: #409EFF; }
-.stat-card.orange { border-left-color: #E6A23C; }
-.stat-card.green { border-left-color: #67C23A; }
-.stat-card.gray { border-left-color: #909399; }
+.stat-card.blue { 
+  background: #ecf5ff;
+  border-left-color: #409EFF; 
+  color: #409EFF;
+}
+.stat-card.orange { 
+  background: #fdf6ec;
+  border-left-color: #E6A23C; 
+  color: #E6A23C;
+}
+.stat-card.green { 
+  background: #f0f9eb;
+  border-left-color: #67C23A; 
+  color: #67C23A;
+}
+.stat-card.gray { 
+  background: #f4f4f5;
+  border-left-color: #909399; 
+  color: #909399;
+}
+
+.stat-card.red {
+  background: #fef0f0;
+  border-left-color: #F56C6C;
+  color: #F56C6C;
+}
 
 .stat-label {
   font-size: 13px;
@@ -443,6 +478,11 @@ export default {
 
 .deadline-overdue {
   color: #f56c6c;
+  font-weight: 700;
+}
+
+.deadline-tomorrow {
+  color: #e6a23c;
   font-weight: 700;
 }
 
