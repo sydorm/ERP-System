@@ -185,7 +185,22 @@
                   </template>
                 </el-table-column>
                 <el-table-column label="Сума" width="130" align="right">
-                  <temp        <!-- 3. Purchase History -->
+                  <template #default="{ row }">
+                    <strong>{{ formatCurrency(row.total_amount) }}</strong>
+                  </template>
+                </el-table-column>
+                <el-table-column width="60" align="right">
+                  <template #default="{ row }">
+                    <el-button :icon="Right" circle size="small" @click="viewOrder(row)" />
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="salesOrders.length === 0" description="Немає замовлень" />
+            </el-card>
+          </div>
+        </el-tab-pane>
+
+        <!-- 3. Purchase History -->
         <el-tab-pane v-if="form.is_supplier" label="Історія закупівель" name="purchases" :disabled="!isEditMode">
           <div class="tab-content">
             <el-card shadow="never" class="form-card">
@@ -307,23 +322,6 @@
 
         <!-- 7. Finances -->
         <el-tab-pane label="Фінанси" name="finances" :disabled="!isEditMode">
-atusLabel(row.status) }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="Сума" width="150" align="right">
-                  <template #default="{ row }">
-                    <strong>{{ formatCurrency(row.total_amount) }}</strong>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-empty v-if="purchaseReceipts.length === 0" description="Немає накладних" />
-            </el-card>
-          </div>
-        </el-tab-pane>
-
-        <!-- 4. Finances -->
-        <el-tab-pane label="Фінанси" name="finances" :disabled="!isEditMode">
           <div class="tab-content">
             <el-row :gutter="20">
               <el-col :span="8">
@@ -387,7 +385,6 @@ atusLabel(row.status) }}
       </el-tabs>
 
       <!-- DIALOGS -->
-      <!-- Bank Account Dialog -->
       <el-dialog v-model="accountDialog.visible" title="Додати банківський рахунок" width="450px">
         <el-form :model="accountDialog.form" label-position="top">
           <el-form-item label="Назва банку">
@@ -418,7 +415,6 @@ atusLabel(row.status) }}
         </template>
       </el-dialog>
 
-      <!-- Material Dialog -->
       <el-dialog v-model="materialDialog.visible" title="Додати матеріал постачальника" width="500px">
         <el-form :model="materialDialog.form" label-position="top">
           <el-form-item label="Виберіть товар/матеріал з каталогу" required>
@@ -445,7 +441,6 @@ atusLabel(row.status) }}
         </template>
       </el-dialog>
 
-      <!-- Contact Dialog -->
       <el-dialog v-model="contactDialog.visible" title="Додати контактну особу" width="450px">
         <el-form :model="contactDialog.form" label-position="top">
           <el-form-item label="ПІБ" required>
@@ -503,6 +498,7 @@ const isEditMode = computed(() => !!route.params.id)
 // Dictionary Data
 const channels = ref([])
 const tagOptions = ref([])
+const paymentTerms = ref([])
 
 const form = reactive({
   id: null,
@@ -550,8 +546,6 @@ const contactDialog = reactive({
 })
 
 const productResults = ref([])
-const paymentTerms = ref([])
-
 const salesOrders = ref([])
 const purchaseReceipts = ref([])
 const financeSummary = reactive({
@@ -633,8 +627,7 @@ const saveCounterparty = async () => {
   if (!form.name) return ElMessage.warning('Вкажіть назву')
   submitting.value = true
   try {
-    // Clean up lists before saving main form
-    const { bank_accounts, contacts, materials, documents, ...payload } = form
+    const { bank_accounts, contacts, materials, ...payload } = form
     if (isEditMode.value) {
       await api.put(`/api/v1/counterparties/${form.id}`, payload)
       ElMessage.success('Оновлено')
