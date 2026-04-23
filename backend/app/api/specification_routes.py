@@ -120,7 +120,7 @@ async def update_specification(
              ProductSpecification.id != spec_id
          ).update({"is_default": False})
 
-    update_data = spec_in.dict(exclude={'items'}, exclude_unset=True)
+    update_data = spec_in.dict(exclude={'items', 'stages'}, exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_spec, key, value)
 
