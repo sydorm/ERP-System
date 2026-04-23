@@ -301,8 +301,8 @@ def update_production_order(
             for assign_in in assignments_data:
                 db_assign = ProductionOrderWorkerAssignment(
                     production_order_id=db_order.id,
-                    employee_id=assign_in["employee_id"],
-                    stage_id=assign_in["stage_id"],
+                    employee_id=assign_in.get("employee_id"),
+                    stage_id=assign_in.get("stage_id"),
                     brigade_id=assign_in.get("brigade_id"),
                     quantity=assign_in.get("quantity"),
                     planned_hours=assign_in.get("planned_hours", 0.0),

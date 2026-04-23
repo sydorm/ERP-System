@@ -748,6 +748,13 @@ const initData = async () => {
             }
           }
         }
+
+        // Initialize performer_id for UI
+        if (form.assignments) {
+          form.assignments.forEach(a => {
+            a.performer_id = a.employee_id || a.brigade_id
+          })
+        }
       } catch (e) {
         console.error('Failed to load order for editing', e)
         ElMessage.error('Не вдалося завантажити дані завдання для редагування.')
