@@ -153,7 +153,7 @@
         </el-tab-pane>
 
         <!-- 2. Sales History -->
-        <el-tab-pane label="Історія продажів" name="sales" :disabled="!isEditMode">
+        <el-tab-pane v-if="form.is_customer" label="Історія продажів" name="sales" :disabled="!isEditMode">
           <div class="tab-content">
             <el-card shadow="never" class="form-card">
               <template #header>
@@ -203,7 +203,7 @@
         </el-tab-pane>
 
         <!-- 3. Purchase History -->
-        <el-tab-pane label="Історія закупівель" name="purchases" :disabled="!isEditMode">
+        <el-tab-pane v-if="form.is_supplier" label="Історія закупівель" name="purchases" :disabled="!isEditMode">
           <div class="tab-content">
             <el-card shadow="never" class="form-card">
               <template #header><span class="card-title">Прибуткові накладні</span></template>
