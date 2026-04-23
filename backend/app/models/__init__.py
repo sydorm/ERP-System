@@ -5,7 +5,7 @@ from .user import User
 from .warehouse import Warehouse
 from .product import Product
 from .dictionary import DictionaryItem
-from .counterparty import Counterparty
+from .counterparty import Counterparty, CounterpartyBankAccount, CounterpartyContact, CounterpartyMaterial, CounterpartyDocument
 from .order import Order, OrderLine, OrderStatus
 
 from .bank_account import BankAccount, Currency
@@ -38,6 +38,10 @@ __all__ = [
     "Warehouse",
     "Product",
     "Counterparty",
+    "CounterpartyBankAccount",
+    "CounterpartyContact",
+    "CounterpartyMaterial",
+    "CounterpartyDocument",
     "Order",
     "OrderLine",
     "OrderStatus",

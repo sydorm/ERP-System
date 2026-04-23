@@ -1,7 +1,7 @@
 """
 Counterparty model - represents customers and suppliers
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, Text, Numeric
+from sqlalchemy import Column, String, Boolean, ForeignKey, Integer, Text, Numeric, func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -40,6 +40,7 @@ class Counterparty(BaseModel):
     
     # Supplier specific
     delivery_days = Column(Integer, nullable=True, default=0)
+    payment_terms_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="SET NULL"), nullable=True)
     payment_terms = Column(String(255), nullable=True)
     min_order_amount = Column(Numeric(15, 2), nullable=True, default=0.0)
     contact_person = Column(String(255), nullable=True)
@@ -55,7 +56,8 @@ class Counterparty(BaseModel):
     # Relationships
     company = relationship("Company", back_populates="counterparties")
     orders = relationship("Order", back_populates="counterparty")
-    acquisition_channel = relationship("DictionaryItem")
+    acquisition_channel = relationship("DictionaryItem", foreign_keys=[acquisition_channel_id])
+    payment_terms_item = relationship("DictionaryItem", foreign_keys=[payment_terms_id])
     
     def __repr__(self):
         type_str = []
@@ -64,3 +66,53 @@ class Counterparty(BaseModel):
         if self.is_supplier:
             type_str.append("Постачальник")
         return f"<Counterparty {self.name} ({', '.join(type_str)})>"
+
+
+class CounterpartyBankAccount(BaseModel):
+    __tablename__ = "counterparty_bank_accounts"
+    
+    counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="CASCADE"), nullable=False, index=True)
+    bank_name = Column(String(255), nullable=True)
+    iban = Column(String(50), nullable=False)
+    currency = Column(String(10), default="UAH")
+    purpose = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    counterparty = relationship("Counterparty", backref="bank_accounts")
+
+
+class CounterpartyContact(BaseModel):
+    __tablename__ = "counterparty_contacts"
+    
+    counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    position = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+    telegram = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=True)
+    is_primary = Column(Boolean, default=False)
+    
+    counterparty = relationship("Counterparty", backref="contacts")
+
+
+class CounterpartyMaterial(BaseModel):
+    __tablename__ = "counterparty_materials"
+    
+    counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    price = Column(Numeric(15, 2), nullable=False, default=0.0)
+    currency = Column(String(10), default="UAH")
+    
+    counterparty = relationship("Counterparty", backref="materials")
+    product = relationship("Product")
+
+
+class CounterpartyDocument(BaseModel):
+    __tablename__ = "counterparty_documents"
+    
+    counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    file_url = Column(String(1000), nullable=False)
+    created_at = Column(postgresql.TIMESTAMP, server_default=func.now())
+    
+    counterparty = relationship("Counterparty", backref="documents")

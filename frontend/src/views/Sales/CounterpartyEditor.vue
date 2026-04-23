@@ -84,10 +84,8 @@
                       </el-form-item>
                     </div>
                     <el-form-item label="Умови оплати">
-                      <el-select v-model="form.payment_terms" placeholder="Оберіть умови..." class="w-full">
-                        <el-option label="Передоплата" value="prepaid" />
-                        <el-option label="Післяплата" value="postpaid" />
-                        <el-option label="Відтермінування" value="deferred" />
+                      <el-select v-model="form.payment_terms_id" placeholder="Оберіть умови..." class="w-full" clearable>
+                        <el-option v-for="p in paymentTerms" :key="p.id" :label="p.name" :value="p.id" />
                       </el-select>
                     </el-form-item>
                     <el-form-item label="Контактна особа">
@@ -187,22 +185,7 @@
                   </template>
                 </el-table-column>
                 <el-table-column label="Сума" width="130" align="right">
-                  <template #default="{ row }">
-                    <strong>{{ formatCurrency(row.total_amount) }}</strong>
-                  </template>
-                </el-table-column>
-                <el-table-column width="60" align="right">
-                  <template #default="{ row }">
-                    <el-button :icon="Right" circle size="small" @click="viewOrder(row)" />
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-empty v-if="salesOrders.length === 0" description="Немає замовлень" />
-            </el-card>
-          </div>
-        </el-tab-pane>
-
-        <!-- 3. Purchase History -->
+                  <temp        <!-- 3. Purchase History -->
         <el-tab-pane v-if="form.is_supplier" label="Історія закупівель" name="purchases" :disabled="!isEditMode">
           <div class="tab-content">
             <el-card shadow="never" class="form-card">
@@ -216,6 +199,115 @@
                   <template #default="{ row }">
                     <el-tag :type="getStatusType(row.status)" size="small" effect="dark">
                       {{ getStatusLabel(row.status) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="Сума" width="150" align="right">
+                  <template #default="{ row }">
+                    <strong>{{ formatCurrency(row.total_amount) }}</strong>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="purchaseReceipts.length === 0" description="Немає накладних" />
+            </el-card>
+          </div>
+        </el-tab-pane>
+
+        <!-- 4. Bank Accounts (Реквізити) -->
+        <el-tab-pane label="Реквізити" name="bank_accounts" :disabled="!isEditMode">
+          <div class="tab-content">
+            <el-card shadow="never" class="form-card">
+              <template #header>
+                <div class="card-header-flex">
+                  <span class="card-title">Банківські рахунки</span>
+                  <el-button type="primary" size="small" :icon="Plus" @click="openAccountDialog" plain>Додати рахунок</el-button>
+                </div>
+              </template>
+              <el-table :data="form.bank_accounts" style="width: 100%">
+                <el-table-column prop="bank_name" label="Банк" width="180" />
+                <el-table-column prop="iban" label="IBAN" min-width="250" />
+                <el-table-column prop="currency" label="Валюта" width="100" />
+                <el-table-column prop="purpose" label="Призначення" />
+                <el-table-column label="Статус" width="100" align="center">
+                  <template #default="{ row }">
+                    <el-icon v-if="row.is_active" color="#48bb78"><CircleCheckFilled /></el-icon>
+                    <el-icon v-else color="#cbd5e0"><CircleCloseFilled /></el-icon>
+                  </template>
+                </el-table-column>
+                <el-table-column width="60" align="right">
+                  <template #default="{ row }">
+                    <el-button type="danger" :icon="Delete" circle size="small" @click="removeAccount(row.id)" plain />
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="!form.bank_accounts?.length" description="Рахунків не додано" />
+            </el-card>
+          </div>
+        </el-tab-pane>
+
+        <!-- 5. Materials (for Suppliers) -->
+        <el-tab-pane v-if="form.is_supplier" label="Матеріали" name="materials" :disabled="!isEditMode">
+          <div class="tab-content">
+            <el-card shadow="never" class="form-card">
+              <template #header>
+                <div class="card-header-flex">
+                  <span class="card-title">Матеріали що постачає</span>
+                  <el-button type="primary" size="small" :icon="Plus" @click="openMaterialDialog" plain>Додати матеріал</el-button>
+                </div>
+              </template>
+              <el-table :data="form.materials" style="width: 100%">
+                <el-table-column prop="product_name" label="Назва матеріалу" min-width="200" />
+                <el-table-column label="Ціна" width="180" align="right">
+                  <template #default="{ row }">
+                    <strong>{{ formatCurrency(row.price) }}</strong>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="currency" label="Валюта" width="100" />
+                <el-table-column width="60" align="right">
+                  <template #default="{ row }">
+                    <el-button type="danger" :icon="Delete" circle size="small" @click="removeMaterial(row.id)" plain />
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="!form.materials?.length" description="Матеріалів не додано" />
+            </el-card>
+          </div>
+        </el-tab-pane>
+
+        <!-- 6. Contacts -->
+        <el-tab-pane label="Контакти" name="contacts" :disabled="!isEditMode">
+          <div class="tab-content">
+            <el-card shadow="never" class="form-card">
+              <template #header>
+                <div class="card-header-flex">
+                  <span class="card-title">Контактні особи</span>
+                  <el-button type="primary" size="small" :icon="Plus" @click="openContactDialog" plain>Додати контакт</el-button>
+                </div>
+              </template>
+              <el-table :data="form.contacts" style="width: 100%">
+                <el-table-column prop="name" label="Ім'я" min-width="180">
+                  <template #default="{ row }">
+                    {{ row.name }} <el-tag v-if="row.is_primary" size="small" type="success" effect="plain" round>Основний</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="position" label="Посада" width="150" />
+                <el-table-column prop="phone" label="Телефон" width="150" />
+                <el-table-column prop="telegram" label="Telegram" width="140" />
+                <el-table-column prop="email" label="Email" min-width="180" />
+                <el-table-column width="60" align="right">
+                  <template #default="{ row }">
+                    <el-button type="danger" :icon="Delete" circle size="small" @click="removeContact(row.id)" plain />
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-empty v-if="!form.contacts?.length" description="Контактів не додано" />
+            </el-card>
+          </div>
+        </el-tab-pane>
+
+        <!-- 7. Finances -->
+        <el-tab-pane label="Фінанси" name="finances" :disabled="!isEditMode">
+atusLabel(row.status) }}
                     </el-tag>
                   </template>
                 </el-table-column>
@@ -293,6 +385,97 @@
           </div>
         </el-tab-pane>
       </el-tabs>
+
+      <!-- DIALOGS -->
+      <!-- Bank Account Dialog -->
+      <el-dialog v-model="accountDialog.visible" title="Додати банківський рахунок" width="450px">
+        <el-form :model="accountDialog.form" label-position="top">
+          <el-form-item label="Назва банку">
+            <el-input v-model="accountDialog.form.bank_name" placeholder="Наприклад: ПриватБанк" />
+          </el-form-item>
+          <el-form-item label="IBAN" required>
+            <el-input v-model="accountDialog.form.iban" placeholder="UA..." />
+          </el-form-item>
+          <div class="form-row">
+            <el-form-item label="Валюта" class="flex-1">
+              <el-select v-model="accountDialog.form.currency">
+                <el-option label="Гривня (UAH)" value="UAH" />
+                <el-option label="Долар (USD)" value="USD" />
+                <el-option label="Євро (EUR)" value="EUR" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Активний" class="flex-1">
+              <el-switch v-model="accountDialog.form.is_active" />
+            </el-form-item>
+          </div>
+          <el-form-item label="Призначення">
+            <el-input v-model="accountDialog.form.purpose" placeholder="Наприклад: Основний для оплат" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="accountDialog.visible = false">Скасувати</el-button>
+          <el-button type="primary" @click="saveBankAccount" :loading="accountDialog.loading">Зберегти</el-button>
+        </template>
+      </el-dialog>
+
+      <!-- Material Dialog -->
+      <el-dialog v-model="materialDialog.visible" title="Додати матеріал постачальника" width="500px">
+        <el-form :model="materialDialog.form" label-position="top">
+          <el-form-item label="Виберіть товар/матеріал з каталогу" required>
+            <el-select v-model="materialDialog.form.product_id" filterable remote :remote-method="searchProducts" :loading="materialDialog.searchLoading" placeholder="Почніть вводити назву..." class="w-full">
+              <el-option v-for="p in productResults" :key="p.id" :label="`${p.name} (${p.sku})`" :value="p.id" />
+            </el-select>
+          </el-form-item>
+          <div class="form-row">
+            <el-form-item label="Ціна постачальника" class="flex-1">
+              <el-input-number v-model="materialDialog.form.price" :min="0" class="w-full" />
+            </el-form-item>
+            <el-form-item label="Валюта" class="flex-1">
+              <el-select v-model="materialDialog.form.currency">
+                <el-option label="UAH" value="UAH" />
+                <el-option label="USD" value="USD" />
+                <el-option label="EUR" value="EUR" />
+              </el-select>
+            </el-form-item>
+          </div>
+        </el-form>
+        <template #footer>
+          <el-button @click="materialDialog.visible = false">Скасувати</el-button>
+          <el-button type="primary" @click="saveMaterial" :loading="materialDialog.loading">Додати</el-button>
+        </template>
+      </el-dialog>
+
+      <!-- Contact Dialog -->
+      <el-dialog v-model="contactDialog.visible" title="Додати контактну особу" width="450px">
+        <el-form :model="contactDialog.form" label-position="top">
+          <el-form-item label="ПІБ" required>
+            <el-input v-model="contactDialog.form.name" placeholder="Іван Іванов" />
+          </el-form-item>
+          <el-form-item label="Посада">
+            <el-input v-model="contactDialog.form.position" placeholder="Менеджер..." />
+          </el-form-item>
+          <div class="form-row">
+            <el-form-item label="Телефон" class="flex-1">
+              <el-input v-model="contactDialog.form.phone" />
+            </el-form-item>
+            <el-form-item label="Email" class="flex-1">
+              <el-input v-model="contactDialog.form.email" />
+            </el-form-item>
+          </div>
+          <div class="form-row">
+            <el-form-item label="Telegram" class="flex-1">
+              <el-input v-model="contactDialog.form.telegram" placeholder="@username" />
+            </el-form-item>
+            <el-form-item label="Основний контакт" class="flex-1">
+              <el-switch v-model="contactDialog.form.is_primary" />
+            </el-form-item>
+          </div>
+        </el-form>
+        <template #footer>
+          <el-button @click="contactDialog.visible = false">Скасувати</el-button>
+          <el-button type="primary" @click="saveContact" :loading="contactDialog.loading">Зберегти</el-button>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -302,7 +485,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
   ArrowLeft, Phone, Message, Document, 
-  ChatDotRound, Plus, Right 
+  ChatDotRound, Plus, Right, Delete,
+  CircleCheckFilled, CircleCloseFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -340,10 +524,33 @@ const form = reactive({
   tags: [],
   delivery_days: 0,
   min_order_amount: 0,
-  payment_terms: 'prepaid',
+  payment_terms_id: null,
+  payment_terms: '',
   contact_person: '',
-  supplied_materials: ''
+  supplied_materials: '',
+  bank_accounts: [],
+  contacts: [],
+  materials: []
 })
+
+// Dialog States
+const accountDialog = reactive({
+  visible: false, loading: false,
+  form: { bank_name: '', iban: '', currency: 'UAH', purpose: '', is_active: true }
+})
+
+const materialDialog = reactive({
+  visible: false, loading: false, searchLoading: false,
+  form: { product_id: null, price: 0, currency: 'UAH' }
+})
+
+const contactDialog = reactive({
+  visible: false, loading: false,
+  form: { name: '', position: '', phone: '', telegram: '', email: '', is_primary: false }
+})
+
+const productResults = ref([])
+const paymentTerms = ref([])
 
 const salesOrders = ref([])
 const purchaseReceipts = ref([])
@@ -389,12 +596,14 @@ const fetchCounterparty = async () => {
 
 const fetchDictionaries = async () => {
   try {
-    const [cRes, tRes] = await Promise.all([
+    const [cRes, tRes, pRes] = await Promise.all([
       api.get('/api/v1/dictionaries/LEAD_SOURCE'),
-      api.get('/api/v1/dictionaries/CLIENT_TAG')
+      api.get('/api/v1/dictionaries/CLIENT_TAG'),
+      api.get('/api/v1/dictionaries/PAYMENT_TERMS')
     ])
     channels.value = cRes.data || []
     tagOptions.value = tRes.data || []
+    paymentTerms.value = pRes.data || []
   } catch (e) {}
 }
 
@@ -424,7 +633,8 @@ const saveCounterparty = async () => {
   if (!form.name) return ElMessage.warning('Вкажіть назву')
   submitting.value = true
   try {
-    const payload = { ...form }
+    // Clean up lists before saving main form
+    const { bank_accounts, contacts, materials, documents, ...payload } = form
     if (isEditMode.value) {
       await api.put(`/api/v1/counterparties/${form.id}`, payload)
       ElMessage.success('Оновлено')
@@ -438,6 +648,104 @@ const saveCounterparty = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// --- Bank Account Methods ---
+const openAccountDialog = () => {
+  accountDialog.form = { bank_name: '', iban: '', currency: 'UAH', purpose: '', is_active: true }
+  accountDialog.visible = true
+}
+
+const saveBankAccount = async () => {
+  if (!accountDialog.form.iban) return ElMessage.warning('Вкажіть IBAN')
+  accountDialog.loading = true
+  try {
+    await api.post(`/api/v1/counterparties/${form.id}/bank-accounts`, accountDialog.form)
+    ElMessage.success('Рахунок додано')
+    accountDialog.visible = false
+    fetchCounterparty()
+  } catch (e) {
+    ElMessage.error('Помилка збереження рахунку')
+  } finally {
+    accountDialog.loading = false
+  }
+}
+
+const removeAccount = async (accId) => {
+  try {
+    await ElMessageBox.confirm('Видалити цей рахунок?', 'Увага', { type: 'warning' })
+    await api.delete(`/api/v1/counterparties/${form.id}/bank-accounts/${accId}`)
+    fetchCounterparty()
+  } catch (e) {}
+}
+
+// --- Contact Methods ---
+const openContactDialog = () => {
+  contactDialog.form = { name: '', position: '', phone: '', telegram: '', email: '', is_primary: false }
+  contactDialog.visible = true
+}
+
+const saveContact = async () => {
+  if (!contactDialog.form.name) return ElMessage.warning('Вкажіть ім\'я')
+  contactDialog.loading = true
+  try {
+    await api.post(`/api/v1/counterparties/${form.id}/contacts`, contactDialog.form)
+    ElMessage.success('Контакт додано')
+    contactDialog.visible = false
+    fetchCounterparty()
+  } catch (e) {
+    ElMessage.error('Помилка збереження контакту')
+  } finally {
+    contactDialog.loading = false
+  }
+}
+
+const removeContact = async (cId) => {
+  try {
+    await ElMessageBox.confirm('Видалити цей контакт?', 'Увага', { type: 'warning' })
+    await api.delete(`/api/v1/counterparties/${form.id}/contacts/${cId}`)
+    fetchCounterparty()
+  } catch (e) {}
+}
+
+// --- Material Methods ---
+const openMaterialDialog = () => {
+  materialDialog.form = { product_id: null, price: 0, currency: 'UAH' }
+  materialDialog.visible = true
+}
+
+const searchProducts = async (query) => {
+  if (query.length < 2) return
+  materialDialog.searchLoading = true
+  try {
+    const res = await api.get('/api/v1/products', { params: { search: query, limit: 10 } })
+    productResults.value = res.data || []
+  } catch (e) {} finally {
+    materialDialog.searchLoading = false
+  }
+}
+
+const saveMaterial = async () => {
+  if (!materialDialog.form.product_id) return ElMessage.warning('Оберіть матеріал')
+  materialDialog.loading = true
+  try {
+    await api.post(`/api/v1/counterparties/${form.id}/materials`, materialDialog.form)
+    ElMessage.success('Матеріал додано')
+    materialDialog.visible = false
+    fetchCounterparty()
+  } catch (e) {
+    ElMessage.error('Помилка додавання матеріалу')
+  } finally {
+    materialDialog.loading = false
+  }
+}
+
+const removeMaterial = async (mId) => {
+  try {
+    await ElMessageBox.confirm('Видалити цей матеріал?', 'Увага', { type: 'warning' })
+    await api.delete(`/api/v1/counterparties/${form.id}/materials/${mId}`)
+    fetchCounterparty()
+  } catch (e) {}
 }
 
 const confirmDelete = async () => {
@@ -518,6 +826,7 @@ onMounted(() => {
 .w-full { width: 100%; }
 .flex-1 { flex: 1; }
 .form-row { display: flex; gap: 15px; }
+.card-header-flex { display: flex; justify-content: space-between; align-items: center; }
 
 .finance-card { border-radius: 12px; text-align: center; }
 .f-stat { padding: 10px; }
