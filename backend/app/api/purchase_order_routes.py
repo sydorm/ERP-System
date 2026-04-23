@@ -25,7 +25,6 @@ async def get_procurement_alerts(
     # 1. Get all products with track_inventory=True and min_stock > 0
     products = db.query(Product).filter(
         Product.company_id == current_user.company_id,
-        Product.track_inventory == True,
         Product.is_deleted == False
     ).all()
     
