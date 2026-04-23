@@ -446,27 +446,43 @@ const recalculateEverything = () => {
   
   const spec = currentSpecs.value.find(s => s.id === activeSpecId.value)
   
-  form.lines = [{ product_id: activeProductId.value, quantity: activeQuantity.value, specification_id: activeSpecId.value }]
+  form.lines = [{ 
+    product_id: activeProductId.value, 
+    quantity: activeQuantity.value, 
+    specification_id: activeSpecId.value 
+  }]
   
   if (spec) {
+    // 1. Recalculate Materials
     form.materials = (spec.items || []).map(item => ({
       component_id: item.component_id,
       component_name: item.component?.name || 'Матеріал',
       required_quantity: item.quantity * activeQuantity.value,
       unit_of_measure: item.unit_of_measure,
-      stock_qty: 0 // In real app, fetch stock
+      stock_qty: 0
     }))
-  }
 
-  // Generate generic stages if no BOM v2 yet
-  const stages = productionStages.value.slice(0, 4) // Stub for v1
-  form.assignments = stages.map(s => ({
-    stage_id: s.id,
-    stage_label: s.name,
-    employee_id: findBestMaster(s.id),
-    planned_hours: 1.5,
-    status: 'pending'
-  }))
+    // 2. Recalculate Production Stages (v2 integration)
+    if (spec.stages && spec.stages.length > 0) {
+      form.assignments = spec.stages.map(s => ({
+        stage_id: s.stage_id,
+        stage_label: s.stage?.name || 'Етап',
+        employee_id: findBestMaster(s.role_id || s.stage_id),
+        planned_hours: parseFloat(s.duration_hours || 0) * activeQuantity.value,
+        status: 'pending'
+      }))
+    } else {
+      // Fallback: Generate generic stages if BOM has no stages defined
+      const stages = productionStages.value.slice(0, 4)
+      form.assignments = stages.map(s => ({
+        stage_id: s.id,
+        stage_label: s.name,
+        employee_id: findBestMaster(s.id),
+        planned_hours: 1.0 * activeQuantity.value,
+        status: 'pending'
+      }))
+    }
+  }
 }
 
 const findBestMaster = (stageId) => {

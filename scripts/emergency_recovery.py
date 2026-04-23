@@ -264,12 +264,25 @@ def recovery():
         )
         """)
         
+        run_sql("""
+        CREATE TABLE IF NOT EXISTS specification_stages (
+            id UUID PRIMARY KEY,
+            specification_id UUID NOT NULL REFERENCES product_specifications(id) ON DELETE CASCADE,
+            stage_id UUID NOT NULL REFERENCES dictionary_items(id) ON DELETE RESTRICT,
+            duration_hours NUMERIC(15, 2) NOT NULL DEFAULT 0.0,
+            role_id UUID NOT NULL REFERENCES dictionary_items(id) ON DELETE RESTRICT,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+        )
+        """)
+        
         # Add foreign key for client if not exists
         try:
             run_sql("ALTER TABLE production_orders ADD CONSTRAINT fk_production_orders_client FOREIGN KEY (client_id) REFERENCES counterparties(id) ON DELETE SET NULL;")
         except Exception:
             pass
-        print("OK: ProductionOrder tables and columns fully synced.")
+        print("OK: ProductionOrder tables and columns fully synced (including BOM stages).")
     except Exception as e:
         print(f"Error during production tables sync: {e}")
 

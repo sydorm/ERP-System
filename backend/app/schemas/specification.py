@@ -77,6 +77,30 @@ class SpecificationItemResponse(SpecificationItemBase):
     class Config:
         from_attributes = True
 
+class SpecificationStageBase(BaseModel):
+    stage_id: UUID
+    duration_hours: Decimal = Field(default=Decimal("0.0"), ge=0)
+    role_id: UUID # Dictionary item (PRODUCTION_STAGE or similar)
+    sort_order: int = 0
+
+class SpecificationStageCreate(SpecificationStageBase):
+    pass
+
+class DictionaryItemBasicInfo(BaseModel):
+    id: UUID
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class SpecificationStageResponse(SpecificationStageBase):
+    id: UUID
+    stage: Optional[DictionaryItemBasicInfo] = None
+    role: Optional[DictionaryItemBasicInfo] = None
+    
+    class Config:
+        from_attributes = True
+
 class ProductSpecificationBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     is_active: bool = True
@@ -85,6 +109,7 @@ class ProductSpecificationBase(BaseModel):
 
 class ProductSpecificationCreate(ProductSpecificationBase):
     items: List[SpecificationItemCreate] = []
+    stages: List[SpecificationStageCreate] = []
 
 class ProductSpecificationUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
@@ -92,11 +117,13 @@ class ProductSpecificationUpdate(BaseModel):
     is_default: Optional[bool] = None
     notes: Optional[str] = None
     items: Optional[List[SpecificationItemCreate]] = None
+    stages: Optional[List[SpecificationStageCreate]] = None
 
 class ProductSpecificationResponse(ProductSpecificationBase):
     id: UUID
     product_id: UUID
     items: List[SpecificationItemResponse] = []
+    stages: List[SpecificationStageResponse] = []
     created_at: datetime
     updated_at: datetime
 

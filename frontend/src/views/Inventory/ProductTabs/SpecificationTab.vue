@@ -191,6 +191,20 @@
             </template>
           </el-table-column>
         </el-table>
+
+        <div v-if="specForm.stages && specForm.stages.length > 0" class="mt-4 p-4 bg-indigo-50 rounded border border-indigo-100">
+           <h5 class="m-0 mb-2 text-indigo-800">Виробничий цикл:</h5>
+           <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <div v-for="stage in specForm.stages" :key="stage.id || stage.sort_order" class="flex items-center gap-1">
+                 <el-icon class="text-indigo-400"><Clock /></el-icon>
+                 <span class="font-medium">{{ getStageName(stage.stage_id) }}:</span>
+                 <span class="text-indigo-600 font-bold">{{ stage.duration_hours }} год</span>
+              </div>
+              <div class="w-full mt-2 pt-2 border-top border-indigo-200">
+                 <strong>Разом робочого часу: <span class="text-lg underline">{{ totalStagesDuration }} год</span></strong>
+              </div>
+           </div>
+        </div>
       </div>
       <template #footer>
         <el-button @click="previewVisible = false">Закрити</el-button>
@@ -378,12 +392,14 @@ import {
 } from '@/api/specifications'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
+import { Clock } from '@element-plus/icons-vue'
 
 const dictStore = useDictionaryStore()
 const uomOptions = ref([])
 
 onMounted(async () => {
     uomOptions.value = await dictStore.fetchCategory('UOM')
+    productionStages.value = await dictStore.fetchCategory('PRODUCTION_STAGE')
     loadSpecifications()
     loadProductAttributes()
 })
@@ -426,7 +442,19 @@ const specForm = ref({
     is_active: true,
     is_default: true,
     notes: '',
-    items: []
+    items: [],
+    stages: []
+})
+
+const productionStages = ref([])
+const getStageName = (id) => {
+    const s = productionStages.value.find(x => x.id === id)
+    return s ? s.name : 'Unknown'
+}
+
+const totalStagesDuration = computed(() => {
+    if (!specForm.value.stages) return 0
+    return specForm.value.stages.reduce((sum, s) => sum + (parseFloat(s.duration_hours) || 0), 0)
 })
 
 const searchingProducts = ref(false)
@@ -523,7 +551,8 @@ const createNewSpec = () => {
         is_active: true,
         is_default: specifications.value.length === 0,
         notes: '',
-        items: []
+        items: [],
+        stages: []
     }
     editingSpec.value = 'new'
 }
@@ -617,6 +646,22 @@ const addItem = () => {
 
 const removeItem = (index) => {
     specForm.value.items.splice(index, 1)
+}
+
+const addStage = () => {
+    if (!specForm.value.stages) specForm.value.stages = []
+    specForm.value.stages.push({
+        stage_id: null,
+        duration_hours: 1,
+        role_id: null,
+        sort_order: specForm.value.stages.length
+    })
+}
+
+const removeStage = (index) => {
+    specForm.value.stages.splice(index, 1)
+    // Refresh sort order
+    specForm.value.stages.forEach((s, idx) => s.sort_order = idx)
 }
 
 // Calculator Logic

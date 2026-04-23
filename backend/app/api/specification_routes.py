@@ -6,7 +6,7 @@ from uuid import UUID
 from app.api.dependencies import get_db, get_current_user
 from app.models.product import Product
 from app.models.variant import ProductVariant
-from app.models.specification import ProductSpecification, SpecificationItem
+from app.models.specification import ProductSpecification, SpecificationItem, ProductSpecificationStage
 from app.models.user import User
 from app.schemas.specification import (
     ProductSpecificationCreate,
@@ -28,6 +28,10 @@ async def list_specifications(
     specs = db.query(ProductSpecification).options(
         joinedload(ProductSpecification.items).options(
             joinedload(SpecificationItem.component)
+        ),
+        joinedload(ProductSpecification.stages).options(
+            joinedload(ProductSpecificationStage.stage),
+            joinedload(ProductSpecificationStage.role)
         )
     ).filter(
         ProductSpecification.product_id == product_id
@@ -81,6 +85,17 @@ async def create_specification(
         )
         db.add(db_item)
 
+    # Add stages
+    for stage_in in spec_in.stages:
+        db_stage = ProductSpecificationStage(
+            specification_id=db_spec.id,
+            stage_id=stage_in.stage_id,
+            duration_hours=stage_in.duration_hours,
+            role_id=stage_in.role_id,
+            sort_order=stage_in.sort_order
+        )
+        db.add(db_stage)
+
     db.commit()
     db.refresh(db_spec)
     return db_spec
@@ -129,6 +144,19 @@ async def update_specification(
                 calc_waste_factor=item_in.calc_waste_factor
             )
             db.add(db_item)
+
+    # Handle stages logic
+    if spec_in.stages is not None:
+        db.query(ProductSpecificationStage).filter(ProductSpecificationStage.specification_id == spec_id).delete()
+        for stage_in in spec_in.stages:
+            db_stage = ProductSpecificationStage(
+                specification_id=db_spec.id,
+                stage_id=stage_in.stage_id,
+                duration_hours=stage_in.duration_hours,
+                role_id=stage_in.role_id,
+                sort_order=stage_in.sort_order
+            )
+            db.add(db_stage)
 
     db.commit()
     db.refresh(db_spec)

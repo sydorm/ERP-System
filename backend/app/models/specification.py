@@ -35,6 +35,7 @@ class ProductSpecification(BaseModel):
     # Relationships
     product = relationship("Product", backref="specifications")
     items = relationship("SpecificationItem", back_populates="specification", cascade="all, delete-orphan")
+    stages = relationship("ProductSpecificationStage", back_populates="specification", cascade="all, delete-orphan", order_by="ProductSpecificationStage.sort_order")
 
     def __repr__(self):
         return f"<Specification {self.name} for {self.product_id}>"
@@ -69,5 +70,24 @@ class SpecificationItem(BaseModel):
     def __repr__(self):
         return f"<SpecItem {self.component_id} x {self.quantity}>"
 
+
+class ProductSpecificationStage(BaseModel):
+    """
+    Production Stages in a Specification (BOM Stage)
+    Defines the labor and time requirements for manufacturing.
+    """
+    __tablename__ = "specification_stages"
+    
+    specification_id = Column(UUID(as_uuid=True), ForeignKey("product_specifications.id", ondelete="CASCADE"), nullable=False, index=True)
+    stage_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False)
+    duration_hours = Column(Numeric(15, 2), nullable=False, default=0.0)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("dictionary_items.id", ondelete="RESTRICT"), nullable=False) # e.g. "Welder" role
+    sort_order = Column(Integer, default=0, nullable=False)
+
+    # Relationships
+    specification = relationship("ProductSpecification", back_populates="stages")
+    stage = relationship("DictionaryItem", foreign_keys=[stage_id])
+    role = relationship("DictionaryItem", foreign_keys=[role_id])
+
     def __repr__(self):
-        return f"<SpecItem {self.component_id} x {self.quantity}>"
+        return f"<SpecStage {self.stage_id} {self.duration_hours}h>"
