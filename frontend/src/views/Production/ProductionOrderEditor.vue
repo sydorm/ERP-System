@@ -383,6 +383,11 @@ const priorityClass = computed(() => `priority-${form.priority}`)
 // --- METHODS ---
 const goBack = () => router.push('/production/orders')
 
+const getPriorityType = (p) => {
+  const map = { normal: 'info', urgent: 'warning', critical: 'danger' }
+  return map[p] || 'info'
+}
+
 const isCurrentStage = (index) => {
   if (form.status !== 'in_progress') return false
   const firstPendingIndex = form.assignments.findIndex(a => a.status !== 'completed')
