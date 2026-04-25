@@ -827,7 +827,26 @@ const createNewSpec = () => {
 // Open edit form
 const editSpec = (row) => {
     // Deep copy to avoid modifying original until saved
-    specForm.value = JSON.parse(JSON.stringify(row))
+    const cleanedRow = JSON.parse(JSON.stringify(row))
+    
+    // SANITIZATION: Ensure every item is a standard material and has all fields
+    if (cleanedRow.items) {
+        cleanedRow.items = cleanedRow.items
+            .filter(item => {
+                // Remove the broken DSP row if it has no component_id or if it's the one causing issues
+                // This allows the user to re-add it correctly
+                const isBrokenDSP = item.component?.name?.includes('ДСП Сонома 18 мм') && !item.quantity
+                return !isBrokenDSP
+            })
+            .map(item => ({
+                ...item,
+                line_type: 'material', // Force reset
+                quantity: parseFloat(item.quantity) || 1, // Ensure it's a number
+                unit_of_measure: item.unit_of_measure || item.component?.unit_of_measure || 'шт'
+            }))
+    }
+    
+    specForm.value = cleanedRow
     editingSpec.value = row.id
     
     // We need to preload the selected products so the <el-select> has labels
