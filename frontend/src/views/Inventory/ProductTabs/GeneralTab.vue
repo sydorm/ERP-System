@@ -70,32 +70,84 @@
 
           <!-- Weight + Dimensions -->
           <div class="section-divider">Фізичні параметри</div>
-          <el-row :gutter="16">
-            <el-col :span="6">
-              <el-form-item>
-                <template #label><span class="field-label">Вага (кг)</span></template>
-                <el-input-number v-model="modelValue.weight_kg" :precision="3" :step="0.1" :min="0" style="width: 100%" class="styled-number" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item>
-                <template #label><span class="field-label">Довжина (см)</span></template>
-                <el-input-number v-model="modelValue.length_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item>
-                <template #label><span class="field-label">Ширина (см)</span></template>
-                <el-input-number v-model="modelValue.width_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item>
-                <template #label><span class="field-label">Висота (см)</span></template>
-                <el-input-number v-model="modelValue.height_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
-              </el-form-item>
-            </el-col>
-          </el-row>
+          
+          <div class="physical-params-grid">
+            <!-- Length (Довжина) -->
+            <div class="param-row">
+              <div class="param-label">Довжина (см):</div>
+              <div class="param-controls">
+                <el-radio-group v-model="getVariantConfig('length').source" size="small">
+                  <el-radio-button label="fixed">Фіксовано</el-radio-button>
+                  <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                </el-radio-group>
+                
+                <el-input-number v-if="getVariantConfig('length').source === 'fixed'" v-model="modelValue.length_cm" :precision="1" size="small" class="w-32 ml-2" />
+                <el-select v-if="getVariantConfig('length').source === 'attribute'" v-model="getVariantConfig('length').attr_id" placeholder="Виберіть..." size="small" class="w-48 ml-2">
+                  <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
+                </el-select>
+              </div>
+            </div>
+
+            <!-- Width (Ширина) -->
+            <div class="param-row">
+              <div class="param-label">Ширина (см):</div>
+              <div class="param-controls">
+                <el-radio-group v-model="getVariantConfig('width').source" size="small">
+                  <el-radio-button label="fixed">Фіксовано</el-radio-button>
+                  <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                </el-radio-group>
+                
+                <el-input-number v-if="getVariantConfig('width').source === 'fixed'" v-model="modelValue.width_cm" :precision="1" size="small" class="w-32 ml-2" />
+                <el-select v-if="getVariantConfig('width').source === 'attribute'" v-model="getVariantConfig('width').attr_id" placeholder="Виберіть..." size="small" class="w-48 ml-2">
+                  <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
+                </el-select>
+              </div>
+            </div>
+
+            <!-- Height (Висота) -->
+            <div class="param-row">
+              <div class="param-label">Висота (см):</div>
+              <div class="param-controls">
+                <el-radio-group v-model="getVariantConfig('height').source" size="small">
+                  <el-radio-button label="fixed">Фіксовано</el-radio-button>
+                  <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                </el-radio-group>
+                
+                <el-input-number v-if="getVariantConfig('height').source === 'fixed'" v-model="modelValue.height_cm" :precision="1" size="small" class="w-32 ml-2" />
+                <el-select v-if="getVariantConfig('height').source === 'attribute'" v-model="getVariantConfig('height').attr_id" placeholder="Виберіть..." size="small" class="w-48 ml-2">
+                  <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
+                </el-select>
+              </div>
+            </div>
+
+            <!-- Weight (Вага) -->
+            <div class="param-row">
+              <div class="param-label">Вага (кг):</div>
+              <div class="param-controls flex-col items-start !gap-2">
+                <el-radio-group v-model="getVariantConfig('weight').source" size="small">
+                  <el-radio-button label="fixed">Фіксовано</el-radio-button>
+                  <el-radio-button label="calc">Розрахунок</el-radio-button>
+                  <el-radio-button label="manual">Вручну в табл.</el-radio-button>
+                </el-radio-group>
+                
+                <div v-if="getVariantConfig('weight').source === 'fixed'" class="flex items-center gap-2">
+                   <el-input-number v-model="modelValue.weight_kg" :precision="3" size="small" class="w-32" />
+                </div>
+
+                <div v-if="getVariantConfig('weight').source === 'calc'" class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
+                   Базова: <el-input-number v-model="getVariantConfig('weight').base_kg" :precision="1" size="small" style="width:70px" :controls="false" /> кг
+                   + <el-input-number v-model="getVariantConfig('weight').step_kg" :precision="1" size="small" style="width:60px" :controls="false" /> кг 
+                   на кожні <el-input-number v-model="getVariantConfig('weight').step_cm" :precision="0" size="small" style="width:60px" :controls="false" /> см
+                   параметра: 
+                   <el-select v-model="getVariantConfig('weight').dim_key" size="small" style="width:100px">
+                     <el-option label="Довжина" value="length" />
+                     <el-option label="Ширина" value="width" />
+                     <el-option label="Висота" value="height" />
+                   </el-select>
+                </div>
+              </div>
+            </div>
+          </div>
         </el-col>
 
         <!-- ===== RIGHT COLUMN ===== -->
@@ -193,7 +245,16 @@ const props = defineProps({
   modelValue: { type: Object, required: true },
   categoryOptions: { type: Array, default: () => [] },
   uomOptions: { type: Array, default: () => [] },
+  categoryAttributes: { type: Array, default: () => [] },
 })
+
+const getVariantConfig = (key) => {
+  if (!props.modelValue.variant_config) props.modelValue.variant_config = {}
+  if (!props.modelValue.variant_config[key]) {
+    props.modelValue.variant_config[key] = { source: 'fixed', attr_id: null, base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+  }
+  return props.modelValue.variant_config[key]
+}
 
 const hasVariants = computed(() => {
   return props.modelValue.variants && props.modelValue.variants.length > 0
@@ -453,18 +514,39 @@ const handleImageChange = async (event) => {
 .toggle-status-text.active { color: #10b981; }
 .toggle-status-text.inactive { color: #94a3b8; }
 
-/* === NUMBER INPUTS === */
-.styled-number :deep(.el-input__wrapper) {
-  background: #f8fafc !important;
+/* === PHYSICAL PARAMS GRID === */
+.physical-params-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
 }
 
-/* === TAGS SELECT === */
-.product-form :deep(.el-tag) {
-  border-radius: 6px;
-  background-color: #eef2ff;
-  border-color: #e0e7ff;
-  color: #6366f1;
-  font-weight: 500;
+.param-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 }
+
+.param-label {
+  width: 110px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  padding-top: 6px;
+}
+
+.param-controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.w-32 { width: 8rem; }
+.w-48 { width: 12rem; }
+.ml-2 { margin-left: 0.5rem; }
+
 </style>
 

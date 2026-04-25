@@ -31,6 +31,7 @@
               v-model="form"
               :category-options="categoryOptions"
               :uom-options="uomOptions"
+              :category-attributes="categoryAttributes"
             />
           </el-tab-pane>
 
@@ -76,6 +77,8 @@
               :initial-variants="form.variants"
               :price-rule="form.price_rule"
               :product-attributes="form.product_attributes"
+              :variant-config="form.variant_config"
+              :base-dimensions="{ length_cm: form.length_cm, width_cm: form.width_cm, height_cm: form.height_cm, weight_kg: form.weight_kg }"
               @update:variants="(val) => form.variants = val"
               @update:priceRule="(val) => form.price_rule = val"
             />
@@ -199,7 +202,13 @@ const form = reactive({
         base_price: 0,
         markups: []
     },
-    product_attributes: []
+    product_attributes: [],
+    variant_config: {
+        length: { source: 'fixed', attr_id: null },
+        width: { source: 'fixed', attr_id: null },
+        height: { source: 'fixed', attr_id: null },
+        weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+    }
 })
 
 const productCharacteristics = ref([])

@@ -1,7 +1,7 @@
 """
 Product model - represents items/nomenclature
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Numeric, Integer
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Numeric, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from decimal import Decimal
@@ -72,6 +72,9 @@ class Product(BaseModel):
     performer_restriction_type = Column(String(50), nullable=True, default='any_role') # 'any_role', 'specific_brigade', 'specific_master'
     restricted_brigade_id = Column(UUID(as_uuid=True), ForeignKey("brigades.id", ondelete="SET NULL"), nullable=True)
     restricted_employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
+    
+    # Configuration for variants (dimensions/weight rules)
+    variant_config = Column(JSON, nullable=True)
 
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)

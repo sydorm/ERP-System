@@ -28,6 +28,12 @@ class ProductVariantBase(BaseModel):
     image_url: Optional[str] = None
     is_primary: bool = False
     is_active: bool = True
+    
+    # Physical Parameters
+    length_cm: Optional[Decimal] = None
+    width_cm: Optional[Decimal] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
 
 class ProductVariantCreate(ProductVariantBase):
     product_id: Optional[UUID4] = None

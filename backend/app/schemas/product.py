@@ -33,6 +33,7 @@ class ProductBase(BaseModel):
     currency: str = Field("UAH", min_length=3, max_length=3)
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: bool = True
+    variant_config: Optional[dict] = None
     
     # Dimensions and Weight
     length_cm: Optional[Decimal] = None
@@ -76,6 +77,7 @@ class ProductUpdate(BaseModel):
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: Optional[bool] = None
+    variant_config: Optional[dict] = None
     
     length_cm: Optional[Decimal] = None
     width_cm: Optional[Decimal] = None

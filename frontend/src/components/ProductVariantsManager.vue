@@ -126,16 +126,34 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="price_override" label="Ціна" width="140">
+      <el-table-column prop="price_override" label="Ціна" width="120">
         <template #default="{ row }">
           <template v-if="localPriceRule.pricing_mode === 'manual'">
-            <el-input-number v-model="row.price_override" :precision="2" :step="100" size="small" controls-position="right" />
+            <el-input-number v-model="row.price_override" :precision="2" :step="100" size="small" controls-position="right" class="w-full" />
           </template>
           <template v-else>
             <div class="calculated-price font-bold text-indigo-600">
               {{ calculateVariantPrice(row) }} <small class="font-normal text-slate-400">грн</small>
             </div>
           </template>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Габарити (см)" width="280">
+        <template #default="{ row }">
+          <div class="flex items-center gap-1">
+            <el-input-number v-model="row.length_cm" :precision="1" :controls="false" size="small" placeholder="Д" class="!w-16" />
+            <span class="text-slate-300">×</span>
+            <el-input-number v-model="row.width_cm" :precision="1" :controls="false" size="small" placeholder="Ш" class="!w-16" />
+            <span class="text-slate-300">×</span>
+            <el-input-number v-model="row.height_cm" :precision="1" :controls="false" size="small" placeholder="В" class="!w-16" />
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Вага (кг)" width="90">
+        <template #default="{ row }">
+           <el-input-number v-model="row.weight_kg" :precision="2" :controls="false" size="small" placeholder="0.00" class="w-full" />
         </template>
       </el-table-column>
 
@@ -191,7 +209,9 @@ const props = defineProps({
     productCode: String,
     initialVariants: Array,
     priceRule: Object,
-    productAttributes: { type: Array, default: () => [] }
+    productAttributes: { type: Array, default: () => [] },
+    variantConfig: { type: Object, default: () => ({}) },
+    baseDimensions: { type: Object, default: () => ({ length_cm: 0, width_cm: 0, height_cm: 0, weight_kg: 0 }) }
 })
 
 const emit = defineEmits(['update:variants', 'update:priceRule'])
@@ -380,9 +400,12 @@ const generateVariants = () => {
             return val.toString().substring(0, 3).toUpperCase()
         }).join('-')
         
+        const physicalParams = calculatePhysicalParams(combo)
+        
         return {
             sku: `${props.productCode || 'P'}-${skuSuffix}`,
             price_override: null,
+            ...physicalParams,
             values: combo.map(c => ({
                 attribute_id: c.attribute_id,
                 option_id: c.option_id,
@@ -422,10 +445,56 @@ const addManualVariant = () => {
     variants.value.push({
         sku: `${props.productCode || 'P'}-CUSTOM`,
         price_override: null,
+        length_cm: props.baseDimensions?.length_cm || 0,
+        width_cm: props.baseDimensions?.width_cm || 0,
+        height_cm: props.baseDimensions?.height_cm || 0,
+        weight_kg: props.baseDimensions?.weight_kg || 0,
         values: [],
         image_url: null,
         is_primary: false
     })
+}
+
+const calculatePhysicalParams = (combo) => {
+    const params = {
+        length_cm: props.baseDimensions?.length_cm || 0,
+        width_cm: props.baseDimensions?.width_cm || 0,
+        height_cm: props.baseDimensions?.height_cm || 0,
+        weight_kg: props.baseDimensions?.weight_kg || 0
+    }
+
+    if (!props.variantConfig) return params
+
+    // Helper to get value from attribute in combo
+    const getAttrVal = (attrId) => {
+        const val = combo.find(c => c.attribute_id === attrId)
+        return val ? parseFloat(val.value) : null
+    }
+
+    // Length, Width, Height
+    ['length', 'width', 'height'].forEach(key => {
+        const cfg = props.variantConfig[key]
+        if (!cfg) return
+        if (cfg.source === 'attribute' && cfg.attr_id) {
+            const val = getAttrVal(cfg.attr_id)
+            if (val !== null) params[`${key}_cm`] = val
+        }
+    })
+
+    // Weight calculation
+    const wCfg = props.variantConfig.weight
+    if (wCfg && wCfg.source === 'calc') {
+        const baseWeight = parseFloat(wCfg.base_kg) || 0
+        const stepKg = parseFloat(wCfg.step_kg) || 0
+        const stepCm = parseFloat(wCfg.step_cm) || 10
+        const dimVal = params[`${wCfg.dim_key}_cm`] || 0
+        
+        if (stepCm > 0) {
+            params.weight_kg = baseWeight + (dimVal / stepCm) * stepKg
+        }
+    }
+
+    return params
 }
 
 const updateVariantValue = (row, attr, option) => {
