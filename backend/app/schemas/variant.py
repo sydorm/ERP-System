@@ -40,3 +40,35 @@ class ProductVariantResponse(ProductVariantBase):
 
     class Config:
         from_attributes = True
+
+# Pricing Rules
+class ProductPriceMarkupBase(BaseModel):
+    attribute_id: UUID4
+    option_id: Optional[UUID4] = None
+    text_value: Optional[str] = None
+    markup: Decimal = Decimal('0.00')
+
+class ProductPriceMarkupCreate(ProductPriceMarkupBase):
+    pass
+
+class ProductPriceMarkupResponse(ProductPriceMarkupBase):
+    id: UUID4
+    rule_id: UUID4
+
+    class Config:
+        from_attributes = True
+
+class ProductPriceRuleBase(BaseModel):
+    pricing_mode: str = "manual"
+    base_price: Optional[Decimal] = None
+
+class ProductPriceRuleCreate(ProductPriceRuleBase):
+    markups: List[ProductPriceMarkupCreate] = []
+
+class ProductPriceRuleResponse(ProductPriceRuleBase):
+    id: UUID4
+    product_id: UUID4
+    markups: List[ProductPriceMarkupResponse] = []
+
+    class Config:
+        from_attributes = True

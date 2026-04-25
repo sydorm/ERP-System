@@ -77,7 +77,8 @@ async def list_products(
     if search:
         search_filter = or_(
             Product.name.ilike(f"%{search}%"),
-            Product.sku.ilike(f"%{search}%")
+            Product.sku.ilike(f"%{search}%"),
+            Product.variants.any(ProductVariant.sku.ilike(f"%{search}%"))
         )
         query = query.filter(search_filter)
         
@@ -138,6 +139,17 @@ async def create_product(
                 db_val = VariantValue(**val_in.dict(), variant_id=db_variant.id)
                 db.add(db_val)
                 
+    if product_in.price_rule:
+        from app.models.variant import ProductPriceRule, ProductPriceMarkup
+        rule_data = product_in.price_rule.dict(exclude={"markups"})
+        db_rule = ProductPriceRule(**rule_data, product_id=product.id)
+        db.add(db_rule)
+        db.flush()
+        
+        for markup_in in product_in.price_rule.markups:
+            db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
+            db.add(db_markup)
+
     db.commit()
     db.refresh(product)
     return product
@@ -195,6 +207,20 @@ async def update_product(
                 val_data = val_in.dict()
                 db_val = VariantValue(**val_data, variant_id=db_variant.id)
                 db.add(db_val)
+
+    if product_in.price_rule is not None:
+        from app.models.variant import ProductPriceRule, ProductPriceMarkup
+        # Remove old rule or update
+        db.query(ProductPriceRule).filter(ProductPriceRule.product_id == product.id).delete()
+        
+        rule_data = product_in.price_rule.dict(exclude={"markups"})
+        db_rule = ProductPriceRule(**rule_data, product_id=product.id)
+        db.add(db_rule)
+        db.flush()
+        
+        for markup_in in product_in.price_rule.markups:
+            db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
+            db.add(db_markup)
 
     db.commit()
     db.refresh(product)

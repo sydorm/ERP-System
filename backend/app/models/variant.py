@@ -40,3 +40,36 @@ class VariantValue(BaseModel):
     variant = relationship("ProductVariant", back_populates="values")
     attribute = relationship("Attribute")
     option = relationship("AttributeOption")
+
+
+class ProductPriceRule(BaseModel):
+    """
+    Pricing rules for product variants
+    """
+    __tablename__ = "product_price_rules"
+    
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, unique=True)
+    pricing_mode = Column(String(50), nullable=False, default="manual") # 'manual' or 'base_plus_markup'
+    base_price = Column(Numeric(15, 2), nullable=True)
+    
+    # Relationships
+    product = relationship("Product")
+    markups = relationship("ProductPriceMarkup", back_populates="rule", cascade="all, delete-orphan")
+
+
+class ProductPriceMarkup(BaseModel):
+    """
+    Markups for specific attribute values
+    """
+    __tablename__ = "product_price_markups"
+    
+    rule_id = Column(UUID(as_uuid=True), ForeignKey("product_price_rules.id", ondelete="CASCADE"), nullable=False)
+    attribute_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
+    option_id = Column(UUID(as_uuid=True), ForeignKey("attribute_options.id", ondelete="CASCADE"), nullable=True) # If it's a predefined option
+    text_value = Column(String(255), nullable=True) # If it's a text/number value
+    markup = Column(Numeric(15, 2), nullable=False, default=0)
+    
+    # Relationships
+    rule = relationship("ProductPriceRule", back_populates="markups")
+    attribute = relationship("Attribute")
+    option = relationship("AttributeOption")

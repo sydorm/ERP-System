@@ -23,6 +23,7 @@ class Attribute(BaseModel):
     icon = Column(String(50), nullable=True) # e.g. "Aa", "palette", "list"
     description = Column(String(500), nullable=True)
     is_archived = Column(Boolean, default=False, nullable=False)
+    generates_variant = Column(Boolean, default=True, nullable=False)
     
     # Configure-To-Order Settings
     allow_manual_input = Column(Boolean, default=False, nullable=False)

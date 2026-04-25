@@ -35,6 +35,7 @@ class AttributeBase(BaseModel):
     is_archived: bool = False
     allow_manual_input: bool = False
     mapped_dimension: Optional[str] = None
+    generates_variant: bool = True
 
 class AttributeCreate(AttributeBase):
     options: Optional[List[AttributeOptionCreate]] = None
@@ -49,6 +50,7 @@ class AttributeUpdate(BaseModel):
     allow_manual_input: Optional[bool] = None
     mapped_dimension: Optional[str] = None
     category_codes: Optional[List[str]] = None
+    generates_variant: Optional[bool] = None
 
 class AttributeResponse(AttributeBase):
     id: UUID4

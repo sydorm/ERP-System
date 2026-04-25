@@ -6,11 +6,18 @@
         <el-tag v-if="variants.length" type="success" effect="plain">{{ variants.length }}</el-tag>
       </div>
       <div class="actions">
+        <div class="pricing-mode-selector mr-4">
+          <span class="mr-2 text-sm text-slate-500">Режим ціноутворення:</span>
+          <el-radio-group v-model="localPriceRule.pricing_mode" size="small">
+            <el-radio-button label="manual">Вручну</el-radio-button>
+            <el-radio-button label="base_plus_markup">Базова + надбавки</el-radio-button>
+          </el-radio-group>
+        </div>
         <el-dropdown v-if="selectedRows.length" class="mr-2" @command="handleBulkCommand">
           <el-button type="info">Дії з вибраними ({{ selectedRows.length }})<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="price">Змінити ціну</el-dropdown-item>
+              <el-dropdown-item command="price" :disabled="localPriceRule.pricing_mode !== 'manual'">Змінити ціну</el-dropdown-item>
               <el-dropdown-item command="activate">Активувати</el-dropdown-item>
               <el-dropdown-item command="deactivate">Деактивувати</el-dropdown-item>
               <el-dropdown-item command="delete" class="text-danger">Видалити</el-dropdown-item>
@@ -19,6 +26,39 @@
         </el-dropdown>
         <el-button type="primary" :icon="MagicStick" @click="openGenerator">Згенерувати комбінації</el-button>
         <el-button :icon="Plus" @click="addManualVariant">Додати вручну</el-button>
+      </div>
+    </div>
+
+    <!-- PRICING RULE CONFIG (Base + Markups) -->
+    <div v-if="localPriceRule.pricing_mode === 'base_plus_markup'" class="pricing-rule-config mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+      <el-row :gutter="20" class="mb-4">
+        <el-col :span="8">
+          <el-form-item label="Базова ціна" class="mb-0">
+            <el-input-number v-model="localPriceRule.base_price" :precision="2" :step="100" class="w-full" controls-position="right" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <div class="markups-section">
+        <h4 class="text-sm font-semibold mb-3 text-slate-700">Надбавки за характеристики</h4>
+        <div v-for="attr in variantAttributes" :key="attr.id" class="attr-markup-group mb-4">
+          <div class="text-xs font-bold text-slate-500 mb-2 uppercase">{{ attr.name }}</div>
+          <div class="flex flex-wrap gap-3">
+            <div v-for="opt in attr.options" :key="opt.id" class="markup-item flex items-center bg-white p-2 rounded border border-slate-200">
+              <span class="text-xs mr-2">{{ opt.value }}:</span>
+              <el-input-number 
+                :model-value="getMarkup(attr.id, opt.id)" 
+                @update:model-value="(val) => setMarkup(attr.id, opt.id, val)"
+                :precision="2" 
+                :step="50" 
+                size="small" 
+                class="w-24" 
+                controls-position="right" 
+                placeholder="+0"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -62,9 +102,16 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="price_override" label="Ціна" width="120">
+      <el-table-column prop="price_override" label="Ціна" width="140">
         <template #default="{ row }">
-          <el-input-number v-model="row.price_override" :precision="2" :step="100" size="small" controls-position="right" />
+          <template v-if="localPriceRule.pricing_mode === 'manual'">
+            <el-input-number v-model="row.price_override" :precision="2" :step="100" size="small" controls-position="right" />
+          </template>
+          <template v-else>
+            <div class="calculated-price font-bold text-indigo-600">
+              {{ calculateVariantPrice(row) }} <small class="font-normal text-slate-400">грн</small>
+            </div>
+          </template>
         </template>
       </el-table-column>
 
@@ -90,7 +137,7 @@
                 <el-alert title="Виберіть значення для кожної характеристики. Система створить усі можливі комбінації." type="info" show-icon :closable="false" />
             </div>
 
-            <div v-for="attr in categoryAttributes" :key="attr.id" class="attr-gen-row mb-4">
+            <div v-for="attr in variantAttributes" :key="attr.id" class="attr-gen-row mb-4">
                 <div class="attr-label mb-2"><strong>{{ attr.name }}</strong></div>
                 <el-checkbox-group v-model="genSelection[attr.id]">
                     <el-checkbox v-for="opt in attr.options" :key="opt.id" :label="opt.id">{{ opt.value }}</el-checkbox>
@@ -118,12 +165,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const props = defineProps({
     categoryAttributes: Array,
     productCode: String,
-    initialVariants: Array
+    initialVariants: Array,
+    priceRule: Object
 })
 
-const emit = defineEmits(['update:variants'])
+const emit = defineEmits(['update:variants', 'update:priceRule'])
 
 const variants = ref(props.initialVariants || [])
+const localPriceRule = ref(props.priceRule || { pricing_mode: 'manual', base_price: 0, markups: [] })
 const primarySku = ref('')
 const genVisible = ref(false)
 const genSelection = reactive({})
@@ -136,6 +185,10 @@ watch(variants, (newVal) => {
     if (currentState !== currentProps) {
         emit('update:variants', newVal)
     }
+}, { deep: true })
+
+watch(localPriceRule, (newVal) => {
+    emit('update:priceRule', newVal)
 }, { deep: true })
 
 // Sync FROM parent (when switching products)
@@ -160,11 +213,48 @@ watch(() => props.initialVariants, (newVal) => {
 // Initialize/Update genSelection when attributes change
 watch(() => props.categoryAttributes, (newAttrs) => {
     newAttrs?.forEach(attr => {
-        if (!genSelection[attr.id]) {
+        if (attr.generates_variant && !genSelection[attr.id]) {
             genSelection[attr.id] = []
         }
     })
 }, { immediate: true })
+
+const variantAttributes = computed(() => {
+    return props.categoryAttributes?.filter(a => a.generates_variant) || []
+})
+
+const getMarkup = (attrId, optId) => {
+    const markup = localPriceRule.value.markups?.find(m => m.attribute_id === attrId && m.option_id === optId)
+    return markup ? markup.markup : 0
+}
+
+const setMarkup = (attrId, optId, value) => {
+    if (!localPriceRule.value.markups) localPriceRule.value.markups = []
+    const idx = localPriceRule.value.markups.findIndex(m => m.attribute_id === attrId && m.option_id === optId)
+    if (idx !== -1) {
+        if (value === 0 || value === null) {
+            localPriceRule.value.markups.splice(idx, 1)
+        } else {
+            localPriceRule.value.markups[idx].markup = value
+        }
+    } else if (value !== 0 && value !== null) {
+        localPriceRule.value.markups.push({
+            attribute_id: attrId,
+            option_id: optId,
+            markup: value
+        })
+    }
+}
+
+const calculateVariantPrice = (row) => {
+    if (localPriceRule.value.pricing_mode === 'manual') return row.price_override || 0
+    
+    let total = parseFloat(localPriceRule.value.base_price || 0)
+    row.values?.forEach(val => {
+        total += parseFloat(getMarkup(val.attribute_id, val.option_id))
+    })
+    return total
+}
 
 const handleSelectionChange = (val) => {
     selectedRows.value = val
@@ -229,7 +319,7 @@ const generateSkuPreview = () => {
 
 const generateVariants = () => {
     // Cartesian product logic
-    const selectedAttrs = props.categoryAttributes.filter(a => genSelection[a.id].length > 0)
+    const selectedAttrs = variantAttributes.value.filter(a => genSelection[a.id].length > 0)
     if (!selectedAttrs.length) return
     
     let results = [[]]

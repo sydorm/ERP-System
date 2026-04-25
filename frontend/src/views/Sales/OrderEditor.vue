@@ -929,16 +929,15 @@ const openVariantSelector = (line) => {
 
 const onVariantSelected = (variant) => {
   if (activeLineForSelector.value) {
+    activeLineForSelector.value.variant_id = variant.id || null
+    activeLineForSelector.value._virtual_label = getVariantLabel(variant)
+    activeLineForSelector.value._virtual_values = variant.values
+    
     if (variant.id) {
-      activeLineForSelector.value.variant_id = variant.id
-      activeLineForSelector.value._virtual_label = null
       handleVariantChange(variant.id, activeLineForSelector.value)
     } else {
-      activeLineForSelector.value.variant_id = null
-      activeLineForSelector.value._virtual_label = getVariantLabel(variant)
-      activeLineForSelector.value._virtual_values = variant.values
       const prod = products.value.find(p => p.id === activeLineForSelector.value.product_id)
-      activeLineForSelector.value.price = prod?.price || 0
+      activeLineForSelector.value.price = calculatePriceWithRule(prod, variant.values)
       updateLineTotal(activeLineForSelector.value)
     }
   }
@@ -952,15 +951,38 @@ const clearVirtualVariant = (line) => {
 const handleVariantChange = (variantId, line) => {
   const product = products.value.find(p => p.id === line.product_id)
   if (!product) return
+  
   if (variantId) {
     const variant = product.variants?.find(v => v.id === variantId)
     if (variant) {
-      line.price = variant.price_override || product.price
+      if (product.price_rule?.pricing_mode === 'base_plus_markup') {
+        line.price = calculatePriceWithRule(product, variant.values)
+      } else {
+        line.price = variant.price_override || product.price
+      }
     }
   } else {
     line.price = product.price
   }
   updateLineTotal(line)
+}
+
+const calculatePriceWithRule = (product, values) => {
+    if (!product) return 0
+    if (!product.price_rule || product.price_rule.pricing_mode === 'manual') {
+        // If specific variant has price_override, we might need it, but this helper is for rules.
+        // For manual, we usually use variant.price_override directly in handleVariantChange.
+        return product.price
+    }
+    
+    let total = parseFloat(product.price_rule.base_price || 0)
+    if (values && product.price_rule.markups) {
+        values.forEach(v => {
+            const markup = product.price_rule.markups.find(m => m.attribute_id === v.attribute_id && m.option_id === v.option_id)
+            if (markup) total += parseFloat(markup.markup)
+        })
+    }
+    return total
 }
 
 const getProductVariants = (productId) => {
@@ -1092,7 +1114,7 @@ const saveOrder = async (action = 'save') => {
         quantity: l.quantity,
         price: l.price,
         total: l.total,
-        variant_values: !l.variant_id && l._virtual_values ? l._virtual_values : undefined
+        variant_values: l._virtual_values || undefined
     })),
     total_amount: totalAmount.value,
     shipping_date: form.shipping_date || null,

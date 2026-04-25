@@ -2,7 +2,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID
-from .variant import ProductVariantCreate, ProductVariantResponse
+from .variant import ProductVariantCreate, ProductVariantResponse, ProductPriceRuleCreate, ProductPriceRuleResponse
 from .specification import ProductSpecificationResponse
 
 class ProductBase(BaseModel):
@@ -45,6 +45,7 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
     """Schema for creating a product"""
     variants: Optional[List[ProductVariantCreate]] = None
+    price_rule: Optional[ProductPriceRuleCreate] = None
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product"""
@@ -83,6 +84,7 @@ class ProductUpdate(BaseModel):
     restricted_employee_id: Optional[UUID] = None
     
     variants: Optional[List[ProductVariantCreate]] = None
+    price_rule: Optional[ProductPriceRuleCreate] = None
 
 class ProductResponse(ProductBase):
     """Schema for product response"""
@@ -90,6 +92,7 @@ class ProductResponse(ProductBase):
     company_id: UUID
     variants: List[ProductVariantResponse] = []
     specifications: List[ProductSpecificationResponse] = []
+    price_rule: Optional[ProductPriceRuleResponse] = None
     stock_balance: float = 0.0
 
     class Config:

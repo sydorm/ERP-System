@@ -72,7 +72,9 @@
               :category-attributes="categoryAttributes"
               :product-code="form.sku"
               :initial-variants="form.variants"
+              :price-rule="form.price_rule"
               @update:variants="(val) => form.variants = val"
+              @update:priceRule="(val) => form.price_rule = val"
             />
           </el-tab-pane>
 
@@ -186,7 +188,14 @@ const form = reactive({
     special_production_conditions: '',
     performer_restriction_type: 'any_role',
     restricted_brigade_id: null,
-    restricted_employee_id: null
+    restricted_employee_id: null,
+
+    // Pricing Rule
+    price_rule: {
+        pricing_mode: 'manual',
+        base_price: 0,
+        markups: []
+    }
 })
 
 const productCharacteristics = ref([])

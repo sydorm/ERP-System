@@ -74,6 +74,14 @@
           </template>
         </el-table-column>
 
+        <el-table-column prop="generates_variant" label="Генерує варіант" width="150" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.generates_variant ? 'success' : 'info'" size="small">
+              {{ row.generates_variant ? '✅ Так' : '❌ Ні' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
         <el-table-column label="Категорії" min-width="180">
           <template #default="{ row }">
             <div class="flex flex-wrap gap-1">
@@ -140,6 +148,13 @@
           <el-select v-model="attrForm.category_codes" multiple filterable placeholder="Всюди (якщо пусто)" class="w-full">
              <el-option v-for="cat in categories" :key="cat.code" :label="cat.name" :value="cat.code" />
           </el-select>
+        </el-form-item>
+
+        <el-form-item label="Генерує варіант SKU" prop="generates_variant">
+          <el-switch v-model="attrForm.generates_variant" active-text="Так" inactive-text="Ні" />
+          <div class="text-xs text-slate-500 mt-1">
+            Якщо ввімкнено, ця характеристика буде використовуватись для автоматичної генерації комбінацій (варіантів) товару.
+          </div>
         </el-form-item>
 
         <div v-if="attrForm.type === 'SELECT'" class="bg-indigo-50/50 p-4 rounded-lg mb-4 border border-indigo-100">
@@ -239,7 +254,8 @@ const attrForm = reactive({
   description: '',
   category_codes: [],
   allow_manual_input: false,
-  mapped_dimension: null
+  mapped_dimension: null,
+  generates_variant: true
 })
 
 const optForm = reactive({
@@ -322,6 +338,7 @@ const openAddAttrModal = () => {
   attrForm.category_codes = []
   attrForm.allow_manual_input = false
   attrForm.mapped_dimension = null
+  attrForm.generates_variant = true
   attrModalVisible.value = true
 }
 
@@ -424,6 +441,7 @@ const handleCommand = (cmd, row) => {
     Object.assign(attrForm, row)
     if (!attrForm.category_codes) attrForm.category_codes = []
     if (attrForm.allow_manual_input === undefined) attrForm.allow_manual_input = false
+    if (attrForm.generates_variant === undefined) attrForm.generates_variant = true
     attrModalVisible.value = true
   } else if (cmd === 'delete') {
     ElMessageBox.confirm('Ви впевнені, що хочете видалити характеристику і всі її значення?', 'Видалити', { type: 'warning' })

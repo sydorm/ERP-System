@@ -28,20 +28,22 @@
       <!-- Attributes Form -->
       <div class="selection-body">
         <el-form label-position="top" class="premium-form">
-          <transition-group name="fade-list">
+          <!-- VARIANT GENERATING ATTRIBUTES -->
+          <div class="variant-attributes-section mb-6">
+            <h4 class="text-xs font-bold text-indigo-600 uppercase mb-4 tracking-wider">Основні параметри (SKU)</h4>
             <el-form-item
-              v-for="attr in sortedAttributes"
+              v-for="attr in variantAttributes"
               :key="attr.id"
               :label="attr.name"
               class="selection-item"
             >
-              <!-- DIMENSIONS: два числових поля Ш × В -->
               <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
                 <el-input-number
                   v-model="dimSelections[attr.id].w"
                   :min="0" :precision="0" :controls="false"
                   placeholder="Ширина"
                   class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
                 />
                 <span class="dims-sep">×</span>
                 <el-input-number
@@ -49,15 +51,15 @@
                   :min="0" :precision="0" :controls="false"
                   placeholder="Висота"
                   class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
                 />
                 <span class="dims-unit">мм</span>
               </div>
 
-              <!-- Всі інші типи: dropdown -->
               <el-select
                 v-else
                 v-model="selections[attr.id]"
-                placeholder="Оберіть варіант або введіть свій..."
+                placeholder="Оберіть варіант..."
                 style="width: 100%"
                 filterable
                 :allow-create="attr.allow_manual_input"
@@ -76,20 +78,48 @@
                   :value="opt.id"
                 >
                   <div class="option-item">
-                    <span
-                      v-if="opt.color_code"
-                      class="color-pill"
-                      :style="{ backgroundColor: opt.color_code }"
-                    ></span>
+                    <span v-if="opt.color_code" class="color-pill" :style="{ backgroundColor: opt.color_code }"></span>
                     <span class="option-text">{{ opt.value }}</span>
                   </div>
                 </el-option>
               </el-select>
-              <div v-if="attr.allow_manual_input && attr.type !== 'DIMENSIONS'" class="text-xs text-indigo-500 mt-1 flex items-center gap-1">
-                <el-icon><EditPen /></el-icon> Почніть набирати текст, щоб вписати своє значення
-              </div>
             </el-form-item>
-          </transition-group>
+          </div>
+
+          <!-- EXTRA ATTRIBUTES (NON-VARIANT) -->
+          <div v-if="extraAttributes.length" class="extra-attributes-section pt-4 border-t border-slate-100">
+            <h4 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Додаткові умови</h4>
+            <el-form-item
+              v-for="attr in extraAttributes"
+              :key="attr.id"
+              :label="attr.name"
+              class="selection-item"
+            >
+              <el-input 
+                v-if="attr.type === 'TEXT'" 
+                v-model="selections[attr.id]" 
+                placeholder="Введіть текст..."
+                @change="handleAttributeChange(attr.id)"
+              />
+              <el-select
+                v-else
+                v-model="selections[attr.id]"
+                placeholder="Виберіть..."
+                style="width: 100%"
+                filterable
+                :allow-create="attr.allow_manual_input || attr.type === 'TEXT'"
+                @change="handleAttributeChange(attr.id)"
+                class="premium-select"
+              >
+                <el-option
+                  v-for="opt in getAvailableOptions(attr.id)"
+                  :key="opt.id"
+                  :label="opt.value"
+                  :value="opt.id"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
         </el-form>
       </div>
 
@@ -146,7 +176,6 @@ const visible = computed({
 
 const selections = ref({})
 const dimSelections = ref({})
-const sortedAttributes = ref([])
 const allCategoryAttributes = ref([])
 const attributeLoading = ref(false)
 
@@ -179,41 +208,56 @@ const fetchAttributes = async () => {
 
 const initializeSelector = () => {
   if (allCategoryAttributes.value.length > 0) {
-      sortedAttributes.value = allCategoryAttributes.value
+      allCategoryAttributes.value.forEach(attr => {
+          if (attr.type === 'DIMENSIONS') dimSelections.value[attr.id] = { w: null, h: null }
+      })
   } else if (props.product?.variants) {
       const attrsMap = new Map()
       props.product.variants.forEach(v => {
         v.values?.forEach(val => {
-          if (val.attribute) attrsMap.set(val.attribute.id, val.attribute)
+          if (val.attribute) {
+              attrsMap.set(val.attribute.id, val.attribute)
+              if (val.attribute.type === 'DIMENSIONS') dimSelections.value[val.attribute.id] = { w: null, h: null }
+          }
         })
       })
-      sortedAttributes.value = Array.from(attrsMap.values())
   }
   
   selections.value = {}
-  dimSelections.value = {}
-  sortedAttributes.value.forEach(attr => {
-    if (attr.type === 'DIMENSIONS') dimSelections.value[attr.id] = { w: null, h: null }
-  })
 
   if (props.initialVariantId) {
     const variant = props.product.variants.find(v => v.id === props.initialVariantId)
     if (variant?.values) {
       variant.values.forEach(v => {
-        selections.value[v.attribute_id] = v.option_id
+        if (v.attribute?.type === 'DIMENSIONS' && v.text_value) {
+            const [w, h] = v.text_value.split('x')
+            dimSelections.value[v.attribute_id] = { w: parseInt(w), h: parseInt(h) }
+        } else {
+            selections.value[v.attribute_id] = v.option_id || v.text_value
+        }
       })
     }
   }
 }
 
+const variantAttributes = computed(() => {
+    const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : [] // Fallback logic needed if empty
+    return attrs.filter(a => a.generates_variant !== false) // default true
+})
+
+const extraAttributes = computed(() => {
+    const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
+    return attrs.filter(a => a.generates_variant === false)
+})
+
 const getAvailableOptions = (attrId) => {
-  const attr = sortedAttributes.value.find(a => a.id === attrId)
+  const attr = allCategoryAttributes.value.find(a => a.id === attrId)
   return attr?.options || []
 }
 
 const allAttributesSelected = computed(() => {
-  if (sortedAttributes.value.length === 0) return false
-  return sortedAttributes.value.every(a => {
+  if (variantAttributes.value.length === 0) return false
+  return variantAttributes.value.every(a => {
     if (a.type === 'DIMENSIONS') {
       const d = dimSelections.value[a.id]
       return d && d.w > 0 && d.h > 0
@@ -226,41 +270,58 @@ const currentVariant = computed(() => {
   if (!allAttributesSelected.value) return null
   
   return props.product.variants.find(v => {
-    return sortedAttributes.value.every(a => {
-      return v.values?.some(vv => vv.attribute_id === a.id && vv.option_id === selections.value[vv.attribute_id])
+    // A variant matches if ALL its values match the CURRENT selections for variant-generating attributes
+    // AND the variant itself only contains variant-generating attributes (usually the case)
+    return variantAttributes.value.every(a => {
+      const selection = selections.value[a.id]
+      const dim = dimSelections.value[a.id]
+      
+      return v.values?.some(vv => {
+        if (vv.attribute_id !== a.id) return false
+        if (a.type === 'DIMENSIONS') {
+            return vv.text_value === `${dim.w}x${dim.h}`
+        }
+        return vv.option_id === selection || vv.text_value === selection
+      })
     })
   })
 })
 
 const handleConfirm = () => {
   if (allAttributesSelected.value) {
-    // If we have a matching variant, emit it. 
-    // Otherwise emit the selections so OrderEditor can handle it.
+    const allAttrs = [...variantAttributes.value, ...extraAttributes.value]
+    
+    // Construct values for the selection
+    const selectedValues = allAttrs.map(attr => {
+        const selection = selections.value[attr.id];
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(selection);
+        
+        if (attr.type === 'DIMENSIONS') {
+          const d = dimSelections.value[attr.id]
+          return { attribute_id: attr.id, option_id: null, text_value: `${d.w}x${d.h}`, attribute: attr, option: null }
+        }
+        return {
+            attribute_id: attr.id,
+            option_id: isUuid ? selection : null,
+            text_value: isUuid ? null : selection,
+            attribute: attr,
+            option: isUuid ? attr.options?.find(o => o.id === selection) : null
+        }
+    }).filter(v => v.option_id || v.text_value)
+
     if (currentVariant.value) {
-        emit('select', currentVariant.value)
+        // Return matching variant but with all selected values (including extras)
+        emit('select', {
+            ...currentVariant.value,
+            values: selectedValues
+        })
     } else {
         // Construct a "virtual" variant object
         const virtualVariant = {
             id: null,
             product_id: props.product.id,
             sku: props.product.sku, // Base SKU
-            values: sortedAttributes.value.map(attr => {
-                const selection = selections.value[attr.id];
-                // Check if the selection is a UUID (an existing option_id)
-                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(selection);
-                
-                if (attr.type === 'DIMENSIONS') {
-                  const d = dimSelections.value[attr.id]
-                  return { attribute_id: attr.id, option_id: null, text_value: `${d.w}x${d.h}`, attribute: attr, option: null }
-                }
-                return {
-                    attribute_id: attr.id,
-                    option_id: isUuid ? selection : null,
-                    text_value: isUuid ? null : selection,
-                    attribute: attr,
-                    option: isUuid ? attr.options?.find(o => o.id === selection) : null
-                }
-            })
+            values: selectedValues
         }
         emit('select', virtualVariant)
     }
