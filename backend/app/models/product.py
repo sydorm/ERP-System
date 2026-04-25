@@ -16,6 +16,8 @@ class ProductAttribute(BaseModel):
     
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     attribute_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
+    option_id = Column(UUID(as_uuid=True), ForeignKey("attribute_options.id", ondelete="SET NULL"), nullable=True)
+    text_value = Column(String(500), nullable=True)
     generates_sku = Column(Boolean, default=True, nullable=False)
     
     # Relationships

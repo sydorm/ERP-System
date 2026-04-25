@@ -8,6 +8,8 @@ from .specification import ProductSpecificationResponse
 
 class ProductAttributeBase(BaseModel):
     attribute_id: UUID
+    option_id: Optional[UUID] = None
+    text_value: Optional[str] = None
     generates_sku: bool = True
 
 
