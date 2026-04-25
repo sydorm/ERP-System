@@ -54,6 +54,7 @@ class PurchaseReceiptLine(BaseModel):
     quantity = Column(Numeric(15, 3), nullable=False)
     price = Column(Numeric(15, 2), nullable=False)
     total = Column(Numeric(15, 2), nullable=False)
+    attribute_values = Column(JSON, nullable=True)
     
     # Foreign Keys
     receipt_id = Column(UUID(as_uuid=True), ForeignKey("purchase_receipts.id", ondelete="CASCADE"), nullable=False)

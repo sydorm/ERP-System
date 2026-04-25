@@ -281,7 +281,8 @@ const onBaseOrderChange = async (orderId) => {
       variant_id: l.variant_id,
       quantity: Number(l.quantity),
       price: Number(l.price),
-      total: Number(l.total)
+      total: Number(l.total),
+      values: l.attribute_values || []
     }))
     onSupplierChange(order.supplier_id)
     ElMessage.success(`Дані замовлення ${order.order_number} завантажено`)
@@ -314,7 +315,13 @@ const fetchData = async () => {
 
     if (isEditMode.value) {
       const res = await api.get(`/api/v1/purchase-receipts/${route.params.id}`)
-      Object.assign(form, res.data)
+      const data = res.data
+      if (data.lines) {
+          data.lines.forEach(l => {
+              l.values = l.attribute_values || []
+          })
+      }
+      Object.assign(form, data)
     } else if (route.query.base_order_id) {
       form.base_order_id = route.query.base_order_id
       await onBaseOrderChange(form.base_order_id)
@@ -353,6 +360,14 @@ const saveReceipt = async (action = 'save') => {
 
   const payload = {
     ...form,
+    lines: form.lines.map(l => ({
+      product_id: l.product_id,
+      variant_id: l.variant_id,
+      quantity: l.quantity,
+      price: l.price,
+      total: l.total,
+      attribute_values: l.values
+    })),
     total_amount: totalAmount.value
   }
 

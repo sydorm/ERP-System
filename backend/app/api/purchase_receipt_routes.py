@@ -64,7 +64,8 @@ async def create_purchase_receipt(
             variant_id=line_data.variant_id,
             quantity=line_data.quantity,
             price=line_data.price,
-            total=line_data.total
+            total=line_data.total,
+            attribute_values=line_data.attribute_values
         )
         db.add(line)
     
@@ -80,7 +81,8 @@ async def create_purchase_receipt(
             warehouse_id=receipt.warehouse_id,
             quantity=float(line_data.quantity),
             amount=float(line_data.total),
-            notes=f"Receipt {receipt.receipt_number}"
+            notes=f"Receipt {receipt.receipt_number}",
+            attribute_values=line_data.attribute_values
         ))
     
     PostingService.post_document(

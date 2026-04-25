@@ -38,22 +38,43 @@
               class="selection-item"
             >
               <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <el-input-number
-                  v-model="dimSelections[attr.id].w"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Ширина"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-sep">×</span>
-                <el-input-number
-                  v-model="dimSelections[attr.id].h"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Висота"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-unit">мм</span>
+                <template v-if="getAvailableOptions(attr.id).length > 0">
+                  <el-select
+                    v-model="selections[attr.id]"
+                    placeholder="Оберіть розмір..."
+                    style="width: 100%"
+                    filterable
+                    allow-create
+                    default-first-option
+                    @change="(val) => handleDimSelectChange(attr.id, val)"
+                    class="premium-select"
+                  >
+                    <el-option
+                      v-for="opt in getAvailableOptions(attr.id)"
+                      :key="opt.id"
+                      :label="opt.value"
+                      :value="opt.value"
+                    />
+                  </el-select>
+                </template>
+                <template v-else>
+                  <el-input-number
+                    v-model="dimSelections[attr.id].w"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Ширина"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id)"
+                  />
+                  <span class="dims-sep">×</span>
+                  <el-input-number
+                    v-model="dimSelections[attr.id].h"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Висота"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id)"
+                  />
+                  <span class="dims-unit">мм</span>
+                </template>
               </div>
 
               <el-select
@@ -96,22 +117,43 @@
               class="selection-item"
             >
               <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <el-input-number
-                  v-model="dimSelections[attr.id].w"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Ширина"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-sep">×</span>
-                <el-input-number
-                  v-model="dimSelections[attr.id].h"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Висота"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-unit">мм</span>
+                <template v-if="getAvailableOptions(attr.id).length > 0">
+                  <el-select
+                    v-model="selections[attr.id]"
+                    placeholder="Оберіть розмір..."
+                    style="width: 100%"
+                    filterable
+                    allow-create
+                    default-first-option
+                    @change="(val) => handleDimSelectChange(attr.id, val)"
+                    class="premium-select"
+                  >
+                    <el-option
+                      v-for="opt in getAvailableOptions(attr.id)"
+                      :key="opt.id"
+                      :label="opt.value"
+                      :value="opt.value"
+                    />
+                  </el-select>
+                </template>
+                <template v-else>
+                  <el-input-number
+                    v-model="dimSelections[attr.id].w"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Ширина"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id)"
+                  />
+                  <span class="dims-sep">×</span>
+                  <el-input-number
+                    v-model="dimSelections[attr.id].h"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Висота"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id)"
+                  />
+                  <span class="dims-unit">мм</span>
+                </template>
               </div>
 
               <el-input 
@@ -371,6 +413,21 @@ const handleConfirm = () => {
 
 const handleClose = () => { selections.value = {} }
 const handleAttributeChange = () => {}
+
+const handleDimSelectChange = (attrId, val) => {
+  if (!val) return
+  const parts = val.toLowerCase().split('x')
+  if (parts.length === 2) {
+    const w = parseInt(parts[0].trim())
+    const h = parseInt(parts[1].trim())
+    if (!isNaN(w) && !isNaN(h)) {
+      dimSelections.value[attrId] = { w, h }
+    }
+  } else {
+      // If manual input is just a number, maybe they only entered width? 
+      // But we expect WxH. For now, just keep as is or clear if invalid.
+  }
+}
 
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(val || 0)
 </script>

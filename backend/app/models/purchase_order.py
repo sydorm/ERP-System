@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric, Enum, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric, Enum, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -51,6 +51,7 @@ class PurchaseOrderLine(BaseModel):
     quantity = Column(Numeric(15, 4), nullable=False, default=1.0)
     price = Column(Numeric(15, 2), nullable=False, default=0.0)
     total = Column(Numeric(15, 2), nullable=False, default=0.0)
+    attribute_values = Column(JSON, nullable=True)
     
     # Relationships
     purchase_order = relationship("PurchaseOrder", back_populates="lines")

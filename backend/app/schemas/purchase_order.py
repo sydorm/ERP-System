@@ -13,6 +13,7 @@ class PurchaseOrderLineBase(BaseModel):
     quantity: Decimal = Field(..., ge=0)
     price: Decimal = Field(..., ge=0)
     total: Decimal = Field(..., ge=0)
+    attribute_values: Optional[List[dict]] = None
 
 class PurchaseOrderLineCreate(PurchaseOrderLineBase):
     pass

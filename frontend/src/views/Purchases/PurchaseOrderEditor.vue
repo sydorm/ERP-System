@@ -514,6 +514,7 @@ const fetchData = async () => {
           line.quantity = Number(line.quantity || 0)
           line.price = Number(line.price || 0)
           line.total = Number(line.total || 0)
+          line.values = line.attribute_values || []
         })
       }
       Object.assign(form, data)
@@ -547,7 +548,8 @@ const saveOrder = async (action = 'save') => {
       variant_id: l.variant_id,
       quantity: l.quantity,
       price: l.price,
-      total: l.total
+      total: l.total,
+      attribute_values: l.values
     })),
     total_amount: totalAmount.value,
     expected_date: form.expected_date || null,

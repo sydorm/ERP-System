@@ -111,7 +111,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
-                  <el-dropdown-item v-if="row.type === 'SELECT' || row.type === 'COLOR'" command="add_option">
+                  <el-dropdown-item v-if="row.type === 'SELECT' || row.type === 'COLOR' || row.type === 'DIMENSIONS'" command="add_option">
                      Додати значення
                   </el-dropdown-item>
                   <el-dropdown-item command="delete" divided class="text-red-500">Видалити</el-dropdown-item>
@@ -157,7 +157,7 @@
           </div>
         </el-form-item>
 
-        <div v-if="attrForm.type === 'SELECT'" class="bg-indigo-50/50 p-4 rounded-lg mb-4 border border-indigo-100">
+        <div v-if="attrForm.type === 'SELECT' || attrForm.type === 'DIMENSIONS'" class="bg-indigo-50/50 p-4 rounded-lg mb-4 border border-indigo-100">
           <h4 class="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
             <el-icon><Operation /></el-icon> Налаштування конфігуратора (BOM)
           </h4>

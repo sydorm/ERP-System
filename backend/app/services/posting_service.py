@@ -16,7 +16,8 @@ class PostingEntry:
         counterparty_id: Optional[UUID] = None,
         bank_account_id: Optional[UUID] = None,
         currency: str = "UAH",
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
+        attribute_values: Optional[dict] = None
     ):
         self.register_type = register_type
         self.quantity = quantity
@@ -28,6 +29,7 @@ class PostingEntry:
         self.bank_account_id = bank_account_id
         self.currency = currency
         self.notes = notes
+        self.attribute_values = attribute_values
 
 class PostingService:
     @staticmethod
@@ -60,7 +62,8 @@ class PostingService:
                 currency=entry.currency,
                 document_type=document_type,
                 document_id=document_id,
-                notes=entry.notes
+                notes=entry.notes,
+                attribute_values=entry.attribute_values
             )
             db.add(db_record)
         

@@ -180,7 +180,8 @@ async def create_purchase_order(
             variant_id=line_data.variant_id,
             quantity=line_data.quantity,
             price=line_data.price,
-            total=line_data.total
+            total=line_data.total,
+            attribute_values=line_data.attribute_values
         )
         db.add(line)
     
@@ -233,7 +234,8 @@ async def update_purchase_order(
                 variant_id=line_data.variant_id,
                 quantity=line_data.quantity,
                 price=line_data.price,
-                total=line_data.total
+                total=line_data.total,
+                attribute_values=line_data.attribute_values
             )
             db.add(line)
             

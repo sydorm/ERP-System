@@ -11,6 +11,7 @@ class PurchaseReceiptLineBase(BaseModel):
     quantity: Decimal
     price: Decimal
     total: Decimal
+    attribute_values: Optional[List[dict]] = None
 
 class PurchaseReceiptLineCreate(PurchaseReceiptLineBase):
     pass
