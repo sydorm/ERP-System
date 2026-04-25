@@ -46,7 +46,7 @@
             <div class="attr-meta">
               <span class="type-badge">{{ typeLabel(getAttrType(char)) }}</span>
               
-              <!-- Compact Values Display (Tags) -->
+              <!-- Compact Values Display (Tags Only) -->
               <div class="values-row">
                 <!-- Pre-defined option tag -->
                 <el-tag 
@@ -57,7 +57,10 @@
                   effect="plain"
                   @close="clearValue(char)"
                 >
-                  {{ getOptionValue(char.option_id) }}
+                  <div class="tag-content-flex">
+                    <span v-if="getOptionColor(char.option_id)" class="dot-swatch-mini" :style="{ background: getOptionColor(char.option_id) }"></span>
+                    {{ getOptionValue(char.option_id) }}
+                  </div>
                 </el-tag>
 
                 <!-- Text/Dimensions manual tag -->
@@ -71,11 +74,18 @@
                 >
                   {{ formatDisplayValue(char) }}
                 </el-tag>
-
-                <!-- Empty state hint -->
-                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-val-hint">
-                  значення не задано
-                </span>
+                
+                <!-- Boolean tag -->
+                <el-tag 
+                  v-if="char.bool_value" 
+                  closable 
+                  size="small" 
+                  type="warning" 
+                  effect="plain"
+                  @close="char.bool_value = false; emitUpdate()"
+                >
+                  Так
+                </el-tag>
               </div>
             </div>
           </div>
@@ -391,6 +401,16 @@ const getOptionValue = (optionId) => {
     }
   }
   return '...'
+}
+
+const getOptionColor = (optionId) => {
+  for (const attr of allAttributes.value) {
+    if (attr.options) {
+      const opt = attr.options.find(o => o.id === optionId)
+      if (opt) return opt.color_code
+    }
+  }
+  return null
 }
 
 const formatDisplayValue = (char) => {
@@ -844,18 +864,18 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  min-width: 250px;
+  min-width: 100px;
 }
 
-.compact-inline-select {
-  width: 180px;
-}
-
-.compact-inline-input {
-  width: 140px;
+.tag-content-flex {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .empty-val-hint {
+  display: none;
+}
   font-size: 11px;
   color: #cbd5e1;
   font-style: italic;
