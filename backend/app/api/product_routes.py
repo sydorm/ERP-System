@@ -119,7 +119,7 @@ async def create_product(
             detail=f"Product with SKU '{product_in.sku}' already exists"
         )
         
-    product_data = product_in.dict(exclude={"variants", "price_rule"})
+    product_data = product_in.dict(exclude={"variants", "price_rule", "product_attributes"})
     product = Product(
         **product_data,
         company_id=current_user.company_id
@@ -152,6 +152,12 @@ async def create_product(
         for markup_in in product_in.price_rule.markups:
             db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
             db.add(db_markup)
+
+    if product_in.product_attributes:
+        from app.models.product import ProductAttribute
+        for attr_in in product_in.product_attributes:
+            db_attr = ProductAttribute(**attr_in.dict(), product_id=product.id)
+            db.add(db_attr)
                 
     db.commit()
     db.refresh(product)
@@ -191,7 +197,7 @@ async def update_product(
                 detail=f"Product with SKU '{product_in.sku}' already exists"
             )
 
-    update_data = product_in.dict(exclude_unset=True, exclude={"variants", "price_rule"})
+    update_data = product_in.dict(exclude_unset=True, exclude={"variants", "price_rule", "product_attributes"})
     for field, value in update_data.items():
         setattr(product, field, value)
         
@@ -213,7 +219,7 @@ async def update_product(
 
     if product_in.price_rule is not None:
         from app.models.variant import ProductPriceRule, ProductPriceMarkup
-        # Remove old rule or update
+        # Remove old rule and markups
         db.query(ProductPriceRule).filter(ProductPriceRule.product_id == product.id).delete()
         
         rule_data = product_in.price_rule.dict(exclude={"markups"})
@@ -224,6 +230,13 @@ async def update_product(
         for markup_in in product_in.price_rule.markups:
             db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
             db.add(db_markup)
+
+    if product_in.product_attributes is not None:
+        from app.models.product import ProductAttribute
+        db.query(ProductAttribute).filter(ProductAttribute.product_id == product.id).delete()
+        for attr_in in product_in.product_attributes:
+            db_attr = ProductAttribute(**attr_in.dict(), product_id=product.id)
+            db.add(db_attr)
 
     db.commit()
     db.refresh(product)

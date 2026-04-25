@@ -5,6 +5,22 @@ from uuid import UUID
 from .variant import ProductVariantCreate, ProductVariantResponse, ProductPriceRuleCreate, ProductPriceRuleResponse
 from .specification import ProductSpecificationResponse
 
+
+class ProductAttributeBase(BaseModel):
+    attribute_id: UUID
+    generates_sku: bool = True
+
+
+class ProductAttributeCreate(ProductAttributeBase):
+    pass
+
+
+class ProductAttributeResponse(ProductAttributeBase):
+    id: UUID
+    
+    class Config:
+        from_attributes = True
+
 class ProductBase(BaseModel):
     """Base Product schema"""
     sku: str = Field(..., min_length=1, max_length=100, description="Stock Keeping Unit")
@@ -46,6 +62,7 @@ class ProductCreate(ProductBase):
     """Schema for creating a product"""
     variants: Optional[List[ProductVariantCreate]] = None
     price_rule: Optional[ProductPriceRuleCreate] = None
+    product_attributes: Optional[List[ProductAttributeCreate]] = None
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product"""
@@ -85,6 +102,7 @@ class ProductUpdate(BaseModel):
     
     variants: Optional[List[ProductVariantCreate]] = None
     price_rule: Optional[ProductPriceRuleCreate] = None
+    product_attributes: Optional[List[ProductAttributeCreate]] = None
 
 class ProductResponse(ProductBase):
     """Schema for product response"""
@@ -93,6 +111,7 @@ class ProductResponse(ProductBase):
     variants: List[ProductVariantResponse] = []
     specifications: List[ProductSpecificationResponse] = []
     price_rule: Optional[ProductPriceRuleResponse] = None
+    product_attributes: List[ProductAttributeResponse] = []
     stock_balance: float = 0.0
 
     class Config:

@@ -70,6 +70,17 @@
               </div>
             </div>
           </div>
+          </div>
+        </div>
+        
+        <div class="char-sku-toggle">
+          <span class="toggle-label">Генерує SKU</span>
+          <el-switch
+            :model-value="getGeneratesSku(char.attribute_id)"
+            @update:model-value="val => setGeneratesSku(char.attribute_id, val)"
+            active-color="#6366f1"
+            size="small"
+          />
         </div>
         
         <div class="char-controls">
@@ -139,10 +150,11 @@ import api from '@/api'
 const props = defineProps({
   productId: { type: String, default: null },
   categoryCode: { type: String, default: '' },
-  modelValue: { type: Array, default: () => [] }
+  modelValue: { type: Array, default: () => [] },
+  productAttributes: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['update:characteristics', 'update:modelValue'])
+const emit = defineEmits(['update:characteristics', 'update:modelValue', 'update:productAttributes'])
 
 // All attributes from backend (loaded once, shared)
 const allAttributes = ref([])
@@ -307,6 +319,22 @@ const emitUpdate = () => {
   emit('update:modelValue', localCharacteristics.value)
 }
 
+const getGeneratesSku = (attrId) => {
+  const attr = props.productAttributes.find(a => a.attribute_id === attrId)
+  return attr ? attr.generates_sku : true
+}
+
+const setGeneratesSku = (attrId, val) => {
+  const attrs = [...props.productAttributes]
+  const idx = attrs.findIndex(a => a.attribute_id === attrId)
+  if (idx > -1) {
+    attrs[idx] = { ...attrs[idx], generates_sku: val }
+  } else {
+    attrs.push({ attribute_id: attrId, generates_sku: val })
+  }
+  emit('update:productAttributes', attrs)
+}
+
 // Watch for changes and emit
 watch(localCharacteristics, emitUpdate, { deep: true })
 
@@ -326,10 +354,13 @@ const syncCategoryAttributes = async () => {
       const alreadyPresent = localCharacteristics.value.some(c => c.attribute_id === ca.attribute_id)
       if (!alreadyPresent) {
         addCharacteristic(ca.attribute_id, ca.is_required || ca.attribute.name.toLowerCase() === 'каркас')
-      } else if (ca.is_required || ca.attribute.name.toLowerCase() === 'каркас') {
-         // Mark existing as fixed if needed
-         const char = localCharacteristics.value.find(c => c.attribute_id === ca.attribute_id)
-         if (char) char.is_fixed = true
+      }
+      
+      // Also ensure it's in product_attributes
+      const inAttrs = props.productAttributes.some(a => a.attribute_id === ca.attribute_id)
+      if (!inAttrs) {
+          const newAttrs = [...props.productAttributes, { attribute_id: ca.attribute_id, generates_sku: true }]
+          emit('update:productAttributes', newAttrs)
       }
     })
 
@@ -585,6 +616,24 @@ onMounted(async () => {
   background: #fef2f2;
   border-color: #fca5a5;
   color: #ef4444;
+}
+
+.char-sku-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+  border-left: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+}
+
+.toggle-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Dialog Styles */

@@ -39,6 +39,8 @@
               v-model="productCharacteristics"
               :product-id="form.id"
               :category-code="form.category"
+              :product-attributes="form.product_attributes"
+              @update:productAttributes="(val) => form.product_attributes = val"
             />
           </el-tab-pane>
 
@@ -73,6 +75,7 @@
               :product-code="form.sku"
               :initial-variants="form.variants"
               :price-rule="form.price_rule"
+              :product-attributes="form.product_attributes"
               @update:variants="(val) => form.variants = val"
               @update:priceRule="(val) => form.price_rule = val"
             />
@@ -195,7 +198,8 @@ const form = reactive({
         pricing_mode: 'manual',
         base_price: 0,
         markups: []
-    }
+    },
+    product_attributes: []
 })
 
 const productCharacteristics = ref([])

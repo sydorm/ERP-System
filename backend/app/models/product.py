@@ -8,6 +8,21 @@ from decimal import Decimal
 from .base import BaseModel
 
 
+class ProductAttribute(BaseModel):
+    """
+    Links a product to specific attributes and defines behavior
+    """
+    __tablename__ = "product_attributes"
+    
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    attribute_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
+    generates_sku = Column(Boolean, default=True, nullable=False)
+    
+    # Relationships
+    product = relationship("Product", back_populates="product_attributes")
+    attribute = relationship("Attribute")
+
+
 class Product(BaseModel):
     """
     Product model (Nomenclature)
@@ -65,6 +80,7 @@ class Product(BaseModel):
     company = relationship("Company", back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     price_rule = relationship("ProductPriceRule", back_populates="product", uselist=False, cascade="all, delete-orphan")
+    product_attributes = relationship("ProductAttribute", back_populates="product", cascade="all, delete-orphan")
     order_lines = relationship("OrderLine", back_populates="product")
     
     def __repr__(self):

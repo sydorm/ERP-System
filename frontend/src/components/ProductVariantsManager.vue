@@ -166,7 +166,8 @@ const props = defineProps({
     categoryAttributes: Array,
     productCode: String,
     initialVariants: Array,
-    priceRule: Object
+    priceRule: Object,
+    productAttributes: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:variants', 'update:priceRule'])
@@ -220,7 +221,14 @@ watch(() => props.categoryAttributes, (newAttrs) => {
 }, { immediate: true })
 
 const variantAttributes = computed(() => {
-    return props.categoryAttributes?.filter(a => a.generates_variant) || []
+    return props.categoryAttributes?.filter(attr => {
+        // Find per-product setting
+        const prodAttr = props.productAttributes?.find(pa => pa.attribute_id === attr.id)
+        if (prodAttr) return prodAttr.generates_sku
+        
+        // Fallback to global attribute setting
+        return attr.generates_variant !== false
+    }) || []
 })
 
 const getMarkup = (attrId, optId) => {

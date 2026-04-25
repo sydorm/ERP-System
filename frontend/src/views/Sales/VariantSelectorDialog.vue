@@ -241,13 +241,21 @@ const initializeSelector = () => {
 }
 
 const variantAttributes = computed(() => {
-    const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : [] // Fallback logic needed if empty
-    return attrs.filter(a => a.generates_variant !== false) // default true
+    const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
+    return attrs.filter(a => {
+        const prodAttr = props.product?.product_attributes?.find(pa => pa.attribute_id === a.id)
+        if (prodAttr) return prodAttr.generates_sku
+        return a.generates_variant !== false
+    })
 })
 
 const extraAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => a.generates_variant === false)
+    return attrs.filter(a => {
+        const prodAttr = props.product?.product_attributes?.find(pa => pa.attribute_id === a.id)
+        if (prodAttr) return !prodAttr.generates_sku
+        return a.generates_variant === false
+    })
 })
 
 const getAvailableOptions = (attrId) => {
