@@ -1,7 +1,7 @@
 """
 Order models - represents customer orders and their line items
 """
-from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Text, Integer, DateTime
+from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Text, Integer, DateTime, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from decimal import Decimal
@@ -118,6 +118,7 @@ class OrderLine(BaseModel):
     quantity = Column(Numeric(15, 3), nullable=False)
     price = Column(Numeric(15, 2), nullable=False)
     total = Column(Numeric(15, 2), nullable=False)
+    attribute_values = Column(JSON, nullable=True)
     
     # Foreign Keys
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
