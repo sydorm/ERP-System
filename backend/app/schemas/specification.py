@@ -57,6 +57,13 @@ class SpecificationItemBase(BaseModel):
     calc_dim_config: Optional[Any] = None
     calc_formula: Optional[str] = None
     calc_waste_factor: Decimal = Field(default=Decimal("0.0"), ge=0, le=1)
+    
+    # Detail-specific fields
+    line_type: str = "material"
+    size_from_attr: Optional[str] = None
+    size_multiplier: Optional[Decimal] = Field(default=Decimal("1.0"))
+    fixed_length: Optional[Decimal] = None
+    fixed_width: Optional[Decimal] = None
 
 class SpecificationItemCreate(SpecificationItemBase):
     pass

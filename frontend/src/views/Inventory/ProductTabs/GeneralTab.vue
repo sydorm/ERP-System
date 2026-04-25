@@ -123,27 +123,29 @@
             <!-- Weight (Вага) -->
             <div class="param-row">
               <div class="param-label">Вага (кг):</div>
-              <div class="param-controls flex-col items-start !gap-2">
-                <el-radio-group v-model="getVariantConfig('weight').source" size="small">
-                  <el-radio-button label="fixed">Фіксовано</el-radio-button>
-                  <el-radio-button label="calc">Розрахунок</el-radio-button>
-                  <el-radio-button label="manual">Вручну в табл.</el-radio-button>
-                </el-radio-group>
-                
-                <div v-if="getVariantConfig('weight').source === 'fixed'" class="flex items-center gap-2">
-                   <el-input-number v-model="modelValue.weight_kg" :precision="3" size="small" class="w-32" />
-                </div>
+              <div class="param-controls items-start !gap-2">
+                <div class="flex flex-col gap-2">
+                  <el-radio-group v-model="getVariantConfig('weight').source" size="small">
+                    <el-radio-button label="fixed">Фіксовано</el-radio-button>
+                    <el-radio-button label="calc">Розрахунок</el-radio-button>
+                    <el-radio-button label="manual">Вручну в табл.</el-radio-button>
+                  </el-radio-group>
+                  
+                  <div v-if="getVariantConfig('weight').source === 'fixed'" class="flex items-center gap-2">
+                     <el-input-number v-model="modelValue.weight_kg" :precision="3" size="small" class="w-32" />
+                  </div>
 
-                <div v-if="getVariantConfig('weight').source === 'calc'" class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
-                   Базова: <el-input-number v-model="getVariantConfig('weight').base_kg" :precision="1" size="small" style="width:70px" :controls="false" /> кг
-                   + <el-input-number v-model="getVariantConfig('weight').step_kg" :precision="1" size="small" style="width:60px" :controls="false" /> кг 
-                   на кожні <el-input-number v-model="getVariantConfig('weight').step_cm" :precision="0" size="small" style="width:60px" :controls="false" /> см
-                   параметра: 
-                   <el-select v-model="getVariantConfig('weight').dim_key" size="small" style="width:100px">
-                     <el-option label="Довжина" value="length" />
-                     <el-option label="Ширина" value="width" />
-                     <el-option label="Висота" value="height" />
-                   </el-select>
+                  <div v-if="getVariantConfig('weight').source === 'calc'" class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
+                     Базова: <el-input-number v-model="getVariantConfig('weight').base_kg" :precision="1" size="small" style="width:70px" :controls="false" /> кг
+                     + <el-input-number v-model="getVariantConfig('weight').step_kg" :precision="1" size="small" style="width:60px" :controls="false" /> кг 
+                     на кожні <el-input-number v-model="getVariantConfig('weight').step_cm" :precision="0" size="small" style="width:60px" :controls="false" /> см
+                     параметра: 
+                     <el-select v-model="getVariantConfig('weight').dim_key" size="small" style="width:100px">
+                       <el-option label="Довжина" value="length" />
+                       <el-option label="Ширина" value="width" />
+                       <el-option label="Висота" value="height" />
+                     </el-select>
+                  </div>
                 </div>
               </div>
             </div>

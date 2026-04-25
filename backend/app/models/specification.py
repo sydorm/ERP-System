@@ -63,6 +63,13 @@ class SpecificationItem(BaseModel):
     calc_formula = Column(String(500), nullable=True)
     calc_waste_factor = Column(Numeric(5, 4), nullable=False, default=0.0)
     
+    # Detail-specific fields
+    line_type = Column(String(20), default="material", nullable=False) # 'material', 'detail'
+    size_from_attr = Column(String(100), nullable=True) # Characteristic name to read from
+    size_multiplier = Column(Numeric(10, 2), nullable=True, default=1.0)
+    fixed_length = Column(Numeric(10, 2), nullable=True)
+    fixed_width = Column(Numeric(10, 2), nullable=True)
+    
     # Relationships
     specification = relationship("ProductSpecification", back_populates="items")
     component = relationship("Product", foreign_keys=[component_id])

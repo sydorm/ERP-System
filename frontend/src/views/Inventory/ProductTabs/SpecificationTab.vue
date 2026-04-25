@@ -81,14 +81,14 @@
           </div>
           
           <el-table :data="specForm.items" stripe style="width: 100%" class="component-table">
-             <el-table-column label="Товар / Матеріал" min-width="300">
-                <template #default="scope">
+             <el-table-column label="Товар / Матеріал" min-width="320">
+                 <template #default="scope"><div class="flex flex-col gap-2"><el-radio-group v-model="scope.row.line_type" size="small" class="line-type-toggle"><el-radio-button label="material">Матеріал</el-radio-button><el-radio-button label="detail">Деталь за розміром</el-radio-button></el-radio-group>
                    <el-select
                       v-model="scope.row.component_id"
                       filterable
                       remote
                       reserve-keyword
-                      placeholder="Пошук номенклатури..."
+                                                placeholder="Пошук номенклатури..."
                       :remote-method="searchProducts"
                       :loading="searchingProducts"
                       class="w-full"
@@ -109,9 +109,29 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Кількість / Розрахунок" width="220">
-                <template #default="scope">
-                   <div class="flex flex-col gap-1">
+             <el-table-column label="Кількість / Розрахунок" width="380">
+                   </el-select></div>
+                   <div v-if="scope.row.line_type === 'detail'" class="detail-config-inline p-2 bg-slate-50 rounded border border-slate-200">
+                       <div class="grid grid-cols-1 gap-2">
+                          <div class="flex items-center gap-2">
+                             <span class="text-[10px] font-bold text-slate-500 w-20">Довжина (мм):</span>
+                             <el-select v-model="scope.row.size_from_attr" placeholder="З хар-ки..." size="small" clearable class="flex-1">
+                                <el-option v-for="attr in productAttributes" :key="attr.id" :label="attr.name" :value="attr.name" />
+                             </el-select>
+                             <span class="text-xs">×</span>
+                             <el-input-number v-model="scope.row.size_multiplier" :controls="false" size="small" style="width: 50px" />
+                             <span class="text-xs">або</span>
+                             <el-input-number v-model="scope.row.fixed_length" :controls="false" placeholder="Фікс." size="small" style="width: 60px" />
+                          </div>
+                          <div class="flex items-center gap-2">
+                             <span class="text-[10px] font-bold text-slate-500 w-20">Ширина (мм):</span>
+                             <el-input-number v-model="scope.row.fixed_width" :controls="false" placeholder="Фікс." size="small" class="flex-1" />
+                             <span class="text-[10px] font-bold text-slate-500 ml-2">К-сть (шт):</span>
+                             <el-input-number v-model="scope.row.quantity" :min="1" :step="1" :precision="0" size="small" style="width: 80px" />
+                          </div>
+                       </div>
+                    </div>
+                    <div v-else class="flex flex-col gap-1">
                       <div class="flex items-center gap-2">
                         <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
                         <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
@@ -872,6 +892,11 @@ const addItem = () => {
         quantity: 1,
         unit_of_measure: 'шт',
         notes: '',
+        line_type: 'material',
+        size_from_attr: null,
+        size_multiplier: 10,
+        fixed_length: null,
+        fixed_width: null,
         is_calculated: false,
         calc_dimension: null,
         calc_data_points: { h: [], w: [], l: [] },

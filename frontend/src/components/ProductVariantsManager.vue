@@ -139,21 +139,24 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Габарити (см)" width="280">
+      <el-table-column label="Довжина" width="90">
         <template #default="{ row }">
-          <div class="flex items-center gap-1">
-            <el-input-number v-model="row.length_cm" :precision="1" :controls="false" size="small" placeholder="Д" class="!w-16" />
-            <span class="text-slate-300">×</span>
-            <el-input-number v-model="row.width_cm" :precision="1" :controls="false" size="small" placeholder="Ш" class="!w-16" />
-            <span class="text-slate-300">×</span>
-            <el-input-number v-model="row.height_cm" :precision="1" :controls="false" size="small" placeholder="В" class="!w-16" />
-          </div>
+          <el-input-number v-model="row.length_cm" :precision="1" :controls="false" size="small" class="w-full" />
         </template>
       </el-table-column>
-
-      <el-table-column label="Вага (кг)" width="90">
+      <el-table-column label="Ширина" width="90">
         <template #default="{ row }">
-           <el-input-number v-model="row.weight_kg" :precision="2" :controls="false" size="small" placeholder="0.00" class="w-full" />
+          <el-input-number v-model="row.width_cm" :precision="1" :controls="false" size="small" class="w-full" />
+        </template>
+      </el-table-column>
+      <el-table-column label="Висота" width="90">
+        <template #default="{ row }">
+          <el-input-number v-model="row.height_cm" :precision="1" :controls="false" size="small" class="w-full" />
+        </template>
+      </el-table-column>
+      <el-table-column label="Вага (кг)" width="100">
+        <template #default="{ row }">
+          <el-input-number v-model="row.weight_kg" :precision="2" :controls="false" size="small" class="w-full" />
         </template>
       </el-table-column>
 
