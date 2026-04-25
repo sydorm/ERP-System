@@ -83,110 +83,35 @@
           <el-table :data="specForm.items" stripe style="width: 100%" class="component-table">
              <el-table-column label="Товар / Матеріал" min-width="320">
                 <template #default="scope">
-                   <div class="flex flex-col gap-2">
-                      <el-radio-group v-model="scope.row.line_type" size="small" class="line-type-toggle">
-                         <el-radio-button label="material">Матеріал</el-radio-button>
-                         <el-radio-button label="detail">Деталь за розміром</el-radio-button>
-                      </el-radio-group>
-                      
-                      <div v-if="scope.row.line_type === 'detail'" class="detail-mapping-box p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 mt-1">
-                         <div class="flex flex-col gap-3">
-                            <div class="mapping-header">
-                               <label class="text-[10px] font-bold text-indigo-600 uppercase mb-1 block">Характеристика виробу (Умова):</label>
-                               <el-select v-model="scope.row.mapping_attr" placeholder="Виберіть характеристику..." size="small" class="w-full" clearable>
-                                  <el-option v-for="attr in productAttributes" :key="attr.id" :label="attr.name" :value="attr.name" />
-                               </el-select>
-                            </div>
-                            
-                            <div class="mapping-rows flex flex-col gap-2">
-                               <label class="text-[10px] font-bold text-indigo-600 uppercase block">Значення → Номенклатура:</label>
-                               <div v-for="(matId, valKey) in scope.row.material_mapping" :key="valKey" class="flex items-center gap-1">
-                                  <el-input 
-                                     :model-value="valKey" 
-                                     @blur="(e) => updateMappingKey(scope.row, valKey, e.target.value)" 
-                                     placeholder="Значення" 
-                                     size="small" 
-                                     style="width: 100px" 
-                                  />
-                                  <span class="text-indigo-300">→</span>
-                                  <el-select
-                                     v-model="scope.row.material_mapping[valKey]"
-                                     filterable
-                                     remote
-                                     reserve-keyword
-                                     placeholder="Матеріал..."
-                                     :remote-method="searchProducts"
-                                     :loading="searchingProducts"
-                                     size="small"
-                                     class="flex-1"
-                                  >
-                                     <el-option
-                                        v-for="p in productSearchResults"
-                                        :key="p.id"
-                                        :label="p.name"
-                                        :value="p.id"
-                                     />
-                                  </el-select>
-                                  <el-button type="danger" link :icon="Delete" @click="removeMappingRow(scope.row, valKey)" />
-                               </div>
-                               <el-button type="primary" link size="small" :icon="Plus" @click="addMappingRow(scope.row)" class="self-start">
-                                  Додати умову
-                                </el-button>
-                            </div>
-                         </div>
-                      </div>
-
-                      <el-select
-                         v-else
-                         v-model="scope.row.component_id"
-                         filterable
-                         remote
-                         reserve-keyword
-                         placeholder="Пошук номенклатури..."
-                         :remote-method="searchProducts"
-                         :loading="searchingProducts"
-                         class="w-full"
-                         @change="(val) => handleComponentSelect(scope.row, val)"
+                   <el-select
+                      v-model="scope.row.component_id"
+                      filterable
+                      remote
+                      reserve-keyword
+                      placeholder="Пошук номенклатури..."
+                      :remote-method="searchProducts"
+                      :loading="searchingProducts"
+                      class="w-full"
+                      @change="(val) => handleComponentSelect(scope.row, val)"
+                   >
+                      <el-option
+                         v-for="p in productSearchResults"
+                         :key="p.id"
+                         :label="p.name"
+                         :value="p.id"
                       >
-                         <el-option
-                            v-for="p in productSearchResults"
-                            :key="p.id"
-                            :label="p.name"
-                            :value="p.id"
-                         >
-                            <div class="flex justify-between w-full">
-                               <span>{{ p.name }}</span>
-                               <span class="text-gray-400 text-xs">{{ p.sku }}</span>
-                            </div>
-                         </el-option>
-                      </el-select>
-                   </div>
+                         <div class="flex justify-between w-full">
+                            <span>{{ p.name }}</span>
+                            <span class="text-gray-400 text-xs">{{ p.sku }}</span>
+                         </div>
+                      </el-option>
+                   </el-select>
                 </template>
              </el-table-column>
              
              <el-table-column label="Кількість / Розрахунок" width="380">
                 <template #default="scope">
-                   <div v-if="scope.row.line_type === 'detail'" class="detail-config-inline p-2 bg-slate-50 rounded border border-slate-200">
-                       <div class="grid grid-cols-1 gap-2">
-                          <div class="flex items-center gap-2">
-                             <span class="text-[10px] font-bold text-slate-500 w-20">Довжина (мм):</span>
-                             <el-select v-model="scope.row.size_from_attr" placeholder="Характеристика..." size="small" clearable class="flex-1">
-                                <el-option v-for="attr in productAttributes" :key="attr.id" :label="attr.name" :value="attr.name" />
-                             </el-select>
-                             <span class="text-xs">×</span>
-                             <el-input-number v-model="scope.row.size_multiplier" :controls="false" size="small" style="width: 50px" />
-                             <span class="text-xs">або</span>
-                             <el-input-number v-model="scope.row.fixed_length" :controls="false" placeholder="Фікс." size="small" style="width: 60px" />
-                          </div>
-                          <div class="flex items-center gap-2">
-                             <span class="text-[10px] font-bold text-slate-500 w-20">Ширина (мм):</span>
-                             <el-input-number v-model="scope.row.fixed_width" :controls="false" placeholder="Автоматично" size="small" class="flex-1" />
-                             <span class="text-[10px] font-bold text-slate-500 ml-2">К-сть (шт):</span>
-                             <el-input-number v-model="scope.row.quantity" :min="1" :step="1" :precision="0" size="small" style="width: 60px" />
-                          </div>
-                       </div>
-                    </div>
-                    <div v-else class="flex flex-col gap-1">
+                   <div class="flex flex-col gap-1">
                       <div class="flex items-center gap-2">
                         <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
                         <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
