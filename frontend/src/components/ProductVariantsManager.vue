@@ -91,12 +91,35 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Характеристики" min-width="200">
+      <el-table-column label="Характеристики" min-width="250">
         <template #default="{ row }">
-          <div class="variant-values">
-            <el-tag v-for="val in row.values" :key="val.attribute_id" size="small" class="mr-1" effect="light">
-              {{ getAttributeLabel(val) }}: {{ getOptionLabel(val) }}
-            </el-tag>
+          <div class="variant-values flex flex-wrap gap-2">
+            <template v-for="attr in variantAttributes" :key="attr.id">
+              <el-dropdown trigger="click" @command="(val) => updateVariantValue(row, attr, val)">
+                <el-tag 
+                  size="default" 
+                  class="cursor-pointer hover:border-indigo-400 transition-colors" 
+                  :type="getVariantValue(row, attr.id) ? 'primary' : 'info'"
+                  effect="light"
+                >
+                  <span class="font-bold text-xs uppercase opacity-60 mr-1">{{ attr.name }}:</span>
+                  <span>{{ getOptionLabelForAttr(row, attr) }}</span>
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-tag>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item 
+                      v-for="opt in attr.options" 
+                      :key="opt.id" 
+                      :command="opt"
+                      :disabled="getVariantValue(row, attr.id)?.option_id === opt.id"
+                    >
+                      {{ opt.value }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
           </div>
         </template>
       </el-table-column>
@@ -349,19 +372,35 @@ const generateVariants = () => {
     })
 
     const newVariants = results.map(combo => {
-        const skuSuffix = combo.map(c => c.value.substring(0, 3).toUpperCase()).join('-')
+        // Generate a more readable SKU suffix based on values
+        const skuSuffix = combo.map(c => {
+            const val = c.value || c.text_value || ''
+            return val.toString().substring(0, 3).toUpperCase()
+        }).join('-')
+        
         return {
             sku: `${props.productCode || 'P'}-${skuSuffix}`,
             price_override: null,
-            values: combo,
+            values: combo.map(c => ({
+                attribute_id: c.attribute_id,
+                option_id: c.option_id,
+                value: c.value || c.text_value,
+                attribute: c.attribute,
+                option: c.option
+            })),
             image_url: null,
-            is_primary: false
+            is_primary: false,
+            is_active: true
         }
     })
 
-    variants.value.push(...newVariants)
+    // Avoid duplicates if possible (simple check by values JSON)
+    const existingSignatures = new Set(variants.value.map(v => JSON.stringify(v.values.map(val => val.option_id).sort())))
+    const filteredNew = newVariants.filter(nv => !existingSignatures.has(JSON.stringify(nv.values.map(val => val.option_id).sort())))
+
+    variants.value.push(...filteredNew)
     genVisible.value = false
-    ElMessage.success(`Згенеровано ${newVariants.length} варіантів`)
+    ElMessage.success(`Додано ${filteredNew.length} нових комбінацій`)
 }
 
 const handleVariantImage = (row, file) => {
@@ -387,13 +426,43 @@ const addManualVariant = () => {
     })
 }
 
-const getAttributeLabel = (val) => val.attribute?.name || val.name || 'Хар-ка'
-const getOptionLabel = (val) => {
-  if ((val.attribute?.type || val.type) === 'DIMENSIONS' && val.text_value) {
-    const [w, h] = val.text_value.split('x')
-    if (w && h) return `${w}×${h} мм`
-  }
-  return val.option?.value || val.value || val.text_value || 'Значення'
+const updateVariantValue = (row, attr, option) => {
+    if (!row.values) row.values = []
+    const idx = row.values.findIndex(v => v.attribute_id === attr.id)
+    const newValue = {
+        attribute_id: attr.id,
+        option_id: option.id,
+        value: option.value,
+        attribute: attr,
+        option: option
+    }
+    
+    if (idx !== -1) {
+        row.values[idx] = newValue
+    } else {
+        row.values.push(newValue)
+    }
+    
+    // Auto-update SKU if it looks like a generated one
+    if (row.sku.includes('-CUSTOM') || row.sku.includes('-REF')) {
+        const suffix = row.values.map(v => v.value.substring(0, 3).toUpperCase()).join('-')
+        row.sku = `${props.productCode || 'P'}-${suffix}`
+    }
+}
+
+const getVariantValue = (row, attrId) => {
+    return row.values?.find(v => v.attribute_id === attrId)
+}
+
+const getOptionLabelForAttr = (row, attr) => {
+    const val = getVariantValue(row, attr.id)
+    if (!val) return 'Виберіть...'
+    
+    if (attr.type === 'DIMENSIONS' && val.text_value) {
+        const [w, h] = val.text_value.split('x')
+        return w && h ? `${w}×${h} мм` : val.text_value
+    }
+    return val.option?.value || val.value || '?'
 }
 </script>
 
