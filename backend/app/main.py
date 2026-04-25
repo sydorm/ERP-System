@@ -26,54 +26,6 @@ def on_startup():
         db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_width NUMERIC(15,2)"))
         db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_height NUMERIC(15,2)"))
         
-        # --- TASK: Recreate 'Розмір ДСП' ---
-        char_name = "Розмір ДСП"
-        # 1. Delete existing
-        char_res = db.execute(text("SELECT id FROM attributes WHERE name = :name"), {"name": char_name}).first()
-        if char_res:
-            cid = char_res[0]
-            db.execute(text("DELETE FROM product_attribute_values WHERE attribute_id = :id"), {"id": cid})
-            db.execute(text("DELETE FROM attribute_options WHERE attribute_id = :id"), {"id": cid})
-            db.execute(text("DELETE FROM product_attributes WHERE attribute_id = :id"), {"id": cid})
-            db.execute(text("DELETE FROM attributes WHERE id = :id"), {"id": cid})
-            print(f"🗑️ Deleted existing attribute {char_name}")
-
-        # 2. Find Category "ДСП Матеріали"
-        cat_res = db.execute(text("SELECT id FROM product_categories WHERE name = 'ДСП Матеріали'")).first()
-        cat_id = cat_res[0] if cat_res else None
-
-        # 3. Create new
-        new_attr_id = "00000000-0000-0000-0000-000000000001" # Fixed ID for easier debugging
-        db.execute(text("""
-            INSERT INTO attributes (id, name, type, category_id, generates_sku, allow_custom_value, affects_bom_dimensions, dimension_format, is_active)
-            VALUES (:id, :name, 'DIMENSIONS', :cat_id, false, false, false, '{width}×{height}', true)
-            ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, type = EXCLUDED.type
-        """), {"id": new_attr_id, "name": char_name, "cat_id": cat_id})
-
-        # 4. Find Product and assign
-        prod_res = db.execute(text("SELECT id FROM products WHERE name = 'ДСП Сонома 18мм'")).first()
-        if prod_res:
-            pid = prod_res[0]
-            db.execute(text("INSERT INTO product_attributes (product_id, attribute_id) VALUES (:pid, :aid) ON CONFLICT DO NOTHING"), 
-                       {"pid": pid, "aid": new_attr_id})
-            
-            # Create option 600x320
-            oid = "00000000-0000-0000-0000-000000000002"
-            db.execute(text("""
-                INSERT INTO attribute_options (id, attribute_id, value, width, height)
-                VALUES (:id, :aid, '600×320', 600, 320)
-                ON CONFLICT (id) DO NOTHING
-            """), {"id": oid, "aid": new_attr_id})
-            
-            # Create value for product
-            db.execute(text("""
-                INSERT INTO product_attribute_values (id, product_id, attribute_id, option_id, text_value)
-                VALUES (:vid, :pid, :aid, :oid, '600×320')
-                ON CONFLICT DO NOTHING
-            """), {"vid": "00000000-0000-0000-0000-000000000003", "pid": pid, "aid": new_attr_id, "oid": oid})
-            
-        # -----------------------------------
-
         db.commit()
         print("✅ Database schema check: OK")
     except Exception as e:
