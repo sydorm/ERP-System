@@ -228,14 +228,27 @@ body {
   text-align: right !important;
 }
 
-/* Table dense style for inputs */
+/* Table dense style for inputs (unified block look) */
 .el-table .el-input-number--small .el-input__wrapper {
-  padding-left: 30px !important;
-  padding-right: 30px !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+  box-shadow: 0 0 0 1px #e2e8f0 inset !important;
 }
 .el-table .el-input-number--small .el-input-number__decrease,
 .el-table .el-input-number--small .el-input-number__increase {
   width: 26px !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+.el-table .el-input-number--small .el-input-number__decrease {
+  border-right: 1px solid #e2e8f0 !important;
+}
+.el-table .el-input-number--small .el-input-number__increase {
+  border-left: 1px solid #e2e8f0 !important;
+}
+.el-table .el-input-number--small:hover {
+  box-shadow: 0 0 0 1px #cbd5e1 inset !important;
+  border-radius: 8px;
 }
 
 /* Width overrides for specific cases */

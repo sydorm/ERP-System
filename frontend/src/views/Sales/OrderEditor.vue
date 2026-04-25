@@ -127,9 +127,9 @@
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="К-ть" width="110">
+                <el-table-column label="К-ть" width="100">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.quantity" :min="1" :step="1" @change="updateLineTotal(scope.row)" class="erp-cell-input qty-num" style="width:90px" />
                   </template>
                 </el-table-column>
                 <el-table-column label="Резерв" width="70" align="center">
@@ -1304,6 +1304,8 @@ watch(() => route.params.id, (newId, oldId) => {
   border-color: #dcdfe6 !important; background-color: #fff !important;
 }
 .erp-cell-input.num :deep(.el-input__inner) { text-align: right !important; }
+.erp-cell-input.qty-num :deep(.el-input__inner) { text-align: center !important; }
+
 
 
 .erp-cell-trigger { width: 100%; height: 24px; display: flex; align-items: center; font-size: 13px; cursor: pointer; }
