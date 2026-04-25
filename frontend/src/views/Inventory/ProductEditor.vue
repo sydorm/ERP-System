@@ -258,9 +258,23 @@ const fetchProduct = async () => {
         const res = await api.get(`/api/v1/products/${route.params.id}`)
         Object.assign(form, res.data)
         
-        // Ensure price/cost are numbers for el-input-number
+        // Ensure numeric fields are numbers for el-input-number
         form.price = parseFloat(form.price) || 0
-        form.cost = parseFloat(form.cost) || 0
+        form.cost = form.cost ? parseFloat(form.cost) : 0
+        form.weight_kg = parseFloat(form.weight_kg) || 0
+        form.length_cm = parseFloat(form.length_cm) || 0
+        form.width_cm = parseFloat(form.width_cm) || 0
+        form.height_cm = parseFloat(form.height_cm) || 0
+        form.min_stock = parseFloat(form.min_stock) || 0
+        form.optimal_stock = parseFloat(form.optimal_stock) || 0
+        if (form.price_rule) {
+            form.price_rule.base_price = parseFloat(form.price_rule.base_price) || 0
+            if (form.price_rule.markups) {
+                form.price_rule.markups.forEach(m => {
+                    m.markup = parseFloat(m.markup) || 0
+                })
+            }
+        }
         
         // Extract characteristics from primary variant
         const primaryVar = form.variants?.find(v => v.is_primary) || form.variants?.[0]

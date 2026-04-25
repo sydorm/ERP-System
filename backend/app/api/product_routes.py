@@ -119,7 +119,7 @@ async def create_product(
             detail=f"Product with SKU '{product_in.sku}' already exists"
         )
         
-    product_data = product_in.dict(exclude={"variants"})
+    product_data = product_in.dict(exclude={"variants", "price_rule"})
     product = Product(
         **product_data,
         company_id=current_user.company_id
@@ -138,9 +138,12 @@ async def create_product(
             for val_in in var_in.values:
                 db_val = VariantValue(**val_in.dict(), variant_id=db_variant.id)
                 db.add(db_val)
-                
-    if product_in.price_rule:
+
+    if product_in.price_rule is not None:
         from app.models.variant import ProductPriceRule, ProductPriceMarkup
+        # Remove old rule and markups
+        db.query(ProductPriceRule).filter(ProductPriceRule.product_id == product.id).delete()
+        
         rule_data = product_in.price_rule.dict(exclude={"markups"})
         db_rule = ProductPriceRule(**rule_data, product_id=product.id)
         db.add(db_rule)
@@ -149,7 +152,7 @@ async def create_product(
         for markup_in in product_in.price_rule.markups:
             db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
             db.add(db_markup)
-
+                
     db.commit()
     db.refresh(product)
     return product
@@ -188,7 +191,7 @@ async def update_product(
                 detail=f"Product with SKU '{product_in.sku}' already exists"
             )
 
-    update_data = product_in.dict(exclude_unset=True, exclude={"variants"})
+    update_data = product_in.dict(exclude_unset=True, exclude={"variants", "price_rule"})
     for field, value in update_data.items():
         setattr(product, field, value)
         

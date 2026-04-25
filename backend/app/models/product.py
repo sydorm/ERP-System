@@ -64,6 +64,7 @@ class Product(BaseModel):
     # Relationships
     company = relationship("Company", back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
+    price_rule = relationship("ProductPriceRule", back_populates="product", uselist=False, cascade="all, delete-orphan")
     order_lines = relationship("OrderLine", back_populates="product")
     
     def __repr__(self):

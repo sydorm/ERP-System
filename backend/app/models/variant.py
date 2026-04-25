@@ -53,7 +53,7 @@ class ProductPriceRule(BaseModel):
     base_price = Column(Numeric(15, 2), nullable=True)
     
     # Relationships
-    product = relationship("Product")
+    product = relationship("Product", back_populates="price_rule")
     markups = relationship("ProductPriceMarkup", back_populates="rule", cascade="all, delete-orphan")
 
 
