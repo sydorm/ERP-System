@@ -47,8 +47,10 @@ class AttributeOption(BaseModel):
     __tablename__ = "attribute_options"
     
     attribute_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
-    value = Column(String(255), nullable=False) # e.g. "Velvet", "Red"
+    value = Column(String(255), nullable=False) # e.g. "Velvet", "Red", "600x320"
     color_code = Column(String(20), nullable=True) # Hex code for COLOR type
+    width = Column(Integer, nullable=True) # For DIMENSIONS type
+    height = Column(Integer, nullable=True) # For DIMENSIONS type
     sort_order = Column(Integer, default=0)
     
     # Relationships

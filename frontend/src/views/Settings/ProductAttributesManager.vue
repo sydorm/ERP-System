@@ -421,6 +421,10 @@ const submitOptForm = async () => {
         if (activeAttrForOpt.value.type === 'COLOR') {
           payload.color_code = optForm.color_code
         }
+        if (activeAttrForOpt.value.type === 'DIMENSIONS') {
+          payload.width = optForm.w
+          payload.height = optForm.h
+        }
         
         await api.post(`/api/v1/attributes/${activeAttrForOpt.value.id}/options`, payload)
         ElMessage.success('Значення додано')

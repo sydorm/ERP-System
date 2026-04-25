@@ -14,6 +14,8 @@ class AttributeType(str, enum.Enum):
 class AttributeOptionBase(BaseModel):
     value: str
     color_code: Optional[str] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
     sort_order: int = 0
 
 class AttributeOptionCreate(AttributeOptionBase):

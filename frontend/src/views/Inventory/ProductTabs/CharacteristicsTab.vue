@@ -256,10 +256,16 @@ const saveNewOption = async () => {
   
   savingOption.value = true
   try {
-    const res = await api.post(`/api/v1/attributes/${selectedAttrForOption.value}/options`, {
+    const payload = {
       value: newOption.value,
       color_code: newOption.color_code || null
-    })
+    }
+    if (selectedAttrType.value === 'DIMENSIONS') {
+      payload.width = newOption.w
+      payload.height = newOption.h
+    }
+    
+    const res = await api.post(`/api/v1/attributes/${selectedAttrForOption.value}/options`, payload)
     
     // Refresh the specific attribute in our list
     const attr = allAttributes.value.find(a => a.id === selectedAttrForOption.value)
