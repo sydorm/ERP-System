@@ -42,7 +42,7 @@
                 style="flex: 1" 
                 class="styled-number"
               />
-              <el-tooltip content="Розрахувати собівартість (BOM + Етапи)" placement="top" v-if="hasSpecification && modelValue.id">
+              <el-tooltip content="Розрахувати собівартість (BOM + Етапи)" placement="top" v-if="modelValue.id">
                 <el-button 
                   type="primary" 
                   plain 
@@ -52,8 +52,8 @@
                 />
               </el-tooltip>
             </div>
-            <p v-if="hasSpecification" class="cost-hint">
-              <el-icon><InfoFilled /></el-icon> Є специфікація (BOM). Розрахунок включає матеріали та працю.
+            <p v-if="modelValue.id" class="cost-hint">
+              <el-icon><InfoFilled /></el-icon> Розрахунок собівартості включає матеріали (BOM) та виробничі етапи.
             </p>
           </el-form-item>
 
