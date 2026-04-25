@@ -38,43 +38,22 @@
               class="selection-item"
             >
               <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <template v-if="getAvailableOptions(attr.id).length > 0">
-                  <el-select
-                    v-model="selections[attr.id]"
-                    placeholder="Оберіть розмір..."
-                    style="width: 100%"
-                    filterable
-                    allow-create
-                    default-first-option
-                    @change="(val) => handleDimSelectChange(attr.id, val)"
-                    class="premium-select"
-                  >
-                    <el-option
-                      v-for="opt in getAvailableOptions(attr.id)"
-                      :key="opt.id"
-                      :label="opt.value"
-                      :value="opt.value"
-                    />
-                  </el-select>
-                </template>
-                <template v-else>
-                  <el-input-number
-                    v-model="dimSelections[attr.id].w"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Ширина"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id)"
-                  />
-                  <span class="dims-sep">×</span>
-                  <el-input-number
-                    v-model="dimSelections[attr.id].h"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Висота"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id)"
-                  />
-                  <span class="dims-unit">мм</span>
-                </template>
+                <el-input-number
+                  v-model="getDimValue(attr.id).w"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Ширина"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-sep">×</span>
+                <el-input-number
+                  v-model="getDimValue(attr.id).h"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Висота"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-unit">мм</span>
               </div>
 
               <el-select
@@ -117,43 +96,22 @@
               class="selection-item"
             >
               <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <template v-if="getAvailableOptions(attr.id).length > 0">
-                  <el-select
-                    v-model="selections[attr.id]"
-                    placeholder="Оберіть розмір..."
-                    style="width: 100%"
-                    filterable
-                    allow-create
-                    default-first-option
-                    @change="(val) => handleDimSelectChange(attr.id, val)"
-                    class="premium-select"
-                  >
-                    <el-option
-                      v-for="opt in getAvailableOptions(attr.id)"
-                      :key="opt.id"
-                      :label="opt.value"
-                      :value="opt.value"
-                    />
-                  </el-select>
-                </template>
-                <template v-else>
-                  <el-input-number
-                    v-model="dimSelections[attr.id].w"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Ширина"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id)"
-                  />
-                  <span class="dims-sep">×</span>
-                  <el-input-number
-                    v-model="dimSelections[attr.id].h"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Висота"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id)"
-                  />
-                  <span class="dims-unit">мм</span>
-                </template>
+                <el-input-number
+                  v-model="getDimValue(attr.id).w"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Ширина"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-sep">×</span>
+                <el-input-number
+                  v-model="getDimValue(attr.id).h"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Висота"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-unit">мм</span>
               </div>
 
               <el-input 
@@ -246,13 +204,14 @@ const attributeLoading = ref(false)
 watch(() => [props.modelValue, props.product], async ([isOpen, prod]) => {
   if (isOpen && prod) {
     await fetchAttributes()
-    initializeSelector()
+    // initializeSelector is now called inside fetchAttributes for atomicity
   }
 }, { immediate: true })
 
 const fetchAttributes = async () => {
     if (!props.product?.category) {
         allCategoryAttributes.value = []
+        initializeSelector() // Initialize with empty
         return
     }
     attributeLoading.value = true
@@ -262,6 +221,8 @@ const fetchAttributes = async () => {
             ...ca.attribute,
             is_required: ca.is_required
         }))
+        // Initialize IMMEDIATELY after loading
+        initializeSelector()
     } catch (e) {
         console.error('Failed to load attributes in dialog', e)
     } finally {
@@ -464,19 +425,13 @@ const handleConfirm = async () => {
 const handleClose = () => { selections.value = {} }
 const handleAttributeChange = () => {}
 
-const handleDimSelectChange = (attrId, val) => {
-  if (!val) return
-  const parts = val.toLowerCase().split('x')
-  if (parts.length === 2) {
-    const w = parseInt(parts[0].trim())
-    const h = parseInt(parts[1].trim())
-    if (!isNaN(w) && !isNaN(h)) {
-      dimSelections.value[attrId] = { w, h }
+const handleDimSelectChange = (attrId, val) => {}
+
+const getDimValue = (attrId) => {
+    if (!dimSelections.value[attrId]) {
+        dimSelections.value[attrId] = { w: null, h: null }
     }
-  } else {
-      // If manual input is just a number, maybe they only entered width? 
-      // But we expect WxH. For now, just keep as is or clear if invalid.
-  }
+    return dimSelections.value[attrId]
 }
 
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(val || 0)
