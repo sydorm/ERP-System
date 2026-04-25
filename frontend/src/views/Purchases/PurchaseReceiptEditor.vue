@@ -374,6 +374,10 @@ const saveReceipt = async (action = 'save') => {
   }
 }
 
+// ===== HELPERS =====
+const formatCurrency = (val) =>
+  new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', maximumFractionDigits: 0 }).format(val || 0)
+
 onMounted(fetchData)
 </script>
 
