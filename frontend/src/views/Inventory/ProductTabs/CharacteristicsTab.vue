@@ -182,7 +182,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="addOptionVisible = false" class="btn-cancel">Скасувати</el-button>
-          <el-button type="primary" :loading="savingOption" @click="saveNewOption" :disabled="!newOption.value" class="btn-save">
+          <el-button type="primary" :loading="savingOption" @click="saveNewOption" :disabled="!isOptionFormValid" class="btn-save">
             Зберегти
           </el-button>
         </div>
@@ -269,6 +269,16 @@ const newOption = reactive({
   color_code: '',
   w: null,
   h: null
+})
+
+const isOptionFormValid = computed(() => {
+  if (selectedAttrType.value === 'DIMENSIONS') {
+    return newOption.w > 0 && newOption.h > 0
+  }
+  if (selectedAttrType.value === 'COLOR') {
+    return !!newOption.value && !!newOption.color_code
+  }
+  return !!newOption.value
 })
 
 const openAddOptionDialog = (attrId) => {
