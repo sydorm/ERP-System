@@ -952,26 +952,40 @@ const removeStage = (index) => {
 
 // Calculator Logic
 const openCalcDialog = (item) => {
+    activeCalcItem.value = item
     if (!item.calc_type) item.calc_type = 'fixed'
 
-    // Initialize or migrate to new per-dim format: { h: [{x,qty}], w: [{x,qty}], l: [{x,qty}] }
+    // DEEP MIGRATION: Handle all legacy formats of calc_data_points
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
-        const oldFlat = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
+        const oldData = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
         const newDp = { h: [], w: [], l: [] }
-        for (const pt of oldFlat) {
-            if (pt.h != null) newDp.h.push({ x: pt.size_cm || 0, qty: pt.h })
-            if (pt.w != null) newDp.w.push({ x: pt.size_cm || 0, qty: pt.w })
-            if (pt.l != null) newDp.l.push({ x: pt.size_cm || 0, qty: pt.l })
-        }
+        
+        // Try to recover data from flat array if it exists
+        oldData.forEach(pt => {
+            if (pt.h != null) newDp.h.push({ x: pt.size_cm || pt.x || 0, qty: pt.h || pt.qty || 0 })
+            if (pt.w != null) newDp.w.push({ x: pt.size_cm || pt.x || 0, qty: pt.w || pt.qty || 0 })
+            if (pt.l != null) newDp.l.push({ x: pt.size_cm || pt.x || 0, qty: pt.l || pt.qty || 0 })
+        })
         item.calc_data_points = newDp
-    } else if (!item.calc_data_points.h) {
-        const old = item.calc_data_points
-        item.calc_data_points = {
-            h: (old.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
-            w: (old.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
-            l: (old.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+    } else {
+        // Ensure h, w, l keys exist in the object
+        if (!item.calc_data_points.h) item.calc_data_points.h = []
+        if (!item.calc_data_points.w) item.calc_data_points.w = []
+        if (!item.calc_data_points.l) item.calc_data_points.l = []
+        
+        // Check for cm-based keys from older beta versions
+        if (item.calc_data_points.height_cm && item.calc_data_points.h.length === 0) {
+            item.calc_data_points.h = item.calc_data_points.height_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
+        }
+        if (item.calc_data_points.width_cm && item.calc_data_points.w.length === 0) {
+            item.calc_data_points.w = item.calc_data_points.width_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
+        }
+        if (item.calc_data_points.length_cm && item.calc_data_points.l.length === 0) {
+            item.calc_data_points.l = item.calc_data_points.length_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
         }
     }
+    
+    calcDialogOpen.value = true
 
     // Ensure calc_dim_config exists
     if (!item.calc_dim_config) {
@@ -998,7 +1012,10 @@ const handleTypeChange = (item) => {
 }
 
 const addPoint = (item, dimKey) => {
-    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) item.calc_data_points = { h: [], w: [], l: [] }
+    if (!item) return
+    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
+        item.calc_data_points = { h: [], w: [], l: [] }
+    }
     if (!item.calc_data_points[dimKey]) item.calc_data_points[dimKey] = []
     item.calc_data_points[dimKey].push({ x: 0, qty: 0 })
 }
