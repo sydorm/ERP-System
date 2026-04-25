@@ -72,46 +72,10 @@
                   {{ formatDisplayValue(char) }}
                 </el-tag>
 
-                <!-- Value Picker (Dropdown) - Shown when empty or as a quick way to add -->
-                <el-select
-                  v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(getAttrType(char)) && !char.option_id && !char.text_value"
-                  v-model="char.option_id"
-                  placeholder="Оберіть значення..."
-                  size="small"
-                  filterable
-                  @change="onOptionChange(char)"
-                  class="compact-inline-select"
-                >
-                   <el-option
-                      v-for="opt in getAttrOptions(char)"
-                      :key="opt.id"
-                      :label="opt.value"
-                      :value="opt.id"
-                    >
-                      <div class="option-item-flex">
-                        <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
-                        <span>{{ opt.value }}</span>
-                      </div>
-                    </el-option>
-                </el-select>
-
-                <!-- Manual Input for Text/Number/Boolean if no option picked -->
-                <el-input 
-                  v-else-if="getAttrType(char) === 'TEXT' && !char.text_value"
-                  v-model="char.text_value"
-                  placeholder="Впишіть..."
-                  size="small"
-                  class="compact-inline-input"
-                  @change="emitUpdate"
-                />
-
-                <el-checkbox
-                  v-else-if="getAttrType(char) === 'BOOLEAN' && !char.bool_value"
-                  v-model="char.bool_value"
-                  @change="emitUpdate"
-                >
-                  Так
-                </el-checkbox>
+                <!-- Empty state hint -->
+                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-val-hint">
+                  значення не задано
+                </span>
               </div>
             </div>
           </div>
@@ -155,35 +119,62 @@
     <!-- Add Option Dialog -->
     <el-dialog
       v-model="addOptionVisible"
-      title="Додати нове значення"
-      width="400px"
+      :title="`Налаштувати значення: ${getAttributeName(selectedAttrForOption)}`"
+      width="450px"
       class="kimi-dialog"
       append-to-body
       destroy-on-close
     >
       <el-form label-position="top" class="dialog-form">
-        <el-form-item v-if="selectedAttrType !== 'DIMENSIONS'" label="Значення">
-          <el-input v-model="newOption.value" placeholder="Наприклад: Червоний, 1000мм..." class="styled-input" />
-        </el-form-item>
-        <el-form-item v-else label="Розміри (Ш × В, мм)">
-          <div class="color-picker-row">
-            <el-input-number v-model="newOption.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" />
-            <span class="dims-sep">×</span>
-            <el-input-number v-model="newOption.h" :min="0" :precision="0" :controls="false" placeholder="Висота" />
-          </div>
-        </el-form-item>
-        <el-form-item v-if="selectedAttrType === 'COLOR'" label="Код кольору">
-          <div class="color-picker-row">
-            <el-color-picker v-model="newOption.color_code" />
-            <el-input v-model="newOption.color_code" placeholder="#HEX" class="styled-input" />
-          </div>
-        </el-form-item>
+        <!-- SELECT FROM EXISTING -->
+        <div v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(selectedAttrType)" class="mb-6">
+          <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Вибрати з довідника</h4>
+          <el-select 
+            v-model="newOption.selected_id" 
+            placeholder="Оберіть існуюче значення..." 
+            class="w-full styled-select"
+            filterable
+          >
+            <el-option
+              v-for="opt in getAttrOptions({ attribute_id: selectedAttrForOption })"
+              :key="opt.id"
+              :label="opt.value"
+              :value="opt.id"
+            >
+               <div class="option-item-flex">
+                 <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
+                 <span>{{ opt.value }}</span>
+               </div>
+            </el-option>
+          </el-select>
+        </div>
+
+        <div class="border-t border-slate-100 pt-5 mt-5">
+          <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Або створити нове</h4>
+          
+          <el-form-item v-if="selectedAttrType !== 'DIMENSIONS'" label="Значення">
+            <el-input v-model="newOption.value" placeholder="Наприклад: Червоний, 1000мм..." class="styled-input" />
+          </el-form-item>
+          <el-form-item v-else label="Розміри (Ш × В, мм)">
+            <div class="color-picker-row">
+              <el-input-number v-model="newOption.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" />
+              <span class="dims-sep">×</span>
+              <el-input-number v-model="newOption.h" :min="0" :precision="0" :controls="false" placeholder="Висота" />
+            </div>
+          </el-form-item>
+          <el-form-item v-if="selectedAttrType === 'COLOR'" label="Код кольору">
+            <div class="color-picker-row">
+              <el-color-picker v-model="newOption.color_code" />
+              <el-input v-model="newOption.color_code" placeholder="#HEX" class="styled-input" />
+            </div>
+          </el-form-item>
+        </div>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="addOptionVisible = false" class="btn-cancel">Скасувати</el-button>
           <el-button type="primary" :loading="savingOption" @click="saveNewOption" :disabled="!isOptionFormValid" class="btn-save">
-            Зберегти
+            Підтвердити
           </el-button>
         </div>
       </template>
@@ -265,6 +256,7 @@ const savingOption = ref(false)
 const selectedAttrForOption = ref(null)
 const selectedAttrType = ref('SELECT')
 const newOption = reactive({
+  selected_id: null,
   value: '',
   color_code: '',
   w: null,
@@ -272,6 +264,7 @@ const newOption = reactive({
 })
 
 const isOptionFormValid = computed(() => {
+  if (newOption.selected_id) return true
   if (selectedAttrType.value === 'DIMENSIONS') {
     return newOption.w > 0 && newOption.h > 0
   }
@@ -287,6 +280,7 @@ const openAddOptionDialog = (attrId) => {
   
   selectedAttrForOption.value = attrId
   selectedAttrType.value = attr.type
+  newOption.selected_id = null
   newOption.value = ''
   newOption.w = null
   newOption.h = null
@@ -296,6 +290,17 @@ const openAddOptionDialog = (attrId) => {
 
 const saveNewOption = async () => {
   if (!selectedAttrForOption.value) return
+  
+  // If user selected existing option from dropdown in modal
+  if (newOption.selected_id) {
+    const char = localCharacteristics.value.find(c => c.attribute_id === selectedAttrForOption.value)
+    if (char) {
+      char.option_id = newOption.selected_id
+      onOptionChange(char)
+    }
+    addOptionVisible.value = false
+    return
+  }
   
   if (selectedAttrType.value === 'DIMENSIONS') {
     if (!newOption.w || !newOption.h) {
