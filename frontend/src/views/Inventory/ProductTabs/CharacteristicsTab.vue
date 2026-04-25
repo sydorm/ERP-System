@@ -45,75 +45,37 @@
             </div>
             <div class="attr-meta">
               <span class="type-badge">{{ typeLabel(getAttrType(char)) }}</span>
-              <!-- Value Selector -->
-              <div class="value-selector-box">
-                <!-- SELECT / COLOR / DIMENSIONS (Dictionary Selection) -->
-                <el-select 
-                  v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(getAttrType(char))"
-                  v-model="char.option_id"
-                  placeholder="Оберіть зі списку..."
-                  clearable
-                  @change="onOptionChange(char)"
-                  class="kimi-value-select"
-                  size="small"
+              
+              <!-- Compact Values Display (Tags) -->
+              <div class="values-row">
+                <!-- Pre-defined option tag -->
+                <el-tag 
+                  v-if="char.option_id" 
+                  closable 
+                  size="small" 
+                  type="success" 
+                  effect="plain"
+                  @close="clearValue(char)"
                 >
-                  <el-option
-                    v-for="opt in getAttrOptions(char)"
-                    :key="opt.id"
-                    :label="opt.value"
-                    :value="opt.id"
-                  >
-                    <div class="option-item-flex">
-                      <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
-                      <span>{{ opt.value }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
+                  {{ getOptionValue(char.option_id) }}
+                </el-tag>
 
-                <!-- DIMENSIONS (Manual Inputs - always visible for flexibility) -->
-                <div v-if="getAttrType(char) === 'DIMENSIONS'" class="dimensions-input-group">
-                  <span class="manual-label">або введіть:</span>
-                  <el-input-number
-                    :model-value="getDimW(char)"
-                    @update:model-value="val => setDimW(char, val)"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Ш" size="small" class="dim-field-compact"
-                  />
-                  <span class="dims-sep">×</span>
-                  <el-input-number
-                    :model-value="getDimH(char)"
-                    @update:model-value="val => setDimH(char, val)"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="В" size="small" class="dim-field-compact"
-                  />
-                </div>
-
-                <!-- TEXT -->
-                <el-input 
-                  v-if="getAttrType(char) === 'TEXT'" 
-                  v-model="char.text_value" 
-                  placeholder="Впишіть текст..." 
-                  size="small"
-                  @input="emitUpdate"
-                />
-
-                <!-- NUMBER -->
-                <el-input-number 
-                  v-if="getAttrType(char) === 'NUMBER'" 
-                  v-model="char.text_value" 
-                  placeholder="0" 
-                  size="small"
-                  @change="emitUpdate"
-                />
-
-                <!-- BOOLEAN -->
-                <el-checkbox 
-                  v-if="getAttrType(char) === 'BOOLEAN'" 
-                  v-model="char.bool_value" 
-                  @change="emitUpdate"
+                <!-- Text/Dimensions manual tag -->
+                <el-tag 
+                  v-if="char.text_value && !char.option_id" 
+                  closable 
+                  size="small" 
+                  type="info" 
+                  effect="plain"
+                  @close="char.text_value = ''; emitUpdate()"
                 >
-                  Так
-                </el-checkbox>
+                  {{ formatDisplayValue(char) }}
+                </el-tag>
+
+                <!-- Empty state hint -->
+                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-val-hint">
+                  значення не задано
+                </span>
               </div>
             </div>
           </div>
@@ -367,6 +329,30 @@ const onOptionChange = (char) => {
       char.text_value = `${opt.width}x${opt.height}`
     }
   }
+  emitUpdate()
+}
+
+const getOptionValue = (optionId) => {
+  for (const attr of allAttributes.value) {
+    if (attr.options) {
+      const opt = attr.options.find(o => o.id === optionId)
+      if (opt) return opt.value
+    }
+  }
+  return '...'
+}
+
+const formatDisplayValue = (char) => {
+  if (getAttrType(char) === 'DIMENSIONS') {
+    const [w, h] = (char.text_value || '').split('x')
+    return w && h ? `${w}×${h} мм` : char.text_value
+  }
+  return char.text_value
+}
+
+const clearValue = (char) => {
+  char.option_id = null
+  char.text_value = ''
   emitUpdate()
 }
 
@@ -800,6 +786,19 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.values-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.empty-val-hint {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-style: italic;
 }
 
 .value-selector-box {
