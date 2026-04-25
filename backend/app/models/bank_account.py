@@ -4,6 +4,7 @@ Bank Account model
 from sqlalchemy import Column, String, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 import enum
+from sqlalchemy.dialects.postgresql import UUID
 from .base import BaseModel
 
 class Currency(str, enum.Enum):
@@ -18,7 +19,7 @@ class BankAccount(BaseModel):
     """
     __tablename__ = "bank_accounts"
 
-    company_id = Column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
     
     bank_name = Column(String(255), nullable=True) # Bank Name / Назва банку
     mfo = Column(String(10), nullable=True)        # MFO / МФО (Code of bank)
