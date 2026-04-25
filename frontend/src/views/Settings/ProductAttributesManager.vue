@@ -180,6 +180,13 @@
               Значення цієї характеристики автоматично підставиться у Розумний Калькулятор замість базового габариту товару.
             </div>
           </el-form-item>
+
+          <el-form-item v-if="attrForm.type === 'DIMENSIONS'" label="Формат варіанту" prop="dimension_format" class="mt-3 mb-0">
+            <el-input v-model="attrForm.dimension_format" placeholder="{width}×{height}" />
+            <div class="text-xs text-slate-500 mt-1">
+              Як буде виглядати назва характеристики (напр. {width}×{height} або {width}x{height})
+            </div>
+          </el-form-item>
         </div>
 
         <el-form-item label="Опис (опціонально)">
@@ -254,7 +261,8 @@ const attrForm = reactive({
   description: '',
   category_codes: [],
   allow_manual_input: false,
-  mapped_dimension: null,
+  mapped_dimension: '',
+  dimension_format: '{width}×{height}',
   generates_variant: true
 })
 

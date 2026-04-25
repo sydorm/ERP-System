@@ -26,8 +26,8 @@
       </div>
 
       <!-- Attributes Form -->
-      <div class="selection-body">
-        <el-form label-position="top" class="premium-form">
+      <div class="selection-body" v-loading="attributeLoading" element-loading-text="Завантаження характеристик...">
+        <el-form label-position="top" class="premium-form" v-if="!attributeLoading">
           <!-- VARIANT GENERATING ATTRIBUTES -->
           <div class="variant-attributes-section mb-6">
             <h4 class="text-xs font-bold text-indigo-600 uppercase mb-4 tracking-wider">Основні параметри (SKU)</h4>
@@ -221,6 +221,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Picture, Brush, Operation, EditPen } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
 const props = defineProps({
@@ -352,8 +353,6 @@ const currentVariant = computed(() => {
   if (!allAttributesSelected.value) return null
   
   return props.product.variants.find(v => {
-    // A variant matches if ALL its values match the CURRENT selections for variant-generating attributes
-    // AND the variant itself only contains variant-generating attributes (usually the case)
     return variantAttributes.value.every(a => {
       const selection = selections.value[a.id]
       const dim = dimSelections.value[a.id]
@@ -361,7 +360,9 @@ const currentVariant = computed(() => {
       return v.values?.some(vv => {
         if (vv.attribute_id !== a.id) return false
         if (a.type === 'DIMENSIONS') {
-            return vv.text_value === `${dim.w}x${dim.h}`
+            const fmt = a.dimension_format || '{width}×{height}'
+            const expectedValue = fmt.replace('{width}', dim.w).replace('{height}', dim.h)
+            return vv.text_value === expectedValue || vv.text_value === `${dim.w}x${dim.h}`
         }
         return vv.option_id === selection || vv.text_value === selection
       })
@@ -369,18 +370,17 @@ const currentVariant = computed(() => {
   })
 })
 
-const handleConfirm = () => {
+const handleConfirm = async () => {
   if (allAttributesSelected.value) {
-    const allAttrs = [...variantAttributes.value, ...extraAttributes.value]
-    
-    // Construct values for the selection
-    const selectedValues = allAttrs.map(attr => {
-        const selection = selections.value[attr.id];
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(selection);
+    const selectedValues = variantAttributes.value.concat(extraAttributes.value).map(attr => {
+        const selection = selections.value[attr.id]
+        const isUuid = typeof selection === 'string' && selection.length === 36
         
         if (attr.type === 'DIMENSIONS') {
           const d = dimSelections.value[attr.id]
-          return { attribute_id: attr.id, option_id: null, text_value: `${d.w}x${d.h}`, attribute: attr, option: null }
+          const fmt = attr.dimension_format || '{width}×{height}'
+          const val = fmt.replace('{width}', d.w).replace('{height}', d.h)
+          return { attribute_id: attr.id, option_id: null, text_value: val, attribute: attr, option: null }
         }
         return {
             attribute_id: attr.id,
@@ -392,22 +392,72 @@ const handleConfirm = () => {
     }).filter(v => v.option_id || v.text_value)
 
     if (currentVariant.value) {
-        // Return matching variant but with all selected values (including extras)
         emit('select', {
             ...currentVariant.value,
             values: selectedValues
         })
+        visible.value = false
     } else {
-        // Construct a "virtual" variant object
-        const virtualVariant = {
-            id: null,
-            product_id: props.product.id,
-            sku: props.product.sku, // Base SKU
-            values: selectedValues
+        // If variant not found but all variant-generating attributes are selected
+        // Ask to create a new variant
+        try {
+            const dimAttr = variantAttributes.value.find(a => a.type === 'DIMENSIONS')
+            let label = "цю комбінацію"
+            if (dimAttr) {
+                const d = dimSelections.value[dimAttr.id]
+                label = `${d.w}×${d.h}`
+            }
+
+            await ElMessageBox.confirm(
+                `Варіант "${label}" не існує. Створити автоматично?`,
+                'Новий варіант',
+                { confirmButtonText: 'Так, створити', cancelButtonText: 'Ні, просто вибрати', type: 'info' }
+            )
+
+            // Create variant
+            attributeLoading.value = true
+            const newSku = `${props.product.sku}-${Date.now().toString().slice(-4)}`
+            
+            // Map values for the API (only variant-generating ones)
+            const variantValues = selectedValues.filter(v => {
+                const attr = allCategoryAttributes.value.find(a => a.id === v.attribute_id)
+                return attr?.generates_variant !== false
+            }).map(v => ({
+                attribute_id: v.attribute_id,
+                option_id: v.option_id,
+                text_value: v.text_value
+            }))
+
+            const res = await api.post('/api/v1/attributes/variants', {
+                product_id: props.product.id,
+                sku: newSku,
+                values: variantValues
+            })
+            
+            emit('select', {
+                ...res.data,
+                values: selectedValues
+            })
+            visible.value = false
+        } catch (e) {
+            if (e !== 'cancel') {
+                console.error('Failed to create variant', e)
+                ElMessage.error('Помилка при створенні варіанту')
+            } else {
+                // User said "No, just select" -> send as virtual
+                const virtualVariant = {
+                    id: null,
+                    product_id: props.product.id,
+                    sku: props.product.sku,
+                    values: selectedValues
+                }
+                emit('select', virtualVariant)
+                visible.value = false
+            }
+        } finally {
+            attributeLoading.value = false
         }
-        emit('select', virtualVariant)
     }
-    visible.value = false
   }
 }
 

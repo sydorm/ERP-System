@@ -35,6 +35,7 @@ class AttributeBase(BaseModel):
     is_archived: bool = False
     allow_manual_input: bool = False
     mapped_dimension: Optional[str] = None
+    dimension_format: Optional[str] = "{width}×{height}"
     generates_variant: bool = True
 
 class AttributeCreate(AttributeBase):
@@ -49,6 +50,7 @@ class AttributeUpdate(BaseModel):
     is_archived: Optional[bool] = None
     allow_manual_input: Optional[bool] = None
     mapped_dimension: Optional[str] = None
+    dimension_format: Optional[str] = None
     category_codes: Optional[List[str]] = None
     generates_variant: Optional[bool] = None
 
