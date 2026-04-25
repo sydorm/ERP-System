@@ -25,6 +25,7 @@ class AccumulationRegister(BaseModel):
     # Generic dimensions to support stock (product/warehouse), money (account), or debt (counterparty)
     # Using specific columns for core dimensions for performance
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=True, index=True)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True, index=True)
     warehouse_id = Column(UUID(as_uuid=True), ForeignKey("warehouses.id"), nullable=True, index=True)
     counterparty_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id"), nullable=True, index=True)
     bank_account_id = Column(UUID(as_uuid=True), ForeignKey("bank_accounts.id"), nullable=True, index=True)

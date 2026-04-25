@@ -61,6 +61,7 @@ async def create_purchase_receipt(
         line = PurchaseReceiptLine(
             receipt_id=receipt.id,
             product_id=line_data.product_id,
+            variant_id=line_data.variant_id,
             quantity=line_data.quantity,
             price=line_data.price,
             total=line_data.total
@@ -75,6 +76,7 @@ async def create_purchase_receipt(
         entries.append(PostingEntry(
             register_type=RegisterType.STOCK,
             product_id=line_data.product_id,
+            variant_id=line_data.variant_id,
             warehouse_id=receipt.warehouse_id,
             quantity=float(line_data.quantity),
             amount=float(line_data.total),

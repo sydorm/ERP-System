@@ -11,6 +11,7 @@ class PostingEntry:
         quantity: float = 0,
         amount: float = 0,
         product_id: Optional[UUID] = None,
+        variant_id: Optional[UUID] = None,
         warehouse_id: Optional[UUID] = None,
         counterparty_id: Optional[UUID] = None,
         bank_account_id: Optional[UUID] = None,
@@ -21,6 +22,7 @@ class PostingEntry:
         self.quantity = quantity
         self.amount = amount
         self.product_id = product_id
+        self.variant_id = variant_id
         self.warehouse_id = warehouse_id
         self.counterparty_id = counterparty_id
         self.bank_account_id = bank_account_id
@@ -49,6 +51,7 @@ class PostingService:
                 company_id=company_id,
                 register_type=entry.register_type,
                 product_id=entry.product_id,
+                variant_id=entry.variant_id,
                 warehouse_id=entry.warehouse_id,
                 counterparty_id=entry.counterparty_id,
                 bank_account_id=entry.bank_account_id,

@@ -45,10 +45,30 @@
         <el-divider>Товари</el-divider>
 
         <el-table :data="form.lines" border style="width: 100%">
-          <el-table-column label="Товар" min-width="300">
+          <el-table-column label="Товар" min-width="250">
             <template #default="scope">
-              <el-select v-model="scope.row.product_id" filterable placeholder="Пошук товару..." style="width: 100%">
+              <el-select v-model="scope.row.product_id" filterable placeholder="Пошук товару..." style="width: 100%" @change="(val) => handleProductChange(val, scope.row)">
                 <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="Характеристика" width="180">
+            <template #default="scope">
+              <el-select 
+                v-model="scope.row.variant_id" 
+                size="small" 
+                placeholder="Виберіть..." 
+                style="width: 100%"
+                :disabled="!getVariantsForProduct(scope.row.product_id).length"
+                clearable
+                @change="(val) => handleVariantChange(val, scope.row)"
+              >
+                <el-option 
+                  v-for="v in getVariantsForProduct(scope.row.product_id)" 
+                  :key="v.id" 
+                  :label="getVariantLabel(v)" 
+                  :value="v.id" 
+                />
               </el-select>
             </template>
           </el-table-column>
@@ -129,6 +149,7 @@ const goBack = () => {
 const addLine = () => {
   form.lines.push({
     product_id: '',
+    variant_id: null,
     quantity: 1,
     price: 0,
     total: 0
@@ -141,6 +162,37 @@ const removeLine = (index) => {
 
 const updateLineTotal = (line) => {
   line.total = line.quantity * line.price
+}
+
+const handleProductChange = (productId, line) => {
+  const product = products.value.find(p => p.id === productId)
+  if (product) {
+    line.price = product.price || 0
+    line.variant_id = null
+    updateLineTotal(line)
+  }
+}
+
+const handleVariantChange = (variantId, line) => {
+  if (!variantId) return
+  const product = products.value.find(p => p.id === line.product_id)
+  if (product) {
+    const variant = product.variants?.find(v => v.id === variantId)
+    if (variant && variant.price_override) {
+      line.price = Number(variant.price_override)
+      updateLineTotal(line)
+    }
+  }
+}
+
+const getVariantsForProduct = (productId) => {
+  const product = products.value.find(p => p.id === productId)
+  return product ? product.variants || [] : []
+}
+
+const getVariantLabel = (variant) => {
+  if (!variant || !variant.values || variant.values.length === 0) return variant?.sku || 'Без назви'
+  return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
 }
 
 const fetchData = async () => {
@@ -167,6 +219,7 @@ const fetchData = async () => {
        form.currency = order.currency
        form.lines = (order.lines || []).map(l => ({
            product_id: l.product_id,
+           variant_id: l.variant_id,
            quantity: Number(l.quantity),
            price: Number(l.price),
            total: Number(l.total)

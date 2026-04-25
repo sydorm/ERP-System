@@ -7,6 +7,7 @@ from app.models.purchase_receipt import PurchaseReceiptStatus
 
 class PurchaseReceiptLineBase(BaseModel):
     product_id: UUID
+    variant_id: Optional[UUID] = None
     quantity: Decimal
     price: Decimal
     total: Decimal
