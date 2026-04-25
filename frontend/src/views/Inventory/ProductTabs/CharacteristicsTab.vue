@@ -139,7 +139,7 @@
         <!-- SELECT FROM EXISTING -->
         <div v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(selectedAttrType)" class="mb-6">
           <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Вибрати з довідника</h4>
-          <el-select 
+                <el-select 
             v-model="newOption.selected_id" 
             placeholder="Оберіть існуюче значення..." 
             class="w-full styled-select"
@@ -305,8 +305,18 @@ const saveNewOption = async () => {
   
   // If user selected existing option from dropdown in modal
   if (newOption.selected_id) {
-    activeCharForDialog.value.option_id = newOption.selected_id
-    onOptionChange(activeCharForDialog.value)
+    // Force a fresh reference to trigger reactivity
+    const updatedChar = { 
+      ...activeCharForDialog.value, 
+      option_id: newOption.selected_id 
+    }
+    
+    const index = localCharacteristics.value.findIndex(c => c.attribute_id === selectedAttrForOption.value)
+    if (index !== -1) {
+      localCharacteristics.value[index] = updatedChar
+      onOptionChange(updatedChar)
+    }
+    
     addOptionVisible.value = false
     return
   }
@@ -343,9 +353,17 @@ const saveNewOption = async () => {
       attr.options.push(res.data)
     }
     
-    // Auto-select the newly created option
-    activeCharForDialog.value.option_id = res.data.id
-    onOptionChange(activeCharForDialog.value)
+    // Auto-select the newly created option by replacing the reference
+    const updatedChar = { 
+      ...activeCharForDialog.value, 
+      option_id: res.data.id 
+    }
+    
+    const index = localCharacteristics.value.findIndex(c => c.attribute_id === selectedAttrForOption.value)
+    if (index !== -1) {
+      localCharacteristics.value[index] = updatedChar
+      onOptionChange(updatedChar)
+    }
     
     ElMessage.success('Значення додано')
     addOptionVisible.value = false

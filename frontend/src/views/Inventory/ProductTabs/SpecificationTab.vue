@@ -770,12 +770,15 @@ const loadSpecifications = async () => {
         // Data sanitization: backend might return floats as strings (e.g., "1.000").
         // ElInputNumber requires strict Numbers.
         resData.forEach(spec => {
-            if (spec.items) {
+                    if (spec.items) {
                 spec.items.forEach(item => {
                     // Sync up-to-date unit of measure from component
                     if (item.component?.unit_of_measure) {
                         item.unit_of_measure = item.component.unit_of_measure
                     }
+
+                    // FORCE standard material type to prevent UI hiding fields
+                    item.line_type = 'material'
 
                     if (typeof item.quantity === 'string') item.quantity = parseFloat(item.quantity) || 0
                     if (item.calc_data_points) {
@@ -1028,6 +1031,8 @@ const handleComponentSelect = (row, componentId) => {
     if (selected && selected.unit_of_measure) {
         row.unit_of_measure = selected.unit_of_measure
     }
+    // Force standard material type to ensure all fields are visible
+    row.line_type = 'material'
 }
 
 // Preview calculation logic
