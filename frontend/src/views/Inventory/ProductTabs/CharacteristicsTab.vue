@@ -878,7 +878,6 @@ onMounted(async () => {
 
 .empty-val-hint {
   display: none;
-}
   font-size: 11px;
   color: #cbd5e1;
   font-style: italic;
