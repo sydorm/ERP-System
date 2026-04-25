@@ -164,6 +164,28 @@ app.include_router(payroll_router, prefix="/api/v1", tags=["Payroll"])
 from app.api.brigade_routes import router as brigade_router
 app.include_router(brigade_router, prefix="/api/v1", tags=["Production"])
 
+# Debug/Dev helper for migrations
+@app.post("/api/v1/debug/migrate")
+async def run_migrations():
+    """Manually trigger alembic migrations"""
+    from alembic.config import Config
+    from alembic import command
+    import os
+    
+    # Use alembic.ini from the backend root
+    # Note: we might need to adjust paths depending on where uvicorn is running
+    ini_path = "alembic.ini"
+    if not os.path.exists(ini_path):
+        ini_path = "backend/alembic.ini"
+        
+    try:
+        alembic_cfg = Config(ini_path)
+        # Ensure we point to the correct versions directory
+        command.upgrade(alembic_cfg, "head")
+        return {"status": "success", "message": "Migrations applied successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # Ensure uploads directory exists and mount it for static file serving
 import os
 from fastapi.staticfiles import StaticFiles
