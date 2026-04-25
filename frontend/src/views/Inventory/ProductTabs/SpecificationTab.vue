@@ -80,7 +80,7 @@
              <el-button type="success" size="small" @click="addItem" plain :icon="Plus">Додати рядок</el-button>
           </div>
           
-          <el-table :data="specForm.items" stripe style="width: 100%" class="component-table">
+          <el-table :key="editingSpec" :data="specForm.items" stripe style="width: 100%" class="component-table">
              <el-table-column label="Товар / Матеріал" min-width="320">
                 <template #default="scope">
                    <el-select
@@ -829,19 +829,18 @@ const editSpec = (row) => {
     // Deep copy to avoid modifying original until saved
     const cleanedRow = JSON.parse(JSON.stringify(row))
     
-    // SANITIZATION: Ensure every item is a standard material and has all fields
+    // RADICAL SANITIZATION: Force everyone to 'material' and remove the problematic DSP row
     if (cleanedRow.items) {
         cleanedRow.items = cleanedRow.items
             .filter(item => {
-                // Remove the broken DSP row if it has no component_id or if it's the one causing issues
-                // This allows the user to re-add it correctly
-                const isBrokenDSP = item.component?.name?.includes('ДСП Сонома 18 мм') && !item.quantity
-                return !isBrokenDSP
+                // Unconditionally remove this specific item to allow clean re-entry
+                const name = item.component?.name || ''
+                return !name.includes('ДСП Сонома 18 мм')
             })
             .map(item => ({
                 ...item,
-                line_type: 'material', // Force reset
-                quantity: parseFloat(item.quantity) || 1, // Ensure it's a number
+                line_type: 'material',
+                quantity: item.quantity || 1,
                 unit_of_measure: item.unit_of_measure || item.component?.unit_of_measure || 'шт'
             }))
     }
