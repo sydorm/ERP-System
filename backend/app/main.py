@@ -8,6 +8,23 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.on_event("startup")
+def on_startup():
+    """Ensure database schema is up to date for recent changes"""
+    from app.db.session import SessionLocal
+    from sqlalchemy import text
+    db = SessionLocal()
+    try:
+        # Manually ensure columns exist to prevent 500 errors if alembic is lagging
+        db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
+        db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS height INTEGER"))
+        db.commit()
+        print("✅ Database schema check: OK")
+    except Exception as e:
+        print(f"⚠️ Database schema check failed: {e}")
+    finally:
+        db.close()
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
