@@ -183,6 +183,8 @@ async def delete_specification(
 
 from app.services.specification_service import SpecificationService
 from app.schemas.specification import SpecificationCalculationRequest, CalculatedMaterialResponse
+from app.models.register import AccumulationRegister, RegisterType
+from sqlalchemy import func
 
 @router.post("/specifications/{spec_id}/calculate", response_model=List[CalculatedMaterialResponse])
 async def calculate_specification_materials(
@@ -236,6 +238,19 @@ async def calculate_specification_materials(
         # 4. Calculate Quantity
         quantity = SpecificationService.calculate_item_quantity(item, parent_dims)
         
+        # 5. Fetch Stock Status
+        stock_quantity = 0.0
+        stock_query = db.query(func.sum(AccumulationRegister.quantity)).filter(
+            AccumulationRegister.company_id == current_user.company_id,
+            AccumulationRegister.register_type == RegisterType.STOCK
+        )
+        
+        if variant:
+            stock_quantity = stock_query.filter(AccumulationRegister.variant_id == variant.id).scalar() or 0.0
+        elif component:
+            # If no variant, check total stock for component
+            stock_quantity = stock_query.filter(AccumulationRegister.product_id == component.id).scalar() or 0.0
+
         results.append(CalculatedMaterialResponse(
             component_id=component.id if component else item.component_id,
             component_name=component.name if component else "Unknown",
@@ -243,6 +258,7 @@ async def calculate_specification_materials(
             variant_name=variant.name if variant else None,
             quantity=quantity,
             unit_of_measure=(component.unit_of_measure if component and component.unit_of_measure else item.unit_of_measure) or "шт",
+            stock_quantity=Decimal(str(stock_quantity)),
             notes=item.notes
         ))
         

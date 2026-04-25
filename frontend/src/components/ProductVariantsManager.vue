@@ -105,7 +105,6 @@
                   <span class="flex items-center whitespace-nowrap gap-1">
                     <span class="font-bold text-[10px] uppercase opacity-60">{{ attr.name }}:</span>
                     <span class="text-xs">{{ getOptionLabelForAttr(row, attr) }}</span>
-                    <el-icon class="el-icon--right !ml-0"><ArrowDown /></el-icon>
                   </span>
                 </el-tag>
                 <template #dropdown>

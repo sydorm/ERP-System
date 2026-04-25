@@ -84,7 +84,7 @@
         
         <div class="char-controls">
           <el-button 
-            v-if="['SELECT', 'COLOR'].includes(getAttrType(char))"
+            v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(getAttrType(char))"
             :icon="Plus" 
             circle
             size="small"
@@ -117,8 +117,15 @@
       destroy-on-close
     >
       <el-form label-position="top" class="dialog-form">
-        <el-form-item label="Значення">
+        <el-form-item v-if="selectedAttrType !== 'DIMENSIONS'" label="Значення">
           <el-input v-model="newOption.value" placeholder="Наприклад: Червоний, 1000мм..." class="styled-input" />
+        </el-form-item>
+        <el-form-item v-else label="Розміри (Ш × В, мм)">
+          <div class="color-picker-row">
+            <el-input-number v-model="newOption.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" />
+            <span class="dims-sep">×</span>
+            <el-input-number v-model="newOption.h" :min="0" :precision="0" :controls="false" placeholder="Висота" />
+          </div>
         </el-form-item>
         <el-form-item v-if="selectedAttrType === 'COLOR'" label="Код кольору">
           <div class="color-picker-row">
@@ -214,7 +221,9 @@ const selectedAttrForOption = ref(null)
 const selectedAttrType = ref('SELECT')
 const newOption = reactive({
   value: '',
-  color_code: ''
+  color_code: '',
+  w: null,
+  h: null
 })
 
 const openAddOptionDialog = (attrId) => {
@@ -224,12 +233,26 @@ const openAddOptionDialog = (attrId) => {
   selectedAttrForOption.value = attrId
   selectedAttrType.value = attr.type
   newOption.value = ''
+  newOption.w = null
+  newOption.h = null
   newOption.color_code = attr.type === 'COLOR' ? '#000000' : ''
   addOptionVisible.value = true
 }
 
 const saveNewOption = async () => {
-  if (!selectedAttrForOption.value || !newOption.value) return
+  if (!selectedAttrForOption.value) return
+  
+  if (selectedAttrType.value === 'DIMENSIONS') {
+    if (!newOption.w || !newOption.h) {
+      ElMessage.warning('Вкажіть ширину та висоту')
+      return
+    }
+    const attr = allAttributes.value.find(a => a.id === selectedAttrForOption.value)
+    const fmt = attr?.dimension_format || '{width}×{height}'
+    newOption.value = fmt.replace('{width}', newOption.w).replace('{height}', newOption.h)
+  }
+
+  if (!newOption.value) return
   
   savingOption.value = true
   try {

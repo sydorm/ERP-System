@@ -205,8 +205,17 @@
     <!-- Modal: Add Option (Value) -->
     <el-dialog v-model="optModalVisible" :title="`Додати значення: ${activeAttrForOpt?.name}`" width="450px">
       <el-form ref="optFormRef" :model="optForm" :rules="optRules" label-position="top" @submit.prevent>
-        <el-form-item label="Значення (напр. Червоний, XL, Метал)" prop="value">
+        <el-form-item v-if="activeAttrForOpt?.type !== 'DIMENSIONS'" label="Значення (напр. Червоний, XL, Метал)" prop="value">
           <el-input v-model="optForm.value" placeholder="Введіть значення" @keyup.enter="submitOptForm"/>
+        </el-form-item>
+
+        <el-form-item v-else label="Розміри (Ш × В, мм)">
+          <div class="flex items-center gap-2">
+            <el-input-number v-model="optForm.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" class="w-full" />
+            <span class="text-slate-400 font-bold">×</span>
+            <el-input-number v-model="optForm.h" :min="0" :precision="0" :controls="false" placeholder="Висота" class="w-full" />
+            <span class="text-slate-400">мм</span>
+          </div>
         </el-form-item>
         
         <el-form-item v-if="activeAttrForOpt?.type === 'COLOR'" label="Колір (HEX)" prop="color_code">
@@ -268,7 +277,9 @@ const attrForm = reactive({
 
 const optForm = reactive({
   value: '',
-  color_code: '#000000'
+  color_code: '#4f46e5',
+  w: null,
+  h: null
 })
 
 // Rules
@@ -383,14 +394,25 @@ const openAddOptionModal = (attr) => {
   activeAttrForOpt.value = attr
   optForm.value = ''
   optForm.color_code = '#4f46e5'
+  optForm.w = null
+  optForm.h = null
   optModalVisible.value = true
   
-  // Quick trick to fetch options if they weren't loaded
   refreshOptionsFor(attr.id)
 }
 
 const submitOptForm = async () => {
   if (!optFormRef.value || !activeAttrForOpt.value) return
+
+  if (activeAttrForOpt.value.type === 'DIMENSIONS') {
+    if (!optForm.w || !optForm.h) {
+        ElMessage.warning('Вкажіть ширину та висоту')
+        return
+    }
+    const fmt = activeAttrForOpt.value.dimension_format || '{width}×{height}'
+    optForm.value = fmt.replace('{width}', optForm.w).replace('{height}', optForm.h)
+  }
+
   await optFormRef.value.validate(async (valid) => {
     if (valid) {
       optSubmitting.value = true

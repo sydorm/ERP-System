@@ -81,33 +81,47 @@ class SpecificationService:
     ) -> Optional[Any]:
         """
         Searches for a variant of the product that matches the calculated dimensions.
-        Expects variant characteristics to contain the size (e.g. "600x320").
+        Looks specifically for DIMENSIONS type attributes and compares numeric values.
         """
         if not product or not product.id:
             return None
 
-        from app.models.variant import ProductVariant
-        from sqlalchemy import or_
+        from app.models.variant import ProductVariant, ProductVariantValue
+        from app.models.attribute import Attribute
 
-        # Get all variants of this material
+        # 1. Get all variants for this product
         variants = db.query(ProductVariant).filter(ProductVariant.product_id == product.id).all()
         
-        # Simple heuristic: look for variants where characteristic name or value contains the size
-        # Most common format: "600x320"
-        target_str_1 = f"{int(target_length)}x{int(target_width)}" if target_width else f"{int(target_length)}x"
-        target_str_2 = f"{int(target_width)}x{int(target_length)}" if target_width else f"x{int(target_length)}"
-        
+        # 2. Iterate and check attributes
+        # We look for a variant that has a DIMENSIONS attribute with matching w/h
         for v in variants:
-            v_name = v.name or ""
-            if target_str_1 in v_name or target_str_2 in v_name:
-                return v
-            
-            # Check values
             for val in v.values:
-                val_str = str(val.value or "")
-                if target_str_1 in val_str or target_str_2 in val_str:
-                    return v
+                # If it's a DIMENSIONS type, it likely has text_value="600x320"
+                attr = db.query(Attribute).filter(Attribute.id == val.attribute_id).first()
+                if attr and attr.type == 'DIMENSIONS':
+                    if not val.text_value: continue
+                    parts = val.text_value.split('x')
+                    if len(parts) < 2: continue
                     
+                    v_w = float(parts[0])
+                    v_h = float(parts[1])
+                    
+                    # Match target_length and target_width (order-independent)
+                    if target_width:
+                        match_1 = (abs(v_w - target_length) < 0.1 and abs(v_h - target_width) < 0.1)
+                        match_2 = (abs(v_h - target_length) < 0.1 and abs(v_w - target_width) < 0.1)
+                        if match_1 or match_2:
+                            return v
+                    else:
+                        # Only length matters?
+                        if abs(v_w - target_length) < 0.1 or abs(v_h - target_length) < 0.1:
+                            return v
+                            
+            # Fallback to string search in name
+            target_str = f"{int(target_length)}x{int(target_width)}" if target_width else f"{int(target_length)}"
+            if target_str in (v.name or ""):
+                return v
+
         return None
 
     @staticmethod

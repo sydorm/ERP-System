@@ -310,15 +310,34 @@
         </el-form>
 
         <el-table :data="previewResults" border stripe>
-          <el-table-column prop="component_name" label="Матеріал" />
+          <el-table-column prop="component_name" label="Матеріал" min-width="180">
+            <template #default="scope">
+               <div class="flex flex-col">
+                  <span class="font-bold">{{ scope.row.component_name }}</span>
+                  <span v-if="scope.row.variant_name" class="text-[10px] text-indigo-600 font-bold uppercase">Варіант: {{ scope.row.variant_name }}</span>
+               </div>
+            </template>
+          </el-table-column>
           <el-table-column prop="quantity" label="Розрахована к-ть" width="150" align="right">
             <template #default="scope">
               <span class="font-bold text-indigo-600">{{ scope.row.quantity }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="Од. вим." width="100">
+          <el-table-column label="Од. вим." width="80">
             <template #default="scope">
               {{ getUomName(scope.row.unit_of_measure) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Наявність" width="180" align="right">
+            <template #default="scope">
+               <div class="flex flex-col items-end">
+                  <span :class="['text-xs font-bold', scope.row.stock_quantity < scope.row.quantity ? 'text-red-500' : 'text-green-600']">
+                     Залишок: {{ scope.row.stock_quantity }}
+                  </span>
+                  <el-tag v-if="scope.row.stock_quantity < scope.row.quantity" type="danger" size="small" effect="dark" class="mt-1">
+                     Недостатньо!
+                  </el-tag>
+               </div>
             </template>
           </el-table-column>
         </el-table>

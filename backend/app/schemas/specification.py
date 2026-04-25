@@ -160,4 +160,5 @@ class CalculatedMaterialResponse(BaseModel):
     variant_name: Optional[str] = None
     quantity: Decimal
     unit_of_measure: str
+    stock_quantity: Optional[Decimal] = None
     notes: Optional[str] = None
