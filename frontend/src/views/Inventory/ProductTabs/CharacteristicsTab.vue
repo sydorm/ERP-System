@@ -94,10 +94,24 @@
                   Так
                 </el-tag>
 
-                <!-- Placeholder if empty -->
-                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-value-hint">
-                  Натисніть +, щоб додати значення
-                </span>
+                <!-- Placeholder / Quick Selection if empty -->
+                <div v-if="!char.option_id && !char.text_value && !char.bool_value" class="quick-select-container">
+                  <div 
+                    v-for="opt in getAttrOptions(char).slice(0, 10)" 
+                    :key="opt.id" 
+                    class="quick-option-chip"
+                    @click="selectQuickOption(char, opt.id)"
+                  >
+                    <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
+                    {{ opt.value }}
+                  </div>
+                  <span v-if="getAttrOptions(char).length === 0" class="empty-value-hint">
+                    Натисніть +, щоб додати перше значення
+                  </span>
+                  <span v-else-if="getAttrOptions(char).length > 10" class="more-options-hint">
+                    + ще {{ getAttrOptions(char).length - 10 }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -424,6 +438,11 @@ const onOptionChange = (char) => {
     }
   }
   emitUpdate()
+}
+
+const selectQuickOption = (char, optionId) => {
+  char.option_id = optionId
+  onOptionChange(char)
 }
 
 const getOptionValue = (optionId, char) => {
@@ -799,6 +818,49 @@ onMounted(async () => {
 
 .value-text {
   font-size: 14px;
+}
+
+.quick-select-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.quick-option-chip {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+}
+
+.quick-option-chip:hover {
+  background: #e2e8f0;
+  border-color: #6366f1;
+  color: #6366f1;
+  transform: translateY(-1px);
+}
+
+.more-options-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.dot-swatch-mini {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
 }
 
 .char-controls {
