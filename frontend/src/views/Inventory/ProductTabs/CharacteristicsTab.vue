@@ -49,19 +49,23 @@
               <!-- Compact Values Display (Tags Only) -->
               <div class="values-row">
                 <!-- Pre-defined option tag -->
-                <el-tag 
-                  v-if="char.option_id" 
-                  closable 
-                  size="small" 
-                  type="success" 
-                  effect="plain"
-                  @close="clearValue(char)"
-                >
-                  <div class="tag-content-flex">
-                    <span v-if="getOptionColor(char.option_id)" class="dot-swatch-mini" :style="{ background: getOptionColor(char.option_id) }"></span>
-                    {{ getOptionValue(char.option_id) }}
-                  </div>
-                </el-tag>
+                <div class="char-tags" v-if="char.option_id">
+                   <el-tag 
+                     closable 
+                     @close="clearValue(char)"
+                     :type="getAttrType(char) === 'DIMENSIONS' ? 'warning' : 'success'"
+                     class="value-tag"
+                     size="large"
+                   >
+                     <div class="flex items-center gap-2">
+                       <div v-if="getAttrType(char) === 'COLOR' && getOptionColor(char.option_id)" 
+                            class="color-preview-mini" 
+                            :style="{ background: getOptionColor(char.option_id) }">
+                       </div>
+                       <span class="font-bold">{{ getOptionValue(char.option_id, char) }}</span>
+                     </div>
+                   </el-tag>
+                </div>
 
                 <!-- Text/Dimensions manual tag -->
                 <el-tag 
@@ -414,10 +418,20 @@ const onOptionChange = (char) => {
   emitUpdate()
 }
 
-const getOptionValue = (optionId) => {
-  for (const attr of allAttributes.value) {
-    if (attr.options) {
-      const opt = attr.options.find(o => o.id === optionId)
+const getOptionValue = (optionId, char) => {
+  if (!optionId) return '...'
+  
+  // Try to find in the specific attribute options first
+  const attr = allAttributes.value.find(a => a.id === char?.attribute_id)
+  if (attr && attr.options) {
+    const opt = attr.options.find(o => o.id === optionId)
+    if (opt) return opt.value
+  }
+
+  // Fallback: search everywhere
+  for (const a of allAttributes.value) {
+    if (a.options) {
+      const opt = a.options.find(o => o.id === optionId)
       if (opt) return opt.value
     }
   }
