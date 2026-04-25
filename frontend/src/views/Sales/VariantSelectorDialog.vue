@@ -185,7 +185,8 @@ import api from '@/api'
 const props = defineProps({
   modelValue: Boolean,
   product: Object,
-  initialVariantId: String
+  initialVariantId: { type: String, default: null },
+  initialValues: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:modelValue', 'select'])
@@ -256,23 +257,33 @@ const initializeSelector = () => {
       })
   }
   
-  // 3. Load initial values if variant ID is provided
+  // 3. Load initial values if variant ID is provided OR initial values passed
+  let valuesToLoad = []
   if (props.initialVariantId && props.product?.variants) {
     const variant = props.product.variants.find(v => v.id === props.initialVariantId)
-    if (variant?.values) {
-      variant.values.forEach(v => {
-        // Find attribute type from our cached category attributes if possible
-        const attr = allCategoryAttributes.value.find(a => a.id === v.attribute_id)
-        const type = attr?.type || v.attribute?.type
+    if (variant?.values) valuesToLoad = variant.values
+  } else if (props.initialValues && props.initialValues.length > 0) {
+    valuesToLoad = props.initialValues
+  }
 
-        if (type === 'DIMENSIONS' && v.text_value) {
-            const [w, h] = v.text_value.split('x')
-            dimSelections.value[v.attribute_id] = { w: parseInt(w) || null, h: parseInt(h) || null }
-        } else {
-            selections.value[v.attribute_id] = v.option_id || v.text_value
-        }
-      })
-    }
+  if (valuesToLoad.length > 0) {
+    valuesToLoad.forEach(v => {
+      // Find attribute type from our cached category attributes if possible
+      const attr = allCategoryAttributes.value.find(a => a.id === v.attribute_id)
+      const type = attr?.type || v.attribute?.type
+
+      if (type === 'DIMENSIONS') {
+          // Priority: numeric width/height, fallback: parse text_value
+          if (v.width && v.height) {
+              dimSelections.value[v.attribute_id] = { w: v.width, h: v.height }
+          } else if (v.text_value) {
+              const [w, h] = v.text_value.replace('×', 'x').split('x')
+              dimSelections.value[v.attribute_id] = { w: parseInt(w) || null, h: parseInt(h) || null }
+          }
+      } else {
+          selections.value[v.attribute_id] = v.option_id || v.text_value
+      }
+    })
   }
 }
 
@@ -341,7 +352,15 @@ const handleConfirm = async () => {
           const d = dimSelections.value[attr.id]
           const fmt = attr.dimension_format || '{width}×{height}'
           const val = fmt.replace('{width}', d.w).replace('{height}', d.h)
-          return { attribute_id: attr.id, option_id: null, text_value: val, attribute: attr, option: null }
+          return { 
+            attribute_id: attr.id, 
+            option_id: null, 
+            text_value: val, 
+            attribute: attr, 
+            option: null,
+            width: d.w,
+            height: d.h
+          }
         }
         return {
             attribute_id: attr.id,

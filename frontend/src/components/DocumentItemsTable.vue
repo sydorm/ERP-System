@@ -146,6 +146,7 @@
       v-model="variantSelectorVisible" 
       :product="selectedProductForSelector" 
       :initial-variant-id="activeLineForSelector?.variant_id"
+      :initial-values="activeLineForSelector?.values"
       @select="onVariantSelected" 
     />
   </div>
@@ -241,14 +242,14 @@ const onVariantSelected = (variant) => {
         updateLineTotal(activeLineForSelector.value)
     }
     
-    // Set virtual label if it's a virtual variant
-    if (!variant.id && variant.values) {
+    // Set label for display in the table
+    if (variant.values && variant.values.length > 0) {
         activeLineForSelector.value._virtual_label = variant.values
             .map(v => v.option?.value || v.text_value)
             .filter(Boolean)
             .join(', ')
     } else {
-        activeLineForSelector.value._virtual_label = null
+        activeLineForSelector.value._virtual_label = variant.sku || null
     }
     
     emit('change', activeLineForSelector.value)
@@ -257,6 +258,12 @@ const onVariantSelected = (variant) => {
 
 const getVariantLabelByLine = (line) => {
   if (line._virtual_label) return line._virtual_label
+  
+  // If we have values but no label yet (e.g. after loading from DB)
+  if (line.values && line.values.length > 0) {
+    return line.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+  }
+  
   if (!line.variant_id || !line.product_id) return ''
   
   const product = props.products.find(p => p.id === line.product_id)
