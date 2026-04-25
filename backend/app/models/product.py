@@ -46,6 +46,18 @@ class Product(BaseModel):
     default_supplier_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id", ondelete="SET NULL"), nullable=True)
     delivery_days = Column(Integer, nullable=True, default=0)
 
+    # Manufacturing Parameters
+    production_time_hours = Column(Numeric(10, 2), nullable=True)
+    complexity_code = Column(String(50), nullable=True)
+    min_production_batch = Column(Integer, nullable=True, default=1)
+    max_production_per_day = Column(Integer, nullable=True)
+    special_production_conditions = Column(Text, nullable=True)
+
+    # Performer Restrictions
+    performer_restriction_type = Column(String(50), nullable=True, default='any_role') # 'any_role', 'specific_brigade', 'specific_master'
+    restricted_brigade_id = Column(UUID(as_uuid=True), ForeignKey("brigades.id", ondelete="SET NULL"), nullable=True)
+    restricted_employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
+
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     

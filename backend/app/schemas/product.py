@@ -30,6 +30,18 @@ class ProductBase(BaseModel):
     default_supplier_id: Optional[UUID] = None
     delivery_days: Optional[int] = Field(0, ge=0)
 
+    # Manufacturing Parameters
+    production_time_hours: Optional[Decimal] = None
+    complexity_code: Optional[str] = None
+    min_production_batch: Optional[int] = 1
+    max_production_per_day: Optional[int] = None
+    special_production_conditions: Optional[str] = None
+    
+    # Performer Restrictions
+    performer_restriction_type: Optional[str] = "any_role"
+    restricted_brigade_id: Optional[UUID] = None
+    restricted_employee_id: Optional[UUID] = None
+
 class ProductCreate(ProductBase):
     """Schema for creating a product"""
     variants: Optional[List[ProductVariantCreate]] = None
@@ -57,6 +69,18 @@ class ProductUpdate(BaseModel):
     optimal_stock: Optional[Decimal] = None
     default_supplier_id: Optional[UUID] = None
     delivery_days: Optional[int] = None
+
+    # Manufacturing Parameters
+    production_time_hours: Optional[Decimal] = None
+    complexity_code: Optional[str] = None
+    min_production_batch: Optional[int] = None
+    max_production_per_day: Optional[int] = None
+    special_production_conditions: Optional[str] = None
+    
+    # Performer Restrictions
+    performer_restriction_type: Optional[str] = None
+    restricted_brigade_id: Optional[UUID] = None
+    restricted_employee_id: Optional[UUID] = None
     
     variants: Optional[List[ProductVariantCreate]] = None
 

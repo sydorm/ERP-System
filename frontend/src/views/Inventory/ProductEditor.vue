@@ -90,9 +90,9 @@
           </el-tab-pane>
 
           <el-tab-pane label="Виробництво" name="manufacturing">
-            <div class="empty-tab">
-              <el-empty description="Розділ Виробництво буде доступний в наступній версії" />
-            </div>
+            <ManufacturingTab
+              v-model="form"
+            />
           </el-tab-pane>
 
           <el-tab-pane label="Пакування" name="packaging">
@@ -139,6 +139,7 @@ import InventoryTab from './ProductTabs/InventoryTab.vue'
 import FilesTab from './ProductTabs/FilesTab.vue'
 import ProductVariantsManager from '@/components/ProductVariantsManager.vue'
 import ProcurementTab from './ProductTabs/ProcurementTab.vue'
+import ManufacturingTab from './ProductTabs/ManufacturingTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -175,7 +176,17 @@ const form = reactive({
     min_stock: 0.0,
     optimal_stock: 0.0,
     default_supplier_id: null,
-    delivery_days: 0
+    delivery_days: 0,
+
+    // Manufacturing Parameters
+    production_time_hours: null,
+    complexity_code: null,
+    min_production_batch: 1,
+    max_production_per_day: null,
+    special_production_conditions: '',
+    performer_restriction_type: 'any_role',
+    restricted_brigade_id: null,
+    restricted_employee_id: null
 })
 
 const productCharacteristics = ref([])

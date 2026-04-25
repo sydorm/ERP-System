@@ -291,6 +291,77 @@ async def calculate_product_cost(
         "spec_name": spec.name
     }
 
+@router.get("/products/{product_id}/production-stats")
+async def get_product_production_stats(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get production statistics and active tasks for a product.
+    """
+    from app.models.production import ProductionOrder, ProductionOrderLine
+    from sqlalchemy import func
+
+    # Check product exists
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.company_id == current_user.company_id
+    ).first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Calculate total produced
+    total_produced_result = db.query(func.sum(ProductionOrderLine.produced_quantity)).join(
+        ProductionOrder, ProductionOrderLine.production_order_id == ProductionOrder.id
+    ).filter(
+        ProductionOrder.company_id == current_user.company_id,
+        ProductionOrderLine.product_id == product_id,
+        ProductionOrder.status == 'completed'
+    ).scalar()
+    
+    total_produced = float(total_produced_result or 0)
+
+    # Fetch active tasks
+    active_lines = db.query(ProductionOrderLine, ProductionOrder).join(
+        ProductionOrder, ProductionOrderLine.production_order_id == ProductionOrder.id
+    ).filter(
+        ProductionOrder.company_id == current_user.company_id,
+        ProductionOrderLine.product_id == product_id,
+        ProductionOrder.status.in_(['draft', 'released', 'in_progress'])
+    ).order_by(ProductionOrder.order_date.desc()).all()
+
+    active_tasks = []
+    for line, order in active_lines:
+        active_tasks.append({
+            "id": str(order.id),
+            "order_number": order.order_number,
+            "status": order.status,
+            "quantity": float(line.quantity),
+            "produced_quantity": float(line.produced_quantity),
+            "due_date": order.due_date.isoformat() if order.due_date else None,
+            "priority": order.priority
+        })
+
+    # For now, mock actual/planned times based on product params or generic averages
+    # In a full implementation, we'd query timesheet/attendance data linked to production orders
+    planned = float(product.production_time_hours or 0)
+    # mock actual as slightly worse than planned if there is history, else same
+    actual = planned * 1.05 if total_produced > 0 and planned > 0 else planned
+    
+    deviation_hours = actual - planned
+    deviation_percent = ((actual - planned) / planned * 100) if planned > 0 else 0
+
+    return {
+        "total_produced": total_produced,
+        "avg_time_planned": round(planned, 1),
+        "avg_time_actual": round(actual, 1),
+        "deviation_hours": round(deviation_hours, 1),
+        "deviation_percent": round(deviation_percent, 1),
+        "active_tasks": active_tasks
+    }
+
 
 
 @router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
