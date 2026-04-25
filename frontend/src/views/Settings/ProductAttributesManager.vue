@@ -26,7 +26,7 @@
         <el-table-column type="expand">
           <template #default="{ row }">
             <div class="p-4 bg-slate-50/50 border-t border-b border-slate-100 pl-[60px]">
-              <div v-if="row.type === 'SELECT' || row.type === 'COLOR'">
+              <div v-if="row.type === 'SELECT' || row.type === 'COLOR' || row.type === 'DIMENSIONS'">
                 <div class="flex items-center justify-between mb-3">
                   <h4 class="text-sm font-semibold text-slate-700">Значення ({{ row.options?.length || 0 }})</h4>
                   <el-button size="small" type="primary" plain @click="openAddOptionModal(row)">
@@ -461,7 +461,7 @@ const refreshOptionsFor = async (attrId) => {
 
 const handleExpand = async (row, expandedRowsArr) => {
   const isExpanded = expandedRowsArr.includes(row)
-  if (isExpanded && (row.type === 'SELECT' || row.type === 'COLOR')) {
+  if (isExpanded && (row.type === 'SELECT' || row.type === 'COLOR' || row.type === 'DIMENSIONS')) {
     await refreshOptionsFor(row.id)
   }
 }
@@ -498,7 +498,8 @@ const getTypeName = (type) => {
     'SELECT': 'Список',
     'COLOR': 'Колір',
     'NUMBER': 'Число',
-    'BOOLEAN': 'Так/Ні'
+    'BOOLEAN': 'Так/Ні',
+    'DIMENSIONS': 'Розміри'
   }
   return map[type] || type
 }
@@ -509,7 +510,8 @@ const getTypeClass = (type) => {
     'COLOR': 'bg-purple-100 text-purple-700',
     'TEXT': 'bg-slate-100 text-slate-700',
     'NUMBER': 'bg-amber-100 text-amber-700',
-    'BOOLEAN': 'bg-green-100 text-green-700'
+    'BOOLEAN': 'bg-green-100 text-green-700',
+    'DIMENSIONS': 'bg-indigo-100 text-indigo-700'
   }
   return map[type] || 'bg-slate-100 text-slate-700'
 }
