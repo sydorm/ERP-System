@@ -108,7 +108,7 @@
             circle
             size="small"
             class="kimi-btn-icon"
-            @click="openAddOptionDialog(char.attribute_id)"
+            @click="openAddOptionDialog(char)"
             title="Додати значення"
           />
 
@@ -264,6 +264,7 @@ const getAttrType = (char) => {
 const addOptionVisible = ref(false)
 const savingOption = ref(false)
 const selectedAttrForOption = ref(null)
+const activeCharForDialog = ref(null) // NEW: Keep track of the exact row
 const selectedAttrType = ref('SELECT')
 const newOption = reactive({
   selected_id: null,
@@ -284,11 +285,12 @@ const isOptionFormValid = computed(() => {
   return !!newOption.value
 })
 
-const openAddOptionDialog = (attrId) => {
-  const attr = allAttributes.value.find(a => a.id === attrId)
+const openAddOptionDialog = (char) => {
+  const attr = allAttributes.value.find(a => a.id === char.attribute_id)
   if (!attr) return
   
-  selectedAttrForOption.value = attrId
+  activeCharForDialog.value = char // Store the row object
+  selectedAttrForOption.value = char.attribute_id
   selectedAttrType.value = attr.type
   newOption.selected_id = null
   newOption.value = ''
@@ -299,15 +301,12 @@ const openAddOptionDialog = (attrId) => {
 }
 
 const saveNewOption = async () => {
-  if (!selectedAttrForOption.value) return
+  if (!selectedAttrForOption.value || !activeCharForDialog.value) return
   
   // If user selected existing option from dropdown in modal
   if (newOption.selected_id) {
-    const char = localCharacteristics.value.find(c => c.attribute_id === selectedAttrForOption.value)
-    if (char) {
-      char.option_id = newOption.selected_id
-      onOptionChange(char)
-    }
+    activeCharForDialog.value.option_id = newOption.selected_id
+    onOptionChange(activeCharForDialog.value)
     addOptionVisible.value = false
     return
   }
@@ -343,6 +342,10 @@ const saveNewOption = async () => {
       if (!attr.options) attr.options = []
       attr.options.push(res.data)
     }
+    
+    // Auto-select the newly created option
+    activeCharForDialog.value.option_id = res.data.id
+    onOptionChange(activeCharForDialog.value)
     
     ElMessage.success('Значення додано')
     addOptionVisible.value = false
