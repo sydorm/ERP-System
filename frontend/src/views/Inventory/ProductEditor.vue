@@ -422,16 +422,17 @@ onMounted(() => {
 
 .header-left h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #1e293b;
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .page-subtitle {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 500;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -540,7 +541,7 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__content) {
-  padding: 0;
+  padding: 16px 0 0 0;
 }
 
 /* Specialized tab areas */

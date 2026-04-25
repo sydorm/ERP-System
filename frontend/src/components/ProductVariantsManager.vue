@@ -6,14 +6,14 @@
         <el-tag v-if="variants.length" type="success" effect="plain">{{ variants.length }}</el-tag>
       </div>
       <div class="actions">
-        <div class="pricing-mode-selector mr-4">
+        <div class="pricing-mode-selector">
           <span class="mr-2 text-sm text-slate-500">Режим ціноутворення:</span>
           <el-radio-group v-model="localPriceRule.pricing_mode" size="small">
             <el-radio-button label="manual">Вручну</el-radio-button>
             <el-radio-button label="base_plus_markup">Базова + надбавки</el-radio-button>
           </el-radio-group>
         </div>
-        <el-dropdown v-if="selectedRows.length" class="mr-2" @command="handleBulkCommand">
+        <el-dropdown v-if="selectedRows.length" @command="handleBulkCommand">
           <el-button type="info">Дії з вибраними ({{ selectedRows.length }})<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -410,39 +410,32 @@ const getOptionLabel = (val) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+    margin-bottom: 24px;
     gap: 16px;
 }
-@media (max-width: 640px) {
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .section-header .actions {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .section-header .actions .el-button,
-    .section-header .actions .el-dropdown {
-        width: 100%;
-    }
-    .section-header .actions .el-button {
-        justify-content: center;
-    }
-}
 
-.title-with-badge {
+.actions {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pricing-mode-selector {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    padding: 4px 12px;
+    border-radius: 10px;
+    border: 1px solid #eef2f7;
+    margin-right: 4px;
 }
 
 .title-with-badge h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .variant-uploader {
