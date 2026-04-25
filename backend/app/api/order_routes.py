@@ -142,7 +142,10 @@ async def create_order(
             specification_id=line_in.specification_id,
             quantity=line_in.quantity,
             price=line_in.price,
-            total=line_in.total
+            total=line_in.total,
+            attribute_values=line_in.attribute_values,
+            characteristic_width=line_in.characteristic_width,
+            characteristic_height=line_in.characteristic_height
         )
         db.add(line)
 

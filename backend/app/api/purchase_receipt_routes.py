@@ -65,7 +65,9 @@ async def create_purchase_receipt(
             quantity=line_data.quantity,
             price=line_data.price,
             total=line_data.total,
-            attribute_values=line_data.attribute_values
+            attribute_values=line_data.attribute_values,
+            characteristic_width=line_data.characteristic_width,
+            characteristic_height=line_data.characteristic_height
         )
         db.add(line)
     

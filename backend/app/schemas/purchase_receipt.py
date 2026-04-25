@@ -12,6 +12,8 @@ class PurchaseReceiptLineBase(BaseModel):
     price: Decimal
     total: Decimal
     attribute_values: Optional[List[dict]] = None
+    characteristic_width: Optional[Decimal] = None
+    characteristic_height: Optional[Decimal] = None
 
 class PurchaseReceiptLineCreate(PurchaseReceiptLineBase):
     pass

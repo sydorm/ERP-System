@@ -38,8 +38,9 @@
               :class="{ 'disabled': !scope.row.product_id }"
               @click="openVariantSelector(scope.row)"
             >
-              <span class="selection-text" v-if="scope.row.variant_id">{{ getVariantLabelByLine(scope.row) }}</span>
-              <span class="selection-text virtual" v-else-if="scope.row._virtual_label">{{ scope.row._virtual_label }}</span>
+              <span class="selection-text" v-if="scope.row.variant_id || scope.row.values?.length || scope.row._virtual_label">
+                {{ getVariantLabelByLine(scope.row) }}
+              </span>
               <span class="placeholder" v-else-if="scope.row.product_id">Налаштувати...</span>
               <span class="placeholder disabled" v-else>Спочатку виберіть товар</span>
             </div>
@@ -248,6 +249,13 @@ const onVariantSelected = (variant) => {
             .map(v => v.option?.value || v.text_value)
             .filter(Boolean)
             .join(', ')
+            
+        // Also extract width/height for database storage
+        const dimVal = variant.values.find(v => v.width || v.height)
+        if (dimVal) {
+          activeLineForSelector.value.characteristic_width = dimVal.width
+          activeLineForSelector.value.characteristic_height = dimVal.height
+        }
     } else {
         activeLineForSelector.value._virtual_label = variant.sku || null
     }
@@ -257,25 +265,28 @@ const onVariantSelected = (variant) => {
 }
 
 const getVariantLabelByLine = (line) => {
+  // 1. Try cached label
   if (line._virtual_label) return line._virtual_label
   
-  // If we have values but no label yet (e.g. after loading from DB)
+  // 2. Try stored values (JSON)
   if (line.values && line.values.length > 0) {
-    return line.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+    const label = line.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+    if (label) return label
   }
   
-  if (!line.variant_id || !line.product_id) return ''
-  
-  const product = props.products.find(p => p.id === line.product_id)
-  if (!product || !product.variants) return ''
-  
-  const variant = product.variants.find(v => v.id === line.variant_id)
-  if (!variant) return ''
-  
-  if (variant.values && variant.values.length > 0) {
-    return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+  // 3. Try to find variant in product data
+  if (line.variant_id && line.product_id) {
+    const product = props.products.find(p => p.id === line.product_id)
+    const variant = product?.variants?.find(v => v.id === line.variant_id)
+    if (variant) {
+      if (variant.values?.length) {
+        return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
+      }
+      return variant.sku || ''
+    }
   }
-  return variant.sku || ''
+  
+  return ''
 }
 </script>
 

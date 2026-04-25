@@ -13,6 +13,9 @@ class OrderLineBase(BaseModel):
     price: Decimal = Field(..., ge=0)
     total: Decimal = Field(..., ge=0)
     variant_values: Optional[List[VariantValueCreate]] = None
+    attribute_values: Optional[List[dict]] = None
+    characteristic_width: Optional[Decimal] = None
+    characteristic_height: Optional[Decimal] = None
     specification_id: Optional[UUID] = None
 
 

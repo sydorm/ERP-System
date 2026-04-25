@@ -998,6 +998,7 @@ const fetchData = async () => {
         }))
         
         data.lines.forEach(line => {
+          line.values = line.attribute_values || []
           if (!line.specification_id && specsCache.value[line.product_id]) {
             const cachedSpecs = specsCache.value[line.product_id]
             const defaultSpec = cachedSpecs.find(s => s.is_default) || cachedSpecs[0]
@@ -1067,7 +1068,9 @@ const saveOrder = async (action = 'save') => {
         quantity: l.quantity,
         price: l.price,
         total: l.total,
-        variant_values: l._virtual_values || undefined
+        attribute_values: l.values,
+        characteristic_width: l.characteristic_width,
+        characteristic_height: l.characteristic_height
     })),
     total_amount: totalAmount.value,
     shipping_date: form.shipping_date || null,

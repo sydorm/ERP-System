@@ -366,7 +366,9 @@ const saveReceipt = async (action = 'save') => {
       quantity: l.quantity,
       price: l.price,
       total: l.total,
-      attribute_values: l.values
+      attribute_values: l.values,
+      characteristic_width: l.characteristic_width,
+      characteristic_height: l.characteristic_height
     })),
     total_amount: totalAmount.value
   }

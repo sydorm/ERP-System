@@ -119,6 +119,8 @@ class OrderLine(BaseModel):
     price = Column(Numeric(15, 2), nullable=False)
     total = Column(Numeric(15, 2), nullable=False)
     attribute_values = Column(JSON, nullable=True)
+    characteristic_width = Column(Numeric(15, 2), nullable=True)
+    characteristic_height = Column(Numeric(15, 2), nullable=True)
     
     # Foreign Keys
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)

@@ -19,6 +19,13 @@ def on_startup():
         # Manually ensure columns exist to prevent 500 errors if alembic is lagging
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS height INTEGER"))
+        
+        # Add columns to document lines
+        db.execute(text("ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS characteristic_width NUMERIC(15,2)"))
+        db.execute(text("ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS characteristic_height NUMERIC(15,2)"))
+        db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_width NUMERIC(15,2)"))
+        db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_height NUMERIC(15,2)"))
+        
         db.commit()
         print("✅ Database schema check: OK")
     except Exception as e:
