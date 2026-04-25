@@ -44,7 +44,10 @@
               </el-tag>
             </div>
             <div class="attr-meta">
-              <span class="type-badge">{{ typeLabel(getAttrType(char)) }}</span>
+              <!-- Show type label only if no value is selected -->
+              <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="type-badge">
+                {{ typeLabel(getAttrType(char)) }}
+              </span>
               
               <!-- Compact Values Display (Tags Only) -->
               <div class="values-row">
@@ -54,15 +57,15 @@
                      closable 
                      @close="clearValue(char)"
                      :type="getAttrType(char) === 'DIMENSIONS' ? 'warning' : 'success'"
-                     class="value-tag"
-                     size="large"
+                     class="value-tag-premium"
+                     size="default"
                    >
                      <div class="flex items-center gap-2">
                        <div v-if="getAttrType(char) === 'COLOR' && getOptionColor(char.option_id)" 
                             class="color-preview-mini" 
                             :style="{ background: getOptionColor(char.option_id) }">
                        </div>
-                       <span class="font-bold">{{ getOptionValue(char.option_id, char) }}</span>
+                       <span class="value-text">{{ getOptionValue(char.option_id, char) }}</span>
                      </div>
                    </el-tag>
                 </div>
@@ -71,9 +74,9 @@
                 <el-tag 
                   v-if="char.text_value && !char.option_id" 
                   closable 
-                  size="small" 
+                  size="default" 
                   type="info" 
-                  effect="plain"
+                  class="value-tag-premium"
                   @close="char.text_value = ''; emitUpdate()"
                 >
                   {{ formatDisplayValue(char) }}
@@ -83,13 +86,18 @@
                 <el-tag 
                   v-if="char.bool_value" 
                   closable 
-                  size="small" 
+                  size="default" 
                   type="warning" 
-                  effect="plain"
+                  class="value-tag-premium"
                   @close="char.bool_value = false; emitUpdate()"
                 >
                   Так
                 </el-tag>
+
+                <!-- Placeholder if empty -->
+                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-value-hint">
+                  Натисніть +, щоб додати значення
+                </span>
               </div>
             </div>
           </div>
@@ -763,6 +771,34 @@ onMounted(async () => {
   font-weight: 600;
   color: #94a3b8;
   font-size: 11px;
+}
+
+.empty-value-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.value-tag-premium {
+  border: none !important;
+  font-weight: 700 !important;
+  padding: 0 12px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+}
+
+.value-tag-premium.el-tag--success {
+  background-color: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
+.value-tag-premium.el-tag--warning {
+  background-color: #fffbeb !important;
+  color: #b45309 !important;
+}
+
+.value-text {
+  font-size: 14px;
 }
 
 .char-controls {
