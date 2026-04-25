@@ -95,12 +95,32 @@
               :label="attr.name"
               class="selection-item"
             >
+              <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
+                <el-input-number
+                  v-model="dimSelections[attr.id].w"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Ширина"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-sep">×</span>
+                <el-input-number
+                  v-model="dimSelections[attr.id].h"
+                  :min="0" :precision="0" :controls="false"
+                  placeholder="Висота"
+                  class="dim-input"
+                  @change="handleAttributeChange(attr.id)"
+                />
+                <span class="dims-unit">мм</span>
+              </div>
+
               <el-input 
-                v-if="attr.type === 'TEXT'" 
+                v-else-if="attr.type === 'TEXT'" 
                 v-model="selections[attr.id]" 
                 placeholder="Введіть текст..."
                 @change="handleAttributeChange(attr.id)"
               />
+              
               <el-select
                 v-else
                 v-model="selections[attr.id]"
@@ -207,31 +227,43 @@ const fetchAttributes = async () => {
 }
 
 const initializeSelector = () => {
-  if (allCategoryAttributes.value.length > 0) {
-      allCategoryAttributes.value.forEach(attr => {
-          if (attr.type === 'DIMENSIONS') dimSelections.value[attr.id] = { w: null, h: null }
-      })
-  } else if (props.product?.variants) {
-      const attrsMap = new Map()
+  // Reset
+  selections.value = {}
+  dimSelections.value = {}
+
+  // 1. Initialize all known attributes with defaults
+  const allAttrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
+  allAttrs.forEach(attr => {
+      if (attr.type === 'DIMENSIONS') {
+          dimSelections.value[attr.id] = { w: null, h: null }
+      }
+  })
+
+  // 2. If no category attributes but we have variants, extract attributes from variants
+  if (allAttrs.length === 0 && props.product?.variants) {
       props.product.variants.forEach(v => {
         v.values?.forEach(val => {
           if (val.attribute) {
-              attrsMap.set(val.attribute.id, val.attribute)
-              if (val.attribute.type === 'DIMENSIONS') dimSelections.value[val.attribute.id] = { w: null, h: null }
+              if (val.attribute.type === 'DIMENSIONS' && !dimSelections.value[val.attribute_id]) {
+                  dimSelections.value[val.attribute_id] = { w: null, h: null }
+              }
           }
         })
       })
   }
   
-  selections.value = {}
-
-  if (props.initialVariantId) {
+  // 3. Load initial values if variant ID is provided
+  if (props.initialVariantId && props.product?.variants) {
     const variant = props.product.variants.find(v => v.id === props.initialVariantId)
     if (variant?.values) {
       variant.values.forEach(v => {
-        if (v.attribute?.type === 'DIMENSIONS' && v.text_value) {
+        // Find attribute type from our cached category attributes if possible
+        const attr = allCategoryAttributes.value.find(a => a.id === v.attribute_id)
+        const type = attr?.type || v.attribute?.type
+
+        if (type === 'DIMENSIONS' && v.text_value) {
             const [w, h] = v.text_value.split('x')
-            dimSelections.value[v.attribute_id] = { w: parseInt(w), h: parseInt(h) }
+            dimSelections.value[v.attribute_id] = { w: parseInt(w) || null, h: parseInt(h) || null }
         } else {
             selections.value[v.attribute_id] = v.option_id || v.text_value
         }
