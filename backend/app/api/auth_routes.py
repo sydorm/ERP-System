@@ -88,7 +88,7 @@ async def register_company(reg_data: CompanyRegistrationRequest, db: Session = D
         # 3. Create Company
         new_company = Company(
             name=reg_data.company.name,
-            legal_name=reg_data.company.name, # Use name as legal name for now
+            full_name_uk=reg_data.company.name, # Use name as legal name for now
             tax_id=reg_data.company.taxId,
             company_type=reg_data.company.legalForm,
             is_active=True
