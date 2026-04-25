@@ -111,9 +111,17 @@
              
              <el-table-column label="Кількість / Розрахунок" width="380">
                 <template #default="scope">
-                   <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1">
                       <div class="flex items-center gap-2">
-                        <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
+                        <el-input-number 
+                          v-model="scope.row.quantity" 
+                          :min="0" 
+                          :step="1" 
+                          :precision="3" 
+                          style="flex: 1" 
+                          :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
+                          controls-position="right"
+                        />
                         <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
                           <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
                         </el-tooltip>
@@ -124,7 +132,7 @@
                          <span v-if="getTotalWastePercent(scope.row) > 0"> = {{ scope.row.quantity.toFixed(3) }}</span>
                          <span class="ml-1 uppercase">{{ getUomName(scope.row.unit_of_measure) }}</span>
                       </div>
-                   </div>
+                    </div>
                 </template>
              </el-table-column>
              
@@ -889,20 +897,13 @@ const deleteSpec = async (id) => {
 }
 
 const addItem = () => {
+    if (!specForm.value.items) specForm.value.items = []
     specForm.value.items.push({
         component_id: null,
         quantity: 1,
         unit_of_measure: 'шт',
-        notes: '',
         line_type: 'material',
-        size_from_attr: null,
-        size_multiplier: 10,
-        fixed_length: null,
-        fixed_width: null,
-        mapping_attr: null,
-        material_mapping: {},
-        is_calculated: false,
-        calc_dimension: null,
+        calc_type: 'fixed',
         calc_data_points: { h: [], w: [], l: [] },
         calc_dim_config: { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } },
         calc_formula: '',
