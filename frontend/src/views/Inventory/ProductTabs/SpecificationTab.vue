@@ -184,18 +184,18 @@
         <el-form label-position="top">
           <el-row :gutter="20">
             <el-col :span="6">
-              <el-form-item label="Висота (H), см">
-                <el-input-number v-model="testDims.height_cm" class="w-full" />
+              <el-form-item :label="`Висота (H), ${previewUnit}`">
+                <el-input-number v-model="testDimsDisplay.height" class="w-full" @change="(v) => updateTestDim('height_cm', v)" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item label="Ширина (W), см">
-                <el-input-number v-model="testDims.width_cm" class="w-full" />
+              <el-form-item :label="`Ширина (W), ${previewUnit}`">
+                <el-input-number v-model="testDimsDisplay.width" class="w-full" @change="(v) => updateTestDim('width_cm', v)" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item label="Глибина (L), см">
-                <el-input-number v-model="testDims.length_cm" class="w-full" />
+              <el-form-item :label="`Глибина (L), ${previewUnit}`">
+                <el-input-number v-model="testDimsDisplay.length" class="w-full" @change="(v) => updateTestDim('length_cm', v)" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
@@ -204,6 +204,12 @@
               </el-form-item>
             </el-col>
           </el-row>
+          <div class="flex justify-center mb-4">
+             <el-radio-group v-model="previewUnit" size="small">
+                <el-radio-button label="мм" />
+                <el-radio-button label="см" />
+             </el-radio-group>
+          </div>
 
           <div v-if="testAttributes.length > 0" class="mt-2 mb-4 p-3 bg-gray-50 rounded border border-gray-200">
             <h5 class="m-0 mb-3 text-gray-700">Атрибути з формул:</h5>
@@ -285,14 +291,25 @@
                             <span class="dim-icon">{{ dim.key.toUpperCase() }}</span>
                             <span class="dim-title">{{ dim.label }}</span>
                         </div>
-                        <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" :icon="Plus" circle />
+                        <div class="flex items-center gap-4">
+                            <el-radio-group v-model="getDimConfig(activeCalcItem, dim.key).unit" size="small" class="unit-toggle">
+                                <el-radio-button label="мм" />
+                                <el-radio-button label="см" />
+                            </el-radio-group>
+                            <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" :icon="Plus" circle />
+                        </div>
                     </div>
                     
                     <div class="table-container">
                         <el-table :data="getPoints(activeCalcItem, dim.key)" size="small" border class="compact-table">
-                            <el-table-column :label="dim.label + ' (см)'">
+                            <el-table-column :label="dim.label + ' (' + getDimConfig(activeCalcItem, dim.key).unit + ')'">
                                 <template #default="scope">
-                                    <el-input-number v-model="scope.row.x" size="small" style="width:100%" />
+                                    <el-input-number 
+                                      :model-value="getDimValue(scope.row.x, getDimConfig(activeCalcItem, dim.key).unit)" 
+                                      @update:model-value="(val) => scope.row.x = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit)"
+                                      size="small" 
+                                      style="width:100%" 
+                                    />
                                 </template>
                             </el-table-column>
                             <el-table-column :label="'К-сть (' + (activeCalcItem.unit_of_measure || 'шт') + ')'">
@@ -311,8 +328,12 @@
                     <div class="dim-footer">
                         <div class="config-grid">
                             <div class="config-item">
-                                <label>Стандарт (см)</label>
-                                <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" placeholder="0" />
+                                <label>Стандарт ({{ getDimConfig(activeCalcItem, dim.key).unit }})</label>
+                                <el-input-number 
+                                    :model-value="getDimValue(getDimConfig(activeCalcItem, dim.key).default, getDimConfig(activeCalcItem, dim.key).unit)"
+                                    @update:model-value="(val) => getDimConfig(activeCalcItem, dim.key).default = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit)"
+                                    :precision="0" :min="0" size="small" placeholder="0" 
+                                />
                             </div>
                             <div class="config-item wide">
                                 <label>Читати з характеристики</label>
@@ -336,7 +357,7 @@
                         <div v-if="calcStepInfo && calcStepInfo[dim.key] !== null" class="step-badge">
                             <span class="step-label">📐 Крок:</span>
                             <span class="step-value">{{ calcStepInfo[dim.key] > 0 ? '+' : '' }}{{ calcStepInfo[dim.key] }}</span>
-                            <span class="step-unit">{{ activeCalcItem.unit_of_measure || 'шт' }}/см</span>
+                            <span class="step-unit">{{ activeCalcItem.unit_of_measure || 'шт' }}/{{ getDimConfig(activeCalcItem, dim.key).unit }}</span>
                         </div>
                     </div>
                 </div>
@@ -434,7 +455,8 @@ import {
 } from '@/api/specifications'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
-import { Clock } from '@element-plus/icons-vue'
+import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check } from '@element-plus/icons-vue'
+
 
 const dictStore = useDictionaryStore()
 const uomOptions = ref([])
@@ -506,6 +528,32 @@ const loadProductAttributes = async () => {
     }
 }
 
+// Preview units and display helpers
+const previewUnit = ref('см')
+const testDimsDisplay = computed(() => {
+    const factor = previewUnit.value === 'мм' ? 10 : 1
+    return {
+        height: (testDims.value.height_cm || 0) * factor,
+        width: (testDims.value.width_cm || 0) * factor,
+        length: (testDims.value.length_cm || 0) * factor
+    }
+})
+
+const updateTestDim = (field, val) => {
+    const factor = previewUnit.value === 'мм' ? 10 : 1
+    testDims.value[field] = val / factor
+}
+
+const getDimValue = (valInCm, unit) => {
+    const factor = unit === 'мм' ? 10 : 1
+    return (valInCm || 0) * factor
+}
+
+const setDimValue = (valInUnit, unit) => {
+    const factor = unit === 'мм' ? 10 : 1
+    return valInUnit / factor
+}
+
 const editingSpec = ref(null)
 const specForm = ref({
     name: '',
@@ -547,8 +595,9 @@ const getPoints = (item, key) => {
 
 // Helper: safely get or init the dim config for a given dimension key
 const getDimConfig = (item, key) => {
-    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0 }, w: { char_name: '', default: 0 }, l: { char_name: '', default: 0 } }
-    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0 }
+    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см' }, w: { char_name: '', default: 0, unit: 'см' }, l: { char_name: '', default: 0, unit: 'см' } }
+    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'см' }
+    if (!item.calc_dim_config[key].unit) item.calc_dim_config[key].unit = 'см'
     return item.calc_dim_config[key]
 }
 
@@ -707,7 +756,7 @@ const addItem = () => {
         is_calculated: false,
         calc_dimension: null,
         calc_data_points: { h: [], w: [], l: [] },
-        calc_dim_config: { h: { char_name: '', default: 0 }, w: { char_name: '', default: 0 }, l: { char_name: '', default: 0 } },
+        calc_dim_config: { h: { char_name: '', default: 0, unit: 'см' }, w: { char_name: '', default: 0, unit: 'см' }, l: { char_name: '', default: 0, unit: 'см' } },
         calc_formula: '',
         calc_waste_factor: 0
     })
@@ -759,9 +808,15 @@ const openCalcDialog = (item) => {
     // Ensure calc_dim_config exists
     if (!item.calc_dim_config) {
         item.calc_dim_config = {
-            h: { char_name: '', default: 0 },
-            w: { char_name: '', default: 0 },
-            l: { char_name: '', default: 0 }
+            h: { char_name: '', default: 0, unit: 'см' },
+            w: { char_name: '', default: 0, unit: 'см' },
+            l: { char_name: '', default: 0, unit: 'см' }
+        }
+    } else {
+        // Ensure units exist in existing config
+        for (const k of ['h', 'w', 'l']) {
+            if (!item.calc_dim_config[k]) item.calc_dim_config[k] = { char_name: '', default: 0, unit: 'см' }
+            if (!item.calc_dim_config[k].unit) item.calc_dim_config[k].unit = 'см'
         }
     }
 
