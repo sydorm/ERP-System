@@ -11,12 +11,22 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    """Ensure database schema is up to date for recent changes"""
-    from app.db.session import SessionLocal
+    """Ensure database schema is up to date and all tables exist"""
+    from app.db.session import engine, SessionLocal
+    from app.models import Base
     from sqlalchemy import text
+    
+    # 1. Automatically create all missing tables (like 'users', 'products', etc)
+    try:
+        print("🛠 Initializing database tables...")
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created/verified")
+    except Exception as e:
+        print(f"❌ Error creating tables: {e}")
+
+    # 2. Manually ensure specific columns exist (for hot-fixes)
     db = SessionLocal()
     try:
-        # Manually ensure columns exist to prevent 500 errors if alembic is lagging
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS height INTEGER"))
         
