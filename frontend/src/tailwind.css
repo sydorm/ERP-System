@@ -144,3 +144,93 @@
 body {
   margin: 0;
 }
+
+/* === GLOBAL EL-INPUT-NUMBER STYLING (OPTION 2) === */
+.el-input-number {
+  width: 100% !important;
+  max-width: 180px; /* Default max width to prevent giant inputs */
+}
+
+/* Hide default arrows if any browser defaults remain */
+.el-input-number input::-webkit-outer-spin-button,
+.el-input-number input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.el-input-number .el-input-number__decrease,
+.el-input-number .el-input-number__increase {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+  transition: all 0.2s ease !important;
+  width: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.el-input-number .el-input-number__decrease {
+  border-right: 1px solid #e2e8f0 !important;
+  border-radius: 8px 0 0 8px !important;
+}
+
+.el-input-number .el-input-number__increase {
+  border-left: 1px solid #e2e8f0 !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+.el-input-number:hover .el-input-number__decrease,
+.el-input-number:hover .el-input-number__increase {
+  background-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+.el-input-number .el-input__wrapper {
+  padding-left: 36px !important;
+  padding-right: 36px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 1px #e2e8f0 inset !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.el-input-number .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #cbd5e1 inset !important;
+}
+
+.el-input-number.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px #6366f1 inset, 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
+.el-input-number.is-controls-right .el-input__wrapper {
+  padding-left: 11px !important;
+  padding-right: 40px !important;
+}
+
+.el-input-number .el-input__inner {
+  text-align: center !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+/* Table dense style for inputs */
+.el-table .el-input-number--small .el-input__wrapper {
+  padding-left: 30px !important;
+  padding-right: 30px !important;
+}
+.el-table .el-input-number--small .el-input-number__decrease,
+.el-table .el-input-number--small .el-input-number__increase {
+  width: 26px !important;
+}
+
+/* Width overrides for specific cases */
+.w-full.el-input-number {
+  max-width: none !important;
+}
+.w-32.el-input-number {
+  max-width: 128px !important;
+}
+.w-24.el-input-number {
+  max-width: 96px !important;
+}

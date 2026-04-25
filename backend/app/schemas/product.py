@@ -23,7 +23,7 @@ class ProductAttributeResponse(ProductAttributeBase):
 
 class ProductBase(BaseModel):
     """Base Product schema"""
-    sku: str = Field(..., min_length=1, max_length=100, description="Stock Keeping Unit")
+    sku: Optional[str] = Field(None, max_length=100, description="Stock Keeping Unit")
     name: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
     image_url: Optional[str] = None
@@ -66,7 +66,7 @@ class ProductCreate(ProductBase):
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product"""
-    sku: Optional[str] = Field(None, min_length=1, max_length=100)
+    sku: Optional[str] = Field(None, max_length=100)
     name: Optional[str] = Field(None, min_length=1, max_length=500)
     description: Optional[str] = None
     image_url: Optional[str] = None

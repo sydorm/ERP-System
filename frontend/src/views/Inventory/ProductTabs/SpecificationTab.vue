@@ -152,7 +152,7 @@
              
              <el-table-column label="Час (год)" width="150">
                 <template #default="scope">
-                   <el-input-number v-model="scope.row.duration_hours" :min="0" :step="0.5" :precision="2" class="w-full" :controls="false" />
+                   <el-input-number v-model="scope.row.duration_hours" :min="0" :step="0.5" :precision="2" class="w-full" />
                 </template>
              </el-table-column>
              
@@ -185,22 +185,22 @@
           <el-row :gutter="20">
             <el-col :span="6">
               <el-form-item label="Висота (H), см">
-                <el-input-number v-model="testDims.height_cm" class="w-full" :controls="false" />
+                <el-input-number v-model="testDims.height_cm" class="w-full" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Ширина (W), см">
-                <el-input-number v-model="testDims.width_cm" class="w-full" :controls="false" />
+                <el-input-number v-model="testDims.width_cm" class="w-full" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Глибина (L), см">
-                <el-input-number v-model="testDims.length_cm" class="w-full" :controls="false" />
+                <el-input-number v-model="testDims.length_cm" class="w-full" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="Вага, кг">
-                <el-input-number v-model="testDims.weight_kg" class="w-full" :controls="false" />
+                <el-input-number v-model="testDims.weight_kg" class="w-full" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -210,7 +210,7 @@
             <el-row :gutter="20">
               <el-col :span="8" v-for="attr in testAttributes" :key="attr">
                 <el-form-item :label="attr">
-                  <el-input-number v-model="testDims.custom_attributes[attr]" class="w-full" :controls="false" :precision="2" />
+                  <el-input-number v-model="testDims.custom_attributes[attr]" class="w-full" :precision="2" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -292,12 +292,12 @@
                         <el-table :data="getPoints(activeCalcItem, dim.key)" size="small" border class="compact-table">
                             <el-table-column :label="dim.label + ' (см)'">
                                 <template #default="scope">
-                                    <el-input-number v-model="scope.row.x" size="small" style="width:100%" :controls="false" />
+                                    <el-input-number v-model="scope.row.x" size="small" style="width:100%" />
                                 </template>
                             </el-table-column>
                             <el-table-column :label="'К-сть (' + (activeCalcItem.unit_of_measure || 'шт') + ')'">
                                 <template #default="scope">
-                                    <el-input-number v-model="scope.row.qty" :precision="4" size="small" style="width:100%" :controls="false" />
+                                    <el-input-number v-model="scope.row.qty" :precision="4" size="small" style="width:100%" />
                                 </template>
                             </el-table-column>
                             <el-table-column width="40" align="center">
@@ -312,7 +312,7 @@
                         <div class="config-grid">
                             <div class="config-item">
                                 <label>Стандарт (см)</label>
-                                <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" :controls="false" placeholder="0" />
+                                <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).default" :precision="0" :min="0" size="small" placeholder="0" />
                             </div>
                             <div class="config-item wide">
                                 <label>Читати з характеристики</label>

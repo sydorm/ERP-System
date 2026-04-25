@@ -34,7 +34,7 @@
       <el-row :gutter="20" class="mb-4">
         <el-col :span="8">
           <el-form-item label="Базова ціна" class="mb-0">
-            <el-input-number v-model="localPriceRule.base_price" :precision="2" :step="100" class="w-full" controls-position="right" />
+            <el-input-number v-model="localPriceRule.base_price" :precision="2" :step="100" class="w-full" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -52,8 +52,7 @@
                 :precision="2" 
                 :step="50" 
                 size="small" 
-                class="w-24" 
-                controls-position="right" 
+                class="w-32" 
                 placeholder="+0"
               />
             </div>

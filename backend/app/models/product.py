@@ -31,7 +31,7 @@ class Product(BaseModel):
     __tablename__ = "products"
     
     # Basic Information
-    sku = Column(String(100), nullable=False, index=True)  # Stock Keeping Unit
+    sku = Column(String(100), nullable=True, index=True)  # Stock Keeping Unit
     name = Column(String(500), nullable=False, index=True)
     description = Column(Text, nullable=True)
     image_url = Column(String(500), nullable=True)

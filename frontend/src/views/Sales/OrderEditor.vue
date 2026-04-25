@@ -127,23 +127,23 @@
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="К-ть" width="90">
+                <el-table-column label="К-ть" width="110">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :step="0.001" :precision="3" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="Резерв" width="70" align="center">
                   <template #default><el-checkbox /></template>
                 </el-table-column>
-                <el-table-column label="Ціна" width="100">
+                <el-table-column label="Ціна" width="120">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
 
-                <el-table-column label="Сума" width="100">
+                <el-table-column label="Сума" width="130">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" @change="updateLinePrice(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="Специфікація" min-width="120">

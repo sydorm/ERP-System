@@ -107,17 +107,18 @@ async def create_product(
     Create a new product.
     Checks for SKU uniqueness within the company.
     """
-    # Check if SKU exists in this company
-    existing_product = db.query(Product).filter(
-        Product.company_id == current_user.company_id,
-        Product.sku == product_in.sku
-    ).first()
-    
-    if existing_product:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Product with SKU '{product_in.sku}' already exists"
-        )
+    # Check if SKU exists in this company (only if SKU is provided)
+    if product_in.sku:
+        existing_product = db.query(Product).filter(
+            Product.company_id == current_user.company_id,
+            Product.sku == product_in.sku
+        ).first()
+        
+        if existing_product:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Product with SKU '{product_in.sku}' already exists"
+            )
         
     product_data = product_in.dict(exclude={"variants", "price_rule", "product_attributes"})
     product = Product(
@@ -185,7 +186,7 @@ async def update_product(
             detail="Product not found"
         )
         
-    # If updating SKU, check uniqueness
+    # If updating SKU, check uniqueness (only if SKU is provided)
     if product_in.sku and product_in.sku != product.sku:
         existing_sku = db.query(Product).filter(
             Product.company_id == current_user.company_id,

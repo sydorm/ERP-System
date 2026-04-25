@@ -310,6 +310,14 @@ const fetchStockLevels = async () => {
 }
 
 const saveProduct = async () => {
+    // Validation: SKU is required if no variants are present
+    const hasVariants = form.variants && form.variants.length > 0
+    if (!hasVariants && !form.sku) {
+        ElMessage.error('Вкажіть артикул або створіть варіанти')
+        activeTab.value = 'general'
+        return
+    }
+
     // Ensure numeric types
     form.price = parseFloat(form.price) || 0
     form.cost = (form.cost !== null && form.cost !== undefined) ? parseFloat(form.cost) : null

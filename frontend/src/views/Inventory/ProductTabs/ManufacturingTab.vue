@@ -22,7 +22,6 @@
                       :step="0.5" 
                       :min="0"
                       class="w-full"
-                      controls-position="right"
                     />
                     <el-tooltip content="Розрахувати час із активної специфікації (BOM)" placement="top">
                       <el-button 
@@ -56,7 +55,6 @@
                     :min="1" 
                     :step="1"
                     class="w-full"
-                    controls-position="right"
                   />
                 </el-form-item>
               </el-col>
@@ -68,7 +66,6 @@
                     :step="1"
                     class="w-full"
                     placeholder="Без обмежень"
-                    controls-position="right"
                   />
                 </el-form-item>
               </el-col>

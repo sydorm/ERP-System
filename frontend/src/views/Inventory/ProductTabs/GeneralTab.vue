@@ -17,8 +17,20 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item prop="sku">
-                <template #label><span class="field-label required-mark">Артикул (SKU) <span class="req">*</span></span></template>
-                <el-input v-model="modelValue.sku" placeholder="WOO-001" class="styled-input" />
+                <template #label>
+                  <span class="field-label">
+                    Артикул (SKU) 
+                    <span v-if="!hasVariants" class="req">*</span>
+                  </span>
+                </template>
+                <el-input 
+                  v-model="modelValue.sku" 
+                  placeholder="WOO-001" 
+                  class="styled-input" 
+                />
+                <div v-if="hasVariants" class="field-hint">
+                  SKU визначається варіантами
+                </div>
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -62,25 +74,25 @@
             <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Вага (кг)</span></template>
-                <el-input-number v-model="modelValue.weight_kg" :precision="3" :step="0.1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
+                <el-input-number v-model="modelValue.weight_kg" :precision="3" :step="0.1" :min="0" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Довжина (см)</span></template>
-                <el-input-number v-model="modelValue.length_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
+                <el-input-number v-model="modelValue.length_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Ширина (см)</span></template>
-                <el-input-number v-model="modelValue.width_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
+                <el-input-number v-model="modelValue.width_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item>
                 <template #label><span class="field-label">Висота (см)</span></template>
-                <el-input-number v-model="modelValue.height_cm" :precision="1" :step="1" :min="0" controls-position="right" style="width: 100%" class="styled-number" />
+                <el-input-number v-model="modelValue.height_cm" :precision="1" :step="1" :min="0" style="width: 100%" class="styled-number" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -172,7 +184,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Picture, DataLine } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
@@ -181,6 +193,10 @@ const props = defineProps({
   modelValue: { type: Object, required: true },
   categoryOptions: { type: Array, default: () => [] },
   uomOptions: { type: Array, default: () => [] },
+})
+
+const hasVariants = computed(() => {
+  return props.modelValue.variants && props.modelValue.variants.length > 0
 })
 
 const fileInput = ref(null)
@@ -278,6 +294,13 @@ const handleImageChange = async (event) => {
 .req {
   color: #f43f5e;
   margin-left: 2px;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+  line-height: 1.2;
 }
 
 /* === INPUT STYLING === */
