@@ -109,13 +109,21 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Кількість / Розрахунок" width="200">
+             <el-table-column label="Кількість / Розрахунок" width="220">
                 <template #default="scope">
-                   <div class="flex items-center gap-2">
-                     <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
-                     <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
-                       <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
-                     </el-tooltip>
+                   <div class="flex flex-col gap-1">
+                      <div class="flex items-center gap-2">
+                        <el-input-number v-model="scope.row.quantity" :min="0" :step="1" :precision="3" style="flex: 1" :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'" />
+                        <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
+                          <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
+                        </el-tooltip>
+                      </div>
+                      <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="calc-breakdown text-[10px] text-gray-500 leading-tight">
+                         <span class="font-medium">{{ getBaseQuantity(scope.row).toFixed(3) }}</span> 
+                         <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-600"> + {{ getTotalWastePercent(scope.row) }}% відходів</span>
+                         <span v-if="getTotalWastePercent(scope.row) > 0"> = {{ scope.row.quantity.toFixed(3) }}</span>
+                         <span class="ml-1 uppercase">{{ getUomName(scope.row.unit_of_measure) }}</span>
+                      </div>
                    </div>
                 </template>
              </el-table-column>
@@ -292,6 +300,11 @@
                             <span class="dim-title">{{ dim.label }}</span>
                         </div>
                         <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-1 mr-2 bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                <span class="text-[10px] font-bold text-orange-700 uppercase">Відходи:</span>
+                                <el-input-number v-model="getDimConfig(activeCalcItem, dim.key).waste" :min="0" :max="100" size="small" style="width:70px" :controls="false" placeholder="0" />
+                                <span class="text-xs text-orange-700">%</span>
+                            </div>
                             <el-radio-group v-model="getDimConfig(activeCalcItem, dim.key).unit" size="small" class="unit-toggle">
                                 <el-radio-button label="мм" />
                                 <el-radio-button label="см" />
@@ -594,10 +607,117 @@ const getPoints = (item, key) => {
 
 // Helper: safely get or init the dim config for a given dimension key
 const getDimConfig = (item, key) => {
-    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см' }, w: { char_name: '', default: 0, unit: 'см' }, l: { char_name: '', default: 0, unit: 'см' } }
-    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'см' }
+    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } }
+    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'см', waste: 0 }
     if (!item.calc_dim_config[key].unit) item.calc_dim_config[key].unit = 'см'
+    if (item.calc_dim_config[key].waste === undefined) item.calc_dim_config[key].waste = 0
     return item.calc_dim_config[key]
+}
+
+const calculateQuantityInternal = (item, includeWaste = true) => {
+    if (!item || item.calc_type === 'fixed') return item?.quantity || 0
+
+    const dimensions = {
+        W: parseFloat(props.productDimensions.width_cm) || 0,
+        H: parseFloat(props.productDimensions.height_cm) || 0,
+        L: parseFloat(props.productDimensions.length_cm) || 0,
+        Kg: parseFloat(props.productDimensions.weight_kg) || 0
+    }
+
+    let result = 0
+
+    if (item.calc_type === 'interpolation') {
+        const dp = item.calc_data_points
+        if (!dp || Array.isArray(dp)) return item.quantity
+
+        const dimMap = { h: 'height_cm', w: 'width_cm', l: 'length_cm' }
+        let total = 0
+        let hasAnyPoints = false
+
+        for (const [key, dimKey] of Object.entries(dimMap)) {
+            const pts = (dp[key] || []).filter(p => p.qty != null)
+            if (pts.length === 0) continue
+            hasAnyPoints = true
+            const dimVal = parseFloat(props.productDimensions[dimKey]) || 0
+            const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
+            let dimResult = 0
+            const interp = (p1, p2, val) => {
+                const slope = (p2.x !== p1.x) ? (p2.qty - p1.qty) / (p2.x - p1.x) : 0
+                return p1.qty + slope * (val - p1.x)
+            }
+            if (sorted.length === 1) { dimResult = sorted[0].qty }
+            else if (dimVal <= sorted[0].x) { dimResult = interp(sorted[0], sorted[1], dimVal) }
+            else if (dimVal >= sorted[sorted.length - 1].x) { dimResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimVal) }
+            else {
+                for (let i = 0; i < sorted.length - 1; i++) {
+                    if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) {
+                        dimResult = interp(sorted[i], sorted[i + 1], dimVal); break
+                    }
+                }
+            }
+            
+            // Apply waste for this dimension
+            if (includeWaste && item.calc_dim_config?.[key]?.waste) {
+                dimResult *= (1 + parseFloat(item.calc_dim_config[key].waste) / 100)
+            }
+            
+            total += Math.max(0, dimResult)
+        }
+        if (!hasAnyPoints) return item.quantity
+        result = total
+    }
+    else if (item.calc_type === 'proportional') {
+        const dimVal = parseFloat(props.productDimensions[item.calc_dimension || 'width_cm']) || 0
+        const coeff = parseFloat(item.calc_formula) || 0
+        result = dimVal * coeff
+        if (includeWaste && item.calc_waste_factor) {
+            result *= (1 + parseFloat(item.calc_waste_factor))
+        }
+    }
+    else if (item.calc_type === 'area') {
+        result = dimensions.W * dimensions.H / 10000 
+        if (includeWaste && item.calc_waste_factor) {
+            result *= (1 + parseFloat(item.calc_waste_factor))
+        }
+    }
+    else if (item.calc_type === 'volume') {
+        result = dimensions.W * dimensions.H * dimensions.L / 1000000 
+        if (includeWaste && item.calc_waste_factor) {
+            result *= (1 + parseFloat(item.calc_waste_factor))
+        }
+    }
+    else if (item.calc_type === 'formula') {
+        try {
+            const { W, H, L, Kg } = dimensions
+            result = eval(item.calc_formula || '0')
+            if (includeWaste && item.calc_waste_factor) {
+                result *= (1 + parseFloat(item.calc_waste_factor))
+            }
+        } catch (e) {
+            return 'Помилка'
+        }
+    }
+
+    return result
+}
+
+const calculateQuantity = (item) => {
+    const result = calculateQuantityInternal(item, true)
+    return typeof result === 'number' ? result.toFixed(4) : result
+}
+
+const getBaseQuantity = (item) => {
+    if (!item || item.calc_type === 'fixed') return item?.quantity || 0
+    return calculateQuantityInternal(item, false)
+}
+
+const getTotalWastePercent = (item) => {
+    if (!item.calc_dim_config) return 0
+    const base = calculateQuantityInternal(item, false)
+    if (!base || base === 0) return 0
+    const withWaste = calculateQuantityInternal(item, true)
+    const percent = ((withWaste / base) - 1) * 100
+    return percent > 0 ? parseFloat(percent.toFixed(1)) : 0
 }
 
 // calcStepInfo: per-dimension step values based on first 2 points of each series
@@ -755,7 +875,7 @@ const addItem = () => {
         is_calculated: false,
         calc_dimension: null,
         calc_data_points: { h: [], w: [], l: [] },
-        calc_dim_config: { h: { char_name: '', default: 0, unit: 'см' }, w: { char_name: '', default: 0, unit: 'см' }, l: { char_name: '', default: 0, unit: 'см' } },
+        calc_dim_config: { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } },
         calc_formula: '',
         calc_waste_factor: 0
     })
@@ -807,15 +927,16 @@ const openCalcDialog = (item) => {
     // Ensure calc_dim_config exists
     if (!item.calc_dim_config) {
         item.calc_dim_config = {
-            h: { char_name: '', default: 0, unit: 'см' },
-            w: { char_name: '', default: 0, unit: 'см' },
-            l: { char_name: '', default: 0, unit: 'см' }
+            h: { char_name: '', default: 0, unit: 'см', waste: 0 },
+            w: { char_name: '', default: 0, unit: 'см', waste: 0 },
+            l: { char_name: '', default: 0, unit: 'см', waste: 0 }
         }
     } else {
-        // Ensure units exist in existing config
+        // Ensure units and waste exist in existing config
         for (const k of ['h', 'w', 'l']) {
-            if (!item.calc_dim_config[k]) item.calc_dim_config[k] = { char_name: '', default: 0, unit: 'см' }
+            if (!item.calc_dim_config[k]) item.calc_dim_config[k] = { char_name: '', default: 0, unit: 'см', waste: 0 }
             if (!item.calc_dim_config[k].unit) item.calc_dim_config[k].unit = 'см'
+            if (item.calc_dim_config[k].waste === undefined) item.calc_dim_config[k].waste = 0
         }
     }
 
@@ -835,79 +956,6 @@ const addPoint = (item, dimKey) => {
 
 const removePoint = (item, dimKey, index) => {
     item.calc_data_points[dimKey].splice(index, 1)
-}
-
-const calculateQuantity = (item) => {
-    if (!item || item.calc_type === 'fixed') return item?.quantity || 0
-
-    const dimensions = {
-        W: parseFloat(props.productDimensions.width_cm) || 0,
-        H: parseFloat(props.productDimensions.height_cm) || 0,
-        L: parseFloat(props.productDimensions.length_cm) || 0,
-        Kg: parseFloat(props.productDimensions.weight_kg) || 0
-    }
-
-    let result = 0
-
-    if (item.calc_type === 'interpolation') {
-        const dp = item.calc_data_points
-        if (!dp || Array.isArray(dp)) return item.quantity
-
-        const dimMap = { h: 'height_cm', w: 'width_cm', l: 'length_cm' }
-        let total = 0
-        let hasAnyPoints = false
-
-        for (const [key, dimKey] of Object.entries(dimMap)) {
-            const pts = (dp[key] || []).filter(p => p.qty != null)
-            if (pts.length === 0) continue
-            hasAnyPoints = true
-            const dimVal = parseFloat(props.productDimensions[dimKey]) || 0
-            const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
-            let dimResult = 0
-            const interp = (p1, p2, val) => {
-                const slope = (p2.x !== p1.x) ? (p2.qty - p1.qty) / (p2.x - p1.x) : 0
-                return p1.qty + slope * (val - p1.x)
-            }
-            if (sorted.length === 1) { dimResult = sorted[0].qty }
-            else if (dimVal <= sorted[0].x) { dimResult = interp(sorted[0], sorted[1], dimVal) }
-            else if (dimVal >= sorted[sorted.length - 1].x) { dimResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimVal) }
-            else {
-                for (let i = 0; i < sorted.length - 1; i++) {
-                    if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) {
-                        dimResult = interp(sorted[i], sorted[i + 1], dimVal); break
-                    }
-                }
-            }
-            total += Math.max(0, dimResult)
-        }
-        if (!hasAnyPoints) return item.quantity
-        result = total
-    }
-    else if (item.calc_type === 'proportional') {
-        const dimVal = parseFloat(props.productDimensions[item.calc_dimension || 'width_cm']) || 0
-        const coeff = parseFloat(item.calc_formula) || 0
-        result = dimVal * coeff
-    }
-    else if (item.calc_type === 'area') {
-        result = dimensions.W * dimensions.H / 10000 
-    }
-    else if (item.calc_type === 'volume') {
-        result = dimensions.W * dimensions.H * dimensions.L / 1000000 
-    }
-    else if (item.calc_type === 'formula') {
-        try {
-            const { W, H, L, Kg } = dimensions
-            result = eval(item.calc_formula || '0')
-        } catch (e) {
-            return 'Помилка'
-        }
-    }
-
-    if (item.calc_waste_factor) {
-        result *= (1 + parseFloat(item.calc_waste_factor))
-    }
-    
-    return typeof result === 'number' ? result.toFixed(4) : result
 }
 
 // Product Search for components
