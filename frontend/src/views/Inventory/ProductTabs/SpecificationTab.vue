@@ -82,35 +82,42 @@
           
           <el-table :data="specForm.items" stripe style="width: 100%" class="component-table">
              <el-table-column label="Товар / Матеріал" min-width="320">
-                 <template #default="scope"><div class="flex flex-col gap-2"><el-radio-group v-model="scope.row.line_type" size="small" class="line-type-toggle"><el-radio-button label="material">Матеріал</el-radio-button><el-radio-button label="detail">Деталь за розміром</el-radio-button></el-radio-group>
-                   <el-select
-                      v-model="scope.row.component_id"
-                      filterable
-                      remote
-                      reserve-keyword
-                                                placeholder="Пошук номенклатури..."
-                      :remote-method="searchProducts"
-                      :loading="searchingProducts"
-                      class="w-full"
-                      @change="(val) => handleComponentSelect(scope.row, val)"
-                   >
-                      <el-option
-                         v-for="p in productSearchResults"
-                         :key="p.id"
-                         :label="p.name"
-                         :value="p.id"
+                <template #default="scope">
+                   <div class="flex flex-col gap-2">
+                      <el-radio-group v-model="scope.row.line_type" size="small" class="line-type-toggle">
+                         <el-radio-button label="material">Матеріал</el-radio-button>
+                         <el-radio-button label="detail">Деталь за розміром</el-radio-button>
+                      </el-radio-group>
+                      
+                      <el-select
+                         v-model="scope.row.component_id"
+                         filterable
+                         remote
+                         reserve-keyword
+                         placeholder="Пошук номенклатури..."
+                         :remote-method="searchProducts"
+                         :loading="searchingProducts"
+                         class="w-full"
+                         @change="(val) => handleComponentSelect(scope.row, val)"
                       >
-                         <div class="flex justify-between w-full">
-                            <span>{{ p.name }}</span>
-                            <span class="text-gray-400 text-xs">{{ p.sku }}</span>
-                         </div>
-                      </el-option>
-                   </el-select>
+                         <el-option
+                            v-for="p in productSearchResults"
+                            :key="p.id"
+                            :label="p.name"
+                            :value="p.id"
+                         >
+                            <div class="flex justify-between w-full">
+                               <span>{{ p.name }}</span>
+                               <span class="text-gray-400 text-xs">{{ p.sku }}</span>
+                            </div>
+                         </el-option>
+                      </el-select>
+                   </div>
                 </template>
              </el-table-column>
              
              <el-table-column label="Кількість / Розрахунок" width="380">
-                   </el-select></div>
+                <template #default="scope">
                    <div v-if="scope.row.line_type === 'detail'" class="detail-config-inline p-2 bg-slate-50 rounded border border-slate-200">
                        <div class="grid grid-cols-1 gap-2">
                           <div class="flex items-center gap-2">
@@ -148,7 +155,7 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Од. вим." width="120">
+             <el-table-column label="Од. вим." width="80">
                 <template #default="scope">
                    <el-input :model-value="getUomName(scope.row.unit_of_measure)" placeholder="шт/кг" disabled />
                 </template>
