@@ -33,16 +33,27 @@
             <template #label>
               <span class="field-label">Собівартість</span>
             </template>
-            <el-input-number 
-              v-model="modelValue.cost" 
-              :precision="2" 
-              :step="1" 
-              controls-position="right"
-              style="width: 100%" 
-              class="styled-number"
-            />
+            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+              <el-input-number 
+                v-model="modelValue.cost" 
+                :precision="2" 
+                :step="1" 
+                controls-position="right"
+                style="flex: 1" 
+                class="styled-number"
+              />
+              <el-tooltip content="Розрахувати собівартість (BOM + Етапи)" placement="top" v-if="hasSpecification && modelValue.id">
+                <el-button 
+                  type="primary" 
+                  plain 
+                  :icon="Refresh"
+                  :loading="calculatingCost"
+                  @click="calculateCost"
+                />
+              </el-tooltip>
+            </div>
             <p v-if="hasSpecification" class="cost-hint">
-              <el-icon><InfoFilled /></el-icon> Розраховується за специфікацією (BOM)
+              <el-icon><InfoFilled /></el-icon> Є специфікація (BOM). Розрахунок включає матеріали та працю.
             </p>
           </el-form-item>
 
@@ -80,14 +91,38 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { InfoFilled } from '@element-plus/icons-vue'
+import { ref, computed } from 'vue'
+import { InfoFilled, Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import api from '@/api'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
   currencyOptions: { type: Array, default: () => [] },
   hasSpecification: { type: Boolean, default: false }
 })
+
+const calculatingCost = ref(false)
+
+const calculateCost = async () => {
+  if (!props.modelValue.id) return
+  calculatingCost.value = true
+  try {
+    const res = await api.get(`/api/v1/products/${props.modelValue.id}/calculate-cost`)
+    if (res.data.detail) {
+      ElMessage.warning(res.data.detail)
+    } else {
+      props.modelValue.cost = res.data.cost
+      ElMessage.success(`Собівартість розраховано: ${res.data.cost} ${props.modelValue.currency} (Матеріали: ${res.data.materials_cost}, Праця: ${res.data.stages_cost})`)
+    }
+  } catch (error) {
+    ElMessage.error('Помилка розрахунку собівартості')
+    console.error(error)
+  } finally {
+    calculatingCost.value = false
+  }
+}
+
 
 const calculateMarkup = computed(() => {
   if (!props.modelValue.price || !props.modelValue.cost || props.modelValue.cost === 0) return 0
