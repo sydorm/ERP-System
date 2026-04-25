@@ -52,52 +52,21 @@
           </el-col>
         </el-row>
 
-        <el-divider>Товари</el-divider>
-
-        <el-table :data="form.lines" border style="width: 100%" class="lines-table">
-          <el-table-column label="Товар" min-width="300">
-            <template #default="scope">
-              <el-select 
-                v-model="scope.row.product_id" 
-                filterable 
-                placeholder="Пошук товару..." 
-                style="width: 100%"
-                @change="(val) => handleProductChange(val, scope.row)"
-              >
-                <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id">
-                  <span style="float: left">{{ p.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ formatCurrencyShort(p.price) }}</span>
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="Кількість" width="150">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.quantity" :min="0.001" @change="updateLineTotal(scope.row)" style="width: 100%" />
-            </template>
-          </el-table-column>
-          <el-table-column label="Ціна" width="180">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.price" :min="0" @change="updateLineTotal(scope.row)" :precision="2" style="width: 100%" />
-            </template>
-          </el-table-column>
-          <el-table-column label="Сума" width="180">
-            <template #default="scope">
-              <span class="line-total">{{ formatCurrency(scope.row.total) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="" width="60" align="center">
-            <template #default="scope">
-              <el-button type="danger" :icon="Delete" circle @click="removeLine(scope.$index)" />
-            </template>
-          </el-table-column>
-        </el-table>
-
+        <div class="erp-table-wrapper" style="margin-top: 20px;">
+          <DocumentItemsTable
+            :items="form.lines"
+            :products="products"
+            :warehouses="warehouses"
+            v-model:warehouse-id="form.warehouse_id"
+            mode="invoice"
+            :show-specification="false"
+            :show-warehouse="true"
+            @add-line="addLine"
+            @remove-line="removeLine"
+          />
+        </div>
+        
         <div class="form-footer">
-          <el-button type="dashed" :icon="Plus" @click="addLine" class="add-line-btn">
-            Додати рядок
-          </el-button>
-          
           <div class="summary-card">
             <div class="summary-row">
               <span class="label">Разом:</span>
@@ -116,6 +85,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -150,6 +120,7 @@ const goBack = () => router.push('/sales/invoices')
 const addLine = () => {
   form.lines.push({
     product_id: '',
+    variant_id: null,
     quantity: 1,
     price: 0,
     total: 0
@@ -158,18 +129,6 @@ const addLine = () => {
 
 const removeLine = (index) => {
   form.lines.splice(index, 1)
-}
-
-const updateLineTotal = (line) => {
-  line.total = parseFloat((line.quantity * line.price).toFixed(2))
-}
-
-const handleProductChange = (productId, line) => {
-  const product = products.value.find(p => p.id === productId)
-  if (product) {
-    line.price = product.price
-    updateLineTotal(line)
-  }
 }
 
 const loadFromOrder = async (orderId) => {

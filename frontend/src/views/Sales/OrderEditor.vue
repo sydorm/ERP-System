@@ -97,68 +97,20 @@
           <!-- TAB: Товари -->
           <el-tab-pane name="items">
             <template #label><el-icon><Box /></el-icon>&nbsp;Товари <el-badge v-if="form.lines.length" :value="form.lines.length" class="tab-badge" /></template>
-            <div class="tab-toolbar">
-              <el-button size="small" class="erp-btn" @click="addLine">Додати</el-button>
-              <el-button size="small" class="erp-btn" :icon="Search" @click="openNomenclatureDialog(form.lines.length - 1 || 0)">Підібрати</el-button>
-              <el-button size="small" class="erp-btn-icon" :icon="Setting" title="Налаштування колонок" />
-              <div class="tab-toolbar-right">
-                <span class="erp-label">Склад:</span>
-                <el-select v-model="form.warehouse_id" size="small" class="warehouse-select">
-                  <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-                </el-select>
-              </div>
-            </div>
             <div class="erp-table-wrapper" v-loading="loading">
-              <el-table :data="form.lines" border size="small" class="erp-dense-table" height="100%">
-                <el-table-column type="index" label="N" width="40" align="center" />
-                <el-table-column label="Номенклатура" min-width="200">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.product_id" filterable size="small" placeholder="" class="erp-cell-input" @change="(val) => handleProductChange(val, scope.row)">
-                      <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column label="Характеристика" min-width="140" v-if="visibleCols.characteristic">
-                  <template #default="scope">
-                    <div class="erp-cell-trigger" @click="openVariantSelector(scope.row)">
-                      <span class="selection-text" v-if="scope.row.variant_id">{{ getVariantLabelByLine(scope.row) }}</span>
-                      <span class="selection-text virtual" v-else-if="scope.row._virtual_label">{{ scope.row._virtual_label }}</span>
-                      <span class="placeholder" v-else>...</span>
-                    </div>
-                  </template>
-                </el-table-column>
-                <el-table-column label="К-ть" width="100">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.quantity" :min="1" :step="1" @change="updateLineTotal(scope.row)" class="erp-cell-input qty-num" style="width:90px" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="Резерв" width="70" align="center">
-                  <template #default><el-checkbox /></template>
-                </el-table-column>
-                <el-table-column label="Ціна" width="120">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
-                  </template>
-                </el-table-column>
-
-                <el-table-column label="Сума" width="130">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num" style="width:100%" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="Специфікація" min-width="120">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.specification_id" size="small" placeholder="За замовчуванням" clearable class="erp-cell-input" style="width:100%">
-                      <el-option v-for="s in (specsCache[scope.row.product_id] || [])" :key="s.id" :label="s.is_default ? s.name + ' (Авто)' : s.name" :value="s.id" />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column label="" width="40" align="center" fixed="right">
-                  <template #default="scope">
-                    <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)" style="padding:0;height:auto;" />
-                  </template>
-                </el-table-column>
-              </el-table>
+              <DocumentItemsTable
+                :items="form.lines"
+                :products="products"
+                :warehouses="warehouses"
+                v-model:warehouse-id="form.warehouse_id"
+                :specs-cache="specsCache"
+                mode="sale"
+                show-specification
+                @add-line="addLine"
+                @remove-line="removeLine"
+                @product-change="({ productId, line }) => handleProductChange(productId, line)"
+                @change="(line) => updateLineTotal(line)"
+              />
             </div>
             <div class="items-comment">
               <el-input v-model="form.comment" type="textarea" :autosize="{ minRows: 2, maxRows: 3 }" placeholder="Коментар..." class="erp-comment-input" />
@@ -436,6 +388,7 @@ import api from '@/api'
 import { getProductSpecifications } from '@/api/specifications'
 import VariantSelectorDialog from './VariantSelectorDialog.vue'
 import AuditLogViewer from '@/components/AuditLogViewer.vue'
+import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -234,88 +234,33 @@
               </el-col>
             </el-row>
 
-            <!-- Product Characteristics Section -->
-            <div v-if="productAttributes.length > 0" class="mt-6 characteristics-section">
+            <!-- Document Items Table (Unified) -->
+            <div class="mt-4">
               <div class="field-label mb-2 flex items-center gap-2">
-                <el-icon><Operation /></el-icon>
-                <span>Характеристики виробу:</span>
+                <el-icon><Box /></el-icon>
+                <span>Виріб для виробництва:</span>
               </div>
-              <el-row :gutter="20">
-                <el-col v-for="attr in productAttributes" :key="attr.id" :span="8" class="mb-4">
-                  <span class="field-label">{{ attr.name }}:</span>
-                  
-                  <!-- DIMENSIONS: W x H -->
-                  <div v-if="attr.type === 'DIMENSIONS'" class="dims-row mt-1">
-                    <el-input-number
-                      v-model="dimSelections[attr.id].w"
-                      :min="0" :precision="0" :controls="false"
-                      placeholder="Ш"
-                      class="dim-input"
-                    />
-                    <span class="dims-sep">×</span>
-                    <el-input-number
-                      v-model="dimSelections[attr.id].h"
-                      :min="0" :precision="0" :controls="false"
-                      placeholder="В"
-                      class="dim-input"
-                    />
-                    <span class="dims-unit">мм</span>
-                  </div>
-
-                  <!-- COLOR / OTHER: Dropdown -->
-                  <el-select
-                    v-else
-                    v-model="selections[attr.id]"
-                    :placeholder="'Оберіть ' + attr.name.toLowerCase() + '...'"
-                    class="w-full mt-1"
-                    filterable
-                    :allow-create="attr.allow_manual_input"
-                    default-first-option
-                  >
-                    <template #prefix>
-                      <el-icon v-if="attr.type === 'COLOR'"><Brush /></el-icon>
-                      <el-icon v-else><Operation /></el-icon>
-                    </template>
-                    <el-option
-                      v-for="opt in (attr.options || [])"
-                      :key="opt.id"
-                      :label="opt.value"
-                      :value="opt.id"
-                    >
-                      <div class="flex items-center gap-2">
-                        <span
-                          v-if="opt.color_code"
-                          class="w-3 h-3 rounded-full border"
-                          :style="{ backgroundColor: opt.color_code }"
-                        ></span>
-                        <span>{{ opt.value }}</span>
-                      </div>
-                    </el-option>
-                  </el-select>
-                </el-col>
-              </el-row>
+              <DocumentItemsTable
+                :items="form.lines"
+                :products="products"
+                :warehouses="warehouses"
+                v-model:warehouse-id="form.warehouse_id"
+                mode="production"
+                :show-price="false"
+                :show-warehouse="true"
+                @add-line="() => { if(form.lines.length === 0) addLine() }"
+                @remove-line="removeLine"
+                @product-change="({ productId, line }) => onProductSelect(productId)"
+                @change="recalculateEverything"
+              />
             </div>
 
-            <el-row :gutter="20" class="mt-4">
-               <el-col :span="12">
-                  <span class="field-label req">Виріб:</span>
-                  <el-select v-model="activeProductId" filterable placeholder="Вибрати виріб..." class="w-full mt-1" @change="onProductSelect" :disabled="isEditMode">
-                    <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-                  </el-select>
-               </el-col>
-               <el-col :span="6">
-                  <span class="field-label req">К-сть:</span>
-                  <el-input-number v-model="activeQuantity" :min="1" class="w-full mt-1" @change="recalculateEverything" :disabled="isEditMode" />
-               </el-col>
-               <el-col :span="6">
-                  <span class="field-label">Пріоритет:</span>
-                  <el-select v-model="form.priority" class="w-full mt-1">
-                    <el-option label="Звичайний" value="normal" />
-                    <el-option label="Терміновий" value="urgent" />
-                    <el-option label="Критичний" value="critical" />
-                  </el-select>
-               </el-col>
-            </el-row>
+            <div class="mt-4">
+              <span class="field-label">Коментар до завдання:</span>
+              <el-input v-model="form.comment" type="textarea" :rows="2" class="mt-1" placeholder="Замітка для майстрів..." />
+            </div>
+          </div>
+        </div>
             <div class="mt-4">
               <span class="field-label">Коментар до завдання:</span>
               <el-input v-model="form.comment" type="textarea" :rows="2" class="mt-1" placeholder="Замітка для майстрів..." />
@@ -371,10 +316,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { 
   ArrowLeft, Plus, MoreFilled, Printer, CircleClose, Loading,
   Tools, List, Calendar, InfoFilled, Clock, SuccessFilled,
-  Brush, Operation, EditPen
+  Brush, Operation, EditPen, Box
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 import dayjs from 'dayjs'
 
 import { useUserStore } from '@/stores/user'
@@ -513,20 +459,22 @@ const onSourceOrderChange = (orderId) => {
   }
 }
 
-const onProductSelect = async () => {
-  if (!activeProductId.value) return
+const addLine = () => {
+  form.lines.push({ product_id: '', variant_id: null, quantity: 1 })
+}
+
+const removeLine = (index) => {
+  form.lines.splice(index, 1)
+  recalculateEverything()
+}
+
+const onProductSelect = async (productId) => {
+  const pId = productId || activeProductId.value
+  if (!pId) return
   try {
-    const res = await api.get(`/api/v1/products/${activeProductId.value}/specifications`)
+    const res = await api.get(`/api/v1/products/${pId}/specifications`)
     currentSpecs.value = res.data
     activeSpecId.value = res.data.find(s => s.is_default)?.id || res.data[0]?.id
-    
-    // Fetch attributes if product has category
-    const p = products.value.find(x => x.id === activeProductId.value)
-    if (p && p.category) {
-      await fetchCategoryAttributes(p.category)
-    } else {
-      productAttributes.value = []
-    }
     
     recalculateEverything()
   } catch (e) { 
@@ -534,42 +482,17 @@ const onProductSelect = async () => {
   }
 }
 
-const fetchCategoryAttributes = async (category) => {
-  attributeLoading.value = true
-  try {
-    const res = await api.get(`/api/v1/attributes/category/${category}`)
-    productAttributes.value = (res.data || []).map(ca => ({
-      ...ca.attribute,
-      is_required: ca.is_required
-    }))
-    
-    // Initialize selections
-    selections.value = {}
-    dimSelections.value = {}
-    productAttributes.value.forEach(attr => {
-      if (attr.type === 'DIMENSIONS') {
-        dimSelections.value[attr.id] = { w: null, h: null }
-      }
-    })
-  } catch (e) {
-    console.error('Failed to load attributes', e)
-  } finally {
-    attributeLoading.value = false
-  }
-}
-
 const recalculateEverything = () => {
-  if (!activeProductId.value) return
+  const line = form.lines[0]
+  if (!line || !line.product_id) return
+  
+  activeProductId.value = line.product_id
+  activeQuantity.value = line.quantity
   
   const spec = currentSpecs.value.find(s => s.id === activeSpecId.value)
   
-  form.lines = [{ 
-    product_id: activeProductId.value, 
-    quantity: activeQuantity.value, 
-    specification_id: activeSpecId.value 
-  }]
-  
   if (spec) {
+    // ... (rest of the logic)
     // 1. Recalculate Materials
     form.materials = (spec.items || []).map(item => ({
       component_id: item.component_id,

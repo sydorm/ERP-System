@@ -89,71 +89,18 @@
             <template #label><el-icon><Box /></el-icon>&nbsp;Товари
               <el-badge v-if="form.lines.length" :value="form.lines.length" class="tab-badge" />
             </template>
-            <div class="tab-toolbar">
-              <el-button size="small" class="erp-btn" @click="addLine">Додати</el-button>
-              <div class="tab-toolbar-right">
-                <span class="erp-label">Склад:</span>
-                <el-select v-model="form.warehouse_id" size="small" class="warehouse-select">
-                  <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-                </el-select>
-              </div>
-            </div>
             <div class="erp-table-wrapper" v-loading="loading">
-              <el-table :data="form.lines" border size="small" class="erp-dense-table" height="100%">
-                <el-table-column type="index" label="N" width="40" align="center" />
-                <el-table-column label="Номенклатура" min-width="260">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.product_id" filterable size="small" placeholder="" class="erp-cell-input"
-                      @change="(val) => handleProductChange(val, scope.row)">
-                      <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column label="Характеристика" width="180">
-                  <template #default="scope">
-                    <el-select 
-                      v-model="scope.row.variant_id" 
-                      size="small" 
-                      placeholder="Виберіть..." 
-                      class="erp-cell-input"
-                      :disabled="!getVariantsForProduct(scope.row.product_id).length"
-                      clearable
-                      @change="(val) => handleVariantChange(val, scope.row)"
-                    >
-                      <el-option 
-                        v-for="v in getVariantsForProduct(scope.row.product_id)" 
-                        :key="v.id" 
-                        :label="getVariantLabel(v)" 
-                        :value="v.id" 
-                      />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column label="К-ть" width="100">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.quantity" :min="0.001" :precision="3"
-                      :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="Ціна" width="110">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2"
-                      :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="Сума" width="110">
-                  <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2"
-                      :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num sum-input" style="width:100%" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="" width="40" align="center" fixed="right">
-                  <template #default="scope">
-                    <el-button type="danger" :icon="Delete" link size="small" @click="removeLine(scope.$index)"
-                      style="padding:0;height:auto;" />
-                  </template>
-                </el-table-column>
-              </el-table>
+              <DocumentItemsTable
+                :items="form.lines"
+                :products="products"
+                :warehouses="warehouses"
+                v-model:warehouse-id="form.warehouse_id"
+                mode="purchase"
+                :show-specification="false"
+                :show-warehouse="true"
+                @add-line="addLine"
+                @remove-line="removeLine"
+              />
             </div>
             <div class="items-comment">
               <el-input v-model="form.comment" type="textarea" :autosize="{ minRows: 2, maxRows: 3 }"
@@ -380,6 +327,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -543,45 +491,6 @@ const addLine = () => {
 
 const removeLine = (index) => {
   form.lines.splice(index, 1)
-}
-
-const updateLineTotal = (line) => {
-  line.total = parseFloat((line.quantity * line.price).toFixed(2))
-}
-
-const updateLinePrice = (line) => {
-  if (line.quantity > 0) line.price = parseFloat((line.total / line.quantity).toFixed(2))
-}
-
-const handleProductChange = (productId, line) => {
-  const product = products.value.find(p => p.id === productId)
-  if (product) {
-    line.price = product.price || 0
-    line.variant_id = null
-    updateLineTotal(line)
-  }
-}
-
-const handleVariantChange = (variantId, line) => {
-  if (!variantId) return
-  const product = products.value.find(p => p.id === line.product_id)
-  if (product) {
-    const variant = product.variants?.find(v => v.id === variantId)
-    if (variant && variant.price_override) {
-      line.price = Number(variant.price_override)
-      updateLineTotal(line)
-    }
-  }
-}
-
-const getVariantsForProduct = (productId) => {
-  const product = products.value.find(p => p.id === productId)
-  return product ? product.variants || [] : []
-}
-
-const getVariantLabel = (variant) => {
-  if (!variant || !variant.values || variant.values.length === 0) return variant?.sku || 'Без назви'
-  return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
 }
 
 // ===== DATA FETCHING =====

@@ -42,60 +42,23 @@
           </el-col>
         </el-row>
 
-        <el-divider>Товари</el-divider>
-
-        <el-table :data="form.lines" border style="width: 100%">
-          <el-table-column label="Товар" min-width="250">
-            <template #default="scope">
-              <el-select v-model="scope.row.product_id" filterable placeholder="Пошук товару..." style="width: 100%" @change="(val) => handleProductChange(val, scope.row)">
-                <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="Характеристика" width="180">
-            <template #default="scope">
-              <el-select 
-                v-model="scope.row.variant_id" 
-                size="small" 
-                placeholder="Виберіть..." 
-                style="width: 100%"
-                :disabled="!getVariantsForProduct(scope.row.product_id).length"
-                clearable
-                @change="(val) => handleVariantChange(val, scope.row)"
-              >
-                <el-option 
-                  v-for="v in getVariantsForProduct(scope.row.product_id)" 
-                  :key="v.id" 
-                  :label="getVariantLabel(v)" 
-                  :value="v.id" 
-                />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="Кількість" width="150">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.quantity" :min="0" @change="updateLineTotal(scope.row)" />
-            </template>
-          </el-table-column>
-          <el-table-column label="Ціна" width="180">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.price" :min="0" @change="updateLineTotal(scope.row)" />
-            </template>
-          </el-table-column>
-          <el-table-column label="Сума" width="180">
-            <template #default="scope">
-              <span>{{ scope.row.total.toFixed(2) }} {{ form.currency }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="" width="60">
-            <template #default="scope">
-              <el-button type="danger" :icon="Delete" circle @click="removeLine(scope.$index)" />
-            </template>
-          </el-table-column>
-        </el-table>
-
+        <div class="erp-table-wrapper" style="margin-top: 20px;">
+          <DocumentItemsTable
+            :items="form.lines"
+            :products="products"
+            :warehouses="warehouses"
+            v-model:warehouse-id="form.warehouse_id"
+            mode="invoice"
+            :show-specification="false"
+            :show-warehouse="true"
+            @add-line="addLine"
+            @remove-line="removeLine"
+          />
+        </div>
+        
         <div class="form-footer">
-          <el-button type="dashed" :icon="Plus" @click="addLine" class="add-line-btn">
+          <el-button type="primary" plain class="add-line-btn" @click="addLine">
+            <el-icon><Plus /></el-icon>
             Додати товар
           </el-button>
           
@@ -114,6 +77,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -158,41 +122,6 @@ const addLine = () => {
 
 const removeLine = (index) => {
   form.lines.splice(index, 1)
-}
-
-const updateLineTotal = (line) => {
-  line.total = line.quantity * line.price
-}
-
-const handleProductChange = (productId, line) => {
-  const product = products.value.find(p => p.id === productId)
-  if (product) {
-    line.price = product.price || 0
-    line.variant_id = null
-    updateLineTotal(line)
-  }
-}
-
-const handleVariantChange = (variantId, line) => {
-  if (!variantId) return
-  const product = products.value.find(p => p.id === line.product_id)
-  if (product) {
-    const variant = product.variants?.find(v => v.id === variantId)
-    if (variant && variant.price_override) {
-      line.price = Number(variant.price_override)
-      updateLineTotal(line)
-    }
-  }
-}
-
-const getVariantsForProduct = (productId) => {
-  const product = products.value.find(p => p.id === productId)
-  return product ? product.variants || [] : []
-}
-
-const getVariantLabel = (variant) => {
-  if (!variant || !variant.values || variant.values.length === 0) return variant?.sku || 'Без назви'
-  return variant.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
 }
 
 const fetchData = async () => {
