@@ -45,28 +45,75 @@
             </div>
             <div class="attr-meta">
               <span class="type-badge">{{ typeLabel(getAttrType(char)) }}</span>
-              <div v-if="getAttrType(char) === 'DIMENSIONS'" class="dimensions-input">
-                <el-input-number
-                  :model-value="getDimW(char)"
-                  @update:model-value="val => setDimW(char, val)"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Ш" size="small" class="dim-field"
+              <!-- Value Selector -->
+              <div class="value-selector-box">
+                <!-- SELECT / COLOR / DIMENSIONS (Dictionary Selection) -->
+                <el-select 
+                  v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(getAttrType(char))"
+                  v-model="char.option_id"
+                  placeholder="Оберіть зі списку..."
+                  clearable
+                  @change="onOptionChange(char)"
+                  class="kimi-value-select"
+                  size="small"
+                >
+                  <el-option
+                    v-for="opt in getAttrOptions(char)"
+                    :key="opt.id"
+                    :label="opt.value"
+                    :value="opt.id"
+                  >
+                    <div class="option-item-flex">
+                      <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
+                      <span>{{ opt.value }}</span>
+                    </div>
+                  </el-option>
+                </el-select>
+
+                <!-- DIMENSIONS (Manual Inputs - always visible for flexibility) -->
+                <div v-if="getAttrType(char) === 'DIMENSIONS'" class="dimensions-input-group">
+                  <span class="manual-label">або введіть:</span>
+                  <el-input-number
+                    :model-value="getDimW(char)"
+                    @update:model-value="val => setDimW(char, val)"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Ш" size="small" class="dim-field-compact"
+                  />
+                  <span class="dims-sep">×</span>
+                  <el-input-number
+                    :model-value="getDimH(char)"
+                    @update:model-value="val => setDimH(char, val)"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="В" size="small" class="dim-field-compact"
+                  />
+                </div>
+
+                <!-- TEXT -->
+                <el-input 
+                  v-if="getAttrType(char) === 'TEXT'" 
+                  v-model="char.text_value" 
+                  placeholder="Впишіть текст..." 
+                  size="small"
+                  @input="emitUpdate"
                 />
-                <span class="dims-sep">×</span>
-                <el-input-number
-                  :model-value="getDimH(char)"
-                  @update:model-value="val => setDimH(char, val)"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="В" size="small" class="dim-field"
+
+                <!-- NUMBER -->
+                <el-input-number 
+                  v-if="getAttrType(char) === 'NUMBER'" 
+                  v-model="char.text_value" 
+                  placeholder="0" 
+                  size="small"
+                  @change="emitUpdate"
                 />
-                <span class="dims-unit">мм</span>
-              </div>
-              <div v-else-if="getAttrOptions(char).length > 0" class="options-preview">
-                <span v-for="opt in getAttrOptions(char).slice(0, 5)" :key="opt.id" class="mini-option-dot">
-                  <span v-if="opt.color_code" class="dot-swatch" :style="{ background: opt.color_code }"></span>
-                  {{ opt.value }}
-                </span>
-                <span v-if="getAttrOptions(char).length > 5" class="more-hint">...що ще</span>
+
+                <!-- BOOLEAN -->
+                <el-checkbox 
+                  v-if="getAttrType(char) === 'BOOLEAN'" 
+                  v-model="char.bool_value" 
+                  @change="emitUpdate"
+                >
+                  Так
+                </el-checkbox>
               </div>
             </div>
           </div>
@@ -310,6 +357,16 @@ const setDimW = (char, val) => {
 const setDimH = (char, val) => {
   const w = getDimW(char) ?? ''
   char.text_value = `${w}x${val ?? ''}`
+  emitUpdate()
+}
+
+const onOptionChange = (char) => {
+  if (char.option_id && getAttrType(char) === 'DIMENSIONS') {
+    const opt = getAttrOptions(char).find(o => o.id === char.option_id)
+    if (opt && opt.width && opt.height) {
+      char.text_value = `${opt.width}x${opt.height}`
+    }
+  }
   emitUpdate()
 }
 
@@ -743,6 +800,56 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.value-selector-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.kimi-value-select {
+  width: 200px;
+}
+
+.option-item-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot-swatch-mini {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.dimensions-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 2px 10px;
+  border-radius: 8px;
+}
+
+.manual-label {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.dim-field-compact {
+  width: 50px;
+}
+
+.dim-field-compact :deep(.el-input__wrapper) {
+  padding: 0 4px !important;
+  background: white !important;
 }
 
 .btn-cancel {
