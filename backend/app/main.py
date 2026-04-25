@@ -186,6 +186,22 @@ async def run_migrations():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.post("/api/v1/debug/fix-db")
+async def fix_db():
+    """Manually add missing columns if migrations are stuck"""
+    from app.db.session import SessionLocal
+    from sqlalchemy import text
+    db = SessionLocal()
+    try:
+        db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
+        db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS height INTEGER"))
+        db.commit()
+        return {"status": "success", "message": "Columns added successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
 # Ensure uploads directory exists and mount it for static file serving
 import os
 from fastapi.staticfiles import StaticFiles
