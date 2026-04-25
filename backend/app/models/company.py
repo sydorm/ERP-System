@@ -36,6 +36,7 @@ class Company(BaseModel):
     website = Column(String(255), nullable=True)           # Website / Сайт
     
     # Legal Details / Реєстраційні дані
+    tax_id = Column(String(20), nullable=True, index=True) # Unified Tax ID / ЄДРПОУ або ІПН
     edrpou = Column(String(20), nullable=True, index=True) # EDRPOU code / ЄДРПОУ або РНОКПП (10 digits for FOP, 8 for TOV)
     ipn = Column(String(20), nullable=True)                # Tax ID / ІПН (12 digits)
     kved = Column(String(10), nullable=True)               # Main KVED code / Основний КВЕД (e.g., 62.01)
