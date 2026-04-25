@@ -445,7 +445,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { Plus, Delete, ArrowLeft, Setting } from '@element-plus/icons-vue'
+import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     getProductSpecifications,
@@ -455,10 +455,9 @@ import {
 } from '@/api/specifications'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
-import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check } from '@element-plus/icons-vue'
-
 
 const dictStore = useDictionaryStore()
+
 const uomOptions = ref([])
 const productionStages = ref([])
 const brigadesList = ref([])
