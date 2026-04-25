@@ -454,12 +454,45 @@ async def send_order_to_production(
 
         # Auto-expand BOM into materials
         if spec:
+            parent_dims = {
+                'width_cm': 0, 'height_cm': 0, 'length_cm': 0, 'weight_kg': 0,
+                'custom_attributes': order.attributes_values or {}
+            }
+            # Try to get dims from line's variant if available
+            if line.variant:
+                parent_dims['width_cm'] = float(line.variant.width_cm or 0)
+                parent_dims['height_cm'] = float(line.variant.height_cm or 0)
+                parent_dims['length_cm'] = float(line.variant.length_cm or 0)
+                parent_dims['weight_kg'] = float(line.variant.weight_kg or 0)
+
+            from app.services.specification_service import SpecificationService
             for item in spec.items:
+                component = item.component
+                variant = None
+                
+                if item.line_type == 'detail':
+                    component = SpecificationService.resolve_detail_component(item, parent_dims, db)
+                    
+                    target_length = 0.0
+                    if item.size_from_attr:
+                        attr_val = parent_dims['custom_attributes'].get(item.size_from_attr, 0)
+                        target_length = float(attr_val) * float(item.size_multiplier or 1.0)
+                    elif item.fixed_length:
+                        target_length = float(item.fixed_length)
+                        
+                    target_width = float(item.fixed_width) if item.fixed_width else None
+                    
+                    if component:
+                        variant = SpecificationService.find_matching_variant(component, target_length, target_width, db)
+
+                qty = SpecificationService.calculate_item_quantity(item, parent_dims)
+
                 db_mat = ProductionOrderMaterial(
                     production_order_id=prod_order.id,
-                    component_id=item.component_id,
-                    required_quantity=item.quantity * line.quantity,
-                    unit_of_measure=item.unit_of_measure,
+                    component_id=component.id if component else item.component_id,
+                    variant_id=variant.id if variant else None,
+                    required_quantity=qty * line.quantity,
+                    unit_of_measure=item.unit_of_measure or (component.unit_of_measure if component else "шт"),
                 )
                 db.add(db_mat)
 

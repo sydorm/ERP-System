@@ -89,7 +89,55 @@
                          <el-radio-button label="detail">Деталь за розміром</el-radio-button>
                       </el-radio-group>
                       
+                      <div v-if="scope.row.line_type === 'detail'" class="detail-mapping-box p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 mt-1">
+                         <div class="flex flex-col gap-3">
+                            <div class="mapping-header">
+                               <label class="text-[10px] font-bold text-indigo-600 uppercase mb-1 block">Характеристика виробу (Умова):</label>
+                               <el-select v-model="scope.row.mapping_attr" placeholder="Виберіть характеристику..." size="small" class="w-full" clearable>
+                                  <el-option v-for="attr in productAttributes" :key="attr.id" :label="attr.name" :value="attr.name" />
+                               </el-select>
+                            </div>
+                            
+                            <div class="mapping-rows flex flex-col gap-2">
+                               <label class="text-[10px] font-bold text-indigo-600 uppercase block">Значення → Номенклатура:</label>
+                               <div v-for="(matId, valKey) in scope.row.material_mapping" :key="valKey" class="flex items-center gap-1">
+                                  <el-input 
+                                     :model-value="valKey" 
+                                     @blur="(e) => updateMappingKey(scope.row, valKey, e.target.value)" 
+                                     placeholder="Значення" 
+                                     size="small" 
+                                     style="width: 100px" 
+                                  />
+                                  <span class="text-indigo-300">→</span>
+                                  <el-select
+                                     v-model="scope.row.material_mapping[valKey]"
+                                     filterable
+                                     remote
+                                     reserve-keyword
+                                     placeholder="Матеріал..."
+                                     :remote-method="searchProducts"
+                                     :loading="searchingProducts"
+                                     size="small"
+                                     class="flex-1"
+                                  >
+                                     <el-option
+                                        v-for="p in productSearchResults"
+                                        :key="p.id"
+                                        :label="p.name"
+                                        :value="p.id"
+                                     />
+                                  </el-select>
+                                  <el-button type="danger" link :icon="Delete" @click="removeMappingRow(scope.row, valKey)" />
+                               </div>
+                               <el-button type="primary" link size="small" :icon="Plus" @click="addMappingRow(scope.row)" class="self-start">
+                                  Додати умову
+                                </el-button>
+                            </div>
+                         </div>
+                      </div>
+
                       <el-select
+                         v-else
                          v-model="scope.row.component_id"
                          filterable
                          remote
@@ -122,7 +170,7 @@
                        <div class="grid grid-cols-1 gap-2">
                           <div class="flex items-center gap-2">
                              <span class="text-[10px] font-bold text-slate-500 w-20">Довжина (мм):</span>
-                             <el-select v-model="scope.row.size_from_attr" placeholder="З хар-ки..." size="small" clearable class="flex-1">
+                             <el-select v-model="scope.row.size_from_attr" placeholder="Характеристика..." size="small" clearable class="flex-1">
                                 <el-option v-for="attr in productAttributes" :key="attr.id" :label="attr.name" :value="attr.name" />
                              </el-select>
                              <span class="text-xs">×</span>
@@ -132,9 +180,9 @@
                           </div>
                           <div class="flex items-center gap-2">
                              <span class="text-[10px] font-bold text-slate-500 w-20">Ширина (мм):</span>
-                             <el-input-number v-model="scope.row.fixed_width" :controls="false" placeholder="Фікс." size="small" class="flex-1" />
+                             <el-input-number v-model="scope.row.fixed_width" :controls="false" placeholder="Автоматично" size="small" class="flex-1" />
                              <span class="text-[10px] font-bold text-slate-500 ml-2">К-сть (шт):</span>
-                             <el-input-number v-model="scope.row.quantity" :min="1" :step="1" :precision="0" size="small" style="width: 80px" />
+                             <el-input-number v-model="scope.row.quantity" :min="1" :step="1" :precision="0" size="small" style="width: 60px" />
                           </div>
                        </div>
                     </div>
@@ -904,6 +952,8 @@ const addItem = () => {
         size_multiplier: 10,
         fixed_length: null,
         fixed_width: null,
+        mapping_attr: null,
+        material_mapping: {},
         is_calculated: false,
         calc_dimension: null,
         calc_data_points: { h: [], w: [], l: [] },
@@ -988,6 +1038,26 @@ const addPoint = (item, dimKey) => {
 
 const removePoint = (item, dimKey, index) => {
     item.calc_data_points[dimKey].splice(index, 1)
+}
+
+// Material mapping helpers
+const addMappingRow = (item) => {
+    if (!item.material_mapping) item.material_mapping = {}
+    // Find a unique key name
+    let i = 1
+    while (item.material_mapping[`Значення ${i}`]) i++
+    item.material_mapping[`Значення ${i}`] = null
+}
+
+const removeMappingRow = (item, key) => {
+    delete item.material_mapping[key]
+}
+
+const updateMappingKey = (item, oldKey, newKey) => {
+    if (oldKey === newKey) return
+    const val = item.material_mapping[oldKey]
+    delete item.material_mapping[oldKey]
+    item.material_mapping[newKey] = val
 }
 
 // Product Search for components
@@ -1272,5 +1342,17 @@ onMounted(() => {
 
 .smart-calc-dialog :deep(.el-dialog__body) {
     padding-top: 10px;
+}
+
+.detail-mapping-box {
+    background: #f5f7ff;
+}
+
+.mapping-header label {
+    letter-spacing: 0.05em;
+}
+
+.mapping-rows label {
+    letter-spacing: 0.05em;
 }
 </style>

@@ -81,7 +81,9 @@ async def create_specification(
             calc_data_points=item_in.calc_data_points,
             calc_dim_config=item_in.calc_dim_config,
             calc_formula=item_in.calc_formula,
-            calc_waste_factor=item_in.calc_waste_factor
+            calc_waste_factor=item_in.calc_waste_factor,
+            mapping_attr=item_in.mapping_attr,
+            material_mapping=item_in.material_mapping
         )
         db.add(db_item)
 
@@ -141,7 +143,9 @@ async def update_specification(
                 calc_data_points=item_in.calc_data_points,
                 calc_dim_config=item_in.calc_dim_config,
                 calc_formula=item_in.calc_formula,
-                calc_waste_factor=item_in.calc_waste_factor
+                calc_waste_factor=item_in.calc_waste_factor,
+                mapping_attr=item_in.mapping_attr,
+                material_mapping=item_in.material_mapping
             )
             db.add(db_item)
 
@@ -207,13 +211,38 @@ async def calculate_specification_materials(
     }
     
     for item in db_spec.items:
+        # 1. Resolve Component (Material)
+        component = item.component
+        variant = None
+        
+        if item.line_type == 'detail':
+            component = SpecificationService.resolve_detail_component(item, parent_dims, db)
+            
+            # 2. Calculate Dimensions for the detail
+            # Length: size_from_attr * size_multiplier OR fixed_length
+            target_length = 0.0
+            if item.size_from_attr:
+                attr_val = parent_dims['custom_attributes'].get(item.size_from_attr, 0)
+                target_length = float(attr_val) * float(item.size_multiplier or 1.0)
+            elif item.fixed_length:
+                target_length = float(item.fixed_length)
+                
+            target_width = float(item.fixed_width) if item.fixed_width else None
+            
+            # 3. Find Matching Variant
+            if component:
+                variant = SpecificationService.find_matching_variant(component, target_length, target_width, db)
+        
+        # 4. Calculate Quantity
         quantity = SpecificationService.calculate_item_quantity(item, parent_dims)
         
         results.append(CalculatedMaterialResponse(
-            component_id=item.component_id,
-            component_name=item.component.name if item.component else "Unknown",
+            component_id=component.id if component else item.component_id,
+            component_name=component.name if component else "Unknown",
+            variant_id=variant.id if variant else None,
+            variant_name=variant.name if variant else None,
             quantity=quantity,
-            unit_of_measure=(item.component.unit_of_measure if item.component and item.component.unit_of_measure else item.unit_of_measure) or "шт",
+            unit_of_measure=(component.unit_of_measure if component and component.unit_of_measure else item.unit_of_measure) or "шт",
             notes=item.notes
         ))
         

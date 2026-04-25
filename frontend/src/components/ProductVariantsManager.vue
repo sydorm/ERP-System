@@ -139,27 +139,6 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Довжина" width="90">
-        <template #default="{ row }">
-          <el-input-number v-model="row.length_cm" :precision="1" :controls="false" size="small" class="w-full" />
-        </template>
-      </el-table-column>
-      <el-table-column label="Ширина" width="90">
-        <template #default="{ row }">
-          <el-input-number v-model="row.width_cm" :precision="1" :controls="false" size="small" class="w-full" />
-        </template>
-      </el-table-column>
-      <el-table-column label="Висота" width="90">
-        <template #default="{ row }">
-          <el-input-number v-model="row.height_cm" :precision="1" :controls="false" size="small" class="w-full" />
-        </template>
-      </el-table-column>
-      <el-table-column label="Вага (кг)" width="100">
-        <template #default="{ row }">
-          <el-input-number v-model="row.weight_kg" :precision="2" :controls="false" size="small" class="w-full" />
-        </template>
-      </el-table-column>
-
       <el-table-column prop="is_primary" label="Основний" width="100" align="center">
         <template #default="{ row }">
           <el-radio v-model="primarySku" :label="row.sku" @change="setPrimary(row)">&nbsp;</el-radio>

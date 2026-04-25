@@ -70,6 +70,10 @@ class SpecificationItem(BaseModel):
     fixed_length = Column(Numeric(10, 2), nullable=True)
     fixed_width = Column(Numeric(10, 2), nullable=True)
     
+    # Conditional material selection
+    mapping_attr = Column(String(100), nullable=True) # e.g., "ДСП"
+    material_mapping = Column(JSON, nullable=True) # e.g., {"Сонома": "uuid", "Венге": "uuid"}
+    
     # Relationships
     specification = relationship("ProductSpecification", back_populates="items")
     component = relationship("Product", foreign_keys=[component_id])

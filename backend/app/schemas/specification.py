@@ -64,6 +64,8 @@ class SpecificationItemBase(BaseModel):
     size_multiplier: Optional[Decimal] = Field(default=Decimal("1.0"))
     fixed_length: Optional[Decimal] = None
     fixed_width: Optional[Decimal] = None
+    mapping_attr: Optional[str] = None
+    material_mapping: Optional[Dict[str, Any]] = None
 
 class SpecificationItemCreate(SpecificationItemBase):
     pass
@@ -154,6 +156,8 @@ class SpecificationCalculationRequest(BaseModel):
 class CalculatedMaterialResponse(BaseModel):
     component_id: UUID
     component_name: str
+    variant_id: Optional[UUID] = None
+    variant_name: Optional[str] = None
     quantity: Decimal
     unit_of_measure: str
     notes: Optional[str] = None

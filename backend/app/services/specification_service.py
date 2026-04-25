@@ -42,6 +42,75 @@ class SpecificationService:
         return Decimal(str(round(result, 4)))
 
     @staticmethod
+    def resolve_detail_component(
+        item: SpecificationItem, 
+        parent_dimensions: Dict[str, Any],
+        db: Any
+    ) -> Optional[Any]:
+        """
+        Resolves the component (material) for a detail line based on mapping.
+        """
+        if not item.mapping_attr or not item.material_mapping:
+            return item.component
+
+        # Get the value of the mapping attribute from parent characteristics
+        custom_attrs = parent_dimensions.get('custom_attributes') or {}
+        # Try different sources for the value
+        attr_value = custom_attrs.get(item.mapping_attr)
+        
+        if not attr_value:
+            return item.component
+
+        # Find the material ID in mapping
+        material_id_str = item.material_mapping.get(str(attr_value))
+        if not material_id_str:
+            return item.component
+
+        from app.models.product import Product
+        try:
+            return db.query(Product).filter(Product.id == material_id_str).first()
+        except:
+            return item.component
+
+    @staticmethod
+    def find_matching_variant(
+        product: Any,
+        target_length: float,
+        target_width: Optional[float],
+        db: Any
+    ) -> Optional[Any]:
+        """
+        Searches for a variant of the product that matches the calculated dimensions.
+        Expects variant characteristics to contain the size (e.g. "600x320").
+        """
+        if not product or not product.id:
+            return None
+
+        from app.models.variant import ProductVariant
+        from sqlalchemy import or_
+
+        # Get all variants of this material
+        variants = db.query(ProductVariant).filter(ProductVariant.product_id == product.id).all()
+        
+        # Simple heuristic: look for variants where characteristic name or value contains the size
+        # Most common format: "600x320"
+        target_str_1 = f"{int(target_length)}x{int(target_width)}" if target_width else f"{int(target_length)}x"
+        target_str_2 = f"{int(target_width)}x{int(target_length)}" if target_width else f"x{int(target_length)}"
+        
+        for v in variants:
+            v_name = v.name or ""
+            if target_str_1 in v_name or target_str_2 in v_name:
+                return v
+            
+            # Check values
+            for val in v.values:
+                val_str = str(val.value or "")
+                if target_str_1 in val_str or target_str_2 in val_str:
+                    return v
+                    
+        return None
+
+    @staticmethod
     def _calculate_interpolation(item: SpecificationItem, w: float, h: float, l: float) -> float:
         dp = item.calc_data_points
         if not dp or not isinstance(dp, dict):

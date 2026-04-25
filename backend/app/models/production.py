@@ -83,6 +83,7 @@ class ProductionOrderMaterial(BaseModel):
     
     production_order_id = Column(UUID(as_uuid=True), ForeignKey("production_orders.id", ondelete="CASCADE"), nullable=False)
     component_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="RESTRICT"), nullable=False)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="SET NULL"), nullable=True)
     
     # Grouping info (e.g., from which line this requirement came from, optional if we aggregate)
     # But usually it's just aggregated for the whole document
