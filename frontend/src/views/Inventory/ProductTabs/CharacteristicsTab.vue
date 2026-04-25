@@ -72,10 +72,46 @@
                   {{ formatDisplayValue(char) }}
                 </el-tag>
 
-                <!-- Empty state hint -->
-                <span v-if="!char.option_id && !char.text_value && !char.bool_value" class="empty-val-hint">
-                  значення не задано
-                </span>
+                <!-- Value Picker (Dropdown) - Shown when empty or as a quick way to add -->
+                <el-select
+                  v-if="['SELECT', 'COLOR', 'DIMENSIONS'].includes(getAttrType(char)) && !char.option_id && !char.text_value"
+                  v-model="char.option_id"
+                  placeholder="Оберіть значення..."
+                  size="small"
+                  filterable
+                  @change="onOptionChange(char)"
+                  class="compact-inline-select"
+                >
+                   <el-option
+                      v-for="opt in getAttrOptions(char)"
+                      :key="opt.id"
+                      :label="opt.value"
+                      :value="opt.id"
+                    >
+                      <div class="option-item-flex">
+                        <span v-if="opt.color_code" class="dot-swatch-mini" :style="{ background: opt.color_code }"></span>
+                        <span>{{ opt.value }}</span>
+                      </div>
+                    </el-option>
+                </el-select>
+
+                <!-- Manual Input for Text/Number/Boolean if no option picked -->
+                <el-input 
+                  v-else-if="getAttrType(char) === 'TEXT' && !char.text_value"
+                  v-model="char.text_value"
+                  placeholder="Впишіть..."
+                  size="small"
+                  class="compact-inline-input"
+                  @change="emitUpdate"
+                />
+
+                <el-checkbox
+                  v-else-if="getAttrType(char) === 'BOOLEAN' && !char.bool_value"
+                  v-model="char.bool_value"
+                  @change="emitUpdate"
+                >
+                  Так
+                </el-checkbox>
               </div>
             </div>
           </div>
@@ -793,6 +829,15 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 250px;
+}
+
+.compact-inline-select {
+  width: 180px;
+}
+
+.compact-inline-input {
+  width: 140px;
 }
 
 .empty-val-hint {

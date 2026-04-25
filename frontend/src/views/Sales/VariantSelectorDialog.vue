@@ -37,23 +37,43 @@
               :label="attr.name"
               class="selection-item"
             >
-              <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <el-input-number
-                  v-model="getDimValue(attr.id).w"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Ширина"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-sep">×</span>
-                <el-input-number
-                  v-model="getDimValue(attr.id).h"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Висота"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-unit">мм</span>
+              <div v-if="attr.type === 'DIMENSIONS'" class="dims-container-vertical">
+                <el-select
+                  v-model="selections[attr.id]"
+                  placeholder="Оберіть варіант..."
+                  style="width: 100%"
+                  filterable
+                  clearable
+                  @change="handleDimOptionChange(attr.id)"
+                  class="premium-select mb-2"
+                >
+                  <el-option
+                    v-for="opt in getAvailableOptions(attr.id)"
+                    :key="opt.id"
+                    :label="opt.value"
+                    :value="opt.id"
+                  />
+                </el-select>
+                
+                <div class="dims-row">
+                  <span class="manual-hint">або вручну:</span>
+                  <el-input-number
+                    v-model="getDimValue(attr.id).w"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Ширина"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id, true)"
+                  />
+                  <span class="dims-sep">×</span>
+                  <el-input-number
+                    v-model="getDimValue(attr.id).h"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Висота"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id, true)"
+                  />
+                  <span class="dims-unit">мм</span>
+                </div>
               </div>
 
               <el-select
@@ -95,23 +115,41 @@
               :label="attr.name"
               class="selection-item"
             >
-              <div v-if="attr.type === 'DIMENSIONS'" class="dims-row">
-                <el-input-number
-                  v-model="getDimValue(attr.id).w"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Ширина"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-sep">×</span>
-                <el-input-number
-                  v-model="getDimValue(attr.id).h"
-                  :min="0" :precision="0" :controls="false"
-                  placeholder="Висота"
-                  class="dim-input"
-                  @change="handleAttributeChange(attr.id)"
-                />
-                <span class="dims-unit">мм</span>
+              <div v-if="attr.type === 'DIMENSIONS'" class="dims-container-vertical">
+                <el-select
+                  v-model="selections[attr.id]"
+                  placeholder="Виберіть..."
+                  style="width: 100%"
+                  filterable
+                  clearable
+                  @change="handleDimOptionChange(attr.id)"
+                  class="premium-select mb-2"
+                >
+                  <el-option
+                    v-for="opt in getAvailableOptions(attr.id)"
+                    :key="opt.id"
+                    :label="opt.value"
+                    :value="opt.id"
+                  />
+                </el-select>
+                <div class="dims-row">
+                  <el-input-number
+                    v-model="getDimValue(attr.id).w"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Ширина"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id, true)"
+                  />
+                  <span class="dims-sep">×</span>
+                  <el-input-number
+                    v-model="getDimValue(attr.id).h"
+                    :min="0" :precision="0" :controls="false"
+                    placeholder="Висота"
+                    class="dim-input"
+                    @change="handleAttributeChange(attr.id, true)"
+                  />
+                  <span class="dims-unit">мм</span>
+                </div>
               </div>
 
               <el-input 
