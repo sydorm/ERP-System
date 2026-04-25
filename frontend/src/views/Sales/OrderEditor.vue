@@ -137,13 +137,13 @@
                 </el-table-column>
                 <el-table-column label="Ціна" width="120">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.price" :min="0" :precision="2" :controls="false" @change="updateLineTotal(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
 
                 <el-table-column label="Сума" width="130">
                   <template #default="scope">
-                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" @change="updateLinePrice(scope.row)" class="erp-cell-input num" style="width:100%" />
+                    <el-input-number size="small" v-model="scope.row.total" :min="0" :precision="2" :controls="false" @change="updateLinePrice(scope.row)" class="erp-cell-input num" style="width:100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="Специфікація" min-width="120">
@@ -1303,8 +1303,9 @@ watch(() => route.params.id, (newId, oldId) => {
 .erp-cell-input :deep(.el-input__wrapper:focus-within), .erp-cell-input :deep(.el-input__wrapper:hover) {
   border-color: #dcdfe6 !important; background-color: #fff !important;
 }
-.erp-cell-input :deep(.el-input__inner) { font-size: 13px !important; height: 22px !important; line-height: 22px !important; }
 .erp-cell-input.num :deep(.el-input__inner) { text-align: right !important; }
+
+
 .erp-cell-trigger { width: 100%; height: 24px; display: flex; align-items: center; font-size: 13px; cursor: pointer; }
 .virtual { color: #67c23a; }
 .placeholder { color: #c0c4cc; }
