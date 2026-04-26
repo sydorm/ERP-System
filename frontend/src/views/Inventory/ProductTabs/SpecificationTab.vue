@@ -429,44 +429,7 @@
               <div class="text-xs text-gray-400 mt-1" style="line-height: 1.2;">К-сть = Вимір × Коефіцієнт</div>
             </el-form-item>
 
-            <el-form-item label="Своя математична формула" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
-              <el-input v-model="activeCalcItem.calc_formula" placeholder="(W * H) / 10000 * {Товщина_ДСП}" />
-              <div class="mt-2 w-full">
-                <span class="text-xs text-gray-500 mb-1 block">Доступні змінні (натисніть щоб додати у формулу):</span>
-                <div class="flex flex-wrap gap-2">
-                  <el-tag
-                    size="small"
-                    type="primary"
-                    class="cursor-pointer"
-                    effect="light"
-                    @click="addVarToFormula('W')"
-                  >W (Ширина)</el-tag>
-                  <el-tag
-                    size="small"
-                    type="primary"
-                    class="cursor-pointer"
-                    effect="light"
-                    @click="addVarToFormula('H')"
-                  >H (Висота)</el-tag>
-                  <el-tag
-                    size="small"
-                    type="primary"
-                    class="cursor-pointer"
-                    effect="light"
-                    @click="addVarToFormula('L')"
-                  >L (Глибина)</el-tag>
-                  <el-tag
-                    v-for="(attr, idx) in productAttributes" 
-                    :key="idx"
-                    size="small"
-                    class="cursor-pointer"
-                    @click="addAttrToFormula(attr.name)"
-                  >
-                    {{ attr.name }}
-                  </el-tag>
-                </div>
-              </div>
-            </el-form-item>
+            <!-- Temporarily disabled formula block -->
             <!-- Temporarily disabled mapping block -->
             
             <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
