@@ -1,4 +1,4 @@
-<template> <!-- v1.6-FORCE-PULL -->
+<template>
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
@@ -450,7 +450,6 @@
                      <label class="text-xs font-bold text-indigo-900 uppercase">Зв'язок характеристик</label>
                      <el-button type="primary" size="small" @click="addMappingLine" plain :icon="Plus">Додати зв'язок</el-button>
                   </div>
-                  
                   <div class="mapping-rows space-y-3">
                      <div v-for="(m, idx) in activeCalcItem.characteristic_mappings" :key="idx" class="flex items-center gap-3">
                         <div class="flex-1">
@@ -459,7 +458,7 @@
                               <el-option v-for="a in componentAttributes" :key="a.id" :label="a.name" :value="a.id" />
                            </el-select>
                         </div>
-                        <div class="text-indigo-400 mt-5">➔</div>
+                        <div class="text-indigo-400 mt-5">-></div>
                         <div class="flex-1">
                            <label class="text-[10px] text-gray-500 block mb-1">Характеристика виробу</label>
                            <el-select v-model="m.parent_characteristic_id" size="small" class="w-full" placeholder="Виберіть...">
