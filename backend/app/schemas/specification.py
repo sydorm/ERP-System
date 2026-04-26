@@ -43,6 +43,20 @@ class SpecificationCalculationResponse(SpecificationCalculationBase):
     class Config:
         from_attributes = True
 
+class BOMLineCharacteristicMappingBase(BaseModel):
+    component_characteristic_id: UUID
+    parent_characteristic_id: UUID
+
+class BOMLineCharacteristicMappingCreate(BOMLineCharacteristicMappingBase):
+    pass
+
+class BOMLineCharacteristicMappingResponse(BOMLineCharacteristicMappingBase):
+    id: UUID
+    bom_line_id: UUID
+
+    class Config:
+        from_attributes = True
+
 class SpecificationItemBase(BaseModel):
     component_id: UUID
     quantity: Decimal = Field(default=Decimal("0.0"), ge=0)
@@ -164,16 +178,3 @@ class CalculatedMaterialResponse(BaseModel):
     stock_quantity: Optional[Decimal] = None
     notes: Optional[str] = None
 
-class BOMLineCharacteristicMappingBase(BaseModel):
-    component_characteristic_id: UUID
-    parent_characteristic_id: UUID
-
-class BOMLineCharacteristicMappingCreate(BOMLineCharacteristicMappingBase):
-    pass
-
-class BOMLineCharacteristicMappingResponse(BOMLineCharacteristicMappingBase):
-    id: UUID
-    bom_line_id: UUID
-
-    class Config:
-        from_attributes = True
