@@ -211,9 +211,9 @@
 
         <el-form-item v-else label="Розміри (Ш × В, мм)">
           <div class="flex items-center gap-2">
-            <el-input-number v-model="optForm.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" class="w-full" />
+            <el-input-number v-model="optForm.w" :min="0" :precision="0" :controls="false" placeholder="Ширина" class="w-full" @keyup.enter="submitOptForm" />
             <span class="text-slate-400 font-bold">×</span>
-            <el-input-number v-model="optForm.h" :min="0" :precision="0" :controls="false" placeholder="Висота" class="w-full" />
+            <el-input-number v-model="optForm.h" :min="0" :precision="0" :controls="false" placeholder="Висота" class="w-full" @keyup.enter="submitOptForm" />
             <span class="text-slate-400">мм</span>
           </div>
         </el-form-item>
@@ -221,7 +221,7 @@
         <el-form-item v-if="activeAttrForOpt?.type === 'COLOR'" label="Колір (HEX)" prop="color_code">
           <div class="flex items-center gap-4">
              <el-color-picker v-model="optForm.color_code" show-alpha />
-             <el-input v-model="optForm.color_code" class="w-28" />
+             <el-input v-model="optForm.color_code" class="w-28" @keyup.enter="submitOptForm" />
           </div>
         </el-form-item>
       </el-form>
@@ -428,7 +428,12 @@ const submitOptForm = async () => {
         
         await api.post(`/api/v1/attributes/${activeAttrForOpt.value.id}/options`, payload)
         ElMessage.success('Значення додано')
-        optForm.value = '' // reset input for quick mass entry
+        
+        // Reset form for quick mass entry
+        optForm.value = ''
+        optForm.w = null
+        optForm.h = null
+        optForm.color_code = '#4f46e5'
         
         // Refresh options list in background
         await refreshOptionsFor(activeAttrForOpt.value.id)

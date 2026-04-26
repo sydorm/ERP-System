@@ -99,7 +99,7 @@
               <el-row :gutter="32">
                 <el-col :span="14">
                   <el-form-item label="Префікс">
-                    <el-input v-model="seqForm.prefix" placeholder="напр. ORD-" size="large" />
+                    <el-input v-model="seqForm.prefix" placeholder="напр. ORD-" size="large" @keyup.enter="saveSequence" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="10">
@@ -225,7 +225,7 @@
     <el-dialog v-model="dialogVisible" :title="isEditMode ? 'Редагувати' : 'Додати'" width="500px" class="premium-dialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="Назва" prop="name">
-          <el-input v-model="form.name" placeholder="Введіть назву" />
+          <el-input v-model="form.name" placeholder="Введіть назву" @keyup.enter="submitForm" />
         </el-form-item>
         
         <el-form-item label="Стандартна одиниця (Системний код)" prop="code" v-if="activeDictionary === 'UOM'">
@@ -244,7 +244,7 @@
         </el-form-item>
         
         <el-form-item label="Системний код" prop="code" v-else>
-          <el-input v-model="form.code" placeholder="Унікальний ідентифікатор" :disabled="isEditMode && form.is_fixed" />
+          <el-input v-model="form.code" placeholder="Унікальний ідентифікатор" :disabled="isEditMode && form.is_fixed" @keyup.enter="submitForm" />
         </el-form-item>
 
         <el-form-item label="Опис (опціонально)">
