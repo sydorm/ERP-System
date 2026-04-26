@@ -1,7 +1,7 @@
 """add variants pricing schema
 
 Revision ID: add_variants_pricing_schema
-Revises: add_manufacturing_product_params
+Revises: add_mfg_product_params
 Create Date: 2026-04-25 16:25:00.000000
 
 """

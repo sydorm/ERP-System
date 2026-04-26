@@ -1,6 +1,6 @@
 """add dimension_format to attributes
 
-Revision ID: add_dimension_format_to_attributes
+Revision ID: add_dim_format_to_attr
 Revises: add_attribute_values_to_lines
 Create Date: 2026-04-25 23:35:00.000000
 

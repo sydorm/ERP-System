@@ -1,6 +1,6 @@
 """add manufacturing product params
 
-Revision ID: add_manufacturing_product_params
+Revision ID: add_mfg_product_params
 Revises: add_attendance_detailed_hours
 Create Date: 2026-04-25 16:20:00.000000
 

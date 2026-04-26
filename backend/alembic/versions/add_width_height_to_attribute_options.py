@@ -1,6 +1,6 @@
 """add width and height to attribute_options
 
-Revision ID: add_width_height_to_attribute_options
+Revision ID: add_width_height_attr_opts
 Revises: add_attribute_values_to_lines
 Create Date: 2026-04-26 00:10:00.000000
 
