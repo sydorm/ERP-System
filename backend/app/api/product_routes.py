@@ -166,9 +166,37 @@ async def create_product(
     return product
 
 
+@router.get("/products/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get a single product by ID.
+    """
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.company_id == current_user.company_id,
+        Product.is_deleted == False
+    ).first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+        
+    # Enrich with stock balance
+    balances = PostingService.get_stock_balances(db, current_user.company_id, [product_id])
+    product.stock_balance = balances.get(str(product_id), 0.0)
+    
+    return product
+
+
 @router.put("/products/{product_id}", response_model=ProductResponse)
 async def update_product(
-    product_id: str,
+    product_id: UUID,
     product_in: ProductUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -434,7 +462,7 @@ async def get_product_production_stats(
 
 @router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(
-    product_id: str,
+    product_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
