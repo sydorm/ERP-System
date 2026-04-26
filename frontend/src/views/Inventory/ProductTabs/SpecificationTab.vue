@@ -452,17 +452,14 @@
                     effect="light"
                     @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'L'"
                   >L (Глибина)</el-tag>
-                  <!-- Динамічні характеристики -->
                   <el-tag
-                    v-for="attr in productAttributes" 
-                    :key="attr.id"
+                    v-for="(attr, idx) in productAttributes" 
+                    :key="idx"
                     size="small"
-                    type="info"
                     class="cursor-pointer"
-                    effect="plain"
                     @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + '{' + attr.name + '}'"
                   >
-                    {{ '{' + attr.name + '}' }}
+                    {{ attr.name }}
                   </el-tag>
                 </div>
               </div>
