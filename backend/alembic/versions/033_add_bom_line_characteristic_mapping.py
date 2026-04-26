@@ -1,6 +1,6 @@
 """add bom line characteristic mapping
 
-Revision ID: 033_add_bom_line_characteristic_mapping
+Revision ID: 033_add_bom_mapping
 Revises: merge_purchasing_resources
 Create Date: 2026-04-26 17:20:00.000000
 
