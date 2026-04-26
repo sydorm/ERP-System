@@ -4,7 +4,7 @@ from .token import Token, TokenData
 from .company import (
     CompanyCreate, CompanyResponse, CompanyRegistrationRequest, CompanyType
 )
-from .product import ProductCreate, ProductUpdate, ProductResponse
+from .product import ProductCreate, ProductUpdate, ProductResponse, ProductAttributeLight
 from .dictionary import DictionaryItemCreate, DictionaryItemUpdate, DictionaryItemResponse
 from .counterparty import CounterpartyCreate, CounterpartyUpdate, CounterpartyResponse
 from .order import OrderCreate, OrderUpdate, OrderResponse, OrderLineCreate, OrderLineResponse
@@ -26,6 +26,7 @@ __all__ = [
     "ProductCreate",
     "ProductUpdate",
     "ProductResponse",
+    "ProductAttributeLight",
     "DictionaryItemCreate",
     "DictionaryItemUpdate",
     "DictionaryItemResponse",
