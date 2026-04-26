@@ -1,4 +1,4 @@
-<template>
+<template> <!-- v1.4-CLEAN -->
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
@@ -332,7 +332,7 @@
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
                 <!-- Three separate dimension sub-tables in a grid -->
                 <div class="dim-grid">
-                <div v-for="dim in interpDims" :key="dim.key" :class="['dim-section', `dim-${dim.key}`]">
+                <div v-for="dim in interpDims" :key="dim.key" :class="'dim-section dim-' + dim.key">
                     <div class="dim-header-box">
                         <div class="dim-title-group">
                             <span class="dim-icon">{{ dim.key.toUpperCase() }}</span>
@@ -644,7 +644,13 @@ const getPoints = (item, key) => {
 
 // Helper: safely get or init the dim config for a given dimension key
 const getDimConfig = (item, key) => {
-    if (!item.calc_dim_config) item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } }
+    if (!item.calc_dim_config) {
+        item.calc_dim_config = { 
+            h: { char_name: '', default: 0, unit: 'см', waste: 0 }, 
+            w: { char_name: '', default: 0, unit: 'см', waste: 0 }, 
+            l: { char_name: '', default: 0, unit: 'см', waste: 0 } 
+        }
+    }
     if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'см', waste: 0 }
     if (!item.calc_dim_config[key].unit) item.calc_dim_config[key].unit = 'см'
     if (item.calc_dim_config[key].waste === undefined) item.calc_dim_config[key].waste = 0
@@ -688,7 +694,8 @@ const calculateQuantityInternal = (item, includeWaste = true) => {
             else {
                 for (let i = 0; i < sorted.length - 1; i++) {
                     if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) {
-                        dimResult = interp(sorted[i], sorted[i + 1], dimVal); break
+                        dimResult = interp(sorted[i], sorted[i + 1], dimVal)
+                        break
                     }
                 }
             }
