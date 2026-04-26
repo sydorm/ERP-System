@@ -47,8 +47,8 @@ def upgrade() -> None:
         for code, name, icon, order in initial_types:
             item_id = str(uuid.uuid4())
             connection.execute(sa.text(
-                "INSERT INTO dictionary_items (id, company_id, category, type, code, name, icon, \"order\", is_active, is_fixed, created_at, updated_at) "
-                "VALUES (:id, :company_id, 'COMMUNICATION_TYPE', 'COMMUNICATION_TYPE', :code, :name, :icon, :order, true, false, now(), now())"
+                "INSERT INTO dictionary_items (id, company_id, category, type, code, name, icon, \"order\", sort_order, is_active, is_fixed, created_at, updated_at) "
+                "VALUES (:id, :company_id, 'COMMUNICATION_TYPE', 'COMMUNICATION_TYPE', :code, :name, :icon, :order, :order, true, false, now(), now())"
             ), {
                 "id": item_id,
                 "company_id": company_id,

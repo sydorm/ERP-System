@@ -37,8 +37,8 @@ def upgrade():
             item_id = str(uuid.uuid4())
             connection.execute(
                 text(
-                    "INSERT INTO dictionary_items (id, company_id, category, type, code, name, icon, color, \"order\", is_active, is_fixed, created_at, updated_at) "
-                    "VALUES (:id, :company_id, 'CONTACT_RESULT', 'CONTACT_RESULT', :code, :name, :icon, :color, :order, true, false, now(), now())"
+                    "INSERT INTO dictionary_items (id, company_id, category, type, code, name, icon, color, \"order\", sort_order, is_active, is_fixed, created_at, updated_at) "
+                    "VALUES (:id, :company_id, 'CONTACT_RESULT', 'CONTACT_RESULT', :code, :name, :icon, :color, :order, :order, true, false, now(), now())"
                 ),
                 {
                     "id": item_id,
