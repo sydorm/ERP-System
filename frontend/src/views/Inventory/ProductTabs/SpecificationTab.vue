@@ -123,7 +123,15 @@
                           controls-position="right"
                         />
                         <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
-                          <el-button :type="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'success' : 'default'" :icon="Setting" circle @click="openCalcDialog(scope.row)" />
+                                              <div class="flex items-center gap-1">
+                        <el-button 
+                            :type="hasMapping(scope.row) ? 'success' : (scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'primary' : 'default')" 
+                            :icon="Setting" 
+                            circle 
+                            @click="openCalcDialog(scope.row)" 
+                        />
+                        <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
                         </el-tooltip>
                       </div>
                       <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="calc-breakdown text-[10px] text-gray-500 leading-tight">
@@ -312,6 +320,7 @@
                 <el-option label="Площа (W * H)" value="area" />
                 <el-option label="Об'єм (W * H * L)" value="volume" />
                 <el-option label="Своя формула" value="formula" />
+                <el-option label="Характеристики виробу" value="characteristic_mapping" />
               </el-select>
             </el-form-item>
             
@@ -459,6 +468,65 @@
                 </div>
               </div>
             </el-form-item>
+
+            <div v-if="activeCalcItem.calc_type === 'characteristic_mapping'" class="mt-4 border rounded p-4 bg-gray-50">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <el-icon class="text-primary"><Setting /></el-icon>
+                        <span class="font-bold">Мапінг характеристик</span>
+                    </div>
+                    <el-button type="primary" size="small" :icon="Plus" @click="addMappingLine">Додати зв'язок</el-button>
+                </div>
+
+                <div v-if="loadingMappingAttrs" class="flex justify-center py-4">
+                    <el-skeleton :rows="2" animated />
+                </div>
+                <div v-else-if="componentAttributes.length === 0" class="text-center py-4 text-gray-500">
+                    У компонента немає доступних характеристик для мапінгу.
+                </div>
+                <div v-else>
+                    <el-table :data="activeCalcItem.characteristic_mappings || []" size="small" border>
+                        <el-table-column label="Характеристика компонента">
+                            <template #default="scope">
+                                <el-select v-model="scope.row.component_characteristic_id" placeholder="Виберіть..." class="w-full">
+                                    <el-option 
+                                        v-for="attr in componentAttributes" 
+                                        :key="attr.id" 
+                                        :label="attr.name" 
+                                        :value="attr.id" 
+                                    />
+                                </el-select>
+                            </template>
+                        </el-table-column>
+                        <el-table-column align="center" width="50">
+                            <template #default>
+                                <el-icon><Back /></el-icon>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="Характеристика батьківського виробу">
+                            <template #default="scope">
+                                <el-select v-model="scope.row.parent_characteristic_id" placeholder="Виберіть..." class="w-full">
+                                    <el-option 
+                                        v-for="attr in parentAttributes" 
+                                        :key="attr.id" 
+                                        :label="attr.name" 
+                                        :value="attr.id" 
+                                    />
+                                </el-select>
+                            </template>
+                        </el-table-column>
+                        <el-table-column width="50" align="center">
+                            <template #default="scope">
+                                <el-button type="danger" link :icon="Delete" @click="removeMappingLine(scope.$index)" />
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="mt-3 text-xs text-gray-500 italic">
+                        При плануванні виробництва система автоматично вибере той варіант компонента, 
+                        значення характеристики якого збігається зі значенням характеристики батьківського виробу.
+                    </div>
+                </div>
+            </div>
             
             <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
                 Автоматичний розрахунок матеріалу на основі фізичних розмірів товару.
@@ -625,6 +693,44 @@ const interpDims = [
     { key: 'w', label: 'Ширина (W)' },
     { key: 'l', label: 'Довжина (L)' },
 ]
+
+const hasMapping = (item) => {
+    return item.calc_type === 'characteristic_mapping' && item.characteristic_mappings && item.characteristic_mappings.length > 0
+}
+
+const parentAttributes = ref([])
+const componentAttributes = ref([])
+const loadingMappingAttrs = ref(false)
+
+const loadAttributesForMapping = async (parentId, componentId) => {
+    loadingMappingAttrs.value = true
+    try {
+        const [parentRes, componentRes] = await Promise.all([
+            api.get(`/api/v1/products/${parentId}/attributes`),
+            api.get(`/api/v1/products/${componentId}/attributes`)
+        ])
+        parentAttributes.value = parentRes.data || []
+        componentAttributes.value = componentRes.data || []
+    } catch (e) {
+        ElMessage.error('Помилка завантаження атрибутів для мапінгу')
+    } finally {
+        loadingMappingAttrs.value = false
+    }
+}
+
+const addMappingLine = () => {
+    if (!activeCalcItem.value.characteristic_mappings) {
+        activeCalcItem.value.characteristic_mappings = []
+    }
+    activeCalcItem.value.characteristic_mappings.push({
+        component_characteristic_id: null,
+        parent_characteristic_id: null
+    })
+}
+
+const removeMappingLine = (index) => {
+    activeCalcItem.value.characteristic_mappings.splice(index, 1)
+}
 
 // Helper: safely get the points array for a given dimension key
 const getPoints = (item, key) => {
@@ -984,6 +1090,12 @@ const openCalcDialog = (item) => {
         }
     }
     
+    }
+    
+    if (item.calc_type === 'characteristic_mapping') {
+        loadAttributesForMapping(props.productId, item.component_id)
+    }
+    
     calcDialogOpen.value = true
 
     // Ensure calc_dim_config exists
@@ -1007,7 +1119,13 @@ const openCalcDialog = (item) => {
 }
 
 const handleTypeChange = (item) => {
-    item.is_calculated = item.calc_type !== 'fixed'
+    if (item.calc_type === 'interpolation' && (!item.calc_data_points || Array.isArray(item.calc_data_points))) {
+        item.calc_data_points = { h: [], w: [], l: [] }
+    }
+    if (item.calc_type === 'characteristic_mapping') {
+        if (!item.characteristic_mappings) item.characteristic_mappings = []
+        loadAttributesForMapping(props.productId, item.component_id)
+    }
 }
 
 const addPoint = (item, dimKey) => {

@@ -6,12 +6,14 @@ from uuid import UUID
 from app.api.dependencies import get_db, get_current_user
 from app.models.product import Product
 from app.models.variant import ProductVariant
-from app.models.specification import ProductSpecification, SpecificationItem, ProductSpecificationStage
+from app.models.specification import ProductSpecification, SpecificationItem, ProductSpecificationStage, BOMLineCharacteristicMapping
 from app.models.user import User
 from app.schemas.specification import (
     ProductSpecificationCreate,
     ProductSpecificationResponse,
-    ProductSpecificationUpdate
+    ProductSpecificationUpdate,
+    BOMLineCharacteristicMappingCreate,
+    BOMLineCharacteristicMappingResponse
 )
 
 from sqlalchemy.orm import Session, joinedload
@@ -86,6 +88,15 @@ async def create_specification(
             material_mapping=item_in.material_mapping
         )
         db.add(db_item)
+        db.flush()
+        if hasattr(item_in, 'characteristic_mappings') and item_in.characteristic_mappings:
+            for m_in in item_in.characteristic_mappings:
+                db_m = BOMLineCharacteristicMapping(
+                    bom_line_id=db_item.id,
+                    component_characteristic_id=m_in.component_characteristic_id,
+                    parent_characteristic_id=m_in.parent_characteristic_id
+                )
+                db.add(db_m)
 
     # Add stages
     for stage_in in spec_in.stages:
@@ -148,6 +159,15 @@ async def update_specification(
                 material_mapping=item_in.material_mapping
             )
             db.add(db_item)
+            db.flush()
+            if hasattr(item_in, 'characteristic_mappings') and item_in.characteristic_mappings:
+                for m_in in item_in.characteristic_mappings:
+                    db_m = BOMLineCharacteristicMapping(
+                        bom_line_id=db_item.id,
+                        component_characteristic_id=m_in.component_characteristic_id,
+                        parent_characteristic_id=m_in.parent_characteristic_id
+                    )
+                    db.add(db_m)
 
     # Handle stages logic
     if spec_in.stages is not None:
@@ -263,3 +283,47 @@ async def calculate_specification_materials(
         ))
         
     return results
+    return results
+
+@router.get("/bom-lines/{line_id}/characteristic-mapping", response_model=List[BOMLineCharacteristicMappingResponse])
+async def get_bom_line_mapping(
+    line_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get characteristic mapping for a specific BOM line."""
+    return db.query(BOMLineCharacteristicMapping).filter(
+        BOMLineCharacteristicMapping.bom_line_id == line_id
+    ).all()
+
+@router.post("/bom-lines/{line_id}/characteristic-mapping", response_model=List[BOMLineCharacteristicMappingResponse])
+async def save_bom_line_mapping(
+    line_id: UUID,
+    mappings: List[BOMLineCharacteristicMappingCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Save characteristic mappings for a BOM line (replaces existing)."""
+    # Verify line exists
+    line = db.query(SpecificationItem).filter(SpecificationItem.id == line_id).first()
+    if not line:
+        raise HTTPException(status_code=404, detail="BOM line not found")
+
+    # Delete existing
+    db.query(BOMLineCharacteristicMapping).filter(BOMLineCharacteristicMapping.bom_line_id == line_id).delete()
+    
+    # Add new
+    db_mappings = []
+    for m in mappings:
+        db_m = BOMLineCharacteristicMapping(
+            bom_line_id=line_id,
+            component_characteristic_id=m.component_characteristic_id,
+            parent_characteristic_id=m.parent_characteristic_id
+        )
+        db.add(db_m)
+        db_mappings.append(db_m)
+        
+    db.commit()
+    for m in db_mappings:
+        db.refresh(m)
+    return db_mappings

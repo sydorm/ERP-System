@@ -120,3 +120,12 @@ class ProductResponse(ProductBase):
 
     class Config:
         from_attributes = True
+
+class ProductAttributeLight(BaseModel):
+    id: UUID
+    name: str
+    type: str
+    options: List[Dict[str, Any]] = []
+
+    class Config:
+        from_attributes = True

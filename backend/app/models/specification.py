@@ -102,3 +102,19 @@ class ProductSpecificationStage(BaseModel):
 
     def __repr__(self):
         return f"<SpecStage {self.stage_id} {self.duration_hours}h>"
+
+class BOMLineCharacteristicMapping(BaseModel):
+    """
+    Maps a characteristic of the component to a characteristic of the parent product.
+    Used for automatic variant selection in BOM.
+    """
+    __tablename__ = "bom_line_characteristic_mappings"
+    
+    bom_line_id = Column(UUID(as_uuid=True), ForeignKey("specification_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    component_characteristic_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
+    parent_characteristic_id = Column(UUID(as_uuid=True), ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False)
+    
+    # Relationships
+    bom_line = relationship("SpecificationItem", backref="characteristic_mappings")
+    component_characteristic = relationship("Attribute", foreign_keys=[component_characteristic_id])
+    parent_characteristic = relationship("Attribute", foreign_keys=[parent_characteristic_id])

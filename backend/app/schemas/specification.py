@@ -68,7 +68,7 @@ class SpecificationItemBase(BaseModel):
     material_mapping: Optional[Dict[str, Any]] = None
 
 class SpecificationItemCreate(SpecificationItemBase):
-    pass
+    characteristic_mappings: Optional[List[BOMLineCharacteristicMappingCreate]] = []
 
 class ComponentBasicInfo(BaseModel):
     id: UUID
@@ -82,6 +82,7 @@ class ComponentBasicInfo(BaseModel):
 class SpecificationItemResponse(SpecificationItemBase):
     id: UUID
     component: Optional[ComponentBasicInfo] = None
+    characteristic_mappings: List[BOMLineCharacteristicMappingResponse] = []
     
     class Config:
         from_attributes = True
@@ -162,3 +163,17 @@ class CalculatedMaterialResponse(BaseModel):
     unit_of_measure: str
     stock_quantity: Optional[Decimal] = None
     notes: Optional[str] = None
+
+class BOMLineCharacteristicMappingBase(BaseModel):
+    component_characteristic_id: UUID
+    parent_characteristic_id: UUID
+
+class BOMLineCharacteristicMappingCreate(BOMLineCharacteristicMappingBase):
+    pass
+
+class BOMLineCharacteristicMappingResponse(BOMLineCharacteristicMappingBase):
+    id: UUID
+    bom_line_id: UUID
+
+    class Config:
+        from_attributes = True

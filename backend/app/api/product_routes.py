@@ -7,7 +7,8 @@ from sqlalchemy import or_
 from app.db.session import get_db
 from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType
 from app.models.variant import ProductVariant, VariantValue
-from app.schemas import ProductCreate, ProductUpdate, ProductResponse
+from app.models.attribute import Attribute, CategoryAttribute
+from app.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductAttributeLight
 from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService
 
@@ -243,26 +244,50 @@ async def update_product(
     db.refresh(product)
     return product
 
-@router.get("/products/{product_id}", response_model=ProductResponse)
-async def get_product(
+    return product
+
+@router.get("/products/{product_id}/attributes", response_model=List[ProductAttributeLight])
+async def get_product_attributes(
     product_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Get a single product with variants and specifications.
+    Get a light list of attributes relevant to this product.
+    Includes attributes linked via category and global attributes.
     """
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.company_id == current_user.company_id
-    ).first()
-    
+    product = db.query(Product).filter(Product.id == product_id, Product.company_id == current_user.company_id).first()
     if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found"
-        )
-    return product
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # 1. Attributes linked specifically via category
+    category_attrs = db.query(Attribute).join(CategoryAttribute).filter(
+        CategoryAttribute.category_code == product.category,
+        Attribute.company_id == current_user.company_id,
+        Attribute.is_archived == False
+    ).all()
+    
+    # 2. Global attributes (those with NO category links)
+    global_attrs = db.query(Attribute).filter(
+        Attribute.company_id == current_user.company_id,
+        Attribute.is_archived == False,
+        ~Attribute.categories.any()
+    ).all()
+    
+    # Merge and format
+    # Using a dict to avoid duplicates if any
+    all_attrs_map = {a.id: a for a in (category_attrs + global_attrs)}
+    
+    results = []
+    for attr in all_attrs_map.values():
+        results.append({
+            "id": attr.id,
+            "name": attr.name,
+            "type": attr.type.value if hasattr(attr.type, 'value') else str(attr.type),
+            "options": [{"id": o.id, "value": o.value} for o in attr.options]
+        })
+        
+    return results
 
 @router.get("/products/{product_id}/calculate-cost")
 async def calculate_product_cost(
