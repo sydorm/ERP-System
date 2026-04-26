@@ -18,7 +18,13 @@ depends_on = None
 
 def upgrade() -> None:
     # Adding bank_account_id to orders table
-    op.add_column('orders', sa.Column('bank_account_id', sa.UUID(), sa.ForeignKey('bank_accounts.id', ondelete='SET NULL'), nullable=True))
+    conn = op.get_bind()
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='orders' AND column_name='bank_account_id'"
+    ))
+    if not res.first():
+        op.add_column('orders', sa.Column('bank_account_id', sa.UUID(), sa.ForeignKey('bank_accounts.id', ondelete='SET NULL'), nullable=True))
 
 
 def downgrade() -> None:
