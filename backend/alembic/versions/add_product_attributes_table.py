@@ -17,20 +17,24 @@ depends_on = None
 
 
 def upgrade():
-    # Create product_attributes table
-    op.create_table(
-        'product_attributes',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('product_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('attribute_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('generates_sku', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.ForeignKeyConstraint(['attribute_id'], ['attributes.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_product_attributes_id'), 'product_attributes', ['id'], unique=False)
+    conn = op.get_bind()
+    # Check if table exists
+    res = conn.execute(sa.text("SELECT table_name FROM information_schema.tables WHERE table_name='product_attributes'"))
+    if not res.first():
+        # Create product_attributes table
+        op.create_table(
+            'product_attributes',
+            sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('product_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('attribute_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('generates_sku', sa.Boolean(), nullable=False, server_default='true'),
+            sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+            sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+            sa.ForeignKeyConstraint(['attribute_id'], ['attributes.id'], ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_product_attributes_id'), 'product_attributes', ['id'], unique=False)
 
 
 def downgrade():

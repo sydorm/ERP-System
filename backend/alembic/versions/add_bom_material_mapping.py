@@ -16,8 +16,15 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.add_column('specification_items', sa.Column('mapping_attr', sa.String(length=100), nullable=True))
-    op.add_column('specification_items', sa.Column('material_mapping', sa.JSON(), nullable=True))
+    conn = op.get_bind()
+    # Check if column exists
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='specification_items' AND column_name='mapping_attr'"
+    ))
+    if not res.first():
+        op.add_column('specification_items', sa.Column('mapping_attr', sa.String(length=100), nullable=True))
+        op.add_column('specification_items', sa.Column('material_mapping', sa.JSON(), nullable=True))
 
 def downgrade():
     op.drop_column('specification_items', 'material_mapping')

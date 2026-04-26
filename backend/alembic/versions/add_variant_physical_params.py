@@ -17,14 +17,26 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add columns to product_variants
-    op.add_column('product_variants', sa.Column('length_cm', sa.Numeric(precision=10, scale=2), nullable=True))
-    op.add_column('product_variants', sa.Column('width_cm', sa.Numeric(precision=10, scale=2), nullable=True))
-    op.add_column('product_variants', sa.Column('height_cm', sa.Numeric(precision=10, scale=2), nullable=True))
-    op.add_column('product_variants', sa.Column('weight_kg', sa.Numeric(precision=10, scale=2), nullable=True))
+    conn = op.get_bind()
+    # Check if column exists
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='product_variants' AND column_name='length_cm'"
+    ))
+    if not res.first():
+        # Add columns to product_variants
+        op.add_column('product_variants', sa.Column('length_cm', sa.Numeric(precision=10, scale=2), nullable=True))
+        op.add_column('product_variants', sa.Column('width_cm', sa.Numeric(precision=10, scale=2), nullable=True))
+        op.add_column('product_variants', sa.Column('height_cm', sa.Numeric(precision=10, scale=2), nullable=True))
+        op.add_column('product_variants', sa.Column('weight_kg', sa.Numeric(precision=10, scale=2), nullable=True))
     
     # Add column to products
-    op.add_column('products', sa.Column('variant_config', sa.JSON(), nullable=True))
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='products' AND column_name='variant_config'"
+    ))
+    if not res.first():
+        op.add_column('products', sa.Column('variant_config', sa.JSON(), nullable=True))
 
 
 def downgrade() -> None:

@@ -17,11 +17,18 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('specification_items', sa.Column('line_type', sa.String(length=20), server_default='material', nullable=False))
-    op.add_column('specification_items', sa.Column('size_from_attr', sa.String(length=100), nullable=True))
-    op.add_column('specification_items', sa.Column('size_multiplier', sa.Numeric(precision=10, scale=2), nullable=True))
-    op.add_column('specification_items', sa.Column('fixed_length', sa.Numeric(precision=10, scale=2), nullable=True))
-    op.add_column('specification_items', sa.Column('fixed_width', sa.Numeric(precision=10, scale=2), nullable=True))
+    conn = op.get_bind()
+    # Check if column exists
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='specification_items' AND column_name='line_type'"
+    ))
+    if not res.first():
+        op.add_column('specification_items', sa.Column('line_type', sa.String(length=20), server_default='material', nullable=False))
+        op.add_column('specification_items', sa.Column('size_from_attr', sa.String(length=100), nullable=True))
+        op.add_column('specification_items', sa.Column('size_multiplier', sa.Numeric(precision=10, scale=2), nullable=True))
+        op.add_column('specification_items', sa.Column('fixed_length', sa.Numeric(precision=10, scale=2), nullable=True))
+        op.add_column('specification_items', sa.Column('fixed_width', sa.Numeric(precision=10, scale=2), nullable=True))
 
 
 def downgrade() -> None:

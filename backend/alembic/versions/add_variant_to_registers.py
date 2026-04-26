@@ -16,8 +16,15 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.add_column('accumulation_registers', sa.Column('variant_id', sa.UUID(), sa.ForeignKey('product_variants.id'), nullable=True))
-    op.create_index(op.f('ix_accumulation_registers_variant_id'), 'accumulation_registers', ['variant_id'], unique=False)
+    conn = op.get_bind()
+    # Check if column exists
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='accumulation_registers' AND column_name='variant_id'"
+    ))
+    if not res.first():
+        op.add_column('accumulation_registers', sa.Column('variant_id', sa.UUID(), sa.ForeignKey('product_variants.id'), nullable=True))
+        op.create_index(op.f('ix_accumulation_registers_variant_id'), 'accumulation_registers', ['variant_id'], unique=False)
 
 def downgrade():
     op.drop_index(op.f('ix_accumulation_registers_variant_id'), table_name='accumulation_registers')

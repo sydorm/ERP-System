@@ -16,7 +16,14 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.add_column('production_order_materials', sa.Column('variant_id', sa.UUID(), sa.ForeignKey('product_variants.id', ondelete='SET NULL'), nullable=True))
+    conn = op.get_bind()
+    # Check if column exists
+    res = conn.execute(sa.text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name='production_order_materials' AND column_name='variant_id'"
+    ))
+    if not res.first():
+        op.add_column('production_order_materials', sa.Column('variant_id', sa.UUID(), sa.ForeignKey('product_variants.id', ondelete='SET NULL'), nullable=True))
 
 def downgrade():
     op.drop_column('production_order_materials', 'variant_id')
