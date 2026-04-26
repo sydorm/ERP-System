@@ -380,7 +380,7 @@
                                 <label>Стандарт ({{ getDimConfig(activeCalcItem, dim.key).unit }})</label>
                                 <el-input-number 
                                     :model-value="getDimValue(getDimConfig(activeCalcItem, dim.key).default, getDimConfig(activeCalcItem, dim.key).unit)"
-                                    @update:model-value="(val) => getDimConfig(activeCalcItem, dim.key).default = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit)"
+                                    @update:model-value="(val) => { getDimConfig(activeCalcItem, dim.key).default = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit) }"
                                     :precision="0" :min="0" size="small" placeholder="0" 
                                 />
                             </div>
@@ -1088,16 +1088,10 @@ const openCalcDialog = (item) => {
         if (item.calc_data_points.length_cm && item.calc_data_points.l.length === 0) {
             item.calc_data_points.l = item.calc_data_points.length_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
         }
-    }
-    
-    }
-    
     if (item.calc_type === 'characteristic_mapping') {
         loadAttributesForMapping(props.productId, item.component_id)
     }
     
-    calcDialogOpen.value = true
-
     // Ensure calc_dim_config exists
     if (!item.calc_dim_config) {
         item.calc_dim_config = {
@@ -1114,7 +1108,6 @@ const openCalcDialog = (item) => {
         }
     }
 
-    activeCalcItem.value = item
     calcDialogOpen.value = true
 }
 
