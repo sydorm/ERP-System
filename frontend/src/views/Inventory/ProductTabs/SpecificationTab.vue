@@ -1,4 +1,4 @@
-<template> <!-- v1.5-RESTORED -->
+<template> <!-- v1.6-FORCE-PULL -->
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
