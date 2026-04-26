@@ -1,4 +1,4 @@
-<template> <!-- v1.4-CLEAN -->
+<template> <!-- v1.5-RESTORED -->
   <div class="specification-tab-container">
     
     <!-- LIST VIEW -->
@@ -429,8 +429,52 @@
               <div class="text-xs text-gray-400 mt-1" style="line-height: 1.2;">К-сть = Вимір × Коефіцієнт</div>
             </el-form-item>
 
-            <!-- Temporarily disabled formula block -->
-            <!-- Temporarily disabled mapping block -->
+            <el-form-item label="Своя математична формула" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
+              <el-input v-model="activeCalcItem.calc_formula" type="textarea" :rows="3" placeholder="напр. {W} * {H} / 100" />
+              <div class="mt-2 flex flex-wrap gap-2">
+                <el-button v-for="v in ['{W}', '{H}', '{L}', '{Kg}']" :key="v" size="small" @click="addVarToFormula(v)">{{ v }}</el-button>
+                <el-dropdown trigger="click" @command="addAttrToFormula" v-if="productAttributes.length > 0">
+                  <el-button size="small" type="info" plain>+ Додати характеристику</el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item v-for="attr in productAttributes" :key="attr.id" :command="attr.name">{{ attr.name }}</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </el-form-item>
+
+            <div v-if="activeCalcItem.calc_type === 'characteristic_mapping'" class="mt-4">
+               <div class="detail-mapping-box p-4 rounded-lg border border-indigo-100 bg-indigo-50/30">
+                  <div class="mapping-header flex justify-between items-center mb-4">
+                     <label class="text-xs font-bold text-indigo-900 uppercase">Зв'язок характеристик</label>
+                     <el-button type="primary" size="small" @click="addMappingLine" plain :icon="Plus">Додати зв'язок</el-button>
+                  </div>
+                  
+                  <div class="mapping-rows space-y-3">
+                     <div v-for="(m, idx) in activeCalcItem.characteristic_mappings" :key="idx" class="flex items-center gap-3">
+                        <div class="flex-1">
+                           <label class="text-[10px] text-gray-500 block mb-1">Характеристика компонента</label>
+                           <el-select v-model="m.component_characteristic_id" size="small" class="w-full" placeholder="Виберіть...">
+                              <el-option v-for="a in componentAttributes" :key="a.id" :label="a.name" :value="a.id" />
+                           </el-select>
+                        </div>
+                        <div class="text-indigo-400 mt-5">➔</div>
+                        <div class="flex-1">
+                           <label class="text-[10px] text-gray-500 block mb-1">Характеристика виробу</label>
+                           <el-select v-model="m.parent_characteristic_id" size="small" class="w-full" placeholder="Виберіть...">
+                              <el-option v-for="a in parentAttributes" :key="a.id" :label="a.name" :value="a.id" />
+                           </el-select>
+                        </div>
+                        <el-button type="danger" link :icon="Delete" class="mt-5" @click="removeMappingLine(idx)" />
+                     </div>
+                     
+                     <div v-if="!activeCalcItem.characteristic_mappings?.length" class="text-center py-4 border-2 border-dashed border-indigo-100 rounded text-gray-400 text-xs">
+                        Немає налаштованих зв'язків. Натисніть "Додати зв'язок".
+                     </div>
+                  </div>
+               </div>
+            </div>
             
             <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
                 Автоматичний розрахунок матеріалу на основі фізичних розмірів товару.
