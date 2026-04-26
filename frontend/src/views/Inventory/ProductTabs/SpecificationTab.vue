@@ -436,28 +436,28 @@
                     type="primary"
                     class="cursor-pointer"
                     effect="light"
-                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'W'"
+                    @click="addVarToFormula('W')"
                   >W (Ширина)</el-tag>
                   <el-tag
                     size="small"
                     type="primary"
                     class="cursor-pointer"
                     effect="light"
-                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'H'"
+                    @click="addVarToFormula('H')"
                   >H (Висота)</el-tag>
                   <el-tag
                     size="small"
                     type="primary"
                     class="cursor-pointer"
                     effect="light"
-                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + 'L'"
+                    @click="addVarToFormula('L')"
                   >L (Глибина)</el-tag>
                   <el-tag
                     v-for="(attr, idx) in productAttributes" 
                     :key="idx"
                     size="small"
                     class="cursor-pointer"
-                    @click="activeCalcItem.calc_formula = (activeCalcItem.calc_formula || '') + '{' + attr.name + '}'"
+                    @click="addAttrToFormula(attr.name)"
                   >
                     {{ attr.name }}
                   </el-tag>
@@ -1143,11 +1143,17 @@ const removeMappingRow = (item, key) => {
     delete item.material_mapping[key]
 }
 
-const updateMappingKey = (item, oldKey, newKey) => {
-    if (oldKey === newKey) return
-    const val = item.material_mapping[oldKey]
-    delete item.material_mapping[oldKey]
     item.material_mapping[newKey] = val
+}
+
+const addVarToFormula = (v) => {
+    if (!activeCalcItem.value) return
+    activeCalcItem.value.calc_formula = (activeCalcItem.value.calc_formula || '') + v
+}
+
+const addAttrToFormula = (name) => {
+    if (!activeCalcItem.value) return
+    activeCalcItem.value.calc_formula = (activeCalcItem.value.calc_formula || '') + '{' + name + '}'
 }
 
 // Product Search for components
