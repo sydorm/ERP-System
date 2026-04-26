@@ -109,41 +109,39 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Кількість / Розрахунок" width="300">
-                <template #default="scope">
-                    <div class="flex flex-col gap-1">
-                      <div class="flex items-center gap-2">
-                        <el-input-number 
-                          v-model="scope.row.quantity" 
-                          :min="0" 
-                          :step="1" 
-                          :precision="3" 
-                          class="qty-input"
-                          :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
-                          controls-position="right"
-                        />
-                        <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
-                           <div class="flex items-center">
-                              <el-button 
-                                  :type="hasMapping(scope.row) ? 'success' : (scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'primary' : 'default')" 
-                                  :icon="Setting" 
-                                  circle 
-                                  size="small"
-                                  @click="openCalcDialog(scope.row)" 
-                              />
-                              <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-1"></div>
-                           </div>
-                        </el-tooltip>
-                      </div>
-                      <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="calc-breakdown text-[10px] text-gray-500 leading-tight">
-                         <span class="font-medium text-indigo-600">{{ getBaseQuantity(scope.row).toFixed(3) }}</span> 
-                         <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-600"> + {{ getTotalWastePercent(scope.row) }}% відходів</span>
-                         <span v-if="getTotalWastePercent(scope.row) > 0"> = {{ scope.row.quantity.toFixed(3) }}</span>
-                         <span class="ml-1 uppercase">{{ getUomName(scope.row.unit_of_measure) }}</span>
-                      </div>
-                    </div>
-                </template>
-             </el-table-column>
+              <el-table-column label="Кількість / Розрахунок" width="240">
+                 <template #default="scope">
+                     <div class="qty-cell-container">
+                       <div class="qty-input-wrapper">
+                         <el-input-number 
+                           v-model="scope.row.quantity" 
+                           :min="0" 
+                           :step="1" 
+                           :precision="3" 
+                           style="width: 120px"
+                           :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
+                           controls-position="right"
+                         />
+                         <div 
+                           class="calc-indicator" 
+                           :class="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'active' : 'inactive'"
+                           @click="openCalcDialog(scope.row)"
+                         >
+                           <el-icon :size="16"><Setting /></el-icon>
+                         </div>
+                         <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse -ml-2"></div>
+                       </div>
+                       
+                       <div class="flex items-center gap-2">
+                          <span class="uom-badge">{{ scope.row.unit_of_measure }}</span>
+                          <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="text-[10px] text-gray-500 font-medium">
+                             {{ getBaseQuantity(scope.row).toFixed(3) }}
+                             <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-500"> (+{{ getTotalWastePercent(scope.row) }}%)</span>
+                          </div>
+                       </div>
+                     </div>
+                 </template>
+              </el-table-column>
              
              <el-table-column label="Од. вим." width="100" align="center">
                 <template #default="scope">
@@ -1177,9 +1175,59 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Row alignment fixes */
+.qty-cell-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.qty-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.uom-badge {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.calc-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calc-indicator.active {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.calc-indicator.inactive {
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+.calc-indicator:hover {
+    transform: scale(1.1);
+}
+
 .specification-tab-container {
     padding: 10px 24px 24px 24px;
 }
+
 
 .tab-header {
     display: flex;
