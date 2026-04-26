@@ -11,8 +11,8 @@ from sqlalchemy.sql import text
 import uuid
 
 # revision identifiers, used by Alembic.
-revision = '030_add_contact_results_to_dictionary'
-down_revision = '029_add_communication_type_to_contact'
+revision = '030_add_contact_results'
+down_revision = '029_add_comm_type_contact'
 branch_labels = None
 depends_on = None
 

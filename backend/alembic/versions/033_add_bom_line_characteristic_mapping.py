@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '033_add_bom_line_characteristic_mapping'
+revision = '033_add_bom_mapping'
 down_revision = 'merge_purchasing_resources'
 branch_labels = None
 depends_on = None
