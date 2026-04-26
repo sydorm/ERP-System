@@ -467,65 +467,7 @@
                 </div>
               </div>
             </el-form-item>
-
-            <div v-if="activeCalcItem.calc_type === 'characteristic_mapping'" class="mt-4 border rounded p-4 bg-gray-50">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <el-icon class="text-primary"><Setting /></el-icon>
-                        <span class="font-bold">Мапінг характеристик</span>
-                    </div>
-                    <el-button type="primary" size="small" :icon="Plus" @click="addMappingLine">Додати зв'язок</el-button>
-                </div>
-
-                <div v-if="loadingMappingAttrs" class="flex justify-center py-4">
-                    <el-skeleton :rows="2" animated />
-                </div>
-                <div v-else-if="componentAttributes.length === 0" class="text-center py-4 text-gray-500">
-                    У компонента немає доступних характеристик для мапінгу.
-                </div>
-                <div v-else>
-                    <el-table :data="activeCalcItem.characteristic_mappings || []" size="small" border>
-                        <el-table-column label="Характеристика компонента">
-                            <template #default="scope">
-                                <el-select v-model="scope.row.component_characteristic_id" placeholder="Виберіть..." class="w-full">
-                                    <el-option 
-                                        v-for="attr in componentAttributes" 
-                                        :key="attr.id" 
-                                        :label="attr.name" 
-                                        :value="attr.id" 
-                                    />
-                                </el-select>
-                            </template>
-                        </el-table-column>
-                        <el-table-column align="center" width="50">
-                            <template #default>
-                                <el-icon><Back /></el-icon>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Характеристика батьківського виробу">
-                            <template #default="scope">
-                                <el-select v-model="scope.row.parent_characteristic_id" placeholder="Виберіть..." class="w-full">
-                                    <el-option 
-                                        v-for="attr in parentAttributes" 
-                                        :key="attr.id" 
-                                        :label="attr.name" 
-                                        :value="attr.id" 
-                                    />
-                                </el-select>
-                            </template>
-                        </el-table-column>
-                        <el-table-column width="50" align="center">
-                            <template #default="scope">
-                                <el-button type="danger" link :icon="Delete" @click="removeMappingLine(scope.$index)" />
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                    <div class="mt-3 text-xs text-gray-500 italic">
-                        При плануванні виробництва система автоматично вибере той варіант компонента, 
-                        значення характеристики якого збігається зі значенням характеристики батьківського виробу.
-                    </div>
-                </div>
-            </div>
+            <!-- Temporarily disabled mapping block -->
             
             <div v-if="['area', 'volume'].includes(activeCalcItem.calc_type)" class="mt-2 p-3 bg-blue-50 text-blue-700 text-sm rounded">
                 Автоматичний розрахунок матеріалу на основі фізичних розмірів товару.
@@ -1142,12 +1084,8 @@ const addMappingRow = (item) => {
     item.material_mapping[`Значення ${i}`] = null
 }
 
-const updateMappingKey = (item, oldKey, newKey) => {
-    if (oldKey === newKey) return
-    const val = item.material_mapping[oldKey]
-    delete item.material_mapping[oldKey]
-    item.material_mapping[newKey] = val
-}
+
+
 
 const addVarToFormula = (v) => {
     if (!activeCalcItem.value) return
@@ -1455,26 +1393,5 @@ onMounted(() => {
 
 .mapping-rows label {
     letter-spacing: 0.05em;
-}
-.uom-badge {
-    background: #f1f5f9;
-    color: #475569;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    display: inline-block;
-    min-width: 50px;
-    border: 1px solid #e2e8f0;
-}
-
-.qty-input {
-    width: 140px !important;
-}
-
-.qty-input :deep(.el-input__inner) {
-    font-weight: 700;
-    color: #334155;
 }
 </style>
