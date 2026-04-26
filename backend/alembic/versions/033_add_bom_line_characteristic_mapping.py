@@ -17,19 +17,22 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table('bom_line_characteristic_mappings',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('bom_line_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('component_characteristic_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('parent_characteristic_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['bom_line_id'], ['specification_items.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['component_characteristic_id'], ['attributes.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['parent_characteristic_id'], ['attributes.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_bom_line_characteristic_mappings_bom_line_id'), 'bom_line_characteristic_mappings', ['bom_line_id'], unique=False)
+    conn = op.get_bind()
+    res = conn.execute(sa.text("SELECT table_name FROM information_schema.tables WHERE table_name='bom_line_characteristic_mappings'"))
+    if not res.first():
+        op.create_table('bom_line_characteristic_mappings',
+            sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('bom_line_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('component_characteristic_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('parent_characteristic_id', postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column('created_at', sa.DateTime(), nullable=False),
+            sa.Column('updated_at', sa.DateTime(), nullable=False),
+            sa.ForeignKeyConstraint(['bom_line_id'], ['specification_items.id'], ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['component_characteristic_id'], ['attributes.id'], ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['parent_characteristic_id'], ['attributes.id'], ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_bom_line_characteristic_mappings_bom_line_id'), 'bom_line_characteristic_mappings', ['bom_line_id'], unique=False)
 
 
 def downgrade():
