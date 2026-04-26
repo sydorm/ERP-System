@@ -109,7 +109,7 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Кількість / Розрахунок" width="380">
+             <el-table-column label="Кількість / Розрахунок" width="300">
                 <template #default="scope">
                     <div class="flex flex-col gap-1">
                       <div class="flex items-center gap-2">
@@ -118,24 +118,25 @@
                           :min="0" 
                           :step="1" 
                           :precision="3" 
-                          style="flex: 1" 
+                          class="qty-input"
                           :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
                           controls-position="right"
                         />
                         <el-tooltip :content="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'Параметричний розрахунок увімкнено' : 'Налаштувати смарт-розрахунок'" placement="top">
-                                              <div class="flex items-center gap-1">
-                        <el-button 
-                            :type="hasMapping(scope.row) ? 'success' : (scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'primary' : 'default')" 
-                            :icon="Setting" 
-                            circle 
-                            @click="openCalcDialog(scope.row)" 
-                        />
-                        <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    </div>
+                           <div class="flex items-center">
+                              <el-button 
+                                  :type="hasMapping(scope.row) ? 'success' : (scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'primary' : 'default')" 
+                                  :icon="Setting" 
+                                  circle 
+                                  size="small"
+                                  @click="openCalcDialog(scope.row)" 
+                              />
+                              <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse ml-1"></div>
+                           </div>
                         </el-tooltip>
                       </div>
                       <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="calc-breakdown text-[10px] text-gray-500 leading-tight">
-                         <span class="font-medium">{{ getBaseQuantity(scope.row).toFixed(3) }}</span> 
+                         <span class="font-medium text-indigo-600">{{ getBaseQuantity(scope.row).toFixed(3) }}</span> 
                          <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-600"> + {{ getTotalWastePercent(scope.row) }}% відходів</span>
                          <span v-if="getTotalWastePercent(scope.row) > 0"> = {{ scope.row.quantity.toFixed(3) }}</span>
                          <span class="ml-1 uppercase">{{ getUomName(scope.row.unit_of_measure) }}</span>
@@ -144,9 +145,11 @@
                 </template>
              </el-table-column>
              
-             <el-table-column label="Од. вим." width="80">
+             <el-table-column label="Од. вим." width="100" align="center">
                 <template #default="scope">
-                   <el-input :model-value="getUomName(scope.row.unit_of_measure)" placeholder="шт/кг" disabled />
+                   <div class="uom-badge">
+                      {{ getUomName(scope.row.unit_of_measure) }}
+                   </div>
                 </template>
              </el-table-column>
              
@@ -1139,10 +1142,10 @@ const addMappingRow = (item) => {
     item.material_mapping[`Значення ${i}`] = null
 }
 
-const removeMappingRow = (item, key) => {
-    delete item.material_mapping[key]
-}
-
+const updateMappingKey = (item, oldKey, newKey) => {
+    if (oldKey === newKey) return
+    const val = item.material_mapping[oldKey]
+    delete item.material_mapping[oldKey]
     item.material_mapping[newKey] = val
 }
 
@@ -1452,5 +1455,26 @@ onMounted(() => {
 
 .mapping-rows label {
     letter-spacing: 0.05em;
+}
+.uom-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+    min-width: 50px;
+    border: 1px solid #e2e8f0;
+}
+
+.qty-input {
+    width: 140px !important;
+}
+
+.qty-input :deep(.el-input__inner) {
+    font-weight: 700;
+    color: #334155;
 }
 </style>
