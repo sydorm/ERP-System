@@ -1014,12 +1014,10 @@ const openCalcDialog = (item) => {
     activeCalcItem.value = item
     if (!item.calc_type) item.calc_type = 'fixed'
 
-    // DEEP MIGRATION: Handle all legacy formats of calc_data_points
+    // Migration logic for old data formats
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
         const oldData = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
         const newDp = { h: [], w: [], l: [] }
-        
-        // Try to recover data from flat array if it exists
         oldData.forEach(pt => {
             if (pt.h != null) newDp.h.push({ x: pt.size_cm || pt.x || 0, qty: pt.h || pt.qty || 0 })
             if (pt.w != null) newDp.w.push({ x: pt.size_cm || pt.x || 0, qty: pt.w || pt.qty || 0 })
@@ -1027,38 +1025,20 @@ const openCalcDialog = (item) => {
         })
         item.calc_data_points = newDp
     } else {
-        // Ensure h, w, l keys exist in the object
         if (!item.calc_data_points.h) item.calc_data_points.h = []
         if (!item.calc_data_points.w) item.calc_data_points.w = []
         if (!item.calc_data_points.l) item.calc_data_points.l = []
-        
-        // Check for cm-based keys from older beta versions
-        if (item.calc_data_points.height_cm && item.calc_data_points.h.length === 0) {
-            item.calc_data_points.h = item.calc_data_points.height_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
-        }
-        if (item.calc_data_points.width_cm && item.calc_data_points.w.length === 0) {
-            item.calc_data_points.w = item.calc_data_points.width_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
-        }
-        if (item.calc_data_points.length_cm && item.calc_data_points.l.length === 0) {
-            item.calc_data_points.l = item.calc_data_points.length_cm.map(p => ({ x: p.input || 0, qty: p.output || 0 }))
-        }
+    }
+
     if (item.calc_type === 'characteristic_mapping') {
         loadAttributesForMapping(props.productId, item.component_id)
     }
     
-    // Ensure calc_dim_config exists
     if (!item.calc_dim_config) {
         item.calc_dim_config = {
             h: { char_name: '', default: 0, unit: 'см', waste: 0 },
             w: { char_name: '', default: 0, unit: 'см', waste: 0 },
             l: { char_name: '', default: 0, unit: 'см', waste: 0 }
-        }
-    } else {
-        // Ensure units and waste exist in existing config
-        for (const k of ['h', 'w', 'l']) {
-            if (!item.calc_dim_config[k]) item.calc_dim_config[k] = { char_name: '', default: 0, unit: 'см', waste: 0 }
-            if (!item.calc_dim_config[k].unit) item.calc_dim_config[k].unit = 'см'
-            if (item.calc_dim_config[k].waste === undefined) item.calc_dim_config[k].waste = 0
         }
     }
 
