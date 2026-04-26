@@ -40,7 +40,10 @@ def upgrade() -> None:
     op.create_index(op.f('ix_financial_transactions_transaction_date'), 'financial_transactions', ['transaction_date'], unique=False)
 
     # 2. Add fop_income_limit to companies
-    op.add_column('companies', sa.Column('fop_income_limit', sa.Numeric(precision=15, scale=2), nullable=True))
+    conn = op.get_bind()
+    res = conn.execute(sa.text("SELECT column_name FROM information_schema.columns WHERE table_name='companies' AND column_name='fop_income_limit'"))
+    if not res.first():
+        op.add_column('companies', sa.Column('fop_income_limit', sa.Numeric(precision=15, scale=2), nullable=True))
 
 def downgrade() -> None:
     op.drop_column('companies', 'fop_income_limit')

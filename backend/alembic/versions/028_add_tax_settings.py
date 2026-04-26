@@ -15,7 +15,10 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    op.add_column('companies', sa.Column('tax_settings', sa.JSON(), nullable=True))
+    conn = op.get_bind()
+    res = conn.execute(sa.text("SELECT column_name FROM information_schema.columns WHERE table_name='companies' AND column_name='tax_settings'"))
+    if not res.first():
+        op.add_column('companies', sa.Column('tax_settings', sa.JSON(), nullable=True))
 
 def downgrade() -> None:
     op.drop_column('companies', 'tax_settings')
