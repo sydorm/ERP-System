@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'add_manufacturing_product_params'
+revision = 'add_mfg_product_params'
 down_revision = 'add_attendance_detailed_hours'
 branch_labels = None
 depends_on = None

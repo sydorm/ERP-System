@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'add_dimension_format_to_attributes'
+revision = 'add_dim_format_to_attr'
 down_revision = 'add_attribute_values_to_lines'
 branch_labels = None
 depends_on = None
