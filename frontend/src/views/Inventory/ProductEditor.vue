@@ -138,6 +138,9 @@ import { useDictionaryStore } from '@/stores/dictionary'
 const dictStore = useDictionaryStore()
 
 // Sub-components
+import { useTabsStore } from '@/stores/tabs'
+const tabsStore = useTabsStore()
+
 import GeneralTab from './ProductTabs/GeneralTab.vue'
 import CharacteristicsTab from './ProductTabs/CharacteristicsTab.vue'
 import PricingTab from './ProductTabs/PricingTab.vue'
@@ -352,10 +355,11 @@ const saveProduct = async () => {
         if (isEditMode.value) {
             await api.put(`/api/v1/products/${form.id}`, form)
             ElMessage.success('Товар оновлено')
+            tabsStore.closeTab(route.path)
         } else {
-            const res = await api.post('/api/v1/products', form)
+            await api.post('/api/v1/products', form)
             ElMessage.success('Товар створено')
-            router.push(`/inventory/nomenclature/${res.data.id}`)
+            tabsStore.closeTab(route.path)
         }
     } catch (error) {
         ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
@@ -377,7 +381,7 @@ const confirmDelete = () => {
     try {
       await api.delete(`/api/v1/products/${form.id}`)
       ElMessage.success('Товар видалено')
-      router.push('/inventory/nomenclature')
+      tabsStore.closeTab(route.path)
     } catch (error) {
       ElMessage.error(error.response?.data?.detail || 'Помилка видалення')
     }
