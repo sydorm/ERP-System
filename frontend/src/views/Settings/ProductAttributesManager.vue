@@ -43,7 +43,10 @@
                     <div v-if="row.type === 'COLOR' && opt.color_code" 
                          class="w-3.5 h-3.5 rounded-full border border-slate-200" 
                          :style="{ backgroundColor: opt.color_code }"></div>
-                    {{ opt.value }}
+                    <span>{{ opt.value }}</span>
+                    <el-icon class="ml-1 cursor-pointer text-slate-300 hover:text-red-500 transition-colors" @click.stop="handleDeleteOption(opt, row)">
+                      <Close />
+                    </el-icon>
                   </div>
                 </div>
                 <div v-else class="text-sm text-slate-400 italic">
@@ -239,7 +242,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Search, MoreFilled, Menu, Collection, Operation } from '@element-plus/icons-vue'
+import { Plus, Search, MoreFilled, Menu, Collection, Operation, Close } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
@@ -444,6 +447,29 @@ const submitOptForm = async () => {
       }
     }
   })
+}
+
+const handleDeleteOption = async (option, attribute) => {
+  try {
+    await ElMessageBox.confirm(
+      `Видалити значення "${option.value}"?`,
+      'Видалення значення',
+      {
+        confirmButtonText: 'Видалити',
+        confirmButtonClass: 'el-button--danger',
+        cancelButtonText: 'Скасувати',
+        type: 'warning'
+      }
+    )
+    
+    await api.delete(`/api/v1/attributes/options/${option.id}`)
+    ElMessage.success('Значення видалено')
+    await refreshOptionsFor(attribute.id)
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('Помилка видалення значення')
+    }
+  }
 }
 
 // Because the current backend `GET /attributes/` doesn't eager load `options`, 

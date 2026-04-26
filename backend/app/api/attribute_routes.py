@@ -122,6 +122,24 @@ async def add_attribute_option(
     db.refresh(db_opt)
     return db_opt
 
+@router.delete("/options/{option_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_attribute_option(
+    option_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    opt = db.query(AttributeOption).join(Attribute).filter(
+        AttributeOption.id == option_id,
+        Attribute.company_id == current_user.company_id
+    ).first()
+    
+    if not opt:
+        raise HTTPException(status_code=404, detail="Option not found")
+        
+    db.delete(opt)
+    db.commit()
+    return None
+
 # CATEGORY LINKS
 @router.get("/category/{category_code}", response_model=List[CategoryAttributeResponse])
 async def get_category_attributes(
