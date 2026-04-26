@@ -18,7 +18,10 @@ depends_on = None
 
 def upgrade() -> None:
     # 1. Add column to crm_contacts
-    op.add_column('crm_contacts', sa.Column('communication_type', sa.String(length=50), nullable=True))
+    conn = op.get_bind()
+    res = conn.execute(sa.text("SELECT column_name FROM information_schema.columns WHERE table_name='crm_contacts' AND column_name='communication_type'"))
+    if not res.first():
+        op.add_column('crm_contacts', sa.Column('communication_type', sa.String(length=50), nullable=True))
     
     # 2. Seed communication types for all existing companies
     # We use a raw SQL approach to insert initial dictionary items for each company
