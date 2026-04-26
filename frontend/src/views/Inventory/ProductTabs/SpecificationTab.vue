@@ -81,7 +81,7 @@
           </div>
           
           <el-table :key="editingSpec" :data="specForm.items" stripe style="width: 100%" class="component-table">
-             <el-table-column label="Товар / Матеріал" min-width="320">
+             <el-table-column label="Товар / Матеріал" min-width="350">
                 <template #default="scope">
                    <el-select
                       v-model="scope.row.component_id"
@@ -109,45 +109,33 @@
                 </template>
              </el-table-column>
              
-              <el-table-column label="Кількість / Розрахунок" width="240">
-                 <template #default="scope">
-                     <div class="qty-cell-container">
-                       <div class="qty-input-wrapper">
-                         <el-input-number 
-                           v-model="scope.row.quantity" 
-                           :min="0" 
-                           :step="1" 
-                           :precision="3" 
-                           style="width: 120px"
-                           :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
-                           controls-position="right"
-                         />
-                         <div 
-                           class="calc-indicator" 
-                           :class="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'active' : 'inactive'"
-                           @click="openCalcDialog(scope.row)"
-                         >
-                           <el-icon :size="16"><Setting /></el-icon>
-                         </div>
-                         <div v-if="hasMapping(scope.row)" class="w-2 h-2 bg-green-500 rounded-full animate-pulse -ml-2"></div>
-                       </div>
-                       
-                       <div class="flex items-center gap-2">
-                          <span class="uom-badge">{{ scope.row.unit_of_measure }}</span>
-                          <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="text-[10px] text-gray-500 font-medium">
-                             {{ getBaseQuantity(scope.row).toFixed(3) }}
-                             <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-500"> (+{{ getTotalWastePercent(scope.row) }}%)</span>
-                          </div>
-                       </div>
-                     </div>
-                 </template>
-              </el-table-column>
-             
-             <el-table-column label="Од. вим." width="100" align="center">
+             <el-table-column label="Кількість / Розрахунок" min-width="260">
                 <template #default="scope">
-                   <div class="uom-badge">
-                      {{ getUomName(scope.row.unit_of_measure) }}
-                   </div>
+                    <div class="qty-cell-container">
+                      <div class="qty-input-wrapper">
+                        <el-input-number 
+                          v-model="scope.row.quantity" 
+                          :min="0" :step="1" :precision="3" 
+                          style="width: 100px"
+                          :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
+                          controls-position="right"
+                          size="small"
+                        />
+                        <span class="uom-badge">{{ scope.row.unit_of_measure }}</span>
+                        <div 
+                          class="calc-indicator" 
+                          :class="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'active' : 'inactive'"
+                          @click="openCalcDialog(scope.row)"
+                        >
+                          <el-icon :size="14"><Setting /></el-icon>
+                        </div>
+                      </div>
+                      
+                      <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="text-[10px] text-gray-400 font-medium pl-1">
+                         Розраховано: {{ getBaseQuantity(scope.row).toFixed(3) }}
+                         <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-400"> (+{{ getTotalWastePercent(scope.row) }}% відходів)</span>
+                      </div>
+                    </div>
                 </template>
              </el-table-column>
              
@@ -833,19 +821,14 @@ const loadSpecifications = async () => {
     try {
         const resData = await getProductSpecifications(props.productId)
         
-        // Data sanitization: backend might return floats as strings (e.g., "1.000").
-        // ElInputNumber requires strict Numbers.
+        // Data sanitization
         resData.forEach(spec => {
-                    if (spec.items) {
+            if (spec.items) {
                 spec.items.forEach(item => {
-                    // Sync up-to-date unit of measure from component
                     if (item.component?.unit_of_measure) {
                         item.unit_of_measure = item.component.unit_of_measure
                     }
-
-                    // FORCE standard material type to prevent UI hiding fields
                     item.line_type = 'material'
-
                     if (typeof item.quantity === 'string') item.quantity = parseFloat(item.quantity) || 0
                     if (item.calc_data_points) {
                         for (const key of ['h', 'w', 'l']) {
@@ -884,14 +867,10 @@ const createNewSpec = () => {
 
 // Open edit form
 const editSpec = (row) => {
-    // Deep copy to avoid modifying original until saved
     const cleanedRow = JSON.parse(JSON.stringify(row))
-    
-    // RADICAL SANITIZATION: Force everyone to 'material' and remove the problematic DSP row
     if (cleanedRow.items) {
         cleanedRow.items = cleanedRow.items
             .filter(item => {
-                // Unconditionally remove this specific item to allow clean re-entry
                 const name = item.component?.name || ''
                 return !name.includes('ДСП Сонома 18 мм')
             })
@@ -902,21 +881,13 @@ const editSpec = (row) => {
                 unit_of_measure: item.unit_of_measure || item.component?.unit_of_measure || 'шт'
             }))
     }
-    
     specForm.value = cleanedRow
     editingSpec.value = row.id
-    
-    // We need to preload the selected products so the <el-select> has labels
     if (specForm.value.items && specForm.value.items.length > 0) {
-        // Collect pre-loaded components from backend response
         const preloads = specForm.value.items
            .filter(i => i.component)
            .map(i => i.component)
-           
-        // Merge with existing results to ensure labels show up immediately
         const newResults = [...productSearchResults.value, ...preloads]
-        
-        // Remove duplicates by ID
         const uniqueResults = []
         const map = new Map()
         for (const item of newResults) {
@@ -935,11 +906,8 @@ const saveSpecification = async () => {
         ElMessage.warning('Вкажіть назву специфікації')
         return
     }
-    
-    // Validate items: require a component, and either quantity > 0 OR it is a smart-calculated item
     const validItems = specForm.value.items.filter(i => i.component_id && (i.quantity > 0 || (i.calc_type && i.calc_type !== 'fixed')))
     specForm.value.items = validItems
-
     saving.value = true
     try {
         if (specForm.value.id) {
@@ -1003,7 +971,6 @@ const addStage = () => {
 
 const removeStage = (index) => {
     specForm.value.stages.splice(index, 1)
-    // Refresh sort order
     specForm.value.stages.forEach((s, idx) => s.sort_order = idx)
 }
 
@@ -1011,8 +978,6 @@ const removeStage = (index) => {
 const openCalcDialog = (item) => {
     activeCalcItem.value = item
     if (!item.calc_type) item.calc_type = 'fixed'
-
-    // Migration logic for old data formats
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
         const oldData = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
         const newDp = { h: [], w: [], l: [] }
@@ -1027,19 +992,12 @@ const openCalcDialog = (item) => {
         if (!item.calc_data_points.w) item.calc_data_points.w = []
         if (!item.calc_data_points.l) item.calc_data_points.l = []
     }
-
     if (item.calc_type === 'characteristic_mapping') {
         loadAttributesForMapping(props.productId, item.component_id)
     }
-    
     if (!item.calc_dim_config) {
-        item.calc_dim_config = {
-            h: { char_name: '', default: 0, unit: 'см', waste: 0 },
-            w: { char_name: '', default: 0, unit: 'см', waste: 0 },
-            l: { char_name: '', default: 0, unit: 'см', waste: 0 }
-        }
+        item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } }
     }
-
     calcDialogOpen.value = true
 }
 
@@ -1055,9 +1013,7 @@ const handleTypeChange = (item) => {
 
 const addPoint = (item, dimKey) => {
     if (!item) return
-    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
-        item.calc_data_points = { h: [], w: [], l: [] }
-    }
+    if (!item.calc_data_points || Array.isArray(item.calc_data_points)) item.calc_data_points = { h: [], w: [], l: [] }
     if (!item.calc_data_points[dimKey]) item.calc_data_points[dimKey] = []
     item.calc_data_points[dimKey].push({ x: 0, qty: 0 })
 }
@@ -1065,18 +1021,6 @@ const addPoint = (item, dimKey) => {
 const removePoint = (item, dimKey, index) => {
     item.calc_data_points[dimKey].splice(index, 1)
 }
-
-// Material mapping helpers
-const addMappingRow = (item) => {
-    if (!item.material_mapping) item.material_mapping = {}
-    // Find a unique key name
-    let i = 1
-    while (item.material_mapping[`Значення ${i}`]) i++
-    item.material_mapping[`Значення ${i}`] = null
-}
-
-
-
 
 const addVarToFormula = (v) => {
     if (!activeCalcItem.value) return
@@ -1088,16 +1032,11 @@ const addAttrToFormula = (name) => {
     activeCalcItem.value.calc_formula = (activeCalcItem.value.calc_formula || '') + '{' + name + '}'
 }
 
-// Product Search for components
 const searchProducts = async (query) => {
     searchingProducts.value = true
     try {
-        // Fetch all products or search by term
-        // Ideally we exclude the parent product to prevent circular dependencies
         const params = query ? { search: query } : {}
         const res = await api.get('/api/v1/products', { params })
-        
-        // Exclude self
         productSearchResults.value = res.data.filter(p => p.id !== props.productId)
     } catch (e) {
         console.error('Failed to search products', e)
@@ -1106,17 +1045,12 @@ const searchProducts = async (query) => {
     }
 }
 
-// Auto-fill unit of measure when component is selected
 const handleComponentSelect = (row, componentId) => {
     const selected = productSearchResults.value.find(p => p.id === componentId)
-    if (selected && selected.unit_of_measure) {
-        row.unit_of_measure = selected.unit_of_measure
-    }
-    // Force standard material type to ensure all fields are visible
+    if (selected && selected.unit_of_measure) row.unit_of_measure = selected.unit_of_measure
     row.line_type = 'material'
 }
 
-// Preview calculation logic
 const previewVisible = ref(false)
 const previewLoading = ref(false)
 const previewResults = ref([])
@@ -1133,15 +1067,11 @@ const testAttributes = computed(() => {
     if (specForm.value && specForm.value.items) {
         specForm.value.items.forEach(item => {
             if (item.calc_type === 'formula' && item.calc_formula) {
-                // Find all {attribute_name}
                 const regex = /{([^}]+)}/g
                 let match;
                 while ((match = regex.exec(item.calc_formula)) !== null) {
                     keys.add(match[1])
-                    // Initialize if not present
-                    if (!(match[1] in testDims.custom_attributes)) {
-                        testDims.custom_attributes[match[1]] = 0
-                    }
+                    if (!(match[1] in testDims.custom_attributes)) testDims.custom_attributes[match[1]] = 0
                 }
             }
         })
@@ -1170,24 +1100,21 @@ const runPreviewCalculation = async () => {
 onMounted(() => {
     loadSpecifications()
     loadProductAttributes()
-    searchProducts('') // Preload some products for the dropdown
+    searchProducts('')
 })
 </script>
 
 <style scoped>
-/* Row alignment fixes */
 .qty-cell-container {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-
 .qty-input-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-
 .uom-badge {
     font-size: 10px;
     color: #64748b;
@@ -1198,7 +1125,6 @@ onMounted(() => {
     border-radius: 4px;
     white-space: nowrap;
 }
-
 .calc-indicator {
     display: flex;
     align-items: center;
@@ -1209,230 +1135,48 @@ onMounted(() => {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
-.calc-indicator.active {
-    background: #eff6ff;
-    color: #3b82f6;
-}
-
-.calc-indicator.inactive {
-    background: #f8fafc;
-    color: #94a3b8;
-}
-
-.calc-indicator:hover {
-    transform: scale(1.1);
-}
-
-.specification-tab-container {
-    padding: 10px 24px 24px 24px;
-}
-
-
-.tab-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.editor-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.editor-header .left-actions,
-.editor-header .right-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.tab-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.header-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.flex {
-    display: flex;
-}
-.gap-4 {
-    gap: 1rem;
-}
-.justify-between {
-    justify-content: space-between;
-}
-.items-center {
-    align-items: center;
-}
-.mb-4 {
-    margin-bottom: 1rem;
-}
+.calc-indicator.active { background: #eff6ff; color: #3b82f6; }
+.calc-indicator.inactive { background: #f8fafc; color: #94a3b8; }
+.calc-indicator:hover { transform: scale(1.1); }
+.specification-tab-container { padding: 10px 24px 24px 24px; }
+.tab-header { display: flex; justify-content: space-between; align-items: center; }
+.editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.editor-header .left-actions, .editor-header .right-actions { display: flex; align-items: center; gap: 12px; }
+.tab-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.flex { display: flex; }
+.gap-4 { gap: 1rem; }
+.justify-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.mb-4 { margin-bottom: 1rem; }
 .m-0 { margin: 0; }
 .mt-4 { margin-top: 1rem; }
 .pb-4 { padding-bottom: 1rem; }
 .w-full { width: 100%; }
 .text-gray-400 { color: #9ca3af; }
 .text-xs { font-size: 0.75rem; }
-
-.component-table {
-    border-top: 1px solid #ebeef5;
-}
-
-.dim-section {
-    margin-bottom: 0;
-    padding: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #fff;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-}
-
-.dim-section:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
-.dim-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 8px;
-    padding-bottom: 12px;
-}
-
-.dim-header-box {
-    padding: 10px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.dim-title-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.dim-icon {
-    width: 24px;
-    height: 24px;
-    background: #e2e8f0;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 900;
-    color: #475569;
-}
-
-.dim-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #334155;
-}
-
-/* Color accents */
+.component-table { border-top: 1px solid #ebeef5; }
+.dim-section { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s ease; }
+.dim-section:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.dim-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 8px; padding-bottom: 12px; }
+.dim-header-box { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
+.dim-title-group { display: flex; align-items: center; gap: 10px; }
+.dim-icon { width: 24px; height: 24px; background: #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #475569; }
+.dim-title { font-size: 14px; font-weight: 700; color: #334155; }
 .dim-h .dim-icon { background: #dbeafe; color: #1d4ed8; }
-.dim-h .dim-title { color: #1e40af; }
 .dim-h .dim-header-box { background: #f0f7ff; }
-
 .dim-w .dim-icon { background: #e0e7ff; color: #4338ca; }
-.dim-w .dim-title { color: #3730a3; }
 .dim-w .dim-header-box { background: #f5f7ff; }
-
 .dim-l .dim-icon { background: #d1fae5; color: #047857; }
-.dim-l .dim-title { color: #065f46; }
 .dim-l .dim-header-box { background: #f0fdf4; }
-
-.table-container {
-    padding: 10px;
-    flex: 1;
-}
-
-.compact-table :deep(.el-table__header th) {
-    background-color: #f8fafc;
-    color: #64748b;
-    font-size: 11px;
-    padding: 4px 0;
-}
-
-.dim-footer {
-    padding: 12px;
-    background: #f8fafc;
-    border-top: 1px solid #f1f5f9;
-}
-
-.config-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 10px;
-}
-
-.config-item.wide {
-    grid-column: 1 / -1;
-}
-
-.config-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.config-item label {
-    font-size: 11px;
-    font-weight: 500;
-    color: #64748b;
-}
-
-.step-badge {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-}
-
+.table-container { padding: 10px; flex: 1; }
+.dim-footer { padding: 12px; background: #f8fafc; border-top: 1px solid #f1f5f9; }
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+.config-item.wide { grid-column: 1 / -1; }
+.config-item { display: flex; flex-direction: column; gap: 4px; }
+.config-item label { font-size: 11px; font-weight: 500; color: #64748b; }
+.step-badge { display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
 .step-label { color: #94a3b8; }
 .step-value { font-weight: 800; color: #0f172a; }
 .step-unit { color: #64748b; font-size: 11px; }
-
-.smart-calc-dialog :deep(.el-dialog__body) {
-    padding-top: 10px;
-}
-
-.detail-mapping-box {
-    background: #f5f7ff;
-}
-
-.mapping-header label {
-    letter-spacing: 0.05em;
-}
-
-.mapping-rows label {
-    letter-spacing: 0.05em;
-}
+.detail-mapping-box { background: #f5f7ff; }
 </style>
