@@ -391,50 +391,61 @@
             </span>
           </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Вид комунікації</label>
-            <div class="comm-type-list">
-              <button
-                v-for="ct in communicationTypes"
-                :key="ct.code"
-                class="comm-type-btn"
-                :class="{ active: contactCommType === ct.code }"
-                @click="contactCommType = ct.code"
-                type="button"
-              >
-                <span class="ct-icon">{{ ct.icon || '📞' }}</span>
-                <span class="ct-name">{{ ct.name }}</span>
-              </button>
+          <!-- New Compact Communication Block -->
+          <div class="comm-compact-block">
+            <div class="crm-field">
+              <label class="crm-label">Канал зв'язку</label>
+              <div class="comm-pills-row">
+                <button
+                  v-for="ct in communicationTypes"
+                  :key="ct.code"
+                  class="comm-pill"
+                  :class="{ active: contactCommType === ct.code }"
+                  @click="contactCommType = ct.code"
+                  type="button"
+                >
+                  <span class="pill-icon">{{ ct.icon }}</span>
+                  <span class="pill-name">{{ ct.name }}</span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Результат контакту</label>
-            <div class="contact-result-list">
-              <button
-                v-for="cr in contactResults"
-                :key="cr.code"
-                class="contact-result-btn"
-                :class="[{ active: contactResult === cr.code }, `cr-${cr.code}`]"
-                :style="contactResult === cr.code ? { borderColor: cr.color, background: cr.color + '15', color: cr.color } : {}"
-                @click="contactResult = contactResult === cr.code ? null : cr.code"
-              >
-                <span v-if="cr.icon" style="margin-right:8px">{{ cr.icon }}</span>
-                {{ cr.name }}
-              </button>
+            <div class="crm-field">
+              <label class="crm-label">Результат контакту</label>
+              <div class="results-grid-2x2">
+                <button
+                  v-for="cr in contactResults"
+                  :key="cr.code"
+                  class="result-tile"
+                  :class="[cr.code.toLowerCase(), { active: contactResult === cr.code }]"
+                  @click="contactResult = contactResult === cr.code ? null : cr.code"
+                >
+                  <span class="tile-icon">{{ cr.icon }}</span>
+                  <span class="tile-label">{{ cr.name }}</span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div class="crm-field" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
-            <label class="crm-label">Передзвонити</label>
-            <el-date-picker
-              v-model="contactNextAt"
-              type="datetime"
-              format="DD.MM.YYYY HH:mm"
-              value-format="YYYY-MM-DDTHH:mm:ss"
-              style="width:100%"
-              placeholder="Вкажіть дату та час"
-            />
+            <!-- Compact Reminder Bar -->
+            <Transition name="fade-slide">
+              <div class="reminder-bar" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
+                <div class="reminder-head">
+                  <el-icon class="bell-icon"><Clock /></el-icon>
+                  <span>Нагадати:</span>
+                </div>
+                <div class="reminder-pickers">
+                  <el-date-picker
+                    v-model="contactNextAt"
+                    type="datetime"
+                    size="small"
+                    format="DD.MM HH:mm"
+                    value-format="YYYY-MM-DDTHH:mm:ss"
+                    placeholder="Дата та час"
+                    class="compact-picker"
+                  />
+                </div>
+              </div>
+            </Transition>
           </div>
 
           <div class="crm-field">
@@ -567,21 +578,20 @@ const bankAccounts = ref([])
 const deliveryMethods = ref([])
 
 const defaultCommTypes = [
-  { code: 'CALL', name: 'Телефон', icon: '📞' },
+  { code: 'CALL', name: 'Дзвінок', icon: '📞' },
   { code: 'VIBER', name: 'Viber', icon: '💬' },
   { code: 'TELEGRAM', name: 'Telegram', icon: '✈️' },
   { code: 'INSTAGRAM', name: 'Instagram', icon: '📸' },
-  { code: 'SMS', name: 'SMS', icon: '📱' },
   { code: 'EMAIL', name: 'Email', icon: '✉️' },
   { code: 'MEET', name: 'Зустріч', icon: '🤝' },
 ]
 const communicationTypes = ref([...defaultCommTypes])
 
 const defaultContactResults = [
-  { code: 'NO_ANSWER', name: 'Не відповів', icon: '📵', color: '#f97316' },
-  { code: 'THINKING',  name: 'Думає',      icon: '🤔', color: '#eab308' },
-  { code: 'REFUSED',   name: 'Відмовився',  icon: '❌', color: '#ef4444' },
-  { code: 'CONFIRMED', name: 'Підтвердив замовлення', icon: '✅', color: '#22c55e' },
+  { code: 'NO_ANSWER', name: 'Не відповів', icon: '🔴' },
+  { code: 'THINKING',  name: 'Думає',      icon: '🤔' },
+  { code: 'REFUSED',   name: 'Відмовився',  icon: '✗' },
+  { code: 'CONFIRMED', name: 'Підтвердив', icon: '✓' },
 ]
 const contactResults = ref([...defaultContactResults])
 
@@ -1454,4 +1464,75 @@ onMounted(loadData)
 .h-body { display: flex; flex-direction: column; gap: 1px; }
 .h-text { font-size: 13px; color: #1e293b; }
 .h-time { font-size: 11px; color: #94a3b8; }
+/* ─── КОМУНІКАЦІЯ REDESIGN ─── */
+.comm-compact-block { display: flex; flex-direction: column; gap: 16px; }
+
+.comm-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.comm-pill {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 20px;
+  border: 1px solid #E0E0FF;
+  background: #fff;
+  color: #3D3AA8;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.comm-pill:hover { border-color: #3D3AA8; background: #f8f9ff; }
+.comm-pill.active { background: #3D3AA8; color: #fff; border-color: #3D3AA8; box-shadow: 0 4px 10px rgba(61, 58, 168, 0.2); }
+
+.results-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.result-tile {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Status Specific Styles */
+.result-tile.no_answer.active { background: #FEF2F2; color: #991B1B; border-color: #FCA5A5; }
+.result-tile.thinking.active  { background: #FFFBEB; color: #92400E; border-color: #FCD34D; }
+.result-tile.refused.active   { background: #F9FAFB; color: #374151; border-color: #D1D5DB; }
+.result-tile.confirmed.active { background: #ECFDF5; color: #065F46; border-color: #6EE7B7; transform: scale(1.02); }
+
+.reminder-bar {
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: rgba(61, 58, 168, 0.04);
+  border: 1px dashed #3D3AA8;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.reminder-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #3D3AA8; }
+.bell-icon { font-size: 14px; }
+.compact-picker { width: 140px !important; }
+:deep(.compact-picker .el-input__wrapper) { background: transparent !important; box-shadow: none !important; }
+
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.3s ease; }
+.fade-slide-enter-from { opacity: 0; transform: translateY(-10px); }
+.fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* Keep existing styles below... */
 </style>
