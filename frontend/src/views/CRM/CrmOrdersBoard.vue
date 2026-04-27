@@ -85,31 +85,48 @@
             v-for="order in filteredOrdersInStage(stage.key)"
             :key="order.id"
             class="crm-card"
-            :class="[getPriorityClass(order.priority), { 'card-overdue': isOverdue(order) }]"
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
             @click="openEditor(order)"
           >
-            <div class="card-top">
-              <span class="card-number">{{ order.order_number }}</span>
-              <span class="card-priority-dot" :class="getPriorityClass(order.priority)" />
+            <div class="card-header">
+              <span class="card-order-no">#{{ order.order_number }}</span>
+              <span class="card-priority-mark" :style="{ background: stage.color }" />
             </div>
-            <div class="card-client">
-              <el-icon class="card-client-icon"><UserIcon /></el-icon>
-              <span>{{ getCounterpartyName(order.counterparty_id) || '—' }}</span>
+            
+            <div class="card-main">
+              <div class="card-customer">{{ getCounterpartyName(order.counterparty_id) || '—' }}</div>
+              <div class="card-product">{{ order.product_name || 'Індивідуальне замовлення' }}</div>
             </div>
-            <div class="card-finance-row">
-              <span class="card-amount">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span class="card-pay-badge" :class="'pay-' + order.payment_status">
-                {{ getPaymentLabel(order.payment_status) }}
+
+            <div class="card-financial">
+              <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
+              <span class="card-deadline" v-if="order.deadline">
+                <el-icon><Clock /></el-icon> {{ formatDate(order.deadline) }}
               </span>
+            </div>
+
+            <div class="card-footer">
+              <div class="card-badges">
+                <span class="payment-badge" :class="`pay-${order.payment_status}`">
+                  {{ getPaymentLabel(order.payment_status) }}
+                </span>
+              </div>
+              <div class="card-meta">
+                <div class="card-avatar">{{ (getCounterpartyName(order.counterparty_id) || '?').charAt(0) }}</div>
+                <div class="card-comm-icons">
+                  <span class="comm-mini-icon">📞</span>
+                  <span class="comm-mini-icon" v-if="order.lead_source_id === 'viber'">💬</span>
+                  <span class="comm-mini-icon" v-if="order.lead_source_id === 'telegram'">✈️</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         
         <button class="crm-add-card-btn" @click="openNewOrderInStage(stage.key)">
-          <el-icon><Plus /></el-icon> Додати замовлення
+          <el-icon><Plus /></el-icon> + ДОДАТИ ЗАМОВЛЕННЯ
         </button>
 
         <div v-if="hasMore" class="crm-load-more-container">
@@ -159,7 +176,7 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Right, Check, User as UserIcon } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, Clock, User as UserIcon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
@@ -189,12 +206,12 @@ const overdueTasks = computed(() => {
 })
 
 const stages = [
-  { key: 'new', label: 'Нова заявка', color: '#6366f1' },
-  { key: 'processing', label: 'В обробці', color: '#f59e0b' },
-  { key: 'confirmed', label: 'Підтверджено', color: '#22c55e' },
-  { key: 'payment', label: 'Оплата', color: '#8b5cf6' },
-  { key: 'production', label: 'У виробництві', color: '#ec4899' },
-  { key: 'done', label: 'Виконано', color: '#3b82f6' }
+  { key: 'new', label: 'Нові', color: '#3D3AA8' },
+  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
+  { key: 'confirmed', label: 'Підтверджено', color: '#3B82F6' },
+  { key: 'payment', label: 'Оплата', color: '#F97316' },
+  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
+  { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]
 
 const priorities = [
@@ -244,6 +261,7 @@ const loadMore = async () => {
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || id
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 const formatTaskTime = (ts) => new Date(ts).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' })
 const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
 
 const ordersInStage = (stage) => orders.value.filter(o => o.crm_stage === stage)
@@ -254,8 +272,7 @@ const filteredOrdersInStage = (stage) => {
     list = list.filter(o => 
       o.order_number.toLowerCase().includes(q) || 
       getCounterpartyName(o.counterparty_id).toLowerCase().includes(q) ||
-      (o.client_name && o.client_name.toLowerCase().includes(q)) ||
-      (o.client_phone && o.client_phone.includes(q))
+      (o.client_name && o.client_name.toLowerCase().includes(q))
     )
   }
   if (filterPriority.value) list = list.filter(o => o.priority === filterPriority.value)
@@ -264,19 +281,13 @@ const filteredOrdersInStage = (stage) => {
 }
 const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
-const getPriorityClass = (p) => `priority-${p}`
 const getPaymentLabel = (s) => ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
-const isOverdue = (o) => o.deadline && new Date(o.deadline) < new Date()
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
 const openNewOrderInStage = (s) => router.push(`/crm/orders/new?stage=${s}`)
 
 const handleCall = (task) => {
-  if (task.client_phone && navigator.clipboard) {
-    navigator.clipboard.writeText(task.client_phone)
-    ElMessage.success(`Номер скопійовано`)
-  }
   callTask.value = task
   callVisible.value = true
 }
@@ -328,73 +339,33 @@ const onDrop = async (stage) => {
   dragOverStage.value = null
 }
 
-onMounted(() => {
-  console.log('CRM BOARD LOADED - V2')
-  fetchAll()
-})
+onMounted(() => fetchAll())
+onActivated(() => fetchAll())
 
-onActivated(() => {
-  fetchAll()
-})
-
-watch(() => route.path, (newPath) => {
-  if (newPath === '/crm') {
-    fetchAll()
-  }
-})
+watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 </script>
 
 <style scoped>
-.crm-board-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f1f5f9; }
-.crm-board-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: #fff; border-bottom: 1px solid #e2e8f0; }
-.crm-header-left { display: flex; align-items: baseline; gap: 10px; }
-.crm-title { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0; }
-.crm-subtitle { font-size: 13px; color: #94a3b8; }
-.crm-header-right { display: flex; align-items: center; gap: 8px; }
-.crm-search { width: 220px; }
+.crm-board-page {
+  padding: 20px;
+  background: #F4F5F7;
+  min-height: calc(100vh - 60px);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Header ─── */
+.crm-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.crm-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0; }
+.crm-subtitle { font-size: 14px; color: #64748b; }
+
+.crm-header-right { display: flex; gap: 12px; }
+.crm-search { width: 240px; }
 .crm-filter-sel { width: 140px; }
-.crm-new-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 8px; border: none; background: #6366f1; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
-.crm-tasks-panel { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; }
-.tasks-panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.tasks-icon { color: #6366f1; }
-.tasks-title { font-size: 13px; font-weight: 700; }
-.tasks-count { font-size: 11px; background: #6366f1; color: #fff; padding: 1px 8px; border-radius: 99px; }
-.tasks-list { display: flex; flex-direction: column; gap: 5px; }
-.task-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
-.task-row.task-overdue { background: #fff1f2; border-color: #fca5a5; }
-.task-time { font-size: 12px; font-weight: 700; color: #6366f1; width: 60px; }
-.overdue-badge { background: #ef4444; color: #fff; padding: 0 6px; border-radius: 10px; font-size: 11px; }
-.task-info { flex: 1; display: flex; gap: 8px; align-items: center; }
-.task-client { font-weight: 600; font-size: 13px; }
-.task-order { font-size: 11px; color: #6366f1; background: #eef2ff; padding: 1px 6px; border-radius: 10px; }
-.task-phone { font-size: 11px; color: #64748b; }
-.task-actions { display: flex; gap: 5px; }
-.task-btn { padding: 4px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; }
-.task-call { background: #dbeafe; color: #1e40af; }
-.task-move { background: #f1f5f9; color: #475569; }
-.task-done { background: #d1fae5; color: #065f46; }
-.crm-kanban { display: flex; gap: 16px; padding: 16px 24px; overflow-x: auto; flex: 1; align-items: flex-start; }
-.crm-column { flex: 1; min-width: 180px; background: #f8fafc; border-radius: 12px; max-height: 100%; display: flex; flex-direction: column; border: 2px solid transparent; }
-.crm-column.drag-target { border-color: #6366f1; background: #eef2ff; }
-.crm-col-header { padding: 12px 16px; border-top: 3px solid; border-radius: 10px 10px 0 0; }
-.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.crm-col-title { font-weight: 600; font-size: 14px; }
-.crm-col-count { font-size: 11px; background: #e2e8f0; padding: 1px 8px; border-radius: 10px; float: right; }
-.crm-col-amount { display: block; font-size: 11px; color: #94a3b8; margin-top: 4px; }
-.crm-cards-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
-.crm-card { background: #fff; border-radius: 10px; padding: 12px; border: 1px solid #e2e8f0; border-left: 3px solid #e2e8f0; cursor: pointer; transition: transform 0.1s; }
-.crm-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-.priority-critical { border-left-color: #ef4444; }
-.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.card-number { font-size: 12px; font-weight: 700; color: #6366f1; }
-.card-priority-dot { width: 8px; height: 8px; border-radius: 50%; }
-.card-priority-dot.priority-critical { background: #ef4444; }
-.card-client { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
-.card-client-icon { font-size: 13px; color: #94a3b8; }
-.card-finance-row { display: flex; justify-content: space-between; align-items: center; }
-.card-amount { font-weight: 700; font-size: 13px; }
-.card-pay-badge { font-size: 10px; padding: 1px 8px; border-radius: 10px; }
-.pay-unpaid { background: #fee2e2; color: #991b1b; }
 .pay-paid { background: #d1fae5; color: #065f46; }
 .crm-add-card-btn { padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
 .crm-add-card-btn:hover { color: #6366f1; }
