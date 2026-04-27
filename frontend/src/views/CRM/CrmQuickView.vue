@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { 
   Close, Phone, ChatDotRound, Position, Link, 
-  Clock, CircleCheck, Warning, MagicStick, Star, Calendar, Share
+  Clock, CircleCheck, Warning, MagicStick, Star, Share
 } from '@element-plus/icons-vue';
 import api from '@/api';
 import { ElMessage } from 'element-plus';
@@ -37,7 +37,6 @@ const contactForm = ref({
   next_contact: ''
 });
 
-// Computed for current order (prefers fullOrder if loaded)
 const activeOrder = computed(() => fullOrder.value || props.order);
 
 const currentStepIndex = computed(() => {
@@ -106,7 +105,7 @@ const saveContact = async () => {
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    fullOrder.value = null; // Clear previous
+    fullOrder.value = null;
     fetchData();
   }
 });
@@ -114,41 +113,41 @@ watch(() => props.show, (newVal) => {
 
 <template>
   <Teleport to="body">
-    <!-- Backdrop -->
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] z-[45]" @click="emit('close')" />
     </Transition>
 
-    <!-- Drawer Panel -->
     <Transition name="slide">
-      <div v-if="show && activeOrder" class="fixed right-0 top-0 h-full w-[400px] bg-white shadow-2xl z-50 border-l border-slate-200 flex flex-col">
+      <div v-if="show && activeOrder" class="fixed right-0 top-0 h-full w-[380px] bg-white shadow-2xl z-50 border-l border-slate-200 flex flex-col">
         
         <!-- HEADER -->
-        <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 p-6 z-20">
-          <div class="flex items-center justify-between mb-6">
-            <span class="text-xs font-bold text-slate-400 tracking-widest">#{{ activeOrder.order_number }}</span>
+        <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 p-5 z-20">
+          <div class="flex items-center justify-between mb-5">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">Замовлення #{{ activeOrder.order_number }}</span>
             <button @click="emit('close')" class="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-900">
               <el-icon><Close /></el-icon>
             </button>
           </div>
 
-          <!-- Stepper Dots -->
-          <div class="flex items-center justify-between px-2 mb-6">
+          <!-- Stepper Dots (Visual Fix) -->
+          <div class="flex items-center justify-between px-1 mb-5">
             <div v-for="(step, index) in STEPS" :key="step" class="flex flex-col items-center flex-1 relative">
-              <div 
-                class="w-2.5 h-2.5 rounded-full z-10 transition-all duration-300"
-                :class="index <= currentStepIndex ? 'bg-indigo-600 ring-4 ring-indigo-50' : 'bg-slate-200'"
-              />
-              <span class="text-[8px] mt-2 font-black uppercase tracking-tighter" :class="index === currentStepIndex ? 'text-indigo-600' : 'text-slate-400'">
+              <!-- Active Dot (Filled) -->
+              <div v-if="index === currentStepIndex" class="w-3 h-3 rounded-full bg-indigo-600 ring-4 ring-indigo-50 z-10" />
+              <!-- Completed Dot (Outline) -->
+              <div v-else-if="index < currentStepIndex" class="w-2 h-2 rounded-full border-2 border-indigo-600 bg-white z-10" />
+              <!-- Future Dot (Gray) -->
+              <div v-else class="w-2 h-2 rounded-full bg-slate-200 z-10" />
+              
+              <span class="text-[8px] mt-2 font-bold uppercase tracking-tighter" :class="index === currentStepIndex ? 'text-indigo-600' : 'text-slate-400'">
                 {{ STEP_LABELS[step]?.substring(0, 3) }}
               </span>
-              <div v-if="index < STEPS.length - 1" class="absolute top-[5px] left-[50%] w-full h-[1px] -z-0" :class="index < currentStepIndex ? 'bg-indigo-600' : 'bg-slate-100'" />
+              <div v-if="index < STEPS.length - 1" class="absolute top-[4px] left-[50%] w-full h-[1.5px] -z-0" :class="index < currentStepIndex ? 'bg-indigo-600' : 'bg-slate-100'" />
             </div>
           </div>
 
-          <!-- Deadline Chip -->
           <div v-if="deadlineStatus" class="px-1">
-             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wide"
+             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-wide"
                   :class="deadlineStatus.isUrgent ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-amber-50 border-amber-100 text-amber-600'">
                <el-icon><Clock /></el-icon>
                <span>Дедлайн: {{ formatDate(activeOrder.deadline) }} · {{ deadlineStatus.text }}</span>
@@ -157,64 +156,70 @@ watch(() => props.show, (newVal) => {
         </div>
 
         <!-- CONTENT -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-10 scrollbar-hide">
+        <div class="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
           
           <!-- Section: Клієнт -->
-          <section class="space-y-4">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Клієнт</h3>
+          <section class="pb-4 border-bottom-1 border-slate-100 space-y-3">
+            <h3 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Клієнт</h3>
             <div>
-              <h2 @click="emit('openFull')" class="text-xl font-black text-slate-900 tracking-tight leading-tight hover:text-indigo-600 cursor-pointer transition-all flex items-center gap-2 group/name">
+              <h2 @click="emit('openFull')" class="text-[18px] font-black text-slate-900 tracking-tight leading-tight hover:text-indigo-600 cursor-pointer transition-all flex items-center gap-2 group/name">
                 {{ activeOrder.client_name || activeOrder.counterparty?.name || '—' }}
-                <el-icon class="w-4 h-4 opacity-0 group-hover/name:opacity-100 translate-x-0 group-hover/name:translate-x-1 transition-all"><Link /></el-icon>
+                <el-icon class="w-3 h-3 opacity-0 group-hover/name:opacity-100 transition-all"><Link /></el-icon>
               </h2>
-              <a :href="`tel:${activeOrder.client_phone}`" class="text-base font-bold text-indigo-600 hover:underline block mt-1">
+              <a :href="`tel:${activeOrder.client_phone}`" class="text-sm font-bold text-indigo-600 hover:underline block mt-1">
                 {{ activeOrder.client_phone || '—' }}
               </a>
             </div>
             
-            <div class="flex gap-3">
-               <div class="p-2.5 bg-indigo-50 rounded-xl cursor-pointer hover:bg-indigo-100 transition-colors"><el-icon class="text-indigo-600"><ChatDotRound /></el-icon></div>
-               <div class="p-2.5 bg-sky-50 rounded-xl cursor-pointer hover:bg-sky-100 transition-colors"><el-icon class="text-sky-600"><Position /></el-icon></div>
-               <div class="p-2.5 bg-pink-50 rounded-xl cursor-pointer hover:bg-pink-100 transition-colors"><el-icon class="text-pink-600"><Share /></el-icon></div>
+            <div class="flex gap-4">
+               <div class="flex flex-col items-center gap-1 group cursor-pointer">
+                  <div class="p-2.5 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors"><el-icon class="text-indigo-600"><ChatDotRound /></el-icon></div>
+                  <span class="text-[9px] font-bold text-slate-400">Viber</span>
+               </div>
+               <div class="flex flex-col items-center gap-1 group cursor-pointer">
+                  <div class="p-2.5 bg-sky-50 rounded-xl group-hover:bg-sky-100 transition-colors"><el-icon class="text-sky-600"><Position /></el-icon></div>
+                  <span class="text-[9px] font-bold text-slate-400">Telegram</span>
+               </div>
+               <div class="flex flex-col items-center gap-1 group cursor-pointer">
+                  <div class="p-2.5 bg-pink-50 rounded-xl group-hover:bg-pink-100 transition-colors"><el-icon class="text-pink-600"><Star /></el-icon></div>
+                  <span class="text-[9px] font-bold text-slate-400">Instagram</span>
+               </div>
             </div>
             
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              📍 {{ activeOrder.city || '—' }} · {{ activeOrder.delivery_service || 'Доставка не вказана' }}
+            <p v-if="activeOrder.city || activeOrder.delivery_service" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              📍 {{ activeOrder.city || '—' }} <span v-if="activeOrder.delivery_service">· {{ activeOrder.delivery_service }}</span>
             </p>
           </section>
 
           <!-- Section: Виріб -->
-          <section class="space-y-4">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Виріб</h3>
-            <p class="text-base font-bold text-slate-900">{{ activeOrder.product_name || activeOrder.product?.name || 'Індивідуальне замовлення' }}</p>
-            <div class="flex flex-wrap gap-2">
-               <span class="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                 ID: {{ activeOrder.product_id?.substring(0, 8) || 'NEW' }}
-               </span>
-               <span v-if="activeOrder.characteristics" class="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <section class="pb-4 border-bottom-1 border-slate-100 space-y-3">
+            <h3 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Виріб</h3>
+            <p class="text-sm font-bold text-slate-900">{{ activeOrder.product_name || activeOrder.product?.name || 'Індивідуальне замовлення' }}</p>
+            <div v-if="activeOrder.characteristics" class="flex flex-wrap gap-2">
+               <span class="px-2 py-1 bg-slate-50 border border-slate-100 rounded-md text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                  {{ activeOrder.characteristics }}
                </span>
             </div>
-            <div v-if="activeOrder.comment" class="p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-200">
-               <p class="text-[13px] text-slate-500 italic">"{{ activeOrder.comment }}"</p>
+            <div v-if="activeOrder.comment" class="p-4 bg-slate-50 rounded-xl border-l-4 border-slate-200">
+               <p class="text-[12px] text-slate-500 italic">"{{ activeOrder.comment }}"</p>
             </div>
           </section>
 
           <!-- Section: Фінанси -->
-          <section class="space-y-4">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Фінанси</h3>
+          <section class="pb-4 border-bottom-1 border-slate-100 space-y-3">
+            <h3 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Фінанси</h3>
             <div class="flex items-center gap-6">
               <div>
-                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Сума</p>
-                <span class="text-2xl font-black text-slate-900 tracking-tighter">{{ formatCurrency(activeOrder.total_amount) }}</span>
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-0.5">Сума</p>
+                <span class="text-xl font-black text-slate-900 tracking-tighter">{{ formatCurrency(activeOrder.total_amount) }}</span>
               </div>
-              <div class="h-8 w-px bg-slate-100" />
+              <div class="h-6 w-px bg-slate-100" />
               <div>
-                <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Аванс</p>
-                <span class="text-xl font-bold text-slate-400">{{ formatCurrency(activeOrder.prepayment_amount) }}</span>
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-0.5">Аванс</p>
+                <span class="text-lg font-bold text-slate-400">{{ formatCurrency(activeOrder.prepayment_amount) }}</span>
               </div>
             </div>
-            <div class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase border" 
+            <div class="inline-block px-2.5 py-1 rounded-full text-[9px] font-black uppercase border" 
                  :class="{
                    'bg-emerald-50 text-emerald-700 border-emerald-100': activeOrder.payment_status === 'paid',
                    'bg-amber-50 text-amber-700 border-amber-100': activeOrder.payment_status === 'partial',
@@ -224,42 +229,45 @@ watch(() => props.show, (newVal) => {
             </div>
           </section>
 
-          <!-- Section: Додати Контакт (LIGHT STYLE) -->
-          <section class="bg-[#F8F9FF] border border-[#E8EAFF] rounded-[2rem] p-6 space-y-6">
-            <h3 class="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Додати контакт</h3>
+          <!-- Section: Додати Контакт (COMPACT LIGHT STYLE) -->
+          <section class="bg-[#F8F9FF] border border-[#E8EAFF] rounded-xl p-4 space-y-4">
+            <h3 class="text-[9px] font-black uppercase text-indigo-400 tracking-[0.2em]">Додати контакт</h3>
             
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-4 gap-1.5">
                <button v-for="ch in ['📞 Дзвінок', '💬 Viber', '✈ Telegram', '📸 Instagram']" 
                 :key="ch" 
                 @click="contactForm.type = ch"
-                class="py-3 rounded-xl border text-[11px] font-bold transition-all"
-                :class="contactForm.type === ch ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-50'"
+                class="h-[36px] rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center"
+                :class="contactForm.type === ch ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-50'"
                >
-                 {{ ch }}
+                 {{ ch.split(' ')[0] }}
                </button>
             </div>
+            <div class="text-[8px] text-center text-slate-400 font-bold uppercase tracking-widest -mt-2">
+              {{ contactForm.type.split(' ')[1] }}
+            </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-2 gap-1.5">
               <button v-for="res in ['Не відповів', 'Думає', 'Відмовився', '✓ Підтвердив']" :key="res" 
                 @click="contactForm.result = res"
-                class="py-3 rounded-xl border text-[10px] font-black uppercase transition-all"
-                :class="contactForm.result === res ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-300'"
+                class="py-2.5 rounded-lg border text-[9px] font-black uppercase transition-all"
+                :class="contactForm.result === res ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200'"
               >
                 {{ res }}
               </button>
             </div>
 
-            <div class="p-4 bg-white rounded-2xl border border-indigo-50 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <el-icon class="text-indigo-400"><Clock /></el-icon>
+            <div class="p-3 bg-white rounded-xl border border-indigo-50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <el-icon class="text-indigo-400 w-3.5 h-3.5"><Clock /></el-icon>
                 <div class="flex flex-col">
-                  <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Нагадати</span>
+                  <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Нагадати</span>
                   <el-date-picker
                     v-model="contactForm.next_contact"
                     type="datetime"
                     size="small"
                     placeholder="Дата/час"
-                    class="custom-dp"
+                    class="custom-dp-small"
                     format="DD.MM HH:mm"
                     value-format="YYYY-MM-DD HH:mm"
                   />
@@ -267,34 +275,34 @@ watch(() => props.show, (newVal) => {
               </div>
             </div>
 
-            <button @click="saveContact" class="w-full py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+            <button @click="saveContact" class="w-full py-3 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100">
               Зберегти контакт
             </button>
           </section>
 
           <!-- History Timeline -->
-          <section class="space-y-8 pb-10">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Історія контактів</h3>
-            <div v-if="history.length" class="relative pl-8 space-y-8 border-l-2 border-slate-100 ml-2">
+          <section class="space-y-6 pb-10">
+            <h3 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Історія контактів</h3>
+            <div v-if="history.length" class="relative pl-7 space-y-6 border-l-[1.5px] border-slate-100 ml-1.5">
                <div v-for="item in history" :key="item.id" class="relative">
-                  <div class="absolute -left-[39px] top-1 w-3.5 h-3.5 rounded-full ring-4 ring-white shadow-sm"
+                  <div class="absolute -left-[35px] top-1 w-3 h-3 rounded-full ring-4 ring-white shadow-sm"
                        :class="item.result.includes('✓') ? 'bg-indigo-600' : 'bg-slate-200'" />
-                  <p class="text-[13px] font-bold text-slate-900">{{ item.type }} · {{ item.result }}</p>
-                  <p class="text-[10px] font-bold text-slate-300 uppercase mt-1">{{ formatDate(item.created_at, true) }}</p>
+                  <p class="text-[12px] font-bold text-slate-900">{{ item.type }} · {{ item.result }}</p>
+                  <p class="text-[9px] font-bold text-slate-300 uppercase mt-1">{{ formatDate(item.created_at, true) }}</p>
                </div>
             </div>
-            <div v-else class="text-center py-6 border-2 border-dashed border-slate-50 rounded-2xl">
-               <p class="text-[11px] font-black text-slate-300 uppercase tracking-widest">Контактів ще не було</p>
+            <div v-else class="text-center py-4 border-2 border-dashed border-slate-50 rounded-xl">
+               <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Контактів ще не було</p>
             </div>
           </section>
         </div>
 
-        <!-- FOOTER -->
-        <div class="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-slate-100 p-6 flex gap-4 z-30">
-          <button @click="emit('openFull')" class="flex-1 py-4 text-slate-400 hover:text-slate-900 text-[10px] font-black uppercase tracking-widest transition-all">
+        <!-- FOOTER sticky -->
+        <div class="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-slate-100 p-5 flex gap-3 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+          <button @click="emit('openFull')" class="flex-1 py-3.5 text-slate-400 hover:text-slate-900 text-[9px] font-black uppercase tracking-widest transition-all">
             Відкрити повну картку →
           </button>
-          <button class="flex-[1.2] py-4 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
+          <button class="flex-[1.2] py-3.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100">
             <el-icon><CircleCheck /></el-icon>
             В роботу
           </button>
@@ -314,12 +322,16 @@ watch(() => props.show, (newVal) => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-:deep(.custom-dp) {
+.border-bottom-1 { border-bottom: 1px solid #F0F0F0; }
+
+:deep(.custom-dp-small) {
   --el-input-bg-color: transparent;
   --el-input-border-color: transparent;
   --el-input-hover-border-color: transparent;
   --el-input-focus-border-color: transparent;
+  width: 90px !important;
 }
 :deep(.el-input__wrapper) { box-shadow: none !important; padding: 0 !important; background: transparent !important; }
-:deep(.el-input__inner) { font-weight: 800 !important; font-size: 11px !important; color: #3D3AA8 !important; }
+:deep(.el-input__inner) { font-weight: 800 !important; font-size: 10px !important; color: #3D3AA8 !important; height: 16px !important; }
+:deep(.el-input__prefix) { display: none !important; }
 </style>
