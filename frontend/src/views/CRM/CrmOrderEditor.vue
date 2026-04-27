@@ -366,18 +366,6 @@
           <div class="crm-section-title" style="margin-bottom:10px">Виробництво</div>
 
           <div class="crm-field">
-            <label class="crm-label">Відповідальний майстер</label>
-            <el-select v-model="form.manager_id" clearable placeholder="Оберіть майстра" style="width:100%">
-              <el-option
-                v-for="u in users"
-                :key="u.id"
-                :label="u.full_name || u.email"
-                :value="u.id"
-              />
-            </el-select>
-          </div>
-
-          <div class="crm-field">
             <label class="crm-label">Пріоритет</label>
             <div class="priority-pills">
               <button
