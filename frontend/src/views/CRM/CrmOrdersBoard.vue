@@ -363,17 +363,182 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0; }
 .crm-subtitle { font-size: 14px; color: #64748b; }
 
-.crm-header-right { display: flex; gap: 12px; }
-.crm-search { width: 240px; }
-.crm-filter-sel { width: 140px; }
-.pay-paid { background: #d1fae5; color: #065f46; }
-.crm-add-card-btn { padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
-.crm-add-card-btn:hover { color: #6366f1; }
-.crm-load-more-container { padding: 8px; text-align: center; border-top: 1px dashed #e2e8f0; }
-.crm-load-more-btn { background: none; border: none; color: #6366f1; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; }
-.crm-load-more-btn:hover { text-decoration: underline; }
+.crm-new-btn {
+  background: #3D3AA8;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.crm-new-btn:hover { opacity: 0.9; }
+
+/* ─── Tasks Panel ─── */
+.crm-tasks-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+.tasks-panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.tasks-icon { color: #f59e0b; font-size: 20px; }
+.tasks-title { font-weight: 700; color: #1e293b; }
+.tasks-count { background: #fee2e2; color: #ef4444; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+
+.tasks-list { display: flex; flex-direction: column; gap: 8px; }
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+.task-time { display: flex; align-items: center; gap: 6px; width: 100px; }
+.overdue-badge { background: #ef4444; color: #fff; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 800; }
+.task-time-val { font-weight: 600; font-size: 13px; color: #ef4444; }
+.task-info { flex: 1; display: flex; flex-direction: column; }
+.task-client { font-weight: 600; color: #1e293b; }
+.task-order { font-size: 12px; color: #64748b; }
+.task-actions { display: flex; gap: 8px; }
+.task-btn { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
+.task-call { background: #3D3AA8; color: #fff; border: none; }
+.task-done { color: #22c55e; }
+
+/* ─── Kanban ─── */
+.crm-kanban {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  align-items: flex-start;
+}
+.crm-column {
+  flex: 1;
+  min-width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-top: 3px solid #e2e8f0;
+}
+.crm-col-header {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; }
+.crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
+.crm-col-count { color: #94a3b8; font-size: 13px; margin-left: 4px; }
+.crm-col-amount { font-size: 13px; color: #64748b; font-weight: 600; }
+
+.crm-cards-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100px;
+}
+
+/* ─── Card ─── */
+.crm-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.crm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: #3D3AA8;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.card-order-no { font-size: 11px; color: #94a3b8; font-weight: 600; }
+.card-priority-mark { width: 8px; height: 8px; border-radius: 50%; }
+
+.card-main { margin-bottom: 12px; }
+.card-customer { font-weight: 700; color: #1e293b; font-size: 14px; margin-bottom: 2px; }
+.card-product { font-size: 12px; color: #64748b; }
+
+.card-financial {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.card-price { font-weight: 700; color: #3D3AA8; font-size: 14px; }
+.card-deadline { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.payment-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.pay-unpaid { background: #f1f5f9; color: #64748b; }
+.pay-partial { background: #fef3c7; color: #92400e; }
+.pay-paid    { background: #d1fae5; color: #065f46; }
+
+.card-meta { display: flex; align-items: center; gap: 8px; }
+.card-avatar {
+  width: 24px;
+  height: 24px;
+  background: #3D3AA8;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+.card-comm-icons { display: flex; gap: 4px; }
+.comm-mini-icon { font-size: 12px; opacity: 0.7; }
+
+/* ─── Add Button ─── */
+.crm-add-card-btn {
+  margin: 0 12px 12px;
+  padding: 10px;
+  border: 2px dashed #e2e8f0;
+  background: transparent;
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.crm-add-card-btn:hover {
+  border-color: #3D3AA8;
+  color: #3D3AA8;
+  background: #f5f3ff;
+}
+
+.crm-load-more-container { padding: 8px; text-align: center; }
+.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; }
+
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
 .quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .qr-btn { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 12px; font-weight: 600; }
-.qr-btn:hover { background: #eef2ff; border-color: #6366f1; color: #6366f1; }
+.qr-btn:hover { background: #eef2ff; border-color: #3D3AA8; color: #3D3AA8; }
+
 </style>
