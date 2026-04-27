@@ -13,11 +13,15 @@ export const useNotificationStore = defineStore('notification', {
     async fetchNotifications() {
       this.loading = true
       try {
-        const res = await api.get('/api/v1/notifications?unread_only=true')
-        this.notifications = res.data
-        this.unreadCount = this.notifications.length
+        const [notifRes, tasksRes] = await Promise.all([
+          api.get('/api/v1/notifications?unread_only=true'),
+          api.get('/api/v1/crm/tasks/today')
+        ])
+        this.notifications = notifRes.data
+        const tasksCount = tasksRes.data.length
+        this.unreadCount = this.notifications.length + tasksCount
       } catch (e) {
-        console.error('Failed to fetch notifications', e)
+        console.error('Failed to fetch notifications or tasks', e)
       } finally {
         this.loading = false
       }

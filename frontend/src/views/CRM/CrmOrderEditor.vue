@@ -543,7 +543,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -597,6 +597,25 @@ const contactResults = ref([...defaultContactResults])
 const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
+
+// Watch contact result to auto-set reminder
+watch(() => contactResult.value, (newVal) => {
+  if (newVal === 'NO_ANSWER') {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    
+    // Format to local ISO-like string YYYY-MM-DDTHH:mm:ss
+    const pad = (n) => String(n).padStart(2, '0')
+    const y = tomorrow.getFullYear()
+    const m = pad(tomorrow.getMonth() + 1)
+    const d = pad(tomorrow.getDate())
+    const hh = pad(tomorrow.getHours())
+    const mm = pad(tomorrow.getMinutes())
+    const ss = pad(tomorrow.getSeconds())
+    
+    contactNextAt.value = `${y}-${m}-${d}T${hh}:${mm}:${ss}`
+  }
+})
 
 // Communication
 const contacts      = ref([])
