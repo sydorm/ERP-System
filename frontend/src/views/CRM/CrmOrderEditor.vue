@@ -313,19 +313,10 @@
 
           <div class="crm-field">
             <label class="crm-label">Статус оплати</label>
-            <el-select v-model="form.payment_status" placeholder="Оберіть статус" style="width:100%">
-              <el-option
-                v-for="ps in paymentStatuses"
-                :key="ps.value"
-                :label="ps.label"
-                :value="ps.value"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full" :style="{ background: ps.color || '#94a3b8' }" />
-                  {{ ps.label }}
-                </div>
-              </el-option>
-            </el-select>
+            <div class="payment-status-badge" :style="{ background: autoPaymentStatus.color + '20', color: autoPaymentStatus.color, border: '1px solid ' + autoPaymentStatus.color }">
+              <span class="status-dot" :style="{ background: autoPaymentStatus.color }" />
+              {{ autoPaymentStatus.label }}
+            </div>
           </div>
 
           <div class="crm-field" v-if="form.payment_status !== 'unpaid'">
@@ -701,6 +692,19 @@ const history = computed(() => {
   }
   return items
 })
+
+const autoPaymentStatus = computed(() => {
+  const total = Number(form.total_amount) || 0
+  const paid = Number(form.prepayment_amount) || 0
+  
+  if (paid === 0) return { label: 'Не оплачено', color: '#94a3b8', key: 'unpaid' }
+  if (paid >= total && total > 0) return { label: 'Оплачено повністю', color: '#22c55e', key: 'paid' }
+  return { label: 'Часткова оплата', color: '#eab308', key: 'partial' }
+})
+
+watch(() => autoPaymentStatus.value, (newVal) => {
+  form.payment_status = newVal.key
+}, { immediate: true })
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA', { minimumFractionDigits: 0 })
@@ -1352,6 +1356,22 @@ onMounted(loadData)
 .psp-unpaid.active  { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
 .psp-partial.active { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
 .psp-paid.active    { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+
+.payment-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
 
 .deadline-hint { font-size: 11px; color: #94a3b8; margin: 4px 0 0; }
 
