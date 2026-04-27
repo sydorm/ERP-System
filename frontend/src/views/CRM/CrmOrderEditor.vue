@@ -392,7 +392,7 @@
         </div>
 
         <!-- ══ КОМУНІКАЦІЯ ══ -->
-        <div class="crm-section" v-if="orderId">
+        <div class="crm-section">
           <div class="comm-section-head">
             <span class="crm-section-title">Комунікація</span>
             <span class="attempts-badge" v-if="form.contact_attempts > 0">
@@ -464,9 +464,9 @@
           </div>
 
           <button class="log-contact-btn" @click="logContact"
-            :disabled="!contactResult || savingContact">
+            :disabled="!contactResult || savingContact || !orderId">
             <el-icon v-if="savingContact" class="is-loading"><Loading /></el-icon>
-            Записати результат
+            {{ orderId ? 'Записати результат' : 'Збережіть заявку, щоб записати контакт' }}
           </button>
 
           <div v-if="contacts.length" style="margin-top:12px">
@@ -623,6 +623,15 @@ watch(() => contactResult.value, (newVal) => {
     const ss = pad(tomorrow.getSeconds())
     
     contactNextAt.value = `${y}-${m}-${d}T${hh}:${mm}:${ss}`
+  }
+})
+
+// Sync comm type with lead source for new orders
+watch(() => contactCommType.value, (newVal) => {
+  if (!orderId.value && newVal) {
+    // Try to find matching lead source by name or code
+    const found = leadSources.value.find(ls => ls.id === newVal || ls.name === newVal)
+    if (found) form.lead_source_id = found.id
   }
 })
 
@@ -1040,6 +1049,10 @@ const loadData = async () => {
     }
     if (!contactResults.value || contactResults.value.length === 0) {
       contactResults.value = [...defaultContactResults]
+    }
+    if (!leadSources.value || leadSources.value.length === 0) {
+      // Use comm types as fallback for lead sources if empty
+      leadSources.value = communicationTypes.value.map(ct => ({ id: ct.code, name: ct.name, color: '#6366f1' }))
     }
 
     // 2. Load existing Order data
