@@ -100,11 +100,16 @@ class SpecificationService:
                 attr = db.query(Attribute).filter(Attribute.id == val.attribute_id).first()
                 if attr and attr.type == 'DIMENSIONS':
                     if not val.text_value: continue
-                    parts = val.text_value.split('x')
+                    # Normalize separators: x, × (unicode), * and remove spaces
+                    norm_val = val.text_value.replace('×', 'x').replace('*', 'x').replace(' ', '')
+                    parts = norm_val.split('x')
                     if len(parts) < 2: continue
                     
-                    v_w = float(parts[0])
-                    v_h = float(parts[1])
+                    try:
+                        v_w = float(parts[0])
+                        v_h = float(parts[1])
+                    except (ValueError, IndexError):
+                        continue
                     
                     # Match target_length and target_width (order-independent)
                     if target_width:

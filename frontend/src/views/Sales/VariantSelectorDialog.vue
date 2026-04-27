@@ -315,7 +315,9 @@ const initializeSelector = () => {
           if (v.width && v.height) {
               dimSelections.value[v.attribute_id] = { w: v.width, h: v.height }
           } else if (v.text_value) {
-              const [w, h] = v.text_value.replace('×', 'x').split('x')
+              // Normalize and split
+              const norm = v.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '')
+              const [w, h] = norm.split('x')
               dimSelections.value[v.attribute_id] = { w: parseInt(w) || null, h: parseInt(h) || null }
           }
       } else {
@@ -370,9 +372,10 @@ const currentVariant = computed(() => {
       return v.values?.some(vv => {
         if (vv.attribute_id !== a.id) return false
         if (a.type === 'DIMENSIONS') {
-            const fmt = a.dimension_format || '{width}×{height}'
-            const expectedValue = fmt.replace('{width}', dim.w).replace('{height}', dim.h)
-            return vv.text_value === expectedValue || vv.text_value === `${dim.w}x${dim.h}`
+            if (!vv.text_value) return false
+            const normStored = vv.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '')
+            const normExpected = `${dim.w}x${dim.h}`
+            return normStored === normExpected
         }
         return vv.option_id === selection || vv.text_value === selection
       })
@@ -491,8 +494,9 @@ const handleDimOptionChange = (attrId) => {
   const opt = options.find(o => o.id === selected)
   const val = opt ? opt.value : selected.toString()
   
-  const parts = val.split('×')
-  if (parts.length === 2) {
+  // Robust split using regex for x, ×, *
+  const parts = val.replace(/\s+/g, '').split(/[x\u00d7*]/)
+  if (parts.length >= 2) {
     if (!dimSelections.value[attrId]) {
       dimSelections.value[attrId] = { w: 0, h: 0 }
     }
