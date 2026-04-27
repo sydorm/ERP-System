@@ -426,13 +426,14 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   flex: 1;
   min-width: 280px;
   background: #FFFFFF;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   border-top: 3px solid #e2e8f0;
+  padding: 16px;
 }
-.crm-col-header { padding: 16px 16px 12px; }
+.crm-col-header { padding: 0 0 12px; }
 .crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; position: relative; }
 .crm-col-dot { width: 10px; height: 10px; border-radius: 50%; }
 .crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
@@ -449,7 +450,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-col-subheader { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
 
 .crm-cards-list {
-  padding: 12px;
+  padding: 12px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -461,14 +462,18 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 /* ─── Card ─── */
 .crm-card {
   background: #FFFFFF;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+  transition: box-shadow 0.15s ease;
+  border: 1px solid #F0F0F0;
+  margin-bottom: 10px;
 }
-.crm-card:hover { border-color: #3D3AA8; transform: translateY(-1px); }
+.crm-card:hover { 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10); 
+  transform: translateY(-1px); 
+}
 
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .card-order-no { font-size: 11px; color: #94a3b8; font-weight: 600; }
