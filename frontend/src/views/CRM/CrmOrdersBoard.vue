@@ -15,50 +15,86 @@
           <button class="view-btn active">Kanban</button>
           <button class="view-btn">Список</button>
         </div>
-        <button class="crm-filter-btn">
-          <el-icon><Operation /></el-icon> Фільтри
-        </button>
+
+        <!-- SEARCH -->
+        <el-input
+          v-model="searchQuery"
+          placeholder="Пошук клієнта, тел, виробу..."
+          class="crm-search-input"
+          clearable
+          :prefix-icon="Search"
+        />
+
+        <!-- FILTERS -->
+        <el-popover placement="bottom-end" :width="300" trigger="click">
+          <template #reference>
+            <button class="crm-filter-btn">
+              <el-icon><Operation /></el-icon> Фільтри
+              <el-badge v-if="activeFiltersCount" :value="activeFiltersCount" class="filter-badge" />
+            </button>
+          </template>
+          <div class="filter-popover-content">
+            <div class="filter-section">
+              <label>Пріоритет</label>
+              <el-select v-model="filters.priority" placeholder="Всі" clearable>
+                <el-option label="Критичний" value="critical" />
+                <el-option label="Високий" value="urgent" />
+                <el-option label="Середній" value="normal" />
+                <el-option label="Низький" value="low" />
+              </el-select>
+            </div>
+            <div class="filter-section">
+              <label>Статус оплати</label>
+              <el-select v-model="filters.payment" placeholder="Всі" clearable>
+                <el-option label="Не оплачено" value="unpaid" />
+                <el-option label="Часткова" value="partial" />
+                <el-option label="Оплачено" value="paid" />
+              </el-select>
+            </div>
+            <div class="filter-section">
+              <label>Менеджер</label>
+              <el-select v-model="filters.manager" placeholder="Всі" clearable>
+                <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
+              </el-select>
+            </div>
+            <div class="filter-section">
+              <label>Дедлайн</label>
+              <el-select v-model="filters.deadline" placeholder="Всі" clearable>
+                <el-option label="Прострочені" value="overdue" />
+                <el-option label="Сьогодні" value="today" />
+                <el-option label="Цього тижня" value="this_week" />
+              </el-select>
+            </div>
+            <div class="filter-footer">
+              <el-button @click="resetFilters" size="small">Скинути</el-button>
+              <el-button type="primary" size="small" @click="applyFilters">Застосувати</el-button>
+            </div>
+          </div>
+        </el-popover>
+
         <button class="crm-new-btn-indigo" @click="openNewOrder">
-          <el-icon><Plus /></el-icon> Нове замовлення
+          <el-icon><Plus /></el-icon> + Нове замовлення
         </button>
       </div>
     </div>
 
+    <!-- ===== TOOLS (SORT) ===== -->
     <div class="crm-tools-row">
-      <div class="tool-item">Сортувати <el-icon><ArrowDown /></el-icon></div>
+      <el-dropdown trigger="click" @command="handleSort">
+        <div class="tool-item">
+          Сортувати: {{ currentSortLabel }} <el-icon><ArrowDown /></el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="deadline_asc">За дедлайном (ближчі)</el-dropdown-item>
+            <el-dropdown-item command="amount_desc">За сумою (спадання)</el-dropdown-item>
+            <el-dropdown-item command="created_desc">За датою (нові)</el-dropdown-item>
+            <el-dropdown-item command="priority_desc">За пріоритетом</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <div class="tool-item">Групувати <el-icon><ArrowDown /></el-icon></div>
       <div class="tool-item">Вигляд <el-icon><ArrowDown /></el-icon></div>
-    </div>
-
-    <!-- ===== MY TASKS TODAY ===== -->
-    <div class="crm-tasks-panel" v-if="overdueTasks.length">
-      <div class="tasks-panel-head">
-        <el-icon class="tasks-icon"><Bell /></el-icon>
-        <span class="tasks-title">Мої задачі на сьогодні (горить)</span>
-        <span class="tasks-count">{{ overdueTasks.length }}</span>
-      </div>
-      <div class="tasks-list">
-        <div
-          v-for="task in overdueTasks"
-          :key="task.id"
-          class="task-row task-overdue"
-        >
-          <div class="task-time">
-            <span class="overdue-badge">!</span>
-            <span class="task-time-val">{{ formatTaskTime(task.scheduled_at) }}</span>
-          </div>
-          <div class="task-info">
-            <span class="task-client">{{ task.client_name || '—' }}</span>
-            <span class="task-order">{{ task.order_number }}</span>
-            <span v-if="task.client_phone" class="task-phone">{{ task.client_phone }}</span>
-          </div>
-          <div class="task-actions">
-            <button class="task-btn task-call" @click="handleCall(task)">Зателефонувати</button>
-            <button class="task-btn task-move" @click="openReschedule(task)">Перенести</button>
-            <button class="task-btn task-done" @click="completeTask(task)">✓</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- ===== KANBAN BOARD ===== -->
@@ -77,7 +113,7 @@
           <div class="crm-col-title-row">
             <span class="crm-col-dot" :style="{ background: stage.color }" />
             <span class="crm-col-title">{{ stage.label }}</span>
-            <span class="crm-col-count-bubble">{{ ordersInStage(stage.key).length }}</span>
+            <span class="crm-col-count-bubble">{{ filteredOrdersInStage(stage.key).length }}</span>
             <el-icon class="crm-col-menu"><MoreFilled /></el-icon>
           </div>
           <div class="crm-col-subheader">
@@ -98,11 +134,12 @@
           >
             <div class="card-header">
               <span class="card-order-no">#{{ order.order_number }}</span>
-              <span class="priority-dot" :class="getPriorityClass(order.priority)" />
+              <!-- Priority Dot (Top Right) -->
+              <div class="priority-dot-indicator" :class="getPriorityDotClass(order.priority)" />
             </div>
             
             <div class="card-main">
-              <div class="order-card-title">{{ getCounterpartyName(order.counterparty_id) || '—' }}</div>
+              <div class="order-card-title">{{ getCounterpartyName(order.counterparty_id) || order.client_name || '—' }}</div>
               <div class="order-card-details">{{ order.product_name || 'Індивідуальне замовлення' }}</div>
             </div>
 
@@ -120,10 +157,12 @@
                 </span>
               </div>
               <div class="card-meta">
-                <div class="card-avatar">{{ (getCounterpartyName(order.counterparty_id) || '?').charAt(0) }}</div>
+                <el-tooltip :content="getManagerName(order.manager_id)" placement="top">
+                  <div class="card-avatar">{{ (getManagerName(order.manager_id) || '?').charAt(0) }}</div>
+                </el-tooltip>
                 <div class="card-comm-icons">
-                  <span class="comm-status-dot">●</span>
-                  <span class="comm-status-text">Контакт</span>
+                  <el-icon class="comm-icon"><ChatDotRound /></el-icon>
+                  <el-icon class="comm-icon"><Phone /></el-icon>
                 </div>
               </div>
             </div>
@@ -133,12 +172,6 @@
         <button class="add-order-button" @click="openNewOrderInStage(stage.key)">
           <el-icon><Plus /></el-icon> + ДОДАТИ ЗАМОВЛЕННЯ
         </button>
-
-        <div v-if="hasMore" class="crm-load-more-container">
-          <button class="crm-load-more-btn" @click="loadMore">
-            Завантажити ще...
-          </button>
-        </div>
       </div>
     </div>
 
@@ -167,7 +200,6 @@
       </template>
     </el-dialog>
 
-    <!-- Call Results Dialog -->
     <CallResultDialog 
       v-model="callVisible" 
       :task="callTask" 
@@ -181,7 +213,7 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
@@ -193,16 +225,33 @@ const users = ref([])
 const todayTasks = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
-const filterPriority = ref('')
-const filterManager = ref('')
-const limit = 50
-const offset = ref(0)
-const hasMore = ref(true)
+
+// Filter State
+const filters = ref({
+  priority: '',
+  payment: '',
+  manager: '',
+  deadline: ''
+})
+const activeFiltersCount = computed(() => {
+  return Object.values(filters.value).filter(v => v !== '').length
+})
+
+// Sort State
+const sortOption = ref('created_desc')
+const currentSortLabel = computed(() => {
+  const map = {
+    'deadline_asc': 'За дедлайном',
+    'amount_desc': 'За сумою',
+    'created_desc': 'За датою',
+    'priority_desc': 'За пріоритетом'
+  }
+  return map[sortOption.value]
+})
 
 const rescheduleVisible = ref(false)
 const rescheduleTime = ref('')
 const selectedTask = ref(null)
-
 const callVisible = ref(false)
 const callTask = ref(null)
 
@@ -219,18 +268,11 @@ const stages = [
   { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]
 
-const priorities = [
-  { value: 'normal', label: 'Звичайний' },
-  { value: 'urgent', label: 'Терміновий' },
-  { value: 'critical', label: 'Критичний' }
-]
-
 const fetchAll = async () => {
   loading.value = true
-  offset.value = 0
   try {
     const [ordersRes, cpRes, usersRes, tasksRes] = await Promise.all([
-      api.get(`/api/v1/orders?limit=${limit}&offset=0`),
+      api.get('/api/v1/orders?limit=1000&offset=0'),
       api.get('/api/v1/counterparties?limit=500'),
       api.get('/users/colleagues'),
       api.get('/api/v1/crm/tasks/today')
@@ -239,7 +281,6 @@ const fetchAll = async () => {
     counterparties.value = cpRes.data
     users.value = usersRes.data
     todayTasks.value = tasksRes.data
-    hasMore.value = ordersRes.data.length === limit
   } catch (e) {
     ElMessage.error('Помилка завантаження')
   } finally {
@@ -247,51 +288,74 @@ const fetchAll = async () => {
   }
 }
 
-const loadMore = async () => {
-  loading.value = true
-  offset.value += limit
-  try {
-    const res = await api.get(`/api/v1/orders?limit=${limit}&offset=${offset.value}`)
-    if (res.data.length > 0) {
-      orders.value = [...orders.value, ...res.data]
-    }
-    hasMore.value = res.data.length === limit
-  } catch (e) {
-    ElMessage.error('Помилка завантаження додаткових даних')
-  } finally {
-    loading.value = false
-  }
-}
-
-const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || id
+const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
+const getManagerName = (id) => users.value.find(u => u.id === id)?.name || id
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
-const formatTaskTime = (ts) => new Date(ts).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' })
 const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
 
-const ordersInStage = (stage) => orders.value.filter(o => o.crm_stage === stage)
+const handleSort = (cmd) => { sortOption.value = cmd }
+const resetFilters = () => {
+  filters.value = { priority: '', payment: '', manager: '', deadline: '' }
+}
+const applyFilters = () => { /* Popover closes automatically, computed handles it */ }
+
 const filteredOrdersInStage = (stage) => {
-  let list = ordersInStage(stage)
+  let list = orders.value.filter(o => o.crm_stage === stage)
+  
+  // 1. Search
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(o => 
       o.order_number.toLowerCase().includes(q) || 
-      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q) ||
-      (o.client_name && o.client_name.toLowerCase().includes(q))
+      (o.client_name && o.client_name.toLowerCase().includes(q)) ||
+      (o.client_phone && o.client_phone.includes(q)) ||
+      (o.product_name && o.product_name.toLowerCase().includes(q)) ||
+      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q)
     )
   }
-  if (filterPriority.value) list = list.filter(o => o.priority === filterPriority.value)
-  if (filterManager.value) list = list.filter(o => o.manager_id === filterManager.value)
+
+  // 2. Filters
+  if (filters.value.priority) list = list.filter(o => o.priority === filters.value.priority)
+  if (filters.value.payment) list = list.filter(o => o.payment_status === filters.value.payment)
+  if (filters.value.manager) list = list.filter(o => o.manager_id === filters.value.manager)
+  if (filters.value.deadline) {
+    const now = new Date()
+    if (filters.value.deadline === 'overdue') {
+      list = list.filter(o => o.deadline && new Date(o.deadline) < now)
+    } else if (filters.value.deadline === 'today') {
+      const today = now.toDateString()
+      list = list.filter(o => o.deadline && new Date(o.deadline).toDateString() === today)
+    }
+  }
+
+  // 3. Sorting
+  list.sort((a, b) => {
+    if (sortOption.value === 'deadline_asc') {
+      if (!a.deadline) return 1; if (!b.deadline) return -1;
+      return new Date(a.deadline) - new Date(b.deadline)
+    }
+    if (sortOption.value === 'amount_desc') return (b.total_amount || 0) - (a.total_amount || 0)
+    if (sortOption.value === 'created_desc') return new Date(b.created_at) - new Date(a.created_at)
+    if (sortOption.value === 'priority_desc') {
+      const pMap = { critical: 4, urgent: 3, normal: 2, low: 1 }
+      return (pMap[b.priority] || 0) - (pMap[a.priority] || 0)
+    }
+    return 0
+  })
+
   return list
 }
-const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
-const getPriorityClass = (p) => {
-  if (p === 'urgent') return 'priority-high'
-  if (p === 'normal') return 'priority-medium'
-  return 'priority-low'
+const stageTotal = (stage) => filteredOrdersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
+
+const getPriorityDotClass = (p) => {
+  if (p === 'critical') return 'dot-red'
+  if (p === 'urgent') return 'dot-orange'
+  if (p === 'normal') return 'dot-yellow'
+  return 'dot-green'
 }
-const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВО', paid: 'ОПЛАЧЕНО' }[s] || s)
+const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВА', paid: 'ОПЛАЧЕНО' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
@@ -301,9 +365,7 @@ const handleCall = (task) => {
   callTask.value = task
   callVisible.value = true
 }
-
 const onCallSuccess = () => fetchAll()
-
 const completeTask = async (task) => {
   try {
     await api.put(`/api/v1/crm/tasks/${task.id}/complete`)
@@ -351,13 +413,12 @@ const onDrop = async (stage) => {
 
 onMounted(() => fetchAll())
 onActivated(() => fetchAll())
-
 watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 </script>
 
 <style scoped>
 .crm-board-page {
-  padding: 24px;
+  padding: 16px;
   background: #F4F5F7;
   min-height: calc(100vh - 60px);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -367,278 +428,143 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-board-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 .crm-title-row { display: flex; align-items: center; gap: 12px; }
-.crm-title { font-size: 28px; font-weight: 800; color: #1e293b; margin: 0; }
-.crm-count-badge { font-size: 16px; color: #94a3b8; font-weight: 500; }
-.crm-subtitle { font-size: 14px; color: #64748b; margin: 4px 0 0; }
+.crm-title { font-size: 24px; font-weight: 800; color: #1e293b; margin: 0; }
+.crm-count-badge { font-size: 14px; color: #94a3b8; font-weight: 500; }
+.crm-subtitle { font-size: 13px; color: #64748b; margin: 2px 0 0; }
 
-.crm-header-right { display: flex; gap: 12px; align-items: center; }
-.crm-view-switch { background: #e2e8f0; padding: 2px; border-radius: 8px; display: flex; }
-.view-btn { padding: 6px 12px; border: none; background: transparent; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #64748b; }
+.crm-header-right { display: flex; gap: 10px; align-items: center; }
+.crm-view-switch { background: #e2e8f0; padding: 2px; border-radius: 8px; display: flex; margin-right: 8px; }
+.view-btn { padding: 4px 10px; border: none; background: transparent; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b; }
 .view-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-.crm-filter-btn { background: #fff; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #475569; }
-.crm-new-btn-indigo { background: #3D3AA8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.crm-search-input { width: 220px; }
+:deep(.el-input__wrapper) { border-radius: 8px; }
 
-.crm-tools-row { display: flex; gap: 20px; margin-bottom: 24px; }
-.tool-item { font-size: 13px; color: #64748b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-
-/* ─── Tasks Panel ─── */
-.crm-tasks-panel {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-  border: 1px solid #e2e8f0;
+.crm-filter-btn { 
+  background: #fff; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; 
+  font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569; position: relative;
 }
-.tasks-panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.tasks-icon { color: #f59e0b; font-size: 20px; }
-.tasks-title { font-weight: 700; color: #1e293b; }
-.tasks-count { background: #fee2e2; color: #ef4444; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.filter-badge { margin-left: 4px; }
 
-.tasks-list { display: flex; flex-direction: column; gap: 8px; }
-.task-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-.task-time { display: flex; align-items: center; gap: 6px; width: 100px; }
-.overdue-badge { background: #ef4444; color: #fff; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 800; }
-.task-time-val { font-weight: 600; font-size: 13px; color: #ef4444; }
-.task-info { flex: 1; display: flex; flex-direction: column; }
-.task-client { font-weight: 600; color: #1e293b; }
-.task-order { font-size: 12px; color: #64748b; }
-.task-actions { display: flex; gap: 8px; }
-.task-btn { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
-.task-call { background: #3D3AA8; color: #fff; border: none; }
-.task-done { color: #22c55e; }
+.crm-new-btn-indigo { background: #3D3AA8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+.crm-tools-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: center; }
+.tool-item { font-size: 12px; color: #64748b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
 
 /* ─── Kanban Board ─── */
 .crm-kanban {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   overflow-x: auto;
   padding-bottom: 20px;
   align-items: flex-start;
 }
 
-/* 1. Kanban Column Styles */
 .kanban-column {
   flex-shrink: 0;
-  width: 280px;
+  width: 220px;
+  flex: 1;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
-  background-color: rgba(249, 250, 251, 0.5); /* gray-50/50 */
-  border-radius: 16px;
+  min-height: calc(100vh - 200px);
+  background-color: rgba(249, 250, 251, 0.5);
+  border-radius: 12px;
 }
 
 .kanban-column-header {
-  padding: 16px;
+  padding: 12px;
   background-color: #ffffff;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  border: 1px solid #f3f4f6; /* gray-100 */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid #f3f4f6;
   border-top-width: 3px;
-  border-bottom: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.crm-col-title-row { display: flex; align-items: center; gap: 8px; position: relative; }
-.crm-col-dot { width: 10px; height: 10px; border-radius: 50%; }
-.crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
+.crm-col-title-row { display: flex; align-items: center; gap: 6px; position: relative; }
+.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; }
+.crm-col-title { font-weight: 700; color: #1e293b; font-size: 13px; }
 .crm-col-count-bubble { 
-  background: #f1f5f9; 
-  color: #94a3b8; 
-  font-size: 11px; 
-  font-weight: 700; 
-  padding: 2px 8px; 
-  border-radius: 4px; 
-  margin-left: 8px; 
+  background: #f1f5f9; color: #94a3b8; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; 
 }
-.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 18px; }
-.crm-col-subheader { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 16px; }
+.crm-col-subheader { font-size: 9px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .kanban-column-content {
-  padding: 12px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  flex: 1 1 0%;
-}
-
-.add-order-button {
-  margin: 8px 12px 12px;
-  width: calc(100% - 24px);
-  padding: 12px 0;
-  border: 2px dashed #e5e7eb; /* gray-200 */
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  color: #9ca3af; /* gray-400 */
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  background: transparent;
-  transition: all 0.2s;
-  cursor: pointer;
+  overflow-y: auto;
+  flex: 1;
 }
 
-.add-order-button:hover {
-  border-color: #a5b4fc; /* indigo-300 */
-  color: #3D3AA8; /* primary */
-  background-color: #ffffff;
-}
-
-/* 2. Order Card Styles */
+/* ─── Order Card ─── */
 .order-card {
   background-color: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid #f3f4f6;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   position: relative;
-  overflow: hidden;
 }
+.order-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #e5e7eb; }
 
-.order-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-color: #e5e7eb;
-}
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.card-order-no { font-size: 10px; color: #94a3b8; font-weight: 600; }
 
-.order-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background-color: #e0e7ff; /* indigo-100 */
-  opacity: 0;
-  transition: opacity 0.2s;
-}
+/* Priority Dot Indicator */
+.priority-dot-indicator { width: 8px; height: 8px; border-radius: 50%; }
+.dot-red { background: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.5); }
+.dot-orange { background: #f97316; }
+.dot-yellow { background: #eab308; }
+.dot-green { background: #22c55e; }
 
-.order-card:hover::before {
-  opacity: 1;
-}
+.order-card-title { font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 2px; }
+.order-card-details { font-size: 11px; color: #64748b; margin-bottom: 8px; }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.card-order-no { font-size: 11px; color: #94a3b8; font-weight: 600; }
-
-.order-card-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827; /* gray-900 */
-  margin-bottom: 4px;
-  transition: color 0.2s;
-}
-
-.order-card:hover .order-card-title {
-  color: #3D3AA8;
-}
-
-.order-card-details {
-  font-size: 12px;
-  color: #6b7280; /* gray-500 */
-  margin-bottom: 12px;
-}
-
-.card-financial {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.card-price { font-weight: 700; color: #111827; font-size: 14px; }
+.card-financial { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.card-price { font-weight: 700; color: #1e293b; font-size: 13px; }
 
 .deadline-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background-color: #f9fafb;
-  border: 1px solid #f3f4f6;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #4b5563;
+  display: flex; align-items: center; gap: 4px; padding: 2px 6px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; 
+  font-size: 9px; font-weight: 600; color: #64748b;
 }
 
-.priority-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
+.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 4px; }
+.payment-badge { padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.payment-paid { background-color: #dcfce7; color: #15803d; }
+.payment-partial { background-color: #fef9c3; color: #a16207; }
+.payment-unpaid { background-color: #f1f5f9; color: #475569; }
 
-.priority-high { background-color: #ef4444; }
-.priority-medium { background-color: #f59e0b; }
-.priority-low { background-color: #10b981; }
-
-/* 3. Payment Badge Styles */
-.payment-badge {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.payment-paid {
-  background-color: #dcfce7; /* green-100 */
-  color: #15803d; /* green-700 */
-}
-
-.payment-partial {
-  background-color: #fef9c3; /* yellow-100 */
-  color: #a16207; /* yellow-700 */
-}
-
-.payment-unpaid {
-  background-color: #f3f4f6; /* gray-100 */
-  color: #374151; /* gray-700 */
-}
-
-.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f9fafb; padding-top: 12px; }
-.card-meta { display: flex; align-items: center; gap: 8px; }
+.card-meta { display: flex; align-items: center; gap: 6px; }
 .card-avatar {
-  width: 24px;
-  height: 24px;
-  background: #e2e8f0;
-  color: #475569;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
+  width: 20px; height: 20px; background: #3D3AA8; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;
 }
-.card-comm-icons { display: flex; align-items: center; gap: 4px; }
-.comm-status-dot { font-size: 8px; color: #3D3AA8; }
-.comm-status-text { font-size: 11px; color: #3D3AA8; font-weight: 600; }
+.card-comm-icons { display: flex; align-items: center; gap: 4px; color: #94a3b8; font-size: 14px; }
+.comm-icon:hover { color: #3D3AA8; }
 
-.drag-target { background-color: #eef2ff !important; border: 2px dashed #a5b4fc; }
+.add-order-button {
+  margin: 6px; padding: 8px 0; border: 1px dashed #cbd5e1; border-radius: 8px; background: transparent; 
+  color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.add-order-button:hover { background: #fff; border-color: #3D3AA8; color: #3D3AA8; }
 
-.reschedule-body { display: flex; flex-direction: column; gap: 12px; }
-.quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.qr-btn { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 12px; font-weight: 600; }
-.qr-btn:hover { background: #eef2ff; border-color: #3D3AA8; color: #3D3AA8; }
+/* Filter Popover Styles */
+.filter-popover-content { padding: 4px; }
+.filter-section { margin-bottom: 12px; }
+.filter-section label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+.filter-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 4px; }
 
-.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 12px; }
+/* Task Panel Overlay (simplified) */
+.crm-tasks-panel { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
 </style>
