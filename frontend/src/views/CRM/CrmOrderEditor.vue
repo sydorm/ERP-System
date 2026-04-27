@@ -285,7 +285,9 @@
             <label class="crm-label">Сума замовлення (грн)</label>
             <el-input-number
               v-model="form.total_amount"
-              :min="0" :precision="0"
+              :min="0" :precision="2"
+              :controls="false"
+              placeholder="0.00"
               style="width:100%"
               @change="calcPrepayment"
             />
@@ -295,7 +297,7 @@
             <label class="crm-label">Передоплата</label>
             <div class="prepay-pills">
               <button
-                v-for="pct in [30, 50, 100]"
+                v-for="pct in [20, 30, 50, 100]"
                 :key="pct"
                 class="prepay-pill"
                 :class="{ active: form.prepayment_percent === pct }"
@@ -311,15 +313,19 @@
 
           <div class="crm-field">
             <label class="crm-label">Статус оплати</label>
-            <div class="pay-status-pills">
-              <button
+            <el-select v-model="form.payment_status" placeholder="Оберіть статус" style="width:100%">
+              <el-option
                 v-for="ps in paymentStatuses"
                 :key="ps.value"
-                class="pay-status-pill"
-                :class="[`psp-${ps.value}`, form.payment_status === ps.value ? 'active' : '']"
-                @click="form.payment_status = ps.value"
-              >{{ ps.label }}</button>
-            </div>
+                :label="ps.label"
+                :value="ps.value"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :style="{ background: ps.color || '#94a3b8' }" />
+                  {{ ps.label }}
+                </div>
+              </el-option>
+            </el-select>
           </div>
 
           <div class="crm-field" v-if="form.payment_status !== 'unpaid'">
