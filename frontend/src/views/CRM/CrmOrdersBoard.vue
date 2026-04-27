@@ -287,7 +287,7 @@ const filteredOrdersInStage = (stage) => {
 }
 const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
-const getPaymentLabel = (s) => ({ unpaid: 'Не опл.', partial: 'Частково', paid: 'Оплачено' }[s] || s)
+const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВО', paid: 'ОПЛАЧЕНО' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
@@ -435,11 +435,11 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 .crm-col-header { padding: 16px 16px 12px; }
 .crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; position: relative; }
-.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; }
-.crm-col-title { font-weight: 700; color: #1e293b; font-size: 14px; }
-.crm-col-count { color: #94a3b8; font-size: 13px; margin-left: 4px; }
-.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; }
-.crm-col-subheader { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.crm-col-dot { width: 10px; height: 10px; border-radius: 50%; }
+.crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
+.crm-col-count { color: #94a3b8; font-size: 15px; margin-left: 6px; }
+.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 18px; }
+.crm-col-subheader { font-size: 11px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
 
 .crm-cards-list {
   padding: 12px;
@@ -447,8 +447,8 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   flex-direction: column;
   gap: 12px;
   min-height: 100px;
-  background: #F4F5F7;
-  margin: 0 4px;
+  background: transparent;
+  margin: 0;
 }
 
 /* ─── Card ─── */
