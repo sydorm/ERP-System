@@ -374,7 +374,7 @@ watch(() => route.path, (newPath) => {
 .task-move { background: #f1f5f9; color: #475569; }
 .task-done { background: #d1fae5; color: #065f46; }
 .crm-kanban { display: flex; gap: 16px; padding: 16px 24px; overflow-x: auto; flex: 1; align-items: flex-start; }
-.crm-column { flex: 0 0 180px; background: #f8fafc; border-radius: 12px; max-height: 100%; display: flex; flex-direction: column; border: 2px solid transparent; }
+.crm-column { flex: 1; min-width: 180px; background: #f8fafc; border-radius: 12px; max-height: 100%; display: flex; flex-direction: column; border: 2px solid transparent; }
 .crm-column.drag-target { border-color: #6366f1; background: #eef2ff; }
 .crm-col-header { padding: 12px 16px; border-top: 3px solid; border-radius: 10px 10px 0 0; }
 .crm-col-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
