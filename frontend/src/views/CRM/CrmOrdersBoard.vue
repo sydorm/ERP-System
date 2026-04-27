@@ -13,7 +13,6 @@
       <div class="crm-header-right">
         <div class="crm-view-switch">
           <button class="view-btn active">Kanban</button>
-          <button class="view-btn">Список</button>
         </div>
 
         <!-- SEARCH -->
@@ -24,6 +23,15 @@
           clearable
           :prefix-icon="Search"
         />
+
+        <!-- RESET ALL -->
+        <button 
+          v-if="isAnyFilterActive" 
+          class="crm-reset-all-btn" 
+          @click="resetAll"
+        >
+          ✕ Скинути все
+        </button>
 
         <!-- FILTERS -->
         <el-popover placement="bottom-end" :width="300" trigger="click">
@@ -73,7 +81,7 @@
         </el-popover>
 
         <button class="crm-new-btn-indigo" @click="openNewOrder">
-          <el-icon><Plus /></el-icon> + Нове замовлення
+          <el-icon><Plus /></el-icon> Нове замовлення
         </button>
       </div>
     </div>
@@ -86,15 +94,13 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="deadline_asc">За дедлайном (ближчі)</el-dropdown-item>
-            <el-dropdown-item command="amount_desc">За сумою (спадання)</el-dropdown-item>
             <el-dropdown-item command="created_desc">За датою (нові)</el-dropdown-item>
+            <el-dropdown-item command="deadline_asc">За дедлайном</el-dropdown-item>
+            <el-dropdown-item command="amount_desc">За сумою (спадання)</el-dropdown-item>
             <el-dropdown-item command="priority_desc">За пріоритетом</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      <div class="tool-item">Групувати <el-icon><ArrowDown /></el-icon></div>
-      <div class="tool-item">Вигляд <el-icon><ArrowDown /></el-icon></div>
     </div>
 
     <!-- ===== KANBAN BOARD ===== -->
@@ -114,7 +120,6 @@
             <span class="crm-col-dot" :style="{ background: stage.color }" />
             <span class="crm-col-title">{{ stage.label }}</span>
             <span class="crm-col-count-bubble">{{ filteredOrdersInStage(stage.key).length }}</span>
-            <el-icon class="crm-col-menu"><MoreFilled /></el-icon>
           </div>
           <div class="crm-col-subheader">
             ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ГРН
@@ -237,6 +242,10 @@ const activeFiltersCount = computed(() => {
   return Object.values(filters.value).filter(v => v !== '').length
 })
 
+const isAnyFilterActive = computed(() => {
+  return activeFiltersCount.value > 0 || sortOption.value !== 'created_desc' || searchQuery.value !== ''
+})
+
 // Sort State
 const sortOption = ref('created_desc')
 const currentSortLabel = computed(() => {
@@ -297,6 +306,11 @@ const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
 const handleSort = (cmd) => { sortOption.value = cmd }
 const resetFilters = () => {
   filters.value = { priority: '', payment: '', manager: '', deadline: '' }
+}
+const resetAll = () => {
+  resetFilters()
+  sortOption.value = 'created_desc'
+  searchQuery.value = ''
 }
 const applyFilters = () => { /* Popover closes automatically, computed handles it */ }
 
@@ -448,6 +462,10 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   background: #fff; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; 
   font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569; position: relative;
 }
+.crm-reset-all-btn {
+  background: transparent; border: none; color: #ef4444; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0 8px; transition: color 0.2s;
+}
+.crm-reset-all-btn:hover { color: #b91c1c; text-decoration: underline; }
 .filter-badge { margin-left: 4px; }
 
 .crm-new-btn-indigo { background: #3D3AA8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; }
