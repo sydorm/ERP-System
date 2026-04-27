@@ -482,7 +482,24 @@ const handleConfirm = async () => {
 const handleClose = () => { selections.value = {} }
 const handleAttributeChange = () => {}
 
-const handleDimSelectChange = (attrId, val) => {}
+const handleDimOptionChange = (attrId) => {
+  const selected = selections.value[attrId]
+  if (!selected) return
+  
+  // Find the option label to parse dimensions if selected is an ID
+  const options = getAvailableOptions(attrId)
+  const opt = options.find(o => o.id === selected)
+  const val = opt ? opt.value : selected.toString()
+  
+  const parts = val.split('×')
+  if (parts.length === 2) {
+    if (!dimSelections.value[attrId]) {
+      dimSelections.value[attrId] = { w: 0, h: 0 }
+    }
+    dimSelections.value[attrId].w = parseFloat(parts[0]) || 0
+    dimSelections.value[attrId].h = parseFloat(parts[1]) || 0
+  }
+}
 
 const getDimValue = (attrId) => {
     if (!dimSelections.value[attrId]) {
