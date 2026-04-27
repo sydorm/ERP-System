@@ -4,27 +4,30 @@
     <!-- ===== HEADER ===== -->
     <div class="crm-board-header">
       <div class="crm-header-left">
-        <h1 class="crm-title">CRM — Замовлення</h1>
-        <span class="crm-subtitle">{{ orders.length }} замовлень</span>
+        <div class="crm-title-row">
+          <h1 class="crm-title">Дошка замовлень</h1>
+          <span class="crm-count-badge">{{ orders.length }} замовлень</span>
+        </div>
+        <p class="crm-subtitle">Керування меблевим виробництвом</p>
       </div>
       <div class="crm-header-right">
-        <el-input
-          v-model="searchQuery"
-          placeholder="Пошук..."
-          :prefix-icon="Search"
-          clearable
-          class="crm-search"
-        />
-        <el-select v-model="filterPriority" placeholder="Пріоритет" clearable class="crm-filter-sel">
-          <el-option v-for="p in priorities" :key="p.value" :label="p.label" :value="p.value" />
-        </el-select>
-        <el-select v-model="filterManager" placeholder="Менеджер" clearable class="crm-filter-sel">
-          <el-option v-for="u in users" :key="u.id" :label="u.full_name || u.email" :value="u.id" />
-        </el-select>
-        <button class="crm-new-btn" @click="openNewOrder">
-          <el-icon><Plus /></el-icon> Нова заявка
+        <div class="crm-view-switch">
+          <button class="view-btn active">Kanban</button>
+          <button class="view-btn">Список</button>
+        </div>
+        <button class="crm-filter-btn">
+          <el-icon><Operation /></el-icon> Фільтри
+        </button>
+        <button class="crm-new-btn-indigo" @click="openNewOrder">
+          <el-icon><Plus /></el-icon> Нове замовлення
         </button>
       </div>
+    </div>
+
+    <div class="crm-tools-row">
+      <div class="tool-item">Сортувати <el-icon><ArrowDown /></el-icon></div>
+      <div class="tool-item">Групувати <el-icon><ArrowDown /></el-icon></div>
+      <div class="tool-item">Вигляд <el-icon><ArrowDown /></el-icon></div>
     </div>
 
     <!-- ===== MY TASKS TODAY ===== -->
@@ -70,13 +73,16 @@
         @drop.prevent="onDrop(stage.key)"
       >
         <!-- Column Header -->
-        <div class="crm-col-header" :style="{ borderColor: stage.color }">
+        <div class="crm-col-header" :style="{ borderTopColor: stage.color }">
           <div class="crm-col-title-row">
             <span class="crm-col-dot" :style="{ background: stage.color }" />
             <span class="crm-col-title">{{ stage.label }}</span>
             <span class="crm-col-count">{{ ordersInStage(stage.key).length }}</span>
+            <el-icon class="crm-col-menu"><MoreFilled /></el-icon>
           </div>
-          <span class="crm-col-amount">{{ formatCurrency(stageTotal(stage.key)) }} ₴</span>
+          <div class="crm-col-subheader">
+            ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ГРН
+          </div>
         </div>
 
         <!-- Cards -->
@@ -176,7 +182,7 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Clock, User as UserIcon } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
@@ -347,7 +353,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 <style scoped>
 .crm-board-page {
-  padding: 20px;
+  padding: 24px;
   background: #F4F5F7;
   min-height: calc(100vh - 60px);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -357,26 +363,24 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-board-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  margin-bottom: 8px;
 }
-.crm-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0; }
-.crm-subtitle { font-size: 14px; color: #64748b; }
+.crm-title-row { display: flex; align-items: center; gap: 12px; }
+.crm-title { font-size: 28px; font-weight: 800; color: #1e293b; margin: 0; }
+.crm-count-badge { font-size: 16px; color: #94a3b8; font-weight: 500; }
+.crm-subtitle { font-size: 14px; color: #64748b; margin: 4px 0 0; }
 
-.crm-new-btn {
-  background: #3D3AA8;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-.crm-new-btn:hover { opacity: 0.9; }
+.crm-header-right { display: flex; gap: 12px; align-items: center; }
+.crm-view-switch { background: #e2e8f0; padding: 2px; border-radius: 8px; display: flex; }
+.view-btn { padding: 6px 12px; border: none; background: transparent; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #64748b; }
+.view-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+.crm-filter-btn { background: #fff; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #475569; }
+.crm-new-btn-indigo { background: #3D3AA8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+
+.crm-tools-row { display: flex; gap: 20px; margin-bottom: 24px; }
+.tool-item { font-size: 13px; color: #64748b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
 /* ─── Tasks Panel ─── */
 .crm-tasks-panel {
@@ -422,22 +426,20 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-column {
   flex: 1;
   min-width: 280px;
-  background: #fff;
+  background: #FFFFFF;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border-top: 3px solid #e2e8f0;
 }
-.crm-col-header {
-  padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.crm-col-header { padding: 16px 16px 12px; }
+.crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; position: relative; }
 .crm-col-dot { width: 8px; height: 8px; border-radius: 50%; }
-.crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
+.crm-col-title { font-weight: 700; color: #1e293b; font-size: 14px; }
 .crm-col-count { color: #94a3b8; font-size: 13px; margin-left: 4px; }
-.crm-col-amount { font-size: 13px; color: #64748b; font-weight: 600; }
+.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; }
+.crm-col-subheader { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .crm-cards-list {
   padding: 12px;
@@ -445,50 +447,45 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   flex-direction: column;
   gap: 12px;
   min-height: 100px;
+  background: #F4F5F7;
+  margin: 0 4px;
 }
 
 /* ─── Card ─── */
 .crm-card {
-  background: #fff;
+  background: #FFFFFF;
   border-radius: 10px;
   padding: 12px;
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
+  border: 1px solid transparent;
 }
-.crm-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-color: #3D3AA8;
-}
+.crm-card:hover { border-color: #3D3AA8; transform: translateY(-1px); }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .card-order-no { font-size: 11px; color: #94a3b8; font-weight: 600; }
 .card-priority-mark { width: 8px; height: 8px; border-radius: 50%; }
 
-.card-main { margin-bottom: 12px; }
-.card-customer { font-weight: 700; color: #1e293b; font-size: 14px; margin-bottom: 2px; }
-.card-product { font-size: 12px; color: #64748b; }
+.card-main { margin-bottom: 10px; }
+.card-customer { font-weight: 700; color: #1e293b; font-size: 15px; margin-bottom: 2px; }
+.card-product { font-size: 13px; color: #64748b; }
 
 .card-financial {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 10px;
 }
-.card-price { font-weight: 700; color: #3D3AA8; font-size: 14px; }
+.card-price { font-weight: 700; color: #1e293b; font-size: 14px; }
 .card-deadline { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; }
 
-.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; }
 .payment-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 800;
-  text-transform: uppercase;
 }
 .pay-unpaid { background: #f1f5f9; color: #64748b; }
 .pay-partial { background: #fef3c7; color: #92400e; }
@@ -496,28 +493,28 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 .card-meta { display: flex; align-items: center; gap: 8px; }
 .card-avatar {
-  width: 24px;
-  height: 24px;
-  background: #3D3AA8;
-  color: #fff;
+  width: 26px;
+  height: 26px;
+  background: #e2e8f0;
+  color: #475569;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
-.card-comm-icons { display: flex; gap: 4px; }
-.comm-mini-icon { font-size: 12px; opacity: 0.7; }
+.card-comm-icons { display: flex; gap: 6px; }
+.comm-mini-icon { font-size: 14px; opacity: 0.6; }
 
 /* ─── Add Button ─── */
 .crm-add-card-btn {
-  margin: 0 12px 12px;
-  padding: 10px;
-  border: 2px dashed #e2e8f0;
+  margin: 8px 12px 12px;
+  height: 40px;
+  border: 1.5px dashed #CBD5E1;
   background: transparent;
-  border-radius: 10px;
-  color: #94a3b8;
+  border-radius: 8px;
+  color: #64748b;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -525,16 +522,10 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s;
 }
-.crm-add-card-btn:hover {
-  border-color: #3D3AA8;
-  color: #3D3AA8;
-  background: #f5f3ff;
-}
+.crm-add-card-btn:hover { border-color: #3D3AA8; color: #3D3AA8; background: #f5f3ff; }
 
-.crm-load-more-container { padding: 8px; text-align: center; }
-.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; }
+.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 12px; }
 
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
 .quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
