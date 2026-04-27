@@ -66,14 +66,14 @@
       <div
         v-for="stage in stages"
         :key="stage.key"
-        class="crm-column"
-        :class="[`stage-${stage.key}`, dragOverStage === stage.key ? 'drag-target' : '']"
+        class="kanban-column"
+        :class="[dragOverStage === stage.key ? 'drag-target' : '']"
         @dragover.prevent="dragOverStage = stage.key"
         @dragleave="dragOverStage = null"
         @drop.prevent="onDrop(stage.key)"
       >
         <!-- Column Header -->
-        <div class="crm-col-header" :style="{ borderTopColor: stage.color }">
+        <div class="kanban-column-header" :style="{ borderTopColor: stage.color }">
           <div class="crm-col-title-row">
             <span class="crm-col-dot" :style="{ background: stage.color }" />
             <span class="crm-col-title">{{ stage.label }}</span>
@@ -86,11 +86,11 @@
         </div>
 
         <!-- Cards -->
-        <div class="crm-cards-list">
+        <div class="kanban-column-content">
           <div
             v-for="order in filteredOrdersInStage(stage.key)"
             :key="order.id"
-            class="crm-card"
+            class="order-card"
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
@@ -98,24 +98,24 @@
           >
             <div class="card-header">
               <span class="card-order-no">#{{ order.order_number }}</span>
-              <span class="card-priority-mark" :style="{ background: stage.color }" />
+              <span class="priority-dot" :class="getPriorityClass(order.priority)" />
             </div>
             
             <div class="card-main">
-              <div class="card-customer">{{ getCounterpartyName(order.counterparty_id) || '—' }}</div>
-              <div class="card-product">{{ order.product_name || 'Індивідуальне замовлення' }}</div>
+              <div class="order-card-title">{{ getCounterpartyName(order.counterparty_id) || '—' }}</div>
+              <div class="order-card-details">{{ order.product_name || 'Індивідуальне замовлення' }}</div>
             </div>
 
             <div class="card-financial">
               <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span class="card-deadline-pill" v-if="order.deadline">
+              <span class="deadline-chip" v-if="order.deadline">
                 <el-icon><Calendar /></el-icon> {{ formatDate(order.deadline) }}
               </span>
             </div>
 
             <div class="card-footer">
               <div class="card-badges">
-                <span class="payment-badge" :class="`pay-${order.payment_status}`">
+                <span class="payment-badge" :class="`payment-${order.payment_status}`">
                   {{ getPaymentLabel(order.payment_status) }}
                 </span>
               </div>
@@ -130,7 +130,7 @@
           </div>
         </div>
         
-        <button class="crm-add-card-btn" @click="openNewOrderInStage(stage.key)">
+        <button class="add-order-button" @click="openNewOrderInStage(stage.key)">
           <el-icon><Plus /></el-icon> + ДОДАТИ ЗАМОВЛЕННЯ
         </button>
 
@@ -286,6 +286,11 @@ const filteredOrdersInStage = (stage) => {
 }
 const stageTotal = (stage) => ordersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
+const getPriorityClass = (p) => {
+  if (p === 'urgent') return 'priority-high'
+  if (p === 'normal') return 'priority-medium'
+  return 'priority-low'
+}
 const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВО', paid: 'ОПЛАЧЕНО' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
@@ -414,7 +419,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .task-call { background: #3D3AA8; color: #fff; border: none; }
 .task-done { color: #22c55e; }
 
-/* ─── Kanban ─── */
+/* ─── Kanban Board ─── */
 .crm-kanban {
   display: flex;
   gap: 16px;
@@ -422,19 +427,32 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   padding-bottom: 20px;
   align-items: flex-start;
 }
-.crm-column {
-  flex: 1;
-  min-width: 280px;
-  background: #FFFFFF;
-  border-radius: 16px;
+
+/* 1. Kanban Column Styles */
+.kanban-column {
+  flex-shrink: 0;
+  width: 280px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  border-top: 3px solid #e2e8f0;
-  padding: 16px;
+  min-height: 500px;
+  background-color: rgba(249, 250, 251, 0.5); /* gray-50/50 */
+  border-radius: 16px;
 }
-.crm-col-header { padding: 0 0 12px; }
-.crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; position: relative; }
+
+.kanban-column-header {
+  padding: 16px;
+  background-color: #ffffff;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border: 1px solid #f3f4f6; /* gray-100 */
+  border-top-width: 3px;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crm-col-title-row { display: flex; align-items: center; gap: 8px; position: relative; }
 .crm-col-dot { width: 10px; height: 10px; border-radius: 50%; }
 .crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
 .crm-col-count-bubble { 
@@ -447,112 +465,180 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   margin-left: 8px; 
 }
 .crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 18px; }
-.crm-col-subheader { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+.crm-col-subheader { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 
-.crm-cards-list {
-  padding: 12px 0;
+.kanban-column-content {
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 100px;
-  background: transparent;
-  margin: 0;
+  overflow-y: auto;
+  flex: 1 1 0%;
 }
 
-/* ─── Card ─── */
-.crm-card {
-  background: #FFFFFF;
+.add-order-button {
+  margin: 8px 12px 12px;
+  width: calc(100% - 24px);
+  padding: 12px 0;
+  border: 2px dashed #e5e7eb; /* gray-200 */
   border-radius: 12px;
-  padding: 14px;
-  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #9ca3af; /* gray-400 */
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  background: transparent;
+  transition: all 0.2s;
   cursor: pointer;
-  transition: box-shadow 0.15s ease;
-  border: 1px solid #F0F0F0;
-  margin-bottom: 10px;
-}
-.crm-card:hover { 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.10); 
-  transform: translateY(-1px); 
 }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.add-order-button:hover {
+  border-color: #a5b4fc; /* indigo-300 */
+  color: #3D3AA8; /* primary */
+  background-color: #ffffff;
+}
+
+/* 2. Order Card Styles */
+.order-card {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #e5e7eb;
+}
+
+.order-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #e0e7ff; /* indigo-100 */
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.order-card:hover::before {
+  opacity: 1;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .card-order-no { font-size: 11px; color: #94a3b8; font-weight: 600; }
-.card-priority-mark { width: 8px; height: 8px; border-radius: 50%; }
 
-.card-main { margin-bottom: 10px; }
-.card-customer { font-weight: 700; color: #1e293b; font-size: 15px; margin-bottom: 2px; }
-.card-product { font-size: 13px; color: #64748b; }
+.order-card-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827; /* gray-900 */
+  margin-bottom: 4px;
+  transition: color 0.2s;
+}
+
+.order-card:hover .order-card-title {
+  color: #3D3AA8;
+}
+
+.order-card-details {
+  font-size: 12px;
+  color: #6b7280; /* gray-500 */
+  margin-bottom: 12px;
+}
 
 .card-financial {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.card-price { font-weight: 700; color: #1e293b; font-size: 15px; }
-.card-deadline-pill { 
-  font-size: 11px; 
-  color: #64748b; 
-  display: flex; 
-  align-items: center; 
-  gap: 4px; 
-  background: #f8fafc;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #f1f5f9;
-}
+.card-price { font-weight: 700; color: #111827; font-size: 14px; }
 
-.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; }
-.payment-badge {
-  padding: 4px 10px;
+.deadline-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #f9fafb;
+  border: 1px solid #f3f4f6;
   border-radius: 6px;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 500;
+  color: #4b5563;
 }
-.pay-unpaid { background: #f1f5f9; color: #64748b; }
-.pay-partial { background: #fef3c7; color: #92400e; }
-.pay-paid    { background: #d1fae5; color: #065f46; }
 
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.priority-high { background-color: #ef4444; }
+.priority-medium { background-color: #f59e0b; }
+.priority-low { background-color: #10b981; }
+
+/* 3. Payment Badge Styles */
+.payment-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payment-paid {
+  background-color: #dcfce7; /* green-100 */
+  color: #15803d; /* green-700 */
+}
+
+.payment-partial {
+  background-color: #fef9c3; /* yellow-100 */
+  color: #a16207; /* yellow-700 */
+}
+
+.payment-unpaid {
+  background-color: #f3f4f6; /* gray-100 */
+  color: #374151; /* gray-700 */
+}
+
+.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f9fafb; padding-top: 12px; }
 .card-meta { display: flex; align-items: center; gap: 8px; }
 .card-avatar {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   background: #e2e8f0;
   color: #475569;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 .card-comm-icons { display: flex; align-items: center; gap: 4px; }
 .comm-status-dot { font-size: 8px; color: #3D3AA8; }
 .comm-status-text { font-size: 11px; color: #3D3AA8; font-weight: 600; }
 
-/* ─── Add Button ─── */
-.crm-add-card-btn {
-  margin: 8px 12px 12px;
-  height: 40px;
-  border: 1.5px dashed #CBD5E1;
-  background: transparent;
-  border-radius: 8px;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.crm-add-card-btn:hover { border-color: #3D3AA8; color: #3D3AA8; background: #f5f3ff; }
-
-.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 12px; }
+.drag-target { background-color: #eef2ff !important; border: 2px dashed #a5b4fc; }
 
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
 .quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .qr-btn { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 12px; font-weight: 600; }
 .qr-btn:hover { background: #eef2ff; border-color: #3D3AA8; color: #3D3AA8; }
 
+.crm-load-more-btn { background: none; border: none; color: #3D3AA8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 12px; }
 </style>
