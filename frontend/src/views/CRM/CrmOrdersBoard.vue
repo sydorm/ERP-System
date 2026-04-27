@@ -172,6 +172,13 @@
               </div>
             </div>
           </div>
+
+          <!-- LOAD MORE BUTTON -->
+          <div v-if="stageHasMore[stage.key]" 
+               @click.stop="loadMore(stage.key)"
+               class="load-more-btn">
+            Завантажити ще ↓
+          </div>
         </div>
         
         <button class="add-order-button" @click="openNewOrderInStage(stage.key)">
@@ -242,6 +249,13 @@ const activeFiltersCount = computed(() => {
   return Object.values(filters.value).filter(v => v !== '').length
 })
 
+// Pagination state
+const stageSkip = ref({
+  new: 0, processing: 0, confirmed: 0,
+  payment: 0, production: 0, done: 0
+})
+const stageHasMore = ref({})
+
 const isAnyFilterActive = computed(() => {
   return activeFiltersCount.value > 0 || sortOption.value !== 'created_desc' || searchQuery.value !== ''
 })
@@ -277,24 +291,51 @@ const stages = [
   { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]
 
+const fetchStage = async (stage, reset = false) => {
+  if (reset) stageSkip.value[stage] = 0
+  try {
+    const res = await api.get(
+      `/api/v1/orders?crm_stage=${stage}&limit=20&skip=${stageSkip.value[stage]}`
+    )
+    if (reset) {
+      orders.value = orders.value
+        .filter(o => o.crm_stage !== stage)
+        .concat(res.data)
+    } else {
+      // Avoid duplicates
+      const newIds = new Set(res.data.map(o => o.id))
+      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(res.data)
+    }
+    stageHasMore.value[stage] = res.data.length === 20
+  } catch (e) {
+    ElMessage.error(`Помилка завантаження стадії ${stage}`)
+  }
+}
+
 const fetchAll = async () => {
   loading.value = true
   try {
-    const [ordersRes, cpRes, usersRes, tasksRes] = await Promise.all([
-      api.get('/api/v1/orders?limit=1000&offset=0'),
+    const [cpRes, usersRes, tasksRes] = await Promise.all([
       api.get('/api/v1/counterparties?limit=500'),
       api.get('/users/colleagues'),
       api.get('/api/v1/crm/tasks/today')
     ])
-    orders.value = ordersRes.data
     counterparties.value = cpRes.data
     users.value = usersRes.data
     todayTasks.value = tasksRes.data
+
+    // Fetch all stages
+    await Promise.all(stages.map(s => fetchStage(s.key, true)))
   } catch (e) {
-    ElMessage.error('Помилка завантаження')
+    ElMessage.error('Помилка завантаження даних')
   } finally {
     loading.value = false
   }
+}
+
+const loadMore = async (stage) => {
+  stageSkip.value[stage] += 20
+  await fetchStage(stage, false)
 }
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
@@ -604,4 +645,21 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 /* Task Panel Overlay (simplified) */
 .crm-tasks-panel { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+
+.load-more-btn {
+  text-align: center;
+  padding: 10px;
+  margin-top: 4px;
+  cursor: pointer;
+  color: #3D3AA8;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(61, 58, 168, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.load-more-btn:hover {
+  background: rgba(61, 58, 168, 0.1);
+  color: #2a287a;
+}
 </style>
