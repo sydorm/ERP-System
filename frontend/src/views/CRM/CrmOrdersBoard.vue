@@ -303,6 +303,11 @@ const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' })
 const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
 
+const normalizePhone = (phone) => {
+  if (!phone) return ''
+  return phone.toString().replace(/\D/g, '').slice(-9)
+}
+
 const handleSort = (cmd) => { sortOption.value = cmd }
 const resetFilters = () => {
   filters.value = { priority: '', payment: '', manager: '', deadline: '' }
@@ -320,13 +325,27 @@ const filteredOrdersInStage = (stage) => {
   // 1. Search
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
-    list = list.filter(o => 
-      o.order_number.toLowerCase().includes(q) || 
-      (o.client_name && o.client_name.toLowerCase().includes(q)) ||
-      (o.client_phone && o.client_phone.includes(q)) ||
-      (o.product_name && o.product_name.toLowerCase().includes(q)) ||
-      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q)
-    )
+    const qPhone = normalizePhone(q)
+    
+    list = list.filter(o => {
+      // Name, Number, Product search
+      const matchText = 
+        o.order_number.toLowerCase().includes(q) || 
+        (o.client_name && o.client_name.toLowerCase().includes(q)) ||
+        (o.product_name && o.product_name.toLowerCase().includes(q)) ||
+        getCounterpartyName(o.counterparty_id).toLowerCase().includes(q)
+
+      // Normalized Phone search
+      let matchPhone = false
+      if (qPhone.length >= 3) { // only normalize search if query has enough digits
+        const oPhone = normalizePhone(o.client_phone)
+        if (oPhone && oPhone.includes(qPhone)) matchPhone = true
+      } else if (o.client_phone && o.client_phone.includes(q)) {
+        matchPhone = true
+      }
+
+      return matchText || matchPhone
+    })
   }
 
   // 2. Filters

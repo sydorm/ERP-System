@@ -37,14 +37,15 @@
         <div class="crm-section">
           <div class="crm-section-head">
             <span class="crm-section-title">Клієнт</span>
-            <el-select
-              v-model="form.counterparty_id"
-              filterable
-              clearable
-              placeholder="Оберіть або введіть клієнта"
-              class="cp-select"
-              @change="onCounterpartyChange"
-            >
+              <el-select
+                v-model="form.counterparty_id"
+                filterable
+                clearable
+                placeholder="Оберіть або введіть клієнта"
+                class="cp-select"
+                :class="{ 'field-error': vErrors.client }"
+                @change="onCounterpartyChange"
+              >
               <el-option
                 v-for="cp in counterparties"
                 :key="cp.id"
@@ -60,7 +61,7 @@
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Ім'я та прізвище</label>
-              <el-input v-model="clientName" placeholder="Олена Ковальчук" />
+              <el-input v-model="clientName" placeholder="Олена Ковальчук" :class="{ 'field-error': vErrors.client }" />
             </div>
             <div class="crm-field">
               <label class="crm-label">Телефон</label>
@@ -289,6 +290,7 @@
               :controls="false"
               placeholder="0.00"
               style="width:100%"
+              :class="{ 'field-error': vErrors.amount }"
               @change="calcPrepayment"
             />
           </div>
@@ -471,23 +473,36 @@
             {{ orderId ? 'Записати результат' : 'Збережіть заявку, щоб записати контакт' }}
           </button>
 
-          <div v-if="contacts.length" style="margin-top:12px">
-            <div class="crm-label" style="margin-bottom:6px">Історія контактів</div>
-            <div
-              v-for="c in contacts"
-              :key="c.id"
-              class="contact-history-item"
-              :style="{ borderLeft: `3px solid ${getContactResultColor(c.result)}` }"
-            >
-              <span class="chi-icon">
-                <span class="chi-comm-icon" v-if="c.communication_type">{{ getCommIcon(c.communication_type) }}</span>
-                <span v-else>{{ contactResultIcon(c.result) }}</span>
-              </span>
-              <div class="chi-body">
-                <span class="chi-label">{{ contactResultLabel(c.result) }}</span>
-                <span class="chi-note" v-if="c.note">{{ c.note }}</span>
+          <div v-if="contacts.length" style="margin-top:20px">
+            <div class="crm-section-title" style="margin-bottom:12px">Історія комунікацій</div>
+            <div class="comm-timeline">
+              <div
+                v-for="c in contacts"
+                :key="c.id"
+                class="timeline-item"
+              >
+                <div class="timeline-dot" :style="{ background: getContactResultColor(c.result) }" />
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <span class="timeline-channel">
+                      {{ getCommIcon(c.communication_type) }} {{ getCommName(c.communication_type) }}
+                    </span>
+                    <span class="timeline-time">{{ formatDateTime(c.contacted_at) }}</span>
+                  </div>
+                  <div class="timeline-main">
+                    <span class="timeline-res-badge" :style="{ background: getContactResultColor(c.result) + '15', color: getContactResultColor(c.result) }">
+                      {{ contactResultLabel(c.result) }}
+                    </span>
+                    <span class="timeline-manager">
+                      <el-icon><UserIcon /></el-icon> {{ c.manager?.name || 'Менеджер' }}
+                    </span>
+                  </div>
+                  <div class="timeline-note" v-if="c.note">{{ c.note }}</div>
+                  <div class="timeline-reminder" v-if="c.next_contact_at">
+                    <el-icon><Clock /></el-icon> Нагадування: {{ formatDateTime(c.next_contact_at) }}
+                  </div>
+                </div>
               </div>
-              <span class="chi-time">{{ formatDateTime(c.contacted_at) }}</span>
             </div>
           </div>
         </div>
@@ -549,7 +564,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock
+  ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock, User as UserIcon
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
@@ -607,6 +622,11 @@ const contactCommType = ref('CALL')
 const contactNote   = ref('')
 const contactNextAt = ref(null)
 const savingContact = ref(false)
+
+const vErrors = reactive({
+  client: false,
+  amount: false
+})
 
 // Watch contact result to auto-set reminder
 watch(() => contactResult.value, (newVal) => {
@@ -891,7 +911,10 @@ const loadContacts = async () => {
   } catch { /* silent */ }
 }
 
-// ─── Communication helpers ────────────────────────────────────────────────────
+const getCommName = (code) => {
+  const ct = communicationTypes.value.find(i => i.code === code)
+  return ct ? ct.name : 'Контакт'
+}
 const getCommIcon = (code) => {
   const ct = communicationTypes.value.find(i => i.code === code)
   return ct ? ct.icon : '📞'
@@ -933,7 +956,13 @@ const logContact = async () => {
 
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const save = async (action) => {
-  if (!form.counterparty_id) { ElMessage.warning('Оберіть клієнта'); return }
+  vErrors.client = !form.counterparty_id && !clientName.value
+  vErrors.amount = !form.total_amount || form.total_amount <= 0
+
+  if (vErrors.client || vErrors.amount) {
+    ElMessage.warning('Заповніть обов\'язкові поля: Клієнт, Сума')
+    return
+  }
 
   // Auto-pick warehouse if not set
   if (!form.warehouse_id) {
@@ -1533,6 +1562,98 @@ onMounted(loadData)
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.3s ease; }
 .fade-slide-enter-from { opacity: 0; transform: translateY(-10px); }
 .fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* ─── Communication Timeline ─── */
+.comm-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-left: 20px;
+}
+.comm-timeline::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 5px;
+  bottom: 5px;
+  width: 2px;
+  background: #f1f5f9;
+}
+.timeline-item {
+  position: relative;
+}
+.timeline-dot {
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  z-index: 1;
+}
+.timeline-content {
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.timeline-channel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3D3AA8;
+}
+.timeline-time {
+  font-size: 10px;
+  color: #94a3b8;
+}
+.timeline-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.timeline-res-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.timeline-manager {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.timeline-note {
+  font-size: 12px;
+  color: #1e293b;
+  line-height: 1.4;
+}
+.timeline-reminder {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 10px;
+  color: #6366f1;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-error :deep(.el-input__wrapper),
+.field-error.el-select :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #ef4444 inset !important;
+}
 
 /* Keep existing styles below... */
 </style>
