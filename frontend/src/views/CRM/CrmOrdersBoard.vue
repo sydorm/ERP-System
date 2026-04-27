@@ -150,14 +150,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onActivated, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
 import { Search, Plus, Bell, Right, Check, User as UserIcon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
 const router = useRouter()
+const route = useRoute()
 const orders = ref([])
 const counterparties = ref([])
 const users = ref([])
@@ -301,6 +302,16 @@ const onDrop = async (stage) => {
 onMounted(() => {
   console.log('CRM BOARD LOADED - V2')
   fetchAll()
+})
+
+onActivated(() => {
+  fetchAll()
+})
+
+watch(() => route.path, (newPath) => {
+  if (newPath === '/crm') {
+    fetchAll()
+  }
 })
 </script>
 
