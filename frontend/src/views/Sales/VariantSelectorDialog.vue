@@ -55,24 +55,28 @@
                   />
                 </el-select>
                 
-                <div class="dims-row">
-                  <span class="manual-hint">або вручну:</span>
-                  <el-input-number
-                    v-model="getDimValue(attr.id).w"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Ширина"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id, true)"
-                  />
-                  <span class="dims-sep">×</span>
-                  <el-input-number
-                    v-model="getDimValue(attr.id).h"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Висота"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id, true)"
-                  />
-                  <span class="dims-unit">мм</span>
+                <div class="dims-manual-wrapper">
+                  <div class="dims-row">
+                    <span class="manual-hint">або вручну:</span>
+                    <div class="dims-inputs-group">
+                      <el-input-number
+                        v-model="getDimValue(attr.id).w"
+                        :min="0" :precision="0" :controls="false"
+                        placeholder="Ширина"
+                        class="dim-input"
+                        @change="handleAttributeChange(attr.id, true)"
+                      />
+                      <span class="dims-sep">×</span>
+                      <el-input-number
+                        v-model="getDimValue(attr.id).h"
+                        :min="0" :precision="0" :controls="false"
+                        placeholder="Висота"
+                        class="dim-input"
+                        @change="handleAttributeChange(attr.id, true)"
+                      />
+                      <span class="dims-unit">мм</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -132,23 +136,28 @@
                     :value="opt.id"
                   />
                 </el-select>
-                <div class="dims-row">
-                  <el-input-number
-                    v-model="getDimValue(attr.id).w"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Ширина"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id, true)"
-                  />
-                  <span class="dims-sep">×</span>
-                  <el-input-number
-                    v-model="getDimValue(attr.id).h"
-                    :min="0" :precision="0" :controls="false"
-                    placeholder="Висота"
-                    class="dim-input"
-                    @change="handleAttributeChange(attr.id, true)"
-                  />
-                  <span class="dims-unit">мм</span>
+                <div class="dims-manual-wrapper">
+                  <div class="dims-row">
+                    <span class="manual-hint">або вручну:</span>
+                    <div class="dims-inputs-group">
+                      <el-input-number
+                        v-model="getDimValue(attr.id).w"
+                        :min="0" :precision="0" :controls="false"
+                        placeholder="Ширина"
+                        class="dim-input"
+                        @change="handleAttributeChange(attr.id, true)"
+                      />
+                      <span class="dims-sep">×</span>
+                      <el-input-number
+                        v-model="getDimValue(attr.id).h"
+                        :min="0" :precision="0" :controls="false"
+                        placeholder="Висота"
+                        class="dim-input"
+                        @change="handleAttributeChange(attr.id, true)"
+                      />
+                      <span class="dims-unit">мм</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -692,13 +701,31 @@ const formatCurrency = (val) => new Intl.NumberFormat('uk-UA', { style: 'currenc
   padding: 0 24px !important;
 }
 
+.dims-container-vertical { display: flex; flex-direction: column; gap: 4px; }
+.dims-manual-wrapper { padding-top: 4px; }
 .dims-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   width: 100%;
+  gap: 12px;
 }
-.dim-input { width: 100px; }
-.dims-sep { font-size: 18px; color: #64748b; font-weight: 600; }
-.dims-unit { font-size: 14px; color: #64748b; white-space: nowrap; }
+.manual-hint { 
+  font-size: 12px; 
+  color: #94a3b8; 
+  white-space: nowrap; 
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.dims-inputs-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.dim-input { width: 85px !important; }
+.dim-input :deep(.el-input__inner) { text-align: center; font-weight: 600; }
+.dims-sep { font-size: 16px; color: #cbd5e1; font-weight: 600; }
+.dims-unit { font-size: 12px; color: #94a3b8; font-weight: 600; min-width: 24px; }
 </style>
