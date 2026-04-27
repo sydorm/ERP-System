@@ -367,28 +367,22 @@
 
           <div class="crm-field">
             <label class="crm-label">Пріоритет</label>
-            <div class="priority-pills">
-              <button
+            <el-select v-model="form.priority" placeholder="Оберіть пріоритет" style="width:100%">
+              <el-option
                 v-for="p in priorities"
                 :key="p.value"
-                class="priority-pill"
-                :class="[`pp-${p.value}`, form.priority === p.value ? 'active' : '']"
-                @click="form.priority = p.value"
-              >{{ p.label }}</button>
-            </div>
+                :label="p.label"
+                :value="p.value"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :style="{ background: p.color || '#94a3b8' }" />
+                  {{ p.label }}
+                </div>
+              </el-option>
+            </el-select>
           </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Наступний контакт</label>
-            <el-date-picker
-              v-model="form.next_contact_at"
-              type="datetime"
-              format="DD.MM.YYYY HH:mm"
-              value-format="YYYY-MM-DDTHH:mm:ss"
-              style="width:100%"
-              placeholder="18.04.2026  10:00"
-            />
-          </div>
+
         </div>
 
         <!-- ══ КОМУНІКАЦІЯ ══ -->
@@ -443,6 +437,18 @@
               value-format="YYYY-MM-DDTHH:mm:ss"
               style="width:100%"
               placeholder="Вкажіть дату та час"
+            />
+          </div>
+
+          <div class="crm-field">
+            <label class="crm-label">Наступний контакт (план)</label>
+            <el-date-picker
+              v-model="form.next_contact_at"
+              type="datetime"
+              format="DD.MM.YYYY HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+              style="width:100%"
+              placeholder="Вкажіть час наступного контакту"
             />
           </div>
 
