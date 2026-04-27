@@ -292,13 +292,16 @@ const onDrop = async (stage) => {
   if (order && order.crm_stage !== stage) {
     order.crm_stage = stage
     try {
-      await api.patch(`/api/v1/orders/${oid}`, { crm_stage: stage })
+      await api.patch(`/api/v1/orders/${oid}/stage?stage=${stage}`)
     } catch { ElMessage.error('Помилка оновлення статусу') }
   }
   dragOverStage.value = null
 }
 
-onMounted(fetchAll)
+onMounted(() => {
+  console.log('CRM BOARD LOADED - V2')
+  fetchAll()
+})
 </script>
 
 <style scoped>

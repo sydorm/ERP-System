@@ -208,7 +208,7 @@
           </el-tab-pane>
         </el-tabs>
 
-        <!-- Basic Info (Hidden in tabs but available for creation) -->
+        <!-- Basic Info -->
         <div v-if="!isEditMode || activeSubTab === 'stages'" class="form-section-card mt-4">
           <div class="section-header">
             <el-icon><InfoFilled /></el-icon>
@@ -234,7 +234,7 @@
               </el-col>
             </el-row>
 
-            <!-- Document Items Table (Unified) -->
+            <!-- Document Items Table -->
             <div class="mt-4">
               <div class="field-label mb-2 flex items-center gap-2">
                 <el-icon><Box /></el-icon>
@@ -261,12 +261,7 @@
             </div>
           </div>
         </div>
-            <div class="mt-4">
-              <span class="field-label">Коментар до завдання:</span>
-              <el-input v-model="form.comment" type="textarea" :rows="2" class="mt-1" placeholder="Замітка для майстрів..." />
-            </div>
-          </div>
-        </div>
+
       </div>
 
       <!-- RIGHT SIDE: SUMMARY & ACTIONS -->
@@ -322,7 +317,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 import dayjs from 'dayjs'
-
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -342,13 +336,6 @@ const productionStages = ref([])
 const brigades = ref([])
 const currentSpecs = ref([])
 const employeeRoles = ref([])
-
-// Characteristics state
-const productAttributes = ref([])
-const attributeLoading = ref(false)
-const selections = ref({})
-const dimSelections = ref({})
-const currentProduct = computed(() => products.value.find(p => p.id === activeProductId.value))
 
 const form = reactive({
   order_number: 'Авто',
@@ -434,14 +421,12 @@ const completeStage = async (index) => {
     user: employees.value.find(e => e.id === stage.employee_id)?.full_name || 'Невідомий'
   })
 
-  // Auto-activate next stage info message
   if (index < form.assignments.length - 1) {
     ElMessage.success(`Етап закрито. Наступний: ${form.assignments[index+1].stage_label || form.assignments[index+1].stage?.name}`)
   } else {
     ElMessage.success('Всі етапи завершено! Можна закривати завдання.')
   }
   
-  // Save changes locally and potentially to server
   if (isEditMode.value) await saveOrder()
 }
 
@@ -492,8 +477,6 @@ const recalculateEverything = () => {
   const spec = currentSpecs.value.find(s => s.id === activeSpecId.value)
   
   if (spec) {
-    // ... (rest of the logic)
-    // 1. Recalculate Materials
     form.materials = (spec.items || []).map(item => ({
       component_id: item.component_id,
       component_name: item.component?.name || 'Матеріал',
@@ -502,7 +485,6 @@ const recalculateEverything = () => {
       stock_qty: 0
     }))
  
-    // 2. Recalculate Production Stages
     if (spec.stages && spec.stages.length > 0) {
       form.assignments = spec.stages.map(s => {
         const p_id = s.employee_id || s.brigade_id
@@ -517,7 +499,6 @@ const recalculateEverything = () => {
         }
       })
     } else {
-      // Fallback
       form.assignments = productionStages.value.slice(0, 4).map(s => ({
         stage_id: s.id,
         stage_label: s.name,
@@ -533,21 +514,11 @@ const recalculateEverything = () => {
 
 const getFilteredPerformers = (stageId) => {
   const result = []
-  // 1. Add Brigades
   brigades.value.forEach(b => {
-    result.push({
-      id: b.id,
-      name: `👥 ${b.name}`,
-      is_brigade: true
-    })
+    result.push({ id: b.id, name: `👥 ${b.name}`, is_brigade: true })
   })
-  // 2. Add Employees
   employees.value.forEach(e => {
-    result.push({
-      id: e.id,
-      name: `👤 ${e.full_name}`,
-      is_brigade: false
-    })
+    result.push({ id: e.id, name: `👤 ${e.full_name}`, is_brigade: false })
   })
   return result
 }
@@ -568,7 +539,6 @@ const onPerformerChange = (val, row) => {
   }
 }
 
-
 const getStockClass = (row) => parseFloat(row.stock_qty || 0) >= parseFloat(row.required_quantity) ? 'text-green-600' : 'text-red-600'
 
 const saveOrder = async (targetStatus) => {
@@ -578,7 +548,7 @@ const saveOrder = async (targetStatus) => {
   }
   
   if (!form.company_id || !form.warehouse_id) {
-    ElMessage.error('Помилка даних: не вказано компанію або склад. Спробуйте перезавантажити сторінку.')
+    ElMessage.error('Помилка даних: не вказано компанію або склад.')
     return
   }
 
@@ -586,21 +556,9 @@ const saveOrder = async (targetStatus) => {
   submitting.value = true
   try {
     if (isEditMode.value) {
-      // Handle variant assignment
-      const variant = findMatchingVariant()
-      if (variant) {
-        form.lines[0].variant_id = variant.id
-      }
-      
       await api.put(`/api/v1/production/${route.params.id}`, form)
       ElMessage.success('Збережено')
     } else {
-      // Handle variant assignment
-      const variant = findMatchingVariant()
-      if (variant) {
-        form.lines[0].variant_id = variant.id
-      }
-
       const res = await api.post('/api/v1/production/', form)
       ElMessage.success('Завдання створено')
       router.push(`/production/orders/${res.data.id}`)
@@ -612,18 +570,6 @@ const saveOrder = async (targetStatus) => {
 const handleCancel = () => ElMessageBox.confirm('Скасувати завдання?', 'Увага', { type: 'warning' }).then(() => saveOrder('cancelled'))
 const handlePrint = () => window.print()
 const formatDateTime = (d) => d ? dayjs(d).format('DD.MM HH:mm') : ''
-
-// Helpers for characteristics
-const findMatchingVariant = () => {
-  if (!currentProduct.value?.variants || productAttributes.value.length === 0) return null
-  
-  return currentProduct.value.variants.find(v => {
-    return productAttributes.value.every(a => {
-      // For now simple check of option_id
-      return v.values?.some(vv => vv.attribute_id === a.id && vv.option_id === selections.value[a.id])
-    })
-  })
-}
 
 const initData = async () => {
   loading.value = true
@@ -650,46 +596,20 @@ const initData = async () => {
         activeProductId.value = form.lines[0]?.product_id
         activeQuantity.value = form.lines[0]?.quantity
         
-        const p = (products.value || []).find(x => x.id === activeProductId.value)
-        if (p && p.category) {
-          await fetchCategoryAttributes(p.category)
-          const variantId = form.lines[0]?.variant_id
-          if (variantId && p.variants) {
-            const variant = p.variants.find(v => v.id === variantId)
-            if (variant && variant.values) {
-              variant.values.forEach(v => {
-                if (v.attribute?.type === 'DIMENSIONS') {
-                  const parts = (v.text_value || '').split('x')
-                  if (parts.length === 2 && dimSelections.value[v.attribute_id]) {
-                    dimSelections.value[v.attribute_id].w = parseInt(parts[0])
-                    dimSelections.value[v.attribute_id].h = parseInt(parts[1])
-                  }
-                } else {
-                  selections.value[v.attribute_id] = v.option_id || v.text_value
-                }
-              })
-            }
-          }
-        }
-
-        // Initialize performer_id for UI
         if (form.assignments) {
           form.assignments.forEach(a => {
             a.performer_id = a.employee_id || a.brigade_id
           })
         }
       } catch (e) {
-        console.error('Failed to load order for editing', e)
-        ElMessage.error('Не вдалося завантажити дані завдання для редагування.')
+        ElMessage.error('Не вдалося завантажити дані.')
       }
     } else {
-      // Defaults for new order
       if (userStore.user?.company_id) form.company_id = userStore.user.company_id
       const defaultWH = (warehouses.value || []).find(w => w.is_default) || warehouses.value?.[0]
       if (defaultWH) form.warehouse_id = defaultWH.id
     }
   } catch (e) {
-    console.error('Init error:', e)
     ElMessage.error('Помилка ініціалізації')
   } finally {
     loading.value = false
@@ -724,21 +644,5 @@ onMounted(initData)
 .field-label { font-size: 12px; color: #6b7280; font-weight: 500; }
 .req::after { content: '*'; color: #ef4444; }
 
-.characteristics-section {
-  padding-top: 15px;
-  border-top: 1px dashed #e5e7eb;
-}
-
-.dims-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-.dim-input { width: 80px !important; }
-.dims-sep { font-size: 16px; color: #94a3b8; font-weight: 600; }
-.dims-unit { font-size: 12px; color: #94a3b8; }
-
-.custom-tabs-card :deep(.el-tabs__header) { margin-bottom: 0; }
 .history-content p { margin: 4px 0 0 0; }
 </style>
