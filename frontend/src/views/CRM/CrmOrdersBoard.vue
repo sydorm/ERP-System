@@ -94,7 +94,7 @@
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
-            @click="openQuickView(order)"
+            @click="openEditor(order)"
           >
             <div class="card-header">
               <span class="card-order-no">#{{ order.order_number }}</span>
@@ -142,14 +142,6 @@
       </div>
     </div>
 
-    <!-- Quick View Drawer -->
-    <CrmQuickView 
-      :show="quickViewVisible" 
-      :order="selectedOrder" 
-      @close="quickViewVisible = false"
-      @openFull="handleOpenFull"
-    />
-
     <!-- Modals -->
     <el-dialog v-model="rescheduleVisible" title="Перенести передзвон" width="380px">
       <div v-if="selectedTask" class="reschedule-body">
@@ -192,7 +184,6 @@ import api from '@/api'
 import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
-import CrmQuickView from './CrmQuickView.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -214,9 +205,6 @@ const selectedTask = ref(null)
 
 const callVisible = ref(false)
 const callTask = ref(null)
-
-const quickViewVisible = ref(false)
-const selectedOrder = ref(null)
 
 const overdueTasks = computed(() => {
   return todayTasks.value.filter(t => isTaskOverdue(t))
@@ -306,16 +294,6 @@ const getPriorityClass = (p) => {
 const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВО', paid: 'ОПЛАЧЕНО' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
-const openQuickView = (o) => {
-  selectedOrder.value = o
-  quickViewVisible.value = true
-}
-const handleOpenFull = () => {
-  if (selectedOrder.value) {
-    openEditor(selectedOrder.value)
-    quickViewVisible.value = false
-  }
-}
 const openNewOrder = () => router.push('/crm/orders/new')
 const openNewOrderInStage = (s) => router.push(`/crm/orders/new?stage=${s}`)
 
