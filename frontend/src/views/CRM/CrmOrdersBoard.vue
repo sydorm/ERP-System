@@ -111,6 +111,12 @@
         <button class="crm-add-card-btn" @click="openNewOrderInStage(stage.key)">
           <el-icon><Plus /></el-icon> Додати замовлення
         </button>
+
+        <div v-if="hasMore" class="crm-load-more-container">
+          <button class="crm-load-more-btn" @click="loadMore">
+            Завантажити ще...
+          </button>
+        </div>
       </div>
     </div>
 
@@ -167,6 +173,9 @@ const loading = ref(false)
 const searchQuery = ref('')
 const filterPriority = ref('')
 const filterManager = ref('')
+const limit = 50
+const offset = ref(0)
+const hasMore = ref(true)
 
 const rescheduleVisible = ref(false)
 const rescheduleTime = ref('')
@@ -196,9 +205,10 @@ const priorities = [
 
 const fetchAll = async () => {
   loading.value = true
+  offset.value = 0
   try {
     const [ordersRes, cpRes, usersRes, tasksRes] = await Promise.all([
-      api.get('/api/v1/orders?limit=500'),
+      api.get(`/api/v1/orders?limit=${limit}&offset=0`),
       api.get('/api/v1/counterparties?limit=500'),
       api.get('/users/colleagues'),
       api.get('/api/v1/crm/tasks/today')
@@ -207,8 +217,25 @@ const fetchAll = async () => {
     counterparties.value = cpRes.data
     users.value = usersRes.data
     todayTasks.value = tasksRes.data
+    hasMore.value = ordersRes.data.length === limit
   } catch (e) {
     ElMessage.error('Помилка завантаження')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMore = async () => {
+  loading.value = true
+  offset.value += limit
+  try {
+    const res = await api.get(`/api/v1/orders?limit=${limit}&offset=${offset.value}`)
+    if (res.data.length > 0) {
+      orders.value = [...orders.value, ...res.data]
+    }
+    hasMore.value = res.data.length === limit
+  } catch (e) {
+    ElMessage.error('Помилка завантаження додаткових даних')
   } finally {
     loading.value = false
   }
@@ -226,7 +253,9 @@ const filteredOrdersInStage = (stage) => {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(o => 
       o.order_number.toLowerCase().includes(q) || 
-      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q)
+      getCounterpartyName(o.counterparty_id).toLowerCase().includes(q) ||
+      (o.client_name && o.client_name.toLowerCase().includes(q)) ||
+      (o.client_phone && o.client_phone.includes(q))
     )
   }
   if (filterPriority.value) list = list.filter(o => o.priority === filterPriority.value)
@@ -369,6 +398,9 @@ watch(() => route.path, (newPath) => {
 .pay-paid { background: #d1fae5; color: #065f46; }
 .crm-add-card-btn { padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
 .crm-add-card-btn:hover { color: #6366f1; }
+.crm-load-more-container { padding: 8px; text-align: center; border-top: 1px dashed #e2e8f0; }
+.crm-load-more-btn { background: none; border: none; color: #6366f1; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; }
+.crm-load-more-btn:hover { text-decoration: underline; }
 .reschedule-body { display: flex; flex-direction: column; gap: 12px; }
 .quick-reschedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .qr-btn { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 12px; font-weight: 600; }
