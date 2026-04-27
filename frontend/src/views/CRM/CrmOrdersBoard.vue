@@ -77,7 +77,7 @@
           <div class="crm-col-title-row">
             <span class="crm-col-dot" :style="{ background: stage.color }" />
             <span class="crm-col-title">{{ stage.label }}</span>
-            <span class="crm-col-count">{{ ordersInStage(stage.key).length }}</span>
+            <span class="crm-col-count-bubble">{{ ordersInStage(stage.key).length }}</span>
             <el-icon class="crm-col-menu"><MoreFilled /></el-icon>
           </div>
           <div class="crm-col-subheader">
@@ -108,8 +108,8 @@
 
             <div class="card-financial">
               <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span class="card-deadline" v-if="order.deadline">
-                <el-icon><Clock /></el-icon> {{ formatDate(order.deadline) }}
+              <span class="card-deadline-pill" v-if="order.deadline">
+                <el-icon><Calendar /></el-icon> {{ formatDate(order.deadline) }}
               </span>
             </div>
 
@@ -122,9 +122,8 @@
               <div class="card-meta">
                 <div class="card-avatar">{{ (getCounterpartyName(order.counterparty_id) || '?').charAt(0) }}</div>
                 <div class="card-comm-icons">
-                  <span class="comm-mini-icon">📞</span>
-                  <span class="comm-mini-icon" v-if="order.lead_source_id === 'viber'">💬</span>
-                  <span class="comm-mini-icon" v-if="order.lead_source_id === 'telegram'">✈️</span>
+                  <span class="comm-status-dot">●</span>
+                  <span class="comm-status-text">Контакт</span>
                 </div>
               </div>
             </div>
@@ -437,9 +436,17 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-col-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; position: relative; }
 .crm-col-dot { width: 10px; height: 10px; border-radius: 50%; }
 .crm-col-title { font-weight: 700; color: #1e293b; font-size: 15px; }
-.crm-col-count { color: #94a3b8; font-size: 15px; margin-left: 6px; }
+.crm-col-count-bubble { 
+  background: #f1f5f9; 
+  color: #94a3b8; 
+  font-size: 11px; 
+  font-weight: 700; 
+  padding: 2px 8px; 
+  border-radius: 4px; 
+  margin-left: 8px; 
+}
 .crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 18px; }
-.crm-col-subheader { font-size: 11px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
+.crm-col-subheader { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
 
 .crm-cards-list {
   padding: 12px;
@@ -477,8 +484,18 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   align-items: center;
   margin-bottom: 10px;
 }
-.card-price { font-weight: 700; color: #1e293b; font-size: 14px; }
-.card-deadline { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+.card-price { font-weight: 700; color: #1e293b; font-size: 15px; }
+.card-deadline-pill { 
+  font-size: 11px; 
+  color: #64748b; 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; }
 .payment-badge {
@@ -504,8 +521,9 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   font-size: 11px;
   font-weight: 700;
 }
-.card-comm-icons { display: flex; gap: 6px; }
-.comm-mini-icon { font-size: 14px; opacity: 0.6; }
+.card-comm-icons { display: flex; align-items: center; gap: 4px; }
+.comm-status-dot { font-size: 8px; color: #3D3AA8; }
+.comm-status-text { font-size: 11px; color: #3D3AA8; font-weight: 600; }
 
 /* ─── Add Button ─── */
 .crm-add-card-btn {
