@@ -598,6 +598,15 @@ const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
 
+
+// Communication
+const contacts      = ref([])
+const contactResult = ref(null)
+const contactCommType = ref('CALL')
+const contactNote   = ref('')
+const contactNextAt = ref(null)
+const savingContact = ref(false)
+
 // Watch contact result to auto-set reminder
 watch(() => contactResult.value, (newVal) => {
   if (newVal === 'NO_ANSWER') {
@@ -616,14 +625,6 @@ watch(() => contactResult.value, (newVal) => {
     contactNextAt.value = `${y}-${m}-${d}T${hh}:${mm}:${ss}`
   }
 })
-
-// Communication
-const contacts      = ref([])
-const contactResult = ref(null)
-const contactCommType = ref('CALL')
-const contactNote   = ref('')
-const contactNextAt = ref(null)
-const savingContact = ref(false)
 
 const form = reactive({
   order_number:   'Авто',
