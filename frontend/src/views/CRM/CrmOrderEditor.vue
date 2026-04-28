@@ -269,61 +269,60 @@
 
         <!-- ══ SUMMARY ══ -->
         <div class="crm-section crm-summary">
-          <div class="crm-section-title" style="margin-bottom:10px">Підсумок замовлення</div>
+          <div class="crm-section-title" style="margin-bottom:16px">ПІДСУМОК ЗАМОВЛЕННЯ</div>
 
-          <div class="summary-stats">
-            <div class="sum-stat">
-              <p class="sum-stat-val">{{ formatCurrency(form.total_amount) }}</p>
-              <p class="sum-stat-label">сума грн</p>
+          <div class="inline-edit-amounts">
+            <div class="inline-amount-box">
+              <input
+                v-model.number="form.total_amount"
+                type="number"
+                class="inline-amount-input"
+                :class="{ 'field-error': vErrors.amount }"
+                placeholder="0"
+                @input="calcPrepayment"
+              />
+              <span class="inline-amount-label">сума грн</span>
             </div>
-            <div class="sum-stat">
-              <p class="sum-stat-val">{{ formatCurrency(form.prepayment_amount || 0) }}</p>
-              <p class="sum-stat-label">передоплата</p>
-            </div>
-          </div>
-
-          <div class="crm-field">
-            <label class="crm-label">Сума замовлення (грн)</label>
-            <el-input-number
-              v-model="form.total_amount"
-              :min="0" :precision="2"
-              :controls="false"
-              placeholder="0.00"
-              style="width:100%"
-              :class="{ 'field-error': vErrors.amount }"
-              @change="calcPrepayment"
-            />
-          </div>
-
-          <div class="crm-field">
-            <label class="crm-label">Передоплата</label>
-            <div class="prepay-pills">
-              <button
-                v-for="pct in [20, 30, 50, 100]"
-                :key="pct"
-                class="prepay-pill"
-                :class="{ active: form.prepayment_percent === pct }"
-                @click="setPrepayPct(pct)"
-              >{{ pct }}%</button>
-              <button
-                class="prepay-pill pay-none"
-                :class="{ active: form.prepayment_percent === 0 }"
-                @click="setPrepayPct(0)"
-              >Без передоплати</button>
+            <div class="inline-amount-box">
+              <input
+                v-model.number="form.prepayment_amount"
+                type="number"
+                class="inline-amount-input prepay"
+                placeholder="0"
+                @input="onPrepaymentInput"
+              />
+              <span class="inline-amount-label">
+                передоплата
+                <span class="prepay-pct-hint" v-if="form.total_amount > 0">
+                  ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
+                </span>
+              </span>
             </div>
           </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Статус оплати</label>
-            <div class="payment-status-badge" :style="{ background: autoPaymentStatus.color + '20', color: autoPaymentStatus.color, border: '1px solid ' + autoPaymentStatus.color }">
-              <span class="status-dot" :style="{ background: autoPaymentStatus.color }" />
-              {{ autoPaymentStatus.label }}
-            </div>
+          <div class="prepay-pills-new">
+            <button
+              v-for="pct in [20, 30, 50, 100]"
+              :key="pct"
+              class="pill-new"
+              :class="{ active: form.prepayment_percent === pct }"
+              @click="setPrepayPct(pct)"
+            >{{ pct }}%</button>
+            <button
+              class="pill-new pay-none"
+              :class="{ active: form.prepayment_percent === 0 }"
+              @click="setPrepayPct(0)"
+            >Без</button>
+          </div>
+
+          <div class="payment-badge-new" :class="autoPaymentStatus.key">
+            <span class="status-dot-new" />
+            {{ autoPaymentStatus.label }}
           </div>
 
           <div class="crm-field" v-if="form.payment_status !== 'unpaid'">
             <label class="crm-label">Рахунок для зарахування</label>
-            <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" style="width:100%">
+            <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" class="modern-select" style="width:100%">
               <el-option
                 v-for="acc in bankAccounts"
                 :key="acc.id"
@@ -333,31 +332,15 @@
             </el-select>
           </div>
 
-          <div class="crm-grid-2">
-            <div class="crm-field">
-              <label class="crm-label">Дата заявки</label>
-              <el-date-picker
-                v-model="form.order_date"
-                type="date"
-                format="DD.MM.YYYY"
-                value-format="YYYY-MM-DD"
-                style="width:100%"
-              />
-            </div>
-            <div class="crm-field">
-              <label class="crm-label">Дедлайн</label>
-              <el-date-picker
-                v-model="form.deadline_date"
-                type="date"
-                format="DD.MM.YYYY"
-                value-format="YYYY-MM-DD"
-                style="width:100%"
-              />
+          <div class="crm-date-row">
+            <div class="date-item">Дата: <span class="date-val">{{ formatDate(form.order_date) }}</span></div>
+            <div class="date-item">
+              Дедлайн: 
+              <span class="date-val" :class="form.deadline_date ? 'blue' : 'gray'">
+                {{ form.deadline_date ? formatDate(form.deadline_date) : 'авто' }}
+              </span>
             </div>
           </div>
-          <p class="deadline-hint" v-if="!form.deadline_date">
-            Дедлайн розраховується автоматично по типу виробу
-          </p>
         </div>
 
         <!-- ══ PRODUCTION ══ -->
@@ -762,8 +745,15 @@ const setPrepayPct = (pct) => {
 const calcPrepayment = () => {
   if (form.prepayment_percent > 0) {
     form.prepayment_amount = Math.round(form.total_amount * form.prepayment_percent / 100)
-  } else {
+  } else if (form.prepayment_percent === 0) {
     form.prepayment_amount = 0
+  }
+}
+const onPrepaymentInput = () => {
+  if (form.total_amount > 0) {
+    form.prepayment_percent = Math.round((form.prepayment_amount || 0) / form.total_amount * 100)
+  } else {
+    form.prepayment_percent = 0
   }
 }
 
@@ -1653,6 +1643,169 @@ onMounted(loadData)
 .field-error :deep(.el-input__wrapper),
 .field-error.el-select :deep(.el-input__wrapper) {
   box-shadow: 0 0 0 1px #ef4444 inset !important;
+}
+
+/* ─── ORDER SUMMARY 2026 REDESIGN ─── */
+.inline-edit-amounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.inline-amount-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.inline-amount-input {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  width: 100%;
+  cursor: text;
+  outline: none;
+  padding-bottom: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.inline-amount-input.prepay {
+  color: #3D3AA8;
+}
+
+.inline-amount-input:focus {
+  border-bottom-color: #3D3AA8;
+}
+
+.inline-amount-input::-webkit-outer-spin-button,
+.inline-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.inline-amount-input {
+  -moz-appearance: textfield;
+}
+
+.inline-amount-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.prepay-pct-hint {
+  color: #3D3AA8;
+  font-weight: 600;
+}
+
+.prepay-pills-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.pill-new {
+  border-radius: 20px;
+  padding: 5px 14px;
+  border: 1.5px solid #E0E0FF;
+  background: white;
+  color: #3D3AA8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pill-new:hover {
+  background: #F5F3FF;
+  border-color: #3D3AA8;
+}
+
+.pill-new.active {
+  background: #3D3AA8;
+  color: white;
+  border-color: #3D3AA8;
+}
+
+.payment-badge-new {
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.payment-badge-new.unpaid {
+  background: #F9FAFB;
+  color: #6B7280;
+}
+.payment-badge-new.unpaid .status-dot-new {
+  background: #9CA3AF;
+}
+
+.payment-badge-new.partial {
+  background: #FFFBEB;
+  color: #92400E;
+}
+.payment-badge-new.partial .status-dot-new {
+  background: #F59E0B;
+}
+
+.payment-badge-new.paid {
+  background: #ECFDF5;
+  color: #065F46;
+}
+.payment-badge-new.paid .status-dot-new {
+  background: #10B981;
+}
+
+.status-dot-new {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.modern-select :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  border: 1px solid #E8EAFF;
+  box-shadow: none !important;
+}
+
+.modern-select :deep(.el-input__wrapper.is-focus) {
+  border-color: #3D3AA8;
+}
+
+.crm-date-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #475569;
+  margin-top: 16px;
+}
+
+.date-val {
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.date-val.blue {
+  color: #3D3AA8;
+}
+
+.date-val.gray {
+  color: #9CA3AF;
 }
 
 /* Keep existing styles below... */
