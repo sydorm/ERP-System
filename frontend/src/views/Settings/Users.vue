@@ -53,7 +53,8 @@
           />
       </div>
         <div class="kimi-filter-right">
-          <button class="kimi-primary-btn" @click="openCreateModal">
+          <button class="kimi-primary-btn" @click="router.push('/settings/users/create')">
+
             <el-icon><Plus /></el-icon> Новий користувач
           </button>
         </div>
@@ -288,8 +289,11 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const userStore = useUserStore()
+
 const users = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)

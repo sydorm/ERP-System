@@ -301,6 +301,13 @@ const router = createRouter({
                     meta: { title: 'Користувачі', permission: 'settings.users.view' }
                 },
                 {
+                    path: '/settings/users/create',
+                    name: 'user-create',
+                    component: () => import('@/views/Settings/UserCreate.vue'),
+                    meta: { title: 'Новий користувач', permission: 'settings.users.view' }
+                },
+
+                {
                     path: '/settings/trash-bin',
                     name: 'trash-bin',
                     component: () => import('@/views/Admin/TrashBin.vue'),
