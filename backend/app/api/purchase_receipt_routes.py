@@ -87,6 +87,15 @@ async def create_purchase_receipt(
             attribute_values=line_data.attribute_values
         ))
     
+    # 4. Financial: Accounts Payable (creditor liability to supplier)
+    entries.append(PostingEntry(
+        register_type=RegisterType.AR_AP,
+        counterparty_id=receipt.supplier_id,
+        amount=-float(receipt.total_amount),  # Negative = we owe money
+        currency=receipt.currency or "UAH",
+        notes=f"Закупівля {receipt.receipt_number}"
+    ))
+    
     PostingService.post_document(
         db, current_user.company_id, "PurchaseReceipt", receipt.id, entries
     )
