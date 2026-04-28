@@ -268,61 +268,108 @@
       <div class="crm-right-col">
 
         <!-- ══ SUMMARY ══ -->
-        <div class="crm-section crm-summary">
-          <div class="crm-section-title" style="margin-bottom:16px">ПІДСУМОК ЗАМОВЛЕННЯ</div>
+        <div class="crm-section crm-summary" style="background: #fff; border-radius: 12px; padding: 16px 18px; border: 1px solid #e2e8f0;">
+          <div class="crm-section-title" style="margin-bottom:16px; font-size: 14px; font-weight: 700; color: #1e293b;">ПІДСУМОК ЗАМОВЛЕННЯ</div>
 
-          <div class="inline-edit-amounts">
-            <div class="inline-amount-box">
+          <div class="inline-edit-amounts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="inline-amount-box" style="display: flex; flex-direction: column;">
               <input
                 v-model.number="form.total_amount"
                 type="number"
-                class="inline-amount-input"
+                style="font-size: 28px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; transition: border-color 0.2s ease;"
                 :class="{ 'field-error': vErrors.amount }"
                 placeholder="0"
                 @input="calcPrepayment"
+                @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
+                @blur="$event.target.style.borderBottomColor = 'transparent'"
               />
-              <span class="inline-amount-label">сума грн</span>
+              <span class="inline-amount-label" style="font-size: 12px; color: #6B7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;">сума грн</span>
             </div>
-            <div class="inline-amount-box">
+            <div class="inline-amount-box" style="display: flex; flex-direction: column;">
               <input
                 v-model.number="form.prepayment_amount"
                 type="number"
-                class="inline-amount-input prepay"
+                style="font-size: 28px; font-weight: 700; color: #3D3AA8; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; transition: border-color 0.2s ease;"
                 placeholder="0"
                 @input="onPrepaymentInput"
+                @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
+                @blur="$event.target.style.borderBottomColor = 'transparent'"
               />
-              <span class="inline-amount-label">
+              <span class="inline-amount-label" style="font-size: 12px; color: #6B7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
                 передоплата
-                <span class="prepay-pct-hint" v-if="form.total_amount > 0">
+                <span class="prepay-pct-hint" v-if="form.total_amount > 0" style="color: #3D3AA8; font-weight: 600;">
                   ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
                 </span>
               </span>
             </div>
           </div>
 
-          <div class="prepay-pills-new">
+          <div class="prepay-pills-new" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
             <button
               v-for="pct in [20, 30, 50, 100]"
               :key="pct"
-              class="pill-new"
-              :class="{ active: form.prepayment_percent === pct }"
+              :style="{
+                borderRadius: '20px',
+                padding: '5px 14px',
+                border: '1.5px solid #E0E0FF',
+                background: form.prepayment_percent === pct ? '#3D3AA8' : 'white',
+                color: form.prepayment_percent === pct ? 'white' : '#3D3AA8',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }"
               @click="setPrepayPct(pct)"
             >{{ pct }}%</button>
             <button
-              class="pill-new pay-none"
-              :class="{ active: form.prepayment_percent === 0 }"
+              :style="{
+                borderRadius: '20px',
+                padding: '5px 14px',
+                border: '1.5px solid #E0E0FF',
+                background: form.prepayment_percent === 0 ? '#3D3AA8' : 'white',
+                color: form.prepayment_percent === 0 ? 'white' : '#3D3AA8',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }"
               @click="setPrepayPct(0)"
             >Без</button>
           </div>
 
-          <div class="payment-badge-new" :class="autoPaymentStatus.key">
-            <span class="status-dot-new" />
+          <div
+            class="payment-badge-new"
+            :style="{
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontSize: '13px',
+              fontWeight: '600',
+              width: '100%',
+              textAlign: 'center',
+              display: 'flex',
+              align-items: center,
+              justify-content: center,
+              gap: 8px,
+              marginBottom: '20px',
+              background: autoPaymentStatus.key === 'unpaid' ? '#F9FAFB' : autoPaymentStatus.key === 'partial' ? '#FFFBEB' : '#ECFDF5',
+              color: autoPaymentStatus.key === 'unpaid' ? '#6B7280' : autoPaymentStatus.key === 'partial' ? '#92400E' : '#065F46'
+            }"
+          >
+            <span
+              class="status-dot-new"
+              :style="{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: autoPaymentStatus.key === 'unpaid' ? '#9CA3AF' : autoPaymentStatus.key === 'partial' ? '#F59E0B' : '#10B981'
+              }"
+            />
             {{ autoPaymentStatus.label }}
           </div>
 
-          <div class="crm-field" v-if="form.payment_status !== 'unpaid'">
-            <label class="crm-label">Рахунок для зарахування</label>
-            <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" class="modern-select" style="width:100%">
+          <div class="crm-field" v-if="form.payment_status !== 'unpaid'" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;">
+            <label class="crm-label" style="font-size: 12px; font-weight: 500; color: #64748b;">Рахунок для зарахування</label>
+            <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" style="width:100%">
               <el-option
                 v-for="acc in bankAccounts"
                 :key="acc.id"
@@ -332,11 +379,17 @@
             </el-select>
           </div>
 
-          <div class="crm-date-row">
-            <div class="date-item">Дата: <span class="date-val">{{ formatDate(form.order_date) }}</span></div>
+          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-top: 16px;">
+            <div class="date-item">Дата: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
             <div class="date-item">
               Дедлайн: 
-              <span class="date-val" :class="form.deadline_date ? 'blue' : 'gray'">
+              <span
+                class="date-val"
+                :style="{
+                  fontWeight: 600,
+                  color: form.deadline_date ? '#3D3AA8' : '#9CA3AF'
+                }"
+              >
                 {{ form.deadline_date ? formatDate(form.deadline_date) : 'авто' }}
               </span>
             </div>
