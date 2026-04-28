@@ -159,7 +159,60 @@ const router = useRouter()
 const activeTab = ref('general')
 const submitting = ref(false)
 const loading = ref(false)
-const isEditMode = computed(() => !!route.params.id)
+const isEditMode = computed(() => !!route.params.id && route.params.id !== 'new')
+
+const resetForm = () => {
+    Object.assign(form, {
+        id: null,
+        sku: '',
+        name: '',
+        description: '',
+        category: '',
+        unit_of_measure: 'шт',
+        price: 0,
+        cost: 0,
+        currency: 'UAH',
+        image_url: '',
+        is_active: true,
+        track_inventory: true,
+        barcode: '',
+        internal_code: '',
+        weight_kg: 0,
+        length_cm: 0,
+        width_cm: 0,
+        tags: [],
+        notes: '',
+        variants: [],
+        min_stock: 0.0,
+        optimal_stock: 0.0,
+        default_supplier_id: null,
+        delivery_days: 0,
+        production_time_hours: null,
+        complexity_code: null,
+        min_production_batch: 1,
+        max_production_per_day: null,
+        special_production_conditions: '',
+        performer_restriction_type: 'any_role',
+        restricted_brigade_id: null,
+        restricted_employee_id: null,
+        price_rule: {
+            pricing_mode: 'manual',
+            base_price: 0,
+            markups: []
+        },
+        product_attributes: [],
+        variant_config: {
+            length: { source: 'fixed', attr_id: null },
+            width: { source: 'fixed', attr_id: null },
+            height: { source: 'fixed', attr_id: null },
+            weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+        }
+    })
+    productCharacteristics.value = []
+    stockLevels.value = []
+    hasSpecification.value = false
+    activeTab.value = 'general'
+}
 
 const form = reactive({
     id: null,
@@ -228,6 +281,7 @@ const suppliers = ref([])
 const hasSpecification = ref(false)
 
 const goBack = () => {
+    tabsStore.closeTab(route.path)
     router.push('/inventory/nomenclature')
 }
 
@@ -267,11 +321,10 @@ const fetchSuppliers = async () => {
     }
 }
 
-const fetchProduct = async () => {
-    if (!isEditMode.value) return
+const loadProduct = async (id) => {
     loading.value = true
     try {
-        const res = await api.get(`/api/v1/products/${route.params.id}`)
+        const res = await api.get(`/api/v1/products/${id}`)
         Object.assign(form, res.data)
         
         // Ensure numeric fields are numbers for el-input-number
@@ -304,7 +357,7 @@ const fetchProduct = async () => {
             }))
         }
         
-        fetchStockLevels()
+        await fetchStockLevels(id)
     } catch (e) {
         ElMessage.error('Помилка завантаження товару')
     } finally {
@@ -312,9 +365,9 @@ const fetchProduct = async () => {
     }
 }
 
-const fetchStockLevels = async () => {
+const fetchStockLevels = async (id) => {
     try {
-        const res = await api.get(`/api/v1/products/${route.params.id}/stock`)
+        const res = await api.get(`/api/v1/products/${id}/stock`)
         stockLevels.value = res.data
     } catch (e) {
         console.error('Failed to load stock levels', e)
@@ -354,12 +407,11 @@ const saveProduct = async () => {
     try {
         if (isEditMode.value) {
             await api.put(`/api/v1/products/${form.id}`, form)
-            ElMessage.success('Товар оновлено')
-            tabsStore.closeTab(route.path)
+            ElMessage.success('Збережено ✓')
         } else {
-            await api.post('/api/v1/products', form)
-            ElMessage.success('Товар створено')
-            tabsStore.closeTab(route.path)
+            const res = await api.post('/api/v1/products', form)
+            ElMessage.success('Збережено ✓')
+            router.replace({ params: { id: res.data.id } })
         }
     } catch (error) {
         ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
@@ -390,9 +442,16 @@ const confirmDelete = () => {
 
 watch(() => form.category, fetchCategoryAttributes)
 
+watch(() => route.params.id, (newId) => {
+    if (newId === 'new' || !newId) {
+        resetForm()
+    } else {
+        loadProduct(newId)
+    }
+}, { immediate: true })
+
 onMounted(() => {
     fetchDictionaries()
-    fetchProduct()
     fetchSuppliers()
 })
 </script>
