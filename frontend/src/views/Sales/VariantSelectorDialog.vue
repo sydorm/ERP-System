@@ -428,6 +428,30 @@ const handleConfirm = async () => {
         })
         visible.value = false
     } else {
+        // Check if we should skip variant creation for materials/components
+        const catStr = (props.product?.category || '').toUpperCase();
+        const skipVariantCreation = 
+            props.product?.type === 'material' || 
+            props.product?.type === 'component' || 
+            catStr.includes('МАТЕРІАЛ') || 
+            catStr.includes('ДСП') || 
+            catStr.includes('МЕТАЛ') ||
+            catStr.includes('MATERIAL') ||
+            catStr.includes('DSP') ||
+            catStr.includes('METAL');
+
+        if (skipVariantCreation) {
+            const virtualVariant = {
+                id: null,
+                product_id: props.product.id,
+                sku: props.product.sku,
+                values: selectedValues
+            }
+            emit('select', virtualVariant)
+            visible.value = false
+            return
+        }
+
         // If variant not found but all variant-generating attributes are selected
         // Ask to create a new variant
         try {
