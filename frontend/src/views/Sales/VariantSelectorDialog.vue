@@ -11,7 +11,7 @@
       <!-- Product Hero Section -->
       <div class="product-hero">
         <div class="product-image">
-          <img v-if="product.image_url" :src="product.image_url" :alt="product.name" />
+          <img v-if="product.image_url && !product.image_url.includes('api/v1/product')" :src="product.image_url" :alt="product.name" />
           <div v-else class="image-placeholder">
             <el-icon :size="32"><Picture /></el-icon>
           </div>
