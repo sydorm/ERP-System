@@ -83,13 +83,42 @@ async def get_warehouses_stock(
         vid = str(r.variant_id) if r.variant_id else None
         label = variant_labels.get(vid, "") if vid else ""
         
+        cost_price = 0.0
+        
+        # 1. Try finding actual purchase price from latest receipt
+        from app.models.purchase_receipt import PurchaseReceipt, PurchaseReceiptLine
+        latest_receipt = db.query(PurchaseReceiptLine.price).join(
+            PurchaseReceipt, PurchaseReceipt.id == PurchaseReceiptLine.receipt_id
+        ).filter(
+            PurchaseReceiptLine.product_id == r.product_id,
+            PurchaseReceiptLine.variant_id == r.variant_id,
+            PurchaseReceipt.status == "posted"
+        ).order_by(
+            PurchaseReceipt.receipt_date.desc(),
+            PurchaseReceiptLine.created_at.desc()
+        ).first()
+
+        if latest_receipt:
+            cost_price = float(latest_receipt[0])
+        else:
+            # 2. Try variant price override if it exists
+            if vid:
+                from app.models.variant import ProductVariant
+                variant_obj = db.query(ProductVariant.cost_override).filter(ProductVariant.id == r.variant_id).first()
+                if variant_obj and variant_obj[0]:
+                    cost_price = float(variant_obj[0])
+                    
+            # 3. Fallback to standard product cost
+            if cost_price == 0.0:
+                cost_price = float(r.cost or 0)
+
         out.append({
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
             "variant_label": label,
             "quantity": float(r.quantity or 0),
-            "cost": float(r.cost or 0),
+            "cost": cost_price,
             "min_stock": float(r.min_stock or 0)
         })
     return out

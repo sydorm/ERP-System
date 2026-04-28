@@ -112,14 +112,7 @@
                     <span class="total-amount">{{ formatCurrency(scope.row.quantity * scope.row.cost) }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Стан" width="120" align="center">
-                  <template #default="scope">
-                    <el-tooltip v-if="scope.row.quantity <= scope.row.min_stock" :content="'Нижче мін. порогу: ' + scope.row.min_stock + ' шт'" placement="top">
-                      <el-tag type="danger" size="small" effect="dark">Дефіцит</el-tag>
-                    </el-tooltip>
-                    <el-tag v-else type="success" size="small" effect="light">Норма</el-tag>
-                  </template>
-                </el-table-column>
+
               </el-table>
               <div v-if="!getWarehouseStock(props.row.id).length" class="empty-stock-state">
                 <el-icon class="empty-stock-icon"><InfoFilled /></el-icon>
