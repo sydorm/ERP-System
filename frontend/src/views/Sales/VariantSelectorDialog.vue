@@ -441,13 +441,34 @@ const handleConfirm = async () => {
             catStr.includes('METAL');
 
         if (skipVariantCreation) {
-            const virtualVariant = {
-                id: null,
-                product_id: props.product.id,
-                sku: props.product.sku,
-                values: selectedValues
+            try {
+                attributeLoading.value = true
+                const res = await api.post(
+                    `/api/v1/products/${props.product.id}/variants/find-or-create`,
+                    {
+                        values: selectedValues.map(v => ({
+                            attribute_id: v.attribute_id,
+                            option_id: v.option_id ?? null,
+                            text_value: v.text_value ?? null,
+                        }))
+                    }
+                )
+                emit('select', {
+                    id: res.data.id,
+                    product_id: res.data.product_id,
+                    sku: res.data.sku,
+                    values: selectedValues,
+                })
+            } catch {
+                emit('select', {
+                    id: null,
+                    product_id: props.product.id,
+                    sku: props.product.sku,
+                    values: selectedValues,
+                })
+            } finally {
+                attributeLoading.value = false
             }
-            emit('select', virtualVariant)
             visible.value = false
             return
         }
