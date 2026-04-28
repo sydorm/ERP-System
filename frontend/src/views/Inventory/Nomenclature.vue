@@ -636,27 +636,7 @@ onActivated(() => {
   padding: 10px 8px !important;
 }
 
-/* Colored Header Dots */
-.kimi-table :deep(th.el-table__cell .cell::before) {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-  vertical-align: middle;
-}
-
-.kimi-table :deep(th.el-table__cell:nth-child(2) .cell::before) { background-color: #6B7280; }
-.kimi-table :deep(th.el-table__cell:nth-child(3) .cell::before) { background-color: #6C63FF; }
-.kimi-table :deep(th.el-table__cell:nth-child(4) .cell::before) { background-color: #00C9A7; }
-.kimi-table :deep(th.el-table__cell:nth-child(5) .cell::before) { background-color: #F59E0B; }
-.kimi-table :deep(th.el-table__cell:nth-child(6) .cell::before) { background-color: #22C55E; }
-
-.kimi-table :deep(th.el-table__cell:nth-child(1) .cell::before),
-.kimi-table :deep(th.el-table__cell:nth-child(7) .cell::before) {
-  display: none !important;
-}
+/* Colored Header Dots - Removed for pure clean appearance */
 
 /* Table Row Highlighting Rules - Zebra Effect */
 .kimi-table :deep(.el-table__row) {
