@@ -1,128 +1,140 @@
 <template>
-  <div class="orders-page erp-dense-container">
-    <!-- ===== STAT CARDS ===== -->
-    <div class="stats-row-dense kimi-mb-4">
-      <!-- Всього товарів -->
-      <div class="stats-card-dense">
-        <div class="stats-card-dense__icon total">
-          <el-icon><Box /></el-icon>
+  <div class="orders-page" :class="{ 'dense-mode': isCompactMode }">
+    <div class="top-section">
+      <!-- ===== STAT CARDS ===== -->
+      <div class="stats-row-dense kimi-mb-4">
+        <!-- Всього товарів -->
+        <div class="stats-card-dense">
+          <div class="stats-card-dense__icon total">
+            <el-icon><Box /></el-icon>
+          </div>
+          <div class="stats-card-dense__content">
+            <span class="stats-card-dense__label">Всього товарів</span>
+            <span class="stats-card-dense__value">{{ stats.total_products }}</span>
+          </div>
         </div>
-        <div class="stats-card-dense__content">
-          <span class="stats-card-dense__label">Всього товарів</span>
-          <span class="stats-card-dense__value">{{ stats.total_products }}</span>
+
+        <!-- В наявності -->
+        <div class="stats-card-dense">
+          <div class="stats-card-dense__icon success">
+            <el-icon><Check /></el-icon>
+          </div>
+          <div class="stats-card-dense__content">
+            <span class="stats-card-dense__label">В наявності</span>
+            <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
+          </div>
+        </div>
+
+        <!-- Закінчуються -->
+        <div class="stats-card-dense">
+          <div class="stats-card-dense__icon warning">
+            <el-icon><Warning /></el-icon>
+          </div>
+          <div class="stats-card-dense__content">
+            <span class="stats-card-dense__label">Закінчуються</span>
+            <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
+          </div>
+        </div>
+
+        <!-- Немає -->
+        <div class="stats-card-dense">
+          <div class="stats-card-dense__icon danger">
+            <el-icon><CircleClose /></el-icon>
+          </div>
+          <div class="stats-card-dense__content">
+            <span class="stats-card-dense__label">Немає</span>
+            <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- В наявності -->
-      <div class="stats-card-dense">
-        <div class="stats-card-dense__icon success">
-          <el-icon><Check /></el-icon>
-        </div>
-        <div class="stats-card-dense__content">
-          <span class="stats-card-dense__label">В наявності</span>
-          <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
-        </div>
-      </div>
+      <!-- ===== FILTERS TOOLBAR ===== -->
+      <div class="toolbar-dense kimi-mb-4">
+        <div class="toolbar-dense__left">
+          <div class="search-dense-wrapper">
+            <el-icon class="search-dense-icon"><Search /></el-icon>
+            <input
+              v-model="searchQuery"
+              placeholder="Пошук за назвою, артикулом..."
+              class="search-dense-input"
+              @input="handleSearch"
+            />
+          </div>
+          
+          <el-select
+            v-model="filterCategory"
+            placeholder="Всі категорії"
+            clearable
+            @change="handleCategorySelect"
+            class="filter-dense-select pill-select"
+            style="width: 180px;"
+          >
+            <el-option
+              v-for="cat in categoryOptions"
+              :key="cat.code"
+              :label="cat.name"
+              :value="cat.code"
+            />
+          </el-select>
 
-      <!-- Закінчуються -->
-      <div class="stats-card-dense">
-        <div class="stats-card-dense__icon warning">
-          <el-icon><Warning /></el-icon>
-        </div>
-        <div class="stats-card-dense__content">
-          <span class="stats-card-dense__label">Закінчуються</span>
-          <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
-        </div>
-      </div>
+          <el-select
+            v-model="filterStock"
+            placeholder="Наявність"
+            clearable
+            @change="handleFilterChange"
+            class="filter-dense-select pill-select"
+            style="width: 160px;"
+          >
+            <el-option label="Всі товари" value="" />
+            <el-option label="В наявності" value="in_stock" />
+            <el-option label="Закінчуються" value="low_stock" />
+            <el-option label="Немає" value="out_of_stock" />
+          </el-select>
 
-      <!-- Немає -->
-      <div class="stats-card-dense">
-        <div class="stats-card-dense__icon danger">
-          <el-icon><CircleClose /></el-icon>
-        </div>
-        <div class="stats-card-dense__content">
-          <span class="stats-card-dense__label">Немає</span>
-          <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== FILTERS TOOLBAR ===== -->
-    <div class="toolbar-dense kimi-mb-4">
-      <div class="toolbar-dense__left">
-        <div class="search-dense-wrapper">
-          <el-icon class="search-dense-icon"><Search /></el-icon>
-          <input
-            v-model="searchQuery"
-            placeholder="Пошук за назвою, артикулом або категорією..."
-            class="search-dense-input"
-            @input="handleSearch"
-          />
+          <!-- Колонки Dropdown -->
+          <el-dropdown trigger="click" :hide-on-click="false">
+            <button class="column-toggle-btn">
+              ⚙️ Колонки
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu class="column-toggle-menu">
+                <el-dropdown-item><el-checkbox v-model="visibleColumns.brand">Бренд</el-checkbox></el-dropdown-item>
+                <el-dropdown-item><el-checkbox v-model="visibleColumns.weight">Вага</el-checkbox></el-dropdown-item>
+                <el-dropdown-item><el-checkbox v-model="visibleColumns.dimensions">Розміри</el-checkbox></el-dropdown-item>
+                <el-dropdown-item><el-checkbox v-model="visibleColumns.supplier">Постачальник</el-checkbox></el-dropdown-item>
+                <el-dropdown-item divided>
+                  <el-checkbox v-model="isCompactMode" @change="toggleCompactMode">Компактний режим</el-checkbox>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         
-        <el-select
-          v-model="filterCategory"
-          placeholder="Всі категорії"
-          clearable
-          @change="handleCategorySelect"
-          class="filter-dense-select"
-          style="width: 180px;"
-        >
-          <el-option
-            v-for="cat in categoryOptions"
-            :key="cat.code"
-            :label="cat.name"
-            :value="cat.code"
-          />
-        </el-select>
-
-        <el-select
-          v-model="filterStock"
-          placeholder="Наявність"
-          clearable
-          @change="handleFilterChange"
-          class="filter-dense-select"
-          style="width: 160px;"
-        >
-          <el-option label="Всі товари" value="" />
-          <el-option label="В наявності" value="in_stock" />
-          <el-option label="Закінчуються" value="low_stock" />
-          <el-option label="Немає" value="out_of_stock" />
-        </el-select>
-
-        <!-- Колонки Dropdown -->
-        <el-dropdown trigger="click" :hide-on-click="false" class="column-settings-dropdown">
-          <button class="column-toggle-btn">
-            ⚙️ Колонки
+        <div class="toolbar-dense__right">
+          <button class="primary-dense-button" @click="goToCreate">
+            <el-icon><Plus /></el-icon> Створити товар
           </button>
-          <template #dropdown>
-            <el-dropdown-menu class="column-toggle-menu">
-              <el-dropdown-item><el-checkbox v-model="visibleColumns.brand">Бренд</el-checkbox></el-dropdown-item>
-              <el-dropdown-item><el-checkbox v-model="visibleColumns.weight">Вага</el-checkbox></el-dropdown-item>
-              <el-dropdown-item><el-checkbox v-model="visibleColumns.dimensions">Розміри</el-checkbox></el-dropdown-item>
-              <el-dropdown-item><el-checkbox v-model="visibleColumns.supplier">Постачальник</el-checkbox></el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-      
-      <div class="toolbar-dense__right">
-        <button class="primary-dense-button" @click="goToCreate">
-          <el-icon><Plus /></el-icon> Створити товар
-        </button>
+        </div>
       </div>
     </div>
 
-    <!-- ===== TABLE ===== -->
-    <div class="table-dense-card" v-loading="loading">
+    <!-- ===== TABLE SECTION ===== -->
+    <div class="table-section table-dense-card" v-loading="loading">
       <el-table
         :data="products"
         style="width: 100%"
-        height="calc(100vh - 220px)"
+        height="100%"
         :row-class-name="() => 'table-row-dense'"
         :header-row-class-name="() => 'table-header-dense'"
         @row-click="handleRowClick"
       >
+        <!-- Left Indicator Line (via CSS) -->
+        <el-table-column width="16" class-name="indicator-col">
+          <template #default="{ row }">
+            <div class="row-status-indicator" :class="getStockBadgeClass(row.stock_balance, row.min_stock)"></div>
+          </template>
+        </el-table-column>
+
         <!-- Photo -->
         <el-table-column width="64" class-name="table-cell-dense">
           <template #default="{ row }">
@@ -144,35 +156,41 @@
         <el-table-column min-width="280" class-name="table-cell-dense">
           <template #header>Товар</template>
           <template #default="{ row }">
-            <el-tooltip 
-              :content="`Артикул: ${row.sku} | Одиниця: ${getUomName(row.unit_of_measure)} | Мін. запас: ${row.min_stock || 5}`"
-              placement="top"
-              :open-delay="400"
-            >
-              <div class="product-item-block">
-                <div class="product-info-compact">
-                  <div class="product-title-compact">
-                    {{ row.name }}
-                    <span 
-                      v-if="row.stock_balance === 0" 
-                      class="ai-warning-indicator" 
-                      @click.stop="ElMessage.warning('AI: Запас нульовий! Рекомендується поповнити склад!')"
-                    >
-                      ⚠️
-                    </span>
-                  </div>
-                  <div class="product-sku-compact">{{ row.sku }} • {{ getUomName(row.unit_of_measure) }}</div>
+            <div class="product-item-block">
+              <div class="product-info-compact">
+                <div class="product-title-compact">
+                  {{ row.name }}
+                  
+                  <!-- AI Popover instead of Tooltip -->
+                  <el-popover
+                    v-if="row.stock_balance === 0"
+                    placement="top"
+                    :width="220"
+                    trigger="click"
+                    popper-class="premium-ai-popover"
+                  >
+                    <template #reference>
+                      <span class="ai-warning-dot" @click.stop></span>
+                    </template>
+                    <div class="ai-popover-content">
+                      <h5 class="ai-popover-title">🤖 AI Аналітика</h5>
+                      <p class="ai-popover-desc">Критичний залишок! Необхідно поповнити запаси цього товару.</p>
+                    </div>
+                  </el-popover>
+                </div>
+                <div class="product-sku-compact">
+                  {{ row.sku }} <span class="sku-divider">·</span> {{ getUomName(row.unit_of_measure) }}
                 </div>
               </div>
-            </el-tooltip>
+            </div>
           </template>
         </el-table-column>
 
         <!-- Category -->
-        <el-table-column width="160" class-name="table-cell-dense">
+        <el-table-column width="180" class-name="table-cell-dense">
           <template #header>Категорія</template>
           <template #default="{ row }">
-            <span class="category-badge-compact" :title="getCategoryName(row.category)">
+            <span class="category-badge-premium" :title="getCategoryName(row.category)">
               {{ getCategoryName(row.category) }}
             </span>
           </template>
@@ -199,10 +217,9 @@
         <el-table-column width="140" align="center" class-name="table-cell-dense">
           <template #header>Запас</template>
           <template #default="{ row }">
-            <span class="stock-badge-compact" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
-              {{ getStockBadgeText(row.stock_balance, row.min_stock) }} ({{ row.stock_balance }})
+            <span class="stock-badge-premium" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
+              {{ getStockBadgeText(row.stock_balance, row.min_stock) }}
             </span>
-
           </template>
         </el-table-column>
 
@@ -216,26 +233,23 @@
           </template>
         </el-table-column>
 
-        <!-- Actions -->
-        <el-table-column width="140" align="right" class-name="table-cell-dense">
+        <!-- Actions (4 icons) -->
+        <el-table-column width="180" align="right" class-name="table-cell-dense">
           <template #header>Дії</template>
           <template #default="{ row }">
-            <div class="actions-cell-dense" @click.stop>
-              <el-tooltip content="Редагувати" placement="top">
-                <button class="action-btn-dense edit" @click="handleEdit(row)">
-                  ✏️
-                </button>
-              </el-tooltip>
-              <el-tooltip content="Залишки" placement="top">
-                <button class="action-btn-dense stock" @click="handleViewStock(row)">
-                  📦
-                </button>
-              </el-tooltip>
-              <el-tooltip content="Рух" placement="top">
-                <button class="action-btn-dense movement" @click="handleViewMovement(row)">
-                  📊
-                </button>
-              </el-tooltip>
+            <div class="actions-cell-premium" @click.stop>
+              <button class="action-btn-premium" @click="handleEdit(row)" title="Редагувати">
+                ✏️
+              </button>
+              <button class="action-btn-premium" @click="handleViewStock(row)" title="Склад">
+                📦
+              </button>
+              <button class="action-btn-premium" @click="handleViewMovement(row)" title="Рух">
+                📊
+              </button>
+              <button class="action-btn-premium" @click="handleRowClick(row)" title="Перегляд">
+                👁️
+              </button>
             </div>
           </template>
         </el-table-column>
@@ -260,7 +274,7 @@
     <!-- ===== SIDE DRAWER ===== -->
     <el-drawer
       v-model="drawerVisible"
-      title="Деталі товару"
+      title="Інформація про товар"
       size="480px"
       direction="rtl"
       :destroy-on-close="true"
@@ -268,7 +282,7 @@
       <div v-if="selectedProduct" class="drawer-content-dense">
         <div class="drawer-header-block">
           <h3>{{ selectedProduct.name }}</h3>
-          <p class="drawer-sku">{{ selectedProduct.sku }} • {{ getUomName(selectedProduct.unit_of_measure) }}</p>
+          <p class="drawer-sku">{{ selectedProduct.sku }} <span class="sku-divider">·</span> {{ getUomName(selectedProduct.unit_of_measure) }}</p>
         </div>
 
         <el-divider />
@@ -298,6 +312,17 @@
     </el-drawer>
   </div>
 </template>
+="productMovements" style="width: 100%" size="small">
+            <el-table-column prop="date" label="Дата" width="100" />
+            <el-table-column prop="type" label="Операція" width="100" />
+            <el-table-column prop="qty" label="К-сть" align="right" width="70" />
+            <el-table-column prop="note" label="Коментар" />
+          </el-table>
+        </div>
+      </div>
+    </el-drawer>
+  </div>
+</template>
 
 
 
@@ -317,6 +342,13 @@ const dictStore = useDictionaryStore()
 
 const router = useRouter()
 
+// Compact mode state
+const isCompactMode = ref(localStorage.getItem('nomenclature_dense_mode') === 'true')
+const toggleCompactMode = (val) => {
+  isCompactMode.value = val
+  localStorage.setItem('nomenclature_dense_mode', val)
+}
+
 // UI States
 const drawerVisible = ref(false)
 const selectedProduct = ref(null)
@@ -329,6 +361,7 @@ const visibleColumns = ref({
   dimensions: false,
   supplier: false
 })
+
 
 const handleRowClick = (row) => {
   selectedProduct.value = row
@@ -530,60 +563,65 @@ onActivated(() => {
 
 <style scoped>
 .orders-page {
-  --page-bg: #f8fafc;
-  --card-bg: #ffffff;
+  --page-bg: #f4f7fb;
+  --card-bg: rgba(255, 255, 255, 0.82);
   --text-main: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --border-dense: #e2e8f0;
-
+  --border-premium: rgba(226, 232, 240, 0.9);
+  
   --primary: #6366f1;
   --primary-dark: #4f46e5;
 
   --success-bg: #dcfce7;
-  --success-text: #15803d;
+  --success-text: #16a34a;
 
   --warning-bg: #fef3c7;
-  --warning-text: #b45309;
+  --warning-text: #d97706;
 
   --danger-bg: #fee2e2;
-  --danger-text: #b91c1c;
+  --danger-text: #dc2626;
 
-  --category-bg: #f1f5f9;
-  --category-text: #475569;
-
-  background-color: var(--page-bg);
-  padding: 16px;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 28%), var(--page-bg);
+  padding: 20px;
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--text-main);
+  box-sizing: border-box;
 }
 
 /* ===== STAT CARDS ===== */
 .stats-row-dense {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 .stats-card-dense {
   background: var(--card-bg);
-  border: 1px solid var(--border-dense);
-  border-radius: 12px;
-  padding: 10px 14px;
+  border: 1px solid var(--border-premium);
+  border-radius: 18px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 54px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  gap: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease;
+}
+.stats-card-dense:hover {
+  transform: translateY(-1px);
 }
 .stats-card-dense__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px;
 }
 .stats-card-dense__icon.total { background: #eff6ff; color: #2563eb; }
 .stats-card-dense__icon.success { background: var(--success-bg); color: var(--success-text); }
@@ -595,135 +633,170 @@ onActivated(() => {
   flex-direction: column;
 }
 .stats-card-dense__label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .stats-card-dense__value {
-  font-size: 18px;
-  font-weight: 700;
-  font-family: 'DM Mono', monospace;
-  line-height: 1.1;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
 }
 
 /* ===== TOOLBAR ===== */
 .toolbar-dense {
-  background: var(--card-bg);
-  border: 1px solid var(--border-dense);
-  border-radius: 12px;
-  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  margin-top: 16px;
 }
 .toolbar-dense__left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .search-dense-wrapper {
   position: relative;
-  width: 280px;
+  width: 300px;
 }
 .search-dense-icon {
   position: absolute;
-  left: 10px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
 }
 .search-dense-input {
   width: 100%;
-  height: 36px;
-  border-radius: 6px;
-  border: 1px solid var(--border-dense);
-  padding: 0 10px 0 32px;
-  font-size: 13px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 0 14px 0 40px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.2s ease;
 }
 .search-dense-input:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
-.filter-dense-select {
+
+.filter-dense-select.pill-select {
   :deep(.el-select__wrapper) {
-    height: 36px !important;
-    border-radius: 6px !important;
-    border: 1px solid var(--border-dense) !important;
+    height: 42px !important;
+    border-radius: 999px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    box-shadow: none !important;
   }
 }
+
 .column-toggle-btn {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-dense);
-  background: var(--card-bg);
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
-.column-toggle-menu {
-  padding: 8px 12px;
+.column-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: var(--primary);
 }
+
 .primary-dense-button {
-  height: 38px;
-  padding: 0 16px;
-  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  height: 44px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 14px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.28);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.primary-dense-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(99, 102, 241, 0.34);
 }
 
 /* ===== TABLE ===== */
-.table-dense-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-dense);
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-  overflow: hidden;
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
+  margin-top: 16px;
 }
+
 :deep(.table-header-dense th) {
   background: #f8fafc !important;
-  color: var(--text-secondary) !important;
-  font-weight: 700 !important;
+  color: #64748b !important;
+  font-weight: 800 !important;
   font-size: 11px !important;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 12px 16px !important;
+  padding: 16px !important;
+  height: 52px;
+  border-bottom: 1px solid #eef2f7;
 }
 :deep(.table-row-dense) {
-  height: 64px;
+  height: 68px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.16s ease;
 }
 :deep(.table-row-dense:hover td) {
-  background: #f1f5f9 !important;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), rgba(255, 255, 255, 0)) !important;
 }
 :deep(.table-cell-dense) {
-  padding: 8px 16px !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #eef2f7 !important;
 }
+
+.indicator-col {
+  padding: 0 !important;
+}
+.row-status-indicator {
+  width: 3px;
+  height: 40px;
+  border-radius: 0 4px 4px 0;
+}
+.row-status-indicator.danger { background: var(--danger-text); }
+.row-status-indicator.warning { background: var(--warning-text); }
+.row-status-indicator.success { background: var(--success-text); }
 
 .product-item-block {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .product-thumb-compact {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   object-fit: cover;
-  border: 1px solid var(--border-dense);
-  background: #f1f5f9;
+  border: 1px solid rgba(226,232,240,0.8);
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -731,86 +804,148 @@ onActivated(() => {
 .product-info-compact {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 .product-title-compact {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
 }
 .product-sku-compact {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
-.ai-warning-indicator {
-  margin-left: 6px;
-  cursor: help;
+.sku-divider {
+  margin: 0 4px;
+}
+.ai-warning-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+  margin-left: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
-.category-badge-compact {
+.category-badge-premium {
   display: inline-block;
-  max-width: 120px;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: var(--category-bg);
-  color: var(--category-text);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.stock-badge-compact {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #dbe4ff;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 700;
 }
-.stock-badge-compact.danger { background: var(--danger-bg); color: var(--danger-text); }
-.stock-badge-compact.warning { background: var(--warning-bg); color: var(--warning-text); }
-.stock-badge-compact.success { background: var(--success-bg); color: var(--success-text); }
 
-.actions-cell-dense {
+.stock-badge-premium {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.stock-badge-premium.danger { background: var(--danger-bg); color: var(--danger-text); }
+.stock-badge-premium.warning { background: var(--warning-bg); color: var(--warning-text); }
+.stock-badge-premium.success { background: var(--success-bg); color: var(--success-text); }
+
+.price-cell-dense {
+  font-weight: 800;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.actions-cell-premium {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-end;
 }
-.action-btn-dense {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--border-dense);
+.action-btn-premium {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.16s ease;
   font-size: 14px;
 }
-.action-btn-dense:hover {
+.action-btn-premium:hover {
   background: #eef2ff;
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+  transform: translateY(-1px);
 }
 
-/* ===== DRAWER ===== */
-.drawer-content-dense {
-  padding: 0 16px;
+/* ===== COMPACT MODE MODIFIERS ===== */
+.dense-mode {
+  padding: 12px;
+  height: calc(100vh - 64px);
 }
-.drawer-header-block h3 {
-  margin: 0 0 4px 0;
+.dense-mode .stats-row-dense {
+  gap: 8px;
+}
+.dense-mode .stats-card-dense {
+  height: 44px;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+.dense-mode .stats-card-dense__value {
   font-size: 18px;
 }
-.drawer-sku {
-  color: var(--text-muted);
-  font-size: 12px;
+.dense-mode .toolbar-dense {
+  height: 48px;
+  padding: 8px;
+  border-radius: 12px;
+  margin-top: 8px;
 }
-.drawer-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  color: var(--text-secondary);
+.dense-mode .search-dense-input {
+  height: 34px;
+}
+.dense-mode .table-section {
+  border-radius: 16px;
+  margin-top: 8px;
+}
+.dense-mode :deep(.table-row-dense) {
+  height: 56px;
+}
+.dense-mode :deep(.table-cell-dense) {
+  padding: 6px 12px !important;
+}
+
+/* AI Popover override */
+:deep(.premium-ai-popover) {
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15) !important;
+  padding: 12px !important;
+}
+.ai-popover-title {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.ai-popover-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
 }
 </style>
+
 
 
 
