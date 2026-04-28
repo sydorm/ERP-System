@@ -345,9 +345,12 @@ const saveReceipt = async (action = 'save') => {
   }
 
   // Frontend validation for variants
+  // Skip check if line already has attribute_values (materials skip variant creation)
   const missingVariant = form.lines.find(l => {
      const p = products.value.find(prod => prod.id === l.product_id)
-     return p?.product_attributes?.some(a => a.generates_sku) && !l.variant_id
+     const hasAttributes = p?.product_attributes?.some(a => a.generates_sku)
+     const hasValues = l.values && l.values.length > 0
+     return hasAttributes && !l.variant_id && !hasValues
   })
   if (missingVariant) {
     ElMessage.error('Будь ласка, оберіть характеристику для всіх товарів')
