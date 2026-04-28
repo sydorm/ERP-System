@@ -1,7 +1,7 @@
 # Models package
 from .base import Base, BaseModel
 from .company import Company, CompanyType
-from .user import User
+from .user import User, UserLoginLog
 from .warehouse import Warehouse
 from .product import Product
 from .dictionary import DictionaryItem
@@ -89,5 +89,6 @@ __all__ = [
     "Brigade",
     "BrigadeMember",
     "SupplierPrice",
+    "UserLoginLog",
 ]
 
