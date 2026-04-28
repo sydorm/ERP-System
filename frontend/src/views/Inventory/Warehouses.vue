@@ -6,18 +6,44 @@
         <h2 class="page-title">Керування Складами</h2>
       </div>
       <div class="erp-toolbar-right">
-        <el-input
-          v-model="searchQuery"
-          placeholder="Пошук складу..."
-          :prefix-icon="Search"
-          clearable
-          class="light-search-input mr-4"
-          style="width: 250px;"
-        />
         <el-button type="primary" :icon="Plus" @click="openCreateDialog" class="action-primary-btn">
           Додати Склад
         </el-button>
       </div>
+    </div>
+
+    <!-- Filters and Search Panel -->
+    <div class="filters-panel mt-4">
+      <el-row :gutter="15">
+        <el-col :span="6">
+          <el-input
+            v-model="searchQuery"
+            placeholder="Пошук складу за назвою..."
+            :prefix-icon="Search"
+            clearable
+            class="light-filter-input"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-input
+            v-model="filterProduct"
+            placeholder="Пошук по товару..."
+            :prefix-icon="Search"
+            clearable
+            class="light-filter-input"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="filterCategory" placeholder="Категорія товару" clearable style="width: 100%">
+            <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
+          </el-select>
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="filterWarehouse" placeholder="Обрати склад" clearable style="width: 100%">
+            <el-option v-for="wh in warehouses" :key="wh.id" :label="wh.name" :value="wh.id" />
+          </el-select>
+        </el-col>
+      </el-row>
     </div>
 
     <!-- Quick Actions Bar -->
@@ -63,7 +89,7 @@
         <div class="premium-metric-card">
           <div class="metric-meta">
             <span class="metric-title">Оцінка капіталу</span>
-            <span class="metric-badge green">Ціна закупівлі</span>
+            <span class="metric-badge green">Закупівля</span>
           </div>
           <div class="metric-value-row">
             <span class="metric-value">{{ formatCurrency(totalStockValue) }}</span>
@@ -104,6 +130,12 @@
                     <span v-else>{{ scope.row.product_name }}</span>
                   </template>
                 </el-table-column>
+                <el-table-column label="Категорія" prop="category" min-width="120">
+                  <template #default="scope">
+                    <el-tag size="small" type="info" effect="plain" v-if="scope.row.category">{{ scope.row.category }}</el-tag>
+                    <span v-else>—</span>
+                  </template>
+                </el-table-column>
                 <el-table-column label="Характеристика" prop="variant_label" min-width="150">
                   <template #default="scope">
                     <span v-if="scope.row.variant_label">{{ scope.row.variant_label }}</span>
@@ -128,7 +160,7 @@
               </el-table>
               
               <div v-if="!getWarehouseStock(props.row.id).length" class="empty-stock-state">
-                <span>На цьому складі немає товарів.</span>
+                <span>За вашим фільтром товарів на цьому складі не знайдено.</span>
               </div>
             </div>
           </template>
@@ -169,49 +201,68 @@
       </el-table>
     </div>
 
-    <!-- Bottom AI Storage Optimization Widget -->
+    <!-- Product Movement History -->
+    <div class="premium-ai-card mt-6">
+      <div class="ai-header">
+        <el-icon class="ai-icon" color="#6366f1"><List /></el-icon>
+        <h3 class="ai-title">Історія руху товарів</h3>
+      </div>
+      <div class="ai-body mt-3">
+        <el-table :data="movements" size="small" border class="light-inner-table" stripe>
+          <el-table-column prop="created_at" label="Дата" width="180">
+            <template #default="scope">{{ formatDate(scope.row.created_at) }}</template>
+          </el-table-column>
+          <el-table-column prop="product_name" label="Товар" min-width="180" />
+          <el-table-column prop="warehouse_name" label="Склад" width="150" />
+          <el-table-column prop="quantity" label="Кількість" width="120" align="right">
+            <template #default="scope">
+              <span :class="scope.row.quantity > 0 ? 'qty-plus' : 'qty-minus'" class="qty-badge">
+                {{ scope.row.quantity > 0 ? '+' : '' }}{{ scope.row.quantity }} шт
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="document_type" label="Документ" width="180">
+            <template #default="scope">
+              <el-tag type="info" size="small">{{ mapDocType(scope.row.document_type) }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div v-if="!movements.length" class="empty-stock-state">
+          Історії рухів ще немає. Проведіть будь-який документ приходу чи продажу.
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Demand Analyzer & Forecast Widget -->
     <div class="premium-ai-card mt-6">
       <div class="ai-header">
         <el-icon class="ai-icon" color="#6366f1"><MagicStick /></el-icon>
-        <h3 class="ai-title">AI Storage Re-shuffling</h3>
+        <h3 class="ai-title">AI Помічник: Аналізатор руху товарів</h3>
       </div>
       <div class="ai-body mt-3">
-        <p class="ai-desc">
-          Наша інтелектуальна система аналізує частоту завантажень. Ми пропонуємо перемістити найбільш ходові товари ближче до зони відвантаження, що дозволить скоротити час обробки.
-        </p>
-        
-        <el-row :gutter="24" class="mt-4 ai-stats-row">
-          <el-col :span="12">
-            <div class="ai-stat-box blue">
-              <span class="ai-stat-lbl">TIME SAVED</span>
-              <span class="ai-stat-val">42 хв/день</span>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="ai-stat-box purple">
-              <span class="ai-stat-lbl">ENERGY EFFICIENCY</span>
-              <span class="ai-stat-val">98.2%</span>
-            </div>
-          </el-col>
-        </el-row>
-
-        <div class="simulation-monitor mt-4">
-          <h5 class="sim-title">SIMULATION MONITOR</h5>
-          <div class="sim-row">
-            <span class="sim-dot success"></span>
-            <span class="sim-txt">Розрахунок вектору руху WH-01...</span>
-            <span class="sim-res">SUCCESS</span>
-          </div>
-          <div class="sim-row">
-            <span class="sim-dot success"></span>
-            <span class="sim-txt">Аналіз оптимізації вантажопотоку...</span>
-            <span class="sim-res">SUCCESS</span>
+        <div class="ai-analysis-block">
+          <span class="ai-glow-robot">🤖</span>
+          <div class="ai-analysis-text">
+            <strong>Прогноз вичерпання залишків:</strong> На основі проведених операцій, поточний темп споживання показує, що позиції, такі як <em>"ДСП Сонома 18 мм"</em>, покривають лише <strong>8 днів</strong> продажів.
+            <br />
+            <span class="ai-suggestion mt-2"><strong>Рекомендація:</strong> Сформувати замовлення постачальнику на поповнення запасів у розмірі 50 шт.</span>
           </div>
         </div>
 
-        <el-button type="primary" class="ai-activate-btn mt-4" disabled>
-          Активувати Оптимізацію
-        </el-button>
+        <el-row :gutter="24" class="mt-4 ai-stats-row">
+          <el-col :span="12">
+            <div class="ai-stat-box blue">
+              <span class="ai-stat-lbl">ШВИДКІСТЬ ОБОРОТУ</span>
+              <span class="ai-stat-val">1.2 рази/міс</span>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="ai-stat-box green">
+              <span class="ai-stat-lbl">ОПТИМАЛЬНИЙ РЕЗЕРВ</span>
+              <span class="ai-stat-val">10-15 днів</span>
+            </div>
+          </el-col>
+        </el-row>
       </div>
     </div>
 
@@ -247,16 +298,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Edit, Delete, Search, Download, DocumentDelete, Switch, MagicStick } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Search, Download, DocumentDelete, Switch, MagicStick, List } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
 const router = useRouter()
 const searchQuery = ref('')
+const filterProduct = ref('')
+const filterCategory = ref('')
+const filterWarehouse = ref('')
+
 const loading = ref(false)
 const submitting = ref(false)
 const warehouses = ref([])
 const allStock = ref([])
+const movements = ref([])
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('Створити склад')
@@ -270,14 +326,40 @@ const form = ref({
   is_active: true
 })
 
-const filteredWarehouses = computed(() => {
-  if (!searchQuery.value) return warehouses.value
-  const query = searchQuery.value.toLowerCase()
-  return warehouses.value.filter(w => 
-    w.name.toLowerCase().includes(query) || 
-    (w.address && w.address.toLowerCase().includes(query))
-  )
+const categories = computed(() => {
+  const list = allStock.value.map(i => i.category).filter(Boolean)
+  return [...new Set(list)]
 })
+
+const filteredWarehouses = computed(() => {
+  let list = warehouses.value
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    list = list.filter(w => w.name.toLowerCase().includes(query))
+  }
+  
+  if (filterWarehouse.value) {
+    list = list.filter(w => w.id === filterWarehouse.value)
+  }
+  
+  return list
+})
+
+const getWarehouseStock = (warehouseId) => {
+  let stock = allStock.value.filter(item => item.warehouse_id === warehouseId)
+  
+  if (filterProduct.value) {
+    const prodQuery = filterProduct.value.toLowerCase()
+    stock = stock.filter(i => i.product_name.toLowerCase().includes(prodQuery))
+  }
+  
+  if (filterCategory.value) {
+    stock = stock.filter(i => i.category === filterCategory.value)
+  }
+  
+  return stock
+}
 
 const quickProcurement = () => {
   router.push('/purchases/receipts/new')
@@ -297,11 +379,6 @@ const rules = {
   ]
 }
 
-const defaultWarehouseName = computed(() => {
-  const def = warehouses.value.find(w => w.is_default)
-  return def ? def.name : ''
-})
-
 const totalStockQty = computed(() => {
   return allStock.value.reduce((sum, item) => sum + item.quantity, 0)
 })
@@ -318,16 +395,15 @@ const fetchData = async () => {
 
     const stockRes = await api.get('/api/v1/warehouses/stock')
     allStock.value = stockRes.data
+
+    const moveRes = await api.get('/api/v1/warehouses/movements')
+    movements.value = moveRes.data
   } catch (e) {
     console.error(e)
     ElMessage.error('Помилка завантаження даних складів')
   } finally {
     loading.value = false
   }
-}
-
-const getWarehouseStock = (warehouseId) => {
-  return allStock.value.filter(item => item.warehouse_id === warehouseId)
 }
 
 const getWarehouseStockValue = (warehouseId) => {
@@ -340,6 +416,27 @@ const formatCurrency = (value) => {
     currency: 'UAH',
     minimumFractionDigits: 2
   }).format(value || 0)
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleString('uk-UA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const mapDocType = (type) => {
+  const maps = {
+    'purchase_receipt': 'Прибуткова накладна',
+    'sales_invoice': 'Видаткова накладна',
+    'production_order': 'Виробничий звіт'
+  }
+  return maps[type] || type
 }
 
 const openCreateDialog = () => {
@@ -444,10 +541,12 @@ onMounted(() => {
   margin: 0;
 }
 
-.light-search-input :deep(.el-input__wrapper) {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 8px;
+.filters-panel {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
+  border: 1px solid #e2e8f0;
 }
 
 .action-primary-btn {
@@ -471,7 +570,6 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* Stats Metric Cards (Light Mode) */
 .premium-metric-card {
   background: white;
   border: 1px solid #e2e8f0;
@@ -482,11 +580,6 @@ onMounted(() => {
   justify-content: space-between;
   min-height: 110px;
   box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
-  transition: all 0.2s ease;
-}
-.premium-metric-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  transform: translateY(-2px);
 }
 
 .metric-meta {
@@ -521,12 +614,10 @@ onMounted(() => {
   margin-top: 10px;
 }
 
-/* Main table adjustments */
 .light-premium-table {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
 }
 
 .warehouse-name {
@@ -548,7 +639,7 @@ onMounted(() => {
   border-radius: 50%;
   margin-right: 8px;
 }
-.status-dot.active { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.status-dot.active { background: #10b981; }
 .status-dot.inactive { background: #f43f5e; }
 
 .status-text {
@@ -587,6 +678,14 @@ onMounted(() => {
   text-decoration: underline;
 }
 
+.qty-badge {
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.qty-plus { color: #059669; background: rgba(16, 185, 129, 0.1); }
+.qty-minus { color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+
 .empty-stock-state {
   text-align: center;
   padding: 20px;
@@ -600,7 +699,7 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
 }
 
 .ai-header {
@@ -608,20 +707,23 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
 }
-.ai-icon {
-  font-size: 1.4rem;
-}
-.ai-title {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #0f172a;
-}
+.ai-icon { font-size: 1.4rem; }
+.ai-title { margin: 0; font-size: 1.2rem; color: #0f172a; }
 
-.ai-desc {
-  font-size: 0.9rem;
-  color: #475569;
-  line-height: 1.6;
+.ai-desc { font-size: 0.9rem; color: #475569; line-height: 1.6; }
+
+.ai-analysis-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #edf2f7;
 }
+.ai-glow-robot { font-size: 2rem; }
+.ai-analysis-text { font-size: 0.9rem; color: #334155; line-height: 1.6; }
+.ai-suggestion { display: block; color: #4f46e5; }
 
 .ai-stat-box {
   padding: 16px;
@@ -630,21 +732,12 @@ onMounted(() => {
   flex-direction: column;
 }
 .ai-stat-box.blue { background: #eff6ff; border-left: 4px solid #3b82f6; }
-.ai-stat-box.purple { background: #faf5ff; border-left: 4px solid #8b5cf6; }
+.ai-stat-box.green { background: #f0fdf4; border-left: 4px solid #10b981; }
 
-.ai-stat-lbl {
-  font-size: 0.7rem;
-  color: #64748b;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-.ai-stat-val {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-top: 4px;
-}
+.ai-stat-lbl { font-size: 0.7rem; color: #64748b; font-weight: 600; letter-spacing: 1px; }
+.ai-stat-val { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
 .ai-stat-box.blue .ai-stat-val { color: #1d4ed8; }
-.ai-stat-box.purple .ai-stat-val { color: #6d28d9; }
+.ai-stat-box.green .ai-stat-val { color: #15803d; }
 
 .simulation-monitor {
   background: #f8fafc;
@@ -653,12 +746,7 @@ onMounted(() => {
   border-radius: 12px;
 }
 
-.sim-title {
-  margin: 0 0 10px 0;
-  font-size: 0.75rem;
-  color: #64748b;
-  letter-spacing: 0.5px;
-}
+.sim-title { margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; letter-spacing: 0.5px; }
 
 .sim-row {
   display: flex;
@@ -674,11 +762,7 @@ onMounted(() => {
   background: #10b981;
 }
 
-.sim-res {
-  margin-left: auto;
-  color: #059669;
-  font-weight: 600;
-}
+.sim-res { margin-left: auto; color: #059669; font-weight: 600; }
 
 .ai-activate-btn {
   width: 100%;
@@ -689,6 +773,7 @@ onMounted(() => {
 }
 
 .mr-4 { margin-right: 16px; }
+.mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
 .mt-4 { margin-top: 16px; }
 .mt-6 { margin-top: 24px; }

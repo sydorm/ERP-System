@@ -36,6 +36,7 @@ async def get_warehouses_stock(
         Product.name.label("product_name"),
         Product.cost,
         Product.min_stock,
+        Product.category,
         func.sum(AccumulationRegister.quantity).label("quantity"),
     ).join(
         Product, Product.id == AccumulationRegister.product_id
@@ -48,7 +49,8 @@ async def get_warehouses_stock(
         AccumulationRegister.variant_id,
         Product.name,
         Product.cost,
-        Product.min_stock
+        Product.min_stock,
+        Product.category
     ).all()
 
     variant_skus: dict = {}
@@ -119,7 +121,8 @@ async def get_warehouses_stock(
             "variant_label": label,
             "quantity": float(r.quantity or 0),
             "cost": cost_price,
-            "min_stock": float(r.min_stock or 0)
+            "min_stock": float(r.min_stock or 0),
+            "category": r.category
         })
     return out
 
@@ -153,6 +156,46 @@ async def get_warehouse(
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
     return warehouse
+
+@router.get("/warehouses/movements")
+async def get_inventory_movements(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get inventory movements/history"""
+    from app.models import AccumulationRegister, RegisterType, Product, Warehouse
+    
+    results = db.query(
+        AccumulationRegister.id,
+        AccumulationRegister.created_at,
+        AccumulationRegister.quantity,
+        AccumulationRegister.document_type,
+        AccumulationRegister.document_id,
+        Product.name.label("product_name"),
+        Warehouse.name.label("warehouse_name")
+    ).join(
+        Product, Product.id == AccumulationRegister.product_id
+    ).join(
+        Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
+    ).filter(
+        AccumulationRegister.company_id == current_user.company_id,
+        AccumulationRegister.register_type == RegisterType.STOCK
+    ).order_by(
+        AccumulationRegister.created_at.desc()
+    ).limit(100).all()
+    
+    return [
+        {
+            "id": str(r.id),
+            "created_at": r.created_at.isoformat(),
+            "quantity": float(r.quantity),
+            "document_type": r.document_type,
+            "document_id": str(r.document_id) if r.document_id else None,
+            "product_name": r.product_name,
+            "warehouse_name": r.warehouse_name
+        }
+        for r in results
+    ]
 
 @router.put("/warehouses/{warehouse_id}", response_model=WarehouseResponse)
 async def update_warehouse(
