@@ -319,7 +319,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Edit, Delete, Search, Download, DocumentDelete, Switch, MagicStick, List } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
-import MetricCard from '@/components/MetricCard.vue'
+import MetricCard from '../../components/MetricCard.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
