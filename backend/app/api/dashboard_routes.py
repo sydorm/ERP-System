@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -66,15 +66,15 @@ async def get_dashboard_managers(
 ):
     company_id = current_user.company_id
     
-    # Top Managers (by total amount of 'done' orders)
+    # Top Managers
     top_managers = db.query(
-        User.name,
+        (User.first_name + ' ' + User.last_name).label('name'),
         func.count(Order.id),
         func.coalesce(func.sum(Order.total_amount), 0)
     ).join(User, Order.manager_id == User.id).filter(
         Order.company_id == company_id,
         Order.crm_stage == "done"
-    ).group_by(User.id, User.name).order_by(func.sum(Order.total_amount).desc()).all()
+    ).group_by(User.id, User.first_name, User.last_name).order_by(func.sum(Order.total_amount).desc()).all()
 
     return [
         {"name": m[0], "orders_count": m[1], "total_amount": float(m[2])}
@@ -88,23 +88,16 @@ async def get_dashboard_funnel(
 ):
     company_id = current_user.company_id
     
-    stages = ["new", "payment", "processing", "production", "done"]
-    funnel_data = []
-    for s in stages:
-        res = db.query(
-            func.count(Order.id),
-            func.coalesce(func.sum(Order.total_amount), 0)
-        ).filter(
-            Order.company_id == company_id,
-            Order.crm_stage == s,
-        ).first()
-        funnel_data.append({
-            "stage": s,
-            "count": res[0],
-            "total": float(res[1])
-        })
-        
-    return funnel_data
+    stages = db.query(
+        Order.crm_stage,
+        func.count(Order.id),
+        func.coalesce(func.sum(Order.total_amount), 0)
+    ).filter(Order.company_id == company_id).group_by(Order.crm_stage).all()
+    
+    return [
+        {"stage": s[0], "count": s[1], "total": float(s[2])}
+        for s in stages
+    ]
 
 @router.get("/activity")
 async def get_dashboard_activity(
@@ -120,7 +113,7 @@ async def get_dashboard_activity(
     activity = []
     for log in logs:
         user = db.query(User).filter(User.id == log.user_id).first()
-        user_name = user.name if user else "Система"
+        user_name = f"{user.first_name} {user.last_name}" if user else "Система"
         
         action_map = {
             "CREATE": "Створив",
