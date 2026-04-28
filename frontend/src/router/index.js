@@ -92,7 +92,7 @@ const router = createRouter({
                 {
                     path: '/inventory/warehouses',
                     name: 'warehouses',
-                    component: () => import('@/views/HomeView.vue'), // Placeholder
+                    component: () => import('@/views/Inventory/Warehouses.vue'),
                     meta: { title: 'Склади' }
                 },
                 // Sales routes
