@@ -31,30 +31,45 @@ async def get_product_stock(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Get stock levels for a product across all warehouses.
+    Get stock levels for a product across all warehouses, broken down by variant.
     """
     from app.models import AccumulationRegister, Warehouse
     from sqlalchemy import func
-    
+
     results = db.query(
         Warehouse.name.label("warehouse"),
-        func.sum(AccumulationRegister.quantity).label("quantity")
+        AccumulationRegister.variant_id,
+        func.sum(AccumulationRegister.quantity).label("quantity"),
     ).join(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
         AccumulationRegister.product_id == product_id,
-        AccumulationRegister.register_type == RegisterType.STOCK
-    ).group_by(Warehouse.name).all()
-    
+        AccumulationRegister.register_type == RegisterType.STOCK,
+    ).group_by(
+        Warehouse.name,
+        AccumulationRegister.variant_id,
+    ).all()
+
+    # Enrich with variant SKU when variant_id is present
+    variant_skus: dict = {}
+    variant_ids = [r.variant_id for r in results if r.variant_id]
+    if variant_ids:
+        from app.models.variant import ProductVariant
+        variants = db.query(ProductVariant).filter(ProductVariant.id.in_(variant_ids)).all()
+        variant_skus = {str(v.id): v.sku for v in variants}
+
     return [
         {
-            "warehouse": r.warehouse, 
-            "quantity": float(r.quantity), 
-            "reserved": 0, 
-            "available": float(r.quantity), 
-            "minLevel": 5
-        } for r in results
+            "warehouse": r.warehouse,
+            "variant_id": str(r.variant_id) if r.variant_id else None,
+            "variant_sku": variant_skus.get(str(r.variant_id)) if r.variant_id else None,
+            "quantity": float(r.quantity),
+            "reserved": 0,
+            "available": float(r.quantity),
+            "minLevel": 5,
+        }
+        for r in results
     ]
 
 @router.post("/products/{product_id}/variants/find-or-create")
