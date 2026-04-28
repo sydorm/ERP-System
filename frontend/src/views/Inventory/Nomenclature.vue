@@ -578,10 +578,15 @@ onActivated(() => {
   font-size: 16px !important;
 }
 
+/* Hide view toggle buttons entirely */
+.kimi-view-toggle {
+  display: none !important;
+}
+
 .kimi-primary-btn {
-  background: #18181B !important;
+  background: linear-gradient(135deg, #6C63FF, #00C9A7) !important;
   border: none !important;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
   color: #FFFFFF !important;
@@ -591,10 +596,11 @@ onActivated(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 .kimi-primary-btn:hover {
-  background: #27272A !important;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 /* ===== CONTENT AREA ===== */
@@ -616,15 +622,16 @@ onActivated(() => {
   overflow: hidden;
 }
 
+/* Header styling */
 .kimi-table :deep(th.el-table__cell) {
-  background: #F8FAFC !important;
-  color: #6B7280;
+  background: linear-gradient(135deg, rgba(108,99,255,0.06), rgba(0,201,167,0.06)) !important;
+  color: #374151;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid #F3F4F6 !important;
+  border-bottom: 2px solid rgba(108,99,255,0.15) !important;
   padding: 10px 8px !important;
 }
 
@@ -657,26 +664,38 @@ onActivated(() => {
 
 /* Hover state */
 :deep(.kimi-row:hover td) {
-  background-color: #F0F7FF !important;
+  background: linear-gradient(90deg, rgba(108, 99, 255, 0.04), transparent) !important;
 }
 :deep(.kimi-row:hover td:first-child) {
-  border-left: 2px solid #3B82F6 !important;
+  border-left: 2px solid #6C63FF !important;
 }
 
 /* SKU and Name */
 .kimi-text-indigo-600 {
   font-family: 'JetBrains Mono', monospace !important;
   font-size: 12px !important;
-  color: #9CA3AF !important;
-  background: transparent !important;
-  padding: 0 !important;
+  color: #6B7280 !important;
 }
 
 .kimi-text-sm {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 14px;
-  color: #18181B;
+  color: #111827;
   font-weight: 500;
+}
+
+/* Specific price styling */
+.kimi-table :deep(.kimi-row) span.text-rose-600 {
+  color: #EF4444 !important;
+  font-weight: 600 !important;
+}
+.kimi-table :deep(.kimi-row) span.text-amber-600 {
+  color: #EF4444 !important;
+  font-weight: 600 !important;
+}
+.kimi-table :deep(.kimi-row) span.text-emerald-600 {
+  color: #16A34A !important;
+  font-weight: 600 !important;
 }
 
 /* Category Pill badges mapping */
@@ -714,9 +733,11 @@ onActivated(() => {
 }
 
 :deep(.limit-select .el-input__wrapper) {
-  border: 1.5px solid #E5E7EB !important;
+  border: 1px solid #E5E7EB !important;
   border-radius: 8px !important;
-  padding: 6px 12px !important;
+  padding: 4px 10px !important;
+  height: 30px !important;
+  width: auto !important;
 }
 :deep(.limit-select .el-input__inner) {
   font-family: 'Space Grotesk', sans-serif !important;
@@ -727,15 +748,16 @@ onActivated(() => {
   width: 32px;
   height: 32px;
   border-radius: 8px !important;
-  border: 1.5px solid #E5E7EB !important;
+  border: 1px solid #E5E7EB !important;
   background: #FFFFFF !important;
   color: #18181B !important;
   margin: 0 4px;
+  line-height: 32px;
 }
 :deep(.el-pager li.is-active) {
-  background: #18181B !important;
+  background: linear-gradient(135deg, #6C63FF, #00C9A7) !important;
   color: #FFFFFF !important;
-  border-color: #18181B !important;
+  border: none !important;
 }
 :deep(.el-pager li:hover:not(.is-active)) {
   background: #F3F4F6 !important;
