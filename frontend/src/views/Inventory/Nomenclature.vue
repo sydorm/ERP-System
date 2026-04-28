@@ -4,49 +4,10 @@
 
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">
-        <!-- Всього товарів -->
-        <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Всього товарів</p>
-            <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
-            <el-icon><Box /></el-icon>
-          </div>
-        </div>
-
-        <!-- В наявності -->
-        <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">В наявності</p>
-            <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
-            <el-icon><Coordinate /></el-icon>
-          </div>
-        </div>
-
-        <!-- Закінчуються -->
-        <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Закінчуються</p>
-            <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
-            <el-icon><Warning /></el-icon>
-          </div>
-        </div>
-
-        <!-- Немає -->
-        <div class="kimi-stat-card kimi-stat-rose">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Немає</p>
-            <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
-            <el-icon><CircleClose /></el-icon>
-          </div>
-        </div>
+        <MetricCard label="ВСЬОГО ТОВАРІВ" :value="stats.total_products" accentColor="#3B82F6" />
+        <MetricCard label="В НАЯВНОСТІ" :value="stats.in_stock" accentColor="#22C55E" />
+        <MetricCard label="ЗАКІНЧУЮТЬСЯ" :value="stats.low_stock" accentColor="#F59E0B" />
+        <MetricCard label="НЕМАЄ" :value="stats.out_of_stock" accentColor="#EF4444" />
       </div>
 
       <!-- ===== FILTERS TOOLBAR ===== -->
@@ -285,6 +246,7 @@ import {
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
+import MetricCard from '@/components/MetricCard.vue'
 
 const dictStore = useDictionaryStore()
 

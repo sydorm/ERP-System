@@ -52,60 +52,16 @@
     <!-- Stats Dashboard -->
     <el-row :gutter="20" class="stats-row mt-4">
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Складів</span>
-            <span class="metric-trend">↑ +5%</span>
-          </div>
-          <span class="metric-value">{{ warehouses.length }}</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 25 Q 25 5, 50 20 T 100 10" fill="none" stroke="url(#violetMint)" stroke-width="2" />
-            </svg>
-          </div>
-        </div>
+        <MetricCard label="СКЛАДІВ" :value="warehouses.length" accentColor="#3B82F6" />
       </el-col>
-      
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Загальний запас</span>
-            <span class="metric-trend">↑ +12%</span>
-          </div>
-          <span class="metric-value">{{ totalStockQty }} шт</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 15 Q 20 25, 40 5 T 80 20 T 100 5" fill="none" stroke="url(#violetMint)" stroke-width="2" />
-            </svg>
-          </div>
-        </div>
+        <MetricCard label="ЗАГАЛЬНИЙ ЗАПАС" :value="totalStockQty + ' шт'" accentColor="#22C55E" />
       </el-col>
-
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Оцінка капіталу</span>
-            <span class="metric-trend">↑ +2.4%</span>
-          </div>
-          <span class="metric-value">{{ formatCurrency(totalStockValue) }}</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 20 L 30 10 L 60 18 L 100 5" fill="none" stroke="url(#violetMint)" stroke-width="2" />
-            </svg>
-          </div>
-        </div>
+        <MetricCard label="ОЦІНКА КАПІТАЛУ" :value="formatCurrency(totalStockValue)" accentColor="#F59E0B" />
       </el-col>
-
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card card-efficiency">
-          <div class="metric-header">
-            <span class="metric-title">Ефективність</span>
-          </div>
-          <div class="efficiency-content mt-2">
-            <el-progress :percentage="85" :stroke-width="8" class="gradient-progress" :show-text="false" />
-            <span class="metric-value-sub mt-1">85% Optimal</span>
-          </div>
-        </div>
+        <MetricCard label="ЕФЕКТИВНІСТЬ" value="85%" accentColor="#EF4444" />
       </el-col>
     </el-row>
 
@@ -332,6 +288,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Edit, Delete, Search, Download, DocumentDelete, Switch, MagicStick, List } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
+import MetricCard from '@/components/MetricCard.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
