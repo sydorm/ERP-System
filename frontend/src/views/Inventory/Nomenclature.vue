@@ -192,133 +192,136 @@
     </div>
 
     <!-- ===== TABLE SECTION ===== -->
-    <div class="table-section table-dense-card" v-loading="loading">
-      <el-table
-        :data="products"
-        style="width: 100%"
-        height="100%"
-        :row-class-name="() => 'table-row-dense'"
-        :header-row-class-name="() => 'table-header-dense'"
-        @row-click="handleRowClick"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="45" align="center" />
+    <div class="table-section" v-loading="loading">
 
-        <!-- Photo -->
-        <el-table-column width="64" class-name="table-cell-dense">
-          <template #default="{ row }">
-            <div @click.stop>
-              <el-image 
-                v-if="row.image_url"
-                :src="row.image_url" 
-                class="product-thumb-compact" 
-                fit="cover"
-              />
-              <div v-else class="product-thumb-compact">
-                <el-icon v-if="row.category === 'MATERIAL'"><Grid /></el-icon>
-                <el-icon v-else><Box /></el-icon>
-              </div>
+      <!-- Grid Table -->
+      <div class="nom-table">
+
+        <!-- HEADER ROW -->
+        <div class="nom-row nom-header">
+          <div class="nom-cell nom-cell--check">
+            <input type="checkbox" @change="e => selectedRows = e.target.checked ? [...products] : []" />
+          </div>
+          <div class="nom-cell nom-cell--photo"></div>
+          <div class="nom-cell nom-cell--name">Назва / Артикул</div>
+          <div class="nom-cell nom-cell--category">Категорія</div>
+          <div class="nom-cell nom-cell--stock">Залишок</div>
+          <div class="nom-cell nom-cell--status">Статус</div>
+          <div class="nom-cell nom-cell--price">Ціна</div>
+          <div class="nom-cell nom-cell--actions"></div>
+        </div>
+
+        <!-- BODY ROWS -->
+        <div
+          v-for="row in products"
+          :key="row.id"
+          class="nom-row nom-body-row"
+          @click="handleRowClick(row)"
+        >
+          <!-- Checkbox -->
+          <div class="nom-cell nom-cell--check" @click.stop>
+            <input
+              type="checkbox"
+              :checked="selectedRows.some(r => r.id === row.id)"
+              @change="e => { if (e.target.checked) selectedRows.push(row); else selectedRows = selectedRows.filter(r => r.id !== row.id) }"
+            />
+          </div>
+
+          <!-- Photo -->
+          <div class="nom-cell nom-cell--photo" @click.stop>
+            <el-image
+              v-if="row.image_url"
+              :src="row.image_url"
+              class="nom-thumb"
+              fit="cover"
+            />
+            <div v-else class="nom-thumb nom-thumb--icon">
+              <el-icon v-if="row.category === 'MATERIAL'"><Grid /></el-icon>
+              <el-icon v-else><Box /></el-icon>
             </div>
-          </template>
-        </el-table-column>
+          </div>
 
-        <!-- Name, SKU & Unit Block -->
-        <el-table-column min-width="280" class-name="table-cell-dense">
-          <template #header>Назва / Артикул</template>
-          <template #default="{ row }">
-            <div class="product-item-block">
-              <div class="product-info-compact">
-                <div class="product-title-compact">
-                  {{ row.name }}
-                </div>
-                <div class="product-sku-compact">
-                  {{ row.sku }} <span class="sku-divider">·</span> {{ getUomName(row.unit_of_measure) }}
-                </div>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
+          <!-- Name / SKU -->
+          <div class="nom-cell nom-cell--name">
+            <div class="nom-name">{{ row.name }}</div>
+            <div class="nom-sku">{{ row.sku }}<span class="nom-dot"> · </span>{{ getUomName(row.unit_of_measure) }}</div>
+          </div>
 
-        <!-- Category -->
-        <el-table-column width="160" class-name="table-cell-dense">
-          <template #header>Категорія</template>
-          <template #default="{ row }">
-            <span class="category-badge-premium" :title="getCategoryName(row.category)">
-              {{ getCategoryName(row.category) }}
+          <!-- Category -->
+          <div class="nom-cell nom-cell--category">
+            <span class="nom-cat-badge" :title="getCategoryName(row.category)">
+              {{ getCategoryName(row.category) || '—' }}
             </span>
-          </template>
-        </el-table-column>
+          </div>
 
-        <!-- Stock -->
-        <el-table-column width="160" align="left" class-name="table-cell-dense">
-          <template #header>Залишок</template>
-          <template #default="{ row }">
-            <div class="stock-progress-wrapper">
-              <div class="stock-number-dense">
-                {{ row.stock_balance }} {{ getUomName(row.unit_of_measure) }}
-              </div>
-              <div class="stock-progress-bar">
-                <div 
-                  class="stock-progress-fill" 
-                  :class="getStockBadgeClass(row.stock_balance, row.min_stock)"
-                  :style="{ width: row.stock_balance <= 0 ? '8%' : Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
-                ></div>
-              </div>
+          <!-- Stock -->
+          <div class="nom-cell nom-cell--stock">
+            <div class="nom-stock-qty">{{ row.stock_balance }} {{ getUomName(row.unit_of_measure) }}</div>
+            <div class="nom-prog-bar">
+              <div
+                class="nom-prog-fill"
+                :class="getStockBadgeClass(row.stock_balance, row.min_stock)"
+                :style="{ width: row.stock_balance <= 0 ? '6%' : Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
+              ></div>
             </div>
-          </template>
-        </el-table-column>
+          </div>
 
-        <!-- Status Badge -->
-        <el-table-column width="140" align="center" class-name="table-cell-dense">
-          <template #header>Статус</template>
-          <template #default="{ row }">
-            <span class="stock-badge-premium" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
+          <!-- Status -->
+          <div class="nom-cell nom-cell--status">
+            <span class="nom-status-badge" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
               {{ getStockBadgeText(row.stock_balance, row.min_stock) }}
             </span>
-          </template>
-        </el-table-column>
+          </div>
 
-        <!-- Price -->
-        <el-table-column width="120" align="right" class-name="table-cell-dense">
-          <template #header>Ціна</template>
-          <template #default="{ row }">
-            <span class="price-cell-dense" :class="{ 'empty': !row.price }">
+          <!-- Price -->
+          <div class="nom-cell nom-cell--price">
+            <span class="nom-price" :class="{ 'nom-price--empty': !row.price }">
               {{ formatCurrency(row.price, row.currency) }}
             </span>
-          </template>
-        </el-table-column>
+          </div>
 
-        <!-- Actions (Dropdown menu) -->
-        <el-table-column width="120" align="right" class-name="table-cell-dense">
-          <template #header>Дії</template>
-          <template #default="{ row }">
-            <div class="actions-cell-premium" @click.stop>
-              <button class="action-btn-premium" @click="handleEdit(row)" title="Редагувати">
-                <el-icon><Edit /></el-icon>
+          <!-- Actions -->
+          <div class="nom-cell nom-cell--actions" @click.stop>
+            <button class="nom-action-btn" @click.stop="handleEdit(row)" title="Редагувати">
+              <el-icon><Edit /></el-icon>
+            </button>
+            <el-dropdown trigger="click" @click.stop>
+              <button class="nom-action-btn" title="Більше">
+                <el-icon><More /></el-icon>
               </button>
-              
-              <el-dropdown trigger="click" @click.stop>
-                <button class="action-btn-premium" title="Більше">
-                  <el-icon><More /></el-icon>
-                </button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="handleRowClick(row)">
-                      <el-icon><View /></el-icon> Перегляд
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="handleViewStock(row)">
-                      <el-icon><Box /></el-icon> Залишки на складах
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="handleViewMovement(row)">
-                      <el-icon><Coordinate /></el-icon> Рух товару
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleRowClick(row)">
+                    <el-icon><View /></el-icon>&nbsp;Перегляд
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleEdit(row)">
+                    <el-icon><Edit /></el-icon>&nbsp;Редагувати
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="ElMessage.info('Дублювання: ' + row.name)">
+                    <el-icon><Fold /></el-icon>&nbsp;Дублювати
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleViewStock(row)">
+                    <el-icon><Box /></el-icon>&nbsp;Змінити залишок
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleViewMovement(row)">
+                    <el-icon><Coordinate /></el-icon>&nbsp;Рух товару
+                  </el-dropdown-item>
+                  <el-dropdown-item divided class="nom-delete-item" @click="ElMessage.warning('Видалення: ' + row.name)">
+                    <el-icon><CircleClose /></el-icon>&nbsp;Видалити
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="!loading && products.length === 0" class="nom-empty">
+          <div class="nom-empty-icon">📦</div>
+          <div class="nom-empty-text">Номенклатуру не знайдено</div>
+          <div class="nom-empty-sub">Спробуйте змінити фільтри або створіть нову позицію</div>
+        </div>
+      </div>
 
       <!-- Pagination -->
       <div class="pagination-dense">
@@ -1029,122 +1032,269 @@ onActivated(() => {
   margin-top: 20px;
   overflow: hidden;
 }
-:deep(.table-header-dense th) {
-  background: #f8fafc !important;
-  color: var(--text-secondary) !important;
-  font-weight: 700 !important;
-  font-size: 11px !important;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 16px !important;
-  height: 52px;
-  border-bottom: 1px solid #eef2f7;
-}
-:deep(.table-row-dense) {
-  height: 68px;
-  cursor: pointer;
-  transition: all 0.16s ease;
-}
-:deep(.table-row-dense:hover td) {
-  background: linear-gradient(90deg, rgba(99, 91, 255, 0.03), rgba(255, 255, 255, 0)) !important;
-}
-:deep(.table-cell-dense) {
-  padding: 8px 16px !important;
-  border-bottom: 1px solid #eef2f7 !important;
+
+/* ===== CSS GRID TABLE (nom-table) ===== */
+/*
+  The SAME grid-template-columns is applied to both .nom-header and .nom-body-row
+  so header and body are always perfectly aligned.
+*/
+.nom-table {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.product-item-block {
-  display: flex;
+.nom-row {
+  display: grid;
+  grid-template-columns:
+    44px    /* checkbox */
+    64px    /* photo */
+    minmax(240px, 2.2fr) /* name */
+    180px   /* category */
+    170px   /* stock */
+    150px   /* status */
+    120px   /* price */
+    96px;   /* actions */
   align-items: center;
-  gap: 12px;
+  min-width: 900px;
 }
-.product-thumb-compact {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid var(--border);
+
+/* HEADER */
+.nom-header {
   background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-}
-.product-info-compact {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.product-title-compact {
-  font-weight: 600;
-  font-size: 15px;
-  color: #0f172a;
-}
-.product-sku-compact {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.sku-divider {
-  margin: 0 4px;
+  border-bottom: 1px solid #eef2f7;
+  height: 48px;
 }
 
-.category-badge-premium {
-  display: inline-block;
-  max-width: 160px;
+.nom-header .nom-cell {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  padding: 0 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* BODY ROWS */
+.nom-body-row {
+  height: 72px;
+  border-bottom: 1px solid #eef2f7;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.nom-body-row:last-child {
+  border-bottom: none;
+}
+.nom-body-row:hover {
+  background: #fafbff;
+}
+
+/* CELLS — shared */
+.nom-cell {
+  padding: 0 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Checkbox cell --- */
+.nom-cell--check {
+  justify-content: center;
+  padding: 0;
+}
+.nom-cell--check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #635bff;
+}
+
+/* --- Photo cell --- */
+.nom-cell--photo {
+  justify-content: center;
+  padding: 0;
+}
+.nom-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.nom-thumb--icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+/* --- Name cell --- */
+.nom-cell--name {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  padding-right: 12px;
+}
+.nom-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+.nom-sku {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+.nom-dot {
+  margin: 0 2px;
+}
+
+/* --- Category cell --- */
+.nom-cell--category {
+  padding-right: 12px;
+}
+.nom-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   background: #f8fafc;
   color: #475569;
   border: 1px solid #e2e8f0;
-  padding: 6px 10px;
   border-radius: 999px;
+  padding: 5px 10px;
   font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
 }
 
-.stock-badge-premium {
-  padding: 6px 12px;
+/* --- Stock cell --- */
+.nom-cell--stock {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+}
+.nom-stock-qty {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+.nom-prog-bar {
+  width: 100px;
+  height: 5px;
+  background: #eef2f7;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.nom-prog-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.nom-prog-fill.success { background: #22c55e; }
+.nom-prog-fill.warning { background: #f59e0b; }
+.nom-prog-fill.danger  { background: #f43f5e; }
+
+/* --- Status cell --- */
+.nom-cell--status {
+  justify-content: flex-start;
+}
+.nom-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
+  line-height: 1;
 }
-.stock-badge-premium.danger { background: var(--danger-bg); color: var(--danger-text); }
-.stock-badge-premium.warning { background: var(--warning-bg); color: var(--warning-text); }
-.stock-badge-premium.success { background: var(--success-bg); color: var(--success-text); }
+.nom-status-badge.success { background: #dcfce7; color: #16a34a; }
+.nom-status-badge.warning { background: #fef3c7; color: #d97706; }
+.nom-status-badge.danger  { background: #fee2e2; color: #ef4444; }
 
-.price-cell-dense {
-  font-weight: 600;
-  font-size: 14px;
-  color: #0f172a;
-}
-.price-cell-dense.empty {
-  color: var(--text-muted);
-}
-
-.actions-cell-premium {
-  display: flex;
-  gap: 6px;
+/* --- Price cell --- */
+.nom-cell--price {
   justify-content: flex-end;
+  padding-right: 16px;
 }
-.action-btn-premium {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+.nom-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+.nom-price--empty {
+  color: #94a3b8;
+}
+
+/* --- Actions cell --- */
+.nom-cell--actions {
+  justify-content: flex-end;
+  gap: 4px;
+  padding-right: 12px;
+  padding-left: 0;
+}
+.nom-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
-.action-btn-premium:hover {
+.nom-action-btn:hover {
   background: #eef2ff;
   border-color: #c7d2fe;
   color: #4f46e5;
-  transform: translateY(-1px);
+}
+
+/* Delete item in dropdown */
+.nom-delete-item {
+  color: #ef4444 !important;
+}
+
+/* Empty state */
+.nom-empty {
+  padding: 60px 24px;
+  text-align: center;
+}
+.nom-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.nom-empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.nom-empty-sub {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 
 .pagination-dense {
@@ -1173,11 +1323,12 @@ onActivated(() => {
 .dense-mode .table-section {
   margin-top: 12px;
 }
-.dense-mode :deep(.table-row-dense) {
+.dense-mode .nom-body-row {
   height: 56px;
 }
-.dense-mode :deep(.table-cell-dense) {
-  padding: 8px 14px !important;
+.dense-mode .nom-thumb {
+  width: 32px;
+  height: 32px;
 }
 
 /* Custom Scrollbar */
