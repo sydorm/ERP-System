@@ -271,40 +271,42 @@
         <div class="crm-section crm-summary" style="background: #fff; border-radius: 12px; padding: 16px 18px; border: 1px solid #e2e8f0;">
           <div class="crm-section-title" style="margin-bottom:16px; font-size: 14px; font-weight: 700; color: #1e293b;">ПІДСУМОК ЗАМОВЛЕННЯ</div>
 
-          <div class="inline-edit-amounts" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-            <div class="inline-amount-box" style="display: flex; flex-direction: column;">
-              <input
-                v-model.number="form.total_amount"
-                type="number"
-                style="font-size: 28px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; transition: border-color 0.2s ease;"
-                :class="{ 'field-error': vErrors.amount }"
-                placeholder="0"
-                @input="calcPrepayment"
-                @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
-                @blur="$event.target.style.borderBottomColor = 'transparent'"
-              />
-              <span class="inline-amount-label" style="font-size: 12px; color: #6B7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;">сума грн</span>
-            </div>
-            <div class="inline-amount-box" style="display: flex; flex-direction: column;">
-              <input
-                v-model.number="form.prepayment_amount"
-                type="number"
-                style="font-size: 28px; font-weight: 700; color: #3D3AA8; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; transition: border-color 0.2s ease;"
-                placeholder="0"
-                @input="onPrepaymentInput"
-                @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
-                @blur="$event.target.style.borderBottomColor = 'transparent'"
-              />
-              <span class="inline-amount-label" style="font-size: 12px; color: #6B7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
-                передоплата
-                <span class="prepay-pct-hint" v-if="form.total_amount > 0" style="color: #3D3AA8; font-weight: 600;">
-                  ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <tr>
+              <td style="width: 50%; padding-right: 8px; vertical-align: top;">
+                <input
+                  v-model.number="form.total_amount"
+                  type="number"
+                  style="font-size: 28px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; margin: 0;"
+                  :class="{ 'field-error': vErrors.amount }"
+                  placeholder="0"
+                  @input="calcPrepayment"
+                  @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
+                  @blur="$event.target.style.borderBottomColor = 'transparent'"
+                /><br>
+                <span style="font-size: 12px; color: #6B7280;">сума грн</span>
+              </td>
+              <td style="width: 50%; padding-left: 8px; vertical-align: top;">
+                <input
+                  v-model.number="form.prepayment_amount"
+                  type="number"
+                  style="font-size: 28px; font-weight: 700; color: #3D3AA8; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; margin: 0;"
+                  placeholder="0"
+                  @input="onPrepaymentInput"
+                  @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
+                  @blur="$event.target.style.borderBottomColor = 'transparent'"
+                /><br>
+                <span style="font-size: 12px; color: #6B7280;">
+                  передоплата
+                  <span v-if="form.total_amount > 0" style="color: #3D3AA8; font-weight: 600;">
+                    ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
+                  </span>
                 </span>
-              </span>
-            </div>
-          </div>
+              </td>
+            </tr>
+          </table>
 
-          <div class="prepay-pills-new" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+          <div style="margin-bottom: 20px;">
             <button
               v-for="pct in [20, 30, 50, 100]"
               :key="pct"
@@ -317,6 +319,9 @@
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
+                marginRight: '8px',
+                marginBottom: '8px',
+                display: 'inline-block',
                 transition: 'all 0.2s'
               }"
               @click="setPrepayPct(pct)"
@@ -331,6 +336,7 @@
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
+                display: 'inline-block',
                 transition: 'all 0.2s'
               }"
               @click="setPrepayPct(0)"
