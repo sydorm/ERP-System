@@ -249,7 +249,7 @@ const calculateTimeFromBom = async () => {
     // We can reuse the calculate-cost endpoint since it calculates stages_cost and duration
     // Actually, calculate-cost returns stages_cost, not raw duration. 
     // We can just fetch the active specification and sum up durations.
-    const res = await api.get(`/api/v1/specifications/product/${props.modelValue.id}`)
+    const res = await api.get(`/api/v1/products/${props.modelValue.id}/specifications`)
     const specs = res.data || []
     const defaultSpec = specs.find(s => s.is_default && s.is_active) || specs.find(s => s.is_active)
     
