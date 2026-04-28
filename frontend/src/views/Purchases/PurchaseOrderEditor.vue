@@ -440,10 +440,14 @@ const handleSendToSupplier = () => {
 const handleExportExcel = () => ElMessage.info('Експорт в Excel (в розробці)')
 
 const createReceipt = () => {
-  const num = `ПН-${form.order_number || Date.now()}`
-  orderDocs.value.push({ id: Date.now(), type: 'receipt', number: num, date: new Date().toISOString().split('T')[0], status: 'draft' })
-  activeTab.value = 'documents'
-  ElMessage.success(`Накладна ${num} створена`)
+  if (!isEditMode.value) {
+    ElMessage.warning('Спочатку збережіть замовлення')
+    return
+  }
+  router.push({
+    path: '/purchases/receipts/new',
+    query: { base_order_id: route.params.id }
+  })
 }
 
 const createSupplierInvoice = () => {
