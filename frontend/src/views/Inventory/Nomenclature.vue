@@ -553,16 +553,7 @@ const runAiAssistant = () => {
 }
 
 const handleRowClick = (row) => {
-  selectedProduct.value = row
-  drawerVisible.value = true
-  warehouseStock.value = [
-    { name: 'Головний склад', balance: Math.floor(row.stock_balance * 0.7) },
-    { name: 'Склад №2', balance: Math.floor(row.stock_balance * 0.3) }
-  ]
-  productMovements.value = [
-    { date: '2026-04-28', type: 'Прихід', qty: 10, note: 'Закупівля №104' },
-    { date: '2026-04-25', type: 'Списання', qty: 2, note: 'Виробництво' }
-  ]
+  router.push(`/inventory/nomenclature/${row.id}`)
 }
 
 // Data State
@@ -698,24 +689,11 @@ const formModel = ref({
 })
 
 const handleEdit = (row) => {
-  isEditMode.value = true
-  formModel.value = { ...row }
-  formDrawerVisible.value = true
+  router.push(`/inventory/nomenclature/${row.id}`)
 }
 
 const goToCreate = () => {
-  isEditMode.value = false
-  formModel.value = {
-    id: null,
-    name: '',
-    sku: '',
-    category: 'PRODUCT',
-    unit_of_measure: 'pcs',
-    price: 0,
-    stock_balance: 0,
-    min_stock: 0
-  }
-  formDrawerVisible.value = true
+  router.push('/inventory/nomenclature/new')
 }
 
 const saveProduct = async () => {
