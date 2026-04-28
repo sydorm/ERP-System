@@ -1,89 +1,72 @@
 <template>
   <div class="orders-page">
-    <!-- Scrollbar styling applied seamlessly via style tag -->
-    <component :is="'style'">
-      ::-webkit-scrollbar { width: 4px; height: 4px; }
-      ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #6C63FF, #00C9A7); border-radius: 2px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-    </component>
-
     <div class="fixed-top-area">
+
       <!-- ===== STAT CARDS ===== -->
-      <div class="premium-stats-grid">
+      <div class="kimi-stats-row">
         <!-- Всього товарів -->
-        <div class="premium-stat-card">
+        <div class="kimi-stat-card kimi-stat-indigo">
           <div class="kimi-stat-info">
-            <p class="premium-stat-label">Всього товарів</p>
-            <h3 class="premium-stat-value">{{ stats.total_products }}</h3>
-            <span class="premium-stat-sublabel">із 10 позицій</span>
+            <p class="kimi-stat-label">Всього товарів</p>
+            <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
           </div>
-          <div class="premium-stat-icon">
-            <svg viewBox="0 0 24 24" class="linear-svg">
-              <path d="M20 7v10M4 7v10M22 5H2v4h20V5zM22 15H2v4h20v-4z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+            <el-icon><Box /></el-icon>
           </div>
         </div>
 
         <!-- В наявності -->
-        <div class="premium-stat-card">
+        <div class="kimi-stat-card kimi-stat-emerald">
           <div class="kimi-stat-info">
-            <p class="premium-stat-label">В наявності</p>
-            <h3 class="premium-stat-value">{{ stats.in_stock }}</h3>
-            <span class="premium-stat-sublabel">готових до відвантаження</span>
+            <p class="kimi-stat-label">В наявності</p>
+            <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
           </div>
-          <div class="premium-stat-icon">
-            <svg viewBox="0 0 24 24" class="linear-svg">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+            <el-icon><Coordinate /></el-icon>
           </div>
         </div>
 
         <!-- Закінчуються -->
-        <div class="premium-stat-card">
+        <div class="kimi-stat-card kimi-stat-amber">
           <div class="kimi-stat-info">
-            <p class="premium-stat-label">Закінчуються</p>
-            <h3 class="premium-stat-value">{{ stats.low_stock }}</h3>
-            <span class="premium-stat-sublabel">потребують поповнення</span>
+            <p class="kimi-stat-label">Закінчуються</p>
+            <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
           </div>
-          <div class="premium-stat-icon">
-            <svg viewBox="0 0 24 24" class="linear-svg">
-              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+            <el-icon><Warning /></el-icon>
           </div>
         </div>
 
         <!-- Немає -->
-        <div class="premium-stat-card card-out-of-stock">
+        <div class="kimi-stat-card kimi-stat-rose">
           <div class="kimi-stat-info">
-            <p class="premium-stat-label">Немає</p>
-            <h3 class="premium-stat-value text-red">{{ stats.out_of_stock }}</h3>
-            <span class="premium-stat-sublabel">критичний дефіцит</span>
+            <p class="kimi-stat-label">Немає</p>
+            <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
           </div>
-          <div class="premium-stat-icon">
-            <svg viewBox="0 0 24 24" class="linear-svg-red">
-              <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
+            <el-icon><CircleClose /></el-icon>
           </div>
         </div>
       </div>
 
       <!-- ===== FILTERS TOOLBAR ===== -->
-      <div class="premium-filter-bar mt-3">
-        <div class="premium-filter-left">
+      <div class="kimi-filter-bar">
+        <div class="kimi-filter-left">
           <el-input
             v-model="searchQuery"
             placeholder="Пошук товарів..."
             :prefix-icon="Search"
             clearable
             @input="handleSearch"
-            class="premium-styled-input"
+            class="kimi-search-input"
           />
           <el-select
             v-model="filterCategory"
             placeholder="Всі категорії"
             clearable
+            style="width:200px"
             @change="handleCategorySelect"
-            class="premium-styled-select"
+            class="kimi-status-select"
           >
             <el-option
               v-for="cat in categoryOptions"
@@ -96,25 +79,24 @@
             v-model="filterStock"
             placeholder="Наявність"
             clearable
+            style="width:160px"
             @change="handleFilterChange"
-            class="premium-styled-select"
+            class="kimi-status-select"
           >
             <el-option label="Всі товари" value="" />
             <el-option label="В наявності" value="in_stock" />
             <el-option label="Закінчуються" value="low_stock" />
             <el-option label="Немає" value="out_of_stock" />
           </el-select>
-          
-          <el-radio-group v-model="viewMode" size="small" class="premium-view-toggle ml-2">
+          <el-radio-group v-model="viewMode" size="small" class="kimi-view-toggle">
             <el-radio-button value="list"><el-icon><Fold /></el-icon></el-radio-button>
             <el-radio-button value="grid"><el-icon><Grid /></el-icon></el-radio-button>
           </el-radio-group>
         </div>
-        
-        <div class="premium-filter-right">
-          <el-button type="primary" class="action-primary-btn" :icon="Plus" @click="goToCreate">
-            Створити товар
-          </el-button>
+        <div class="kimi-filter-right">
+          <button class="kimi-primary-btn" @click="goToCreate">
+            <el-icon><Plus /></el-icon> Створити товар
+          </button>
         </div>
       </div>
     </div>
@@ -122,42 +104,46 @@
     <!-- ===== CONTENT AREA ===== -->
     <div class="table-container">
       <!-- Grid View -->
-      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading" class="grid-view-wrapper">
-        <div class="grid-products-layout">
-          <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6" style="padding: 10px;">
-            <el-card class="premium-product-card" shadow="hover">
-              <div class="product-image-container">
-                <el-image :src="product.image_url" fit="cover" class="product-image">
-                  <template #error>
-                    <div class="avatar-sku-circle-grid">
-                      {{ product.sku ? product.sku.substring(0,2).toUpperCase() : 'P' }}
-                    </div>
-                  </template>
-                </el-image>
-                <div class="product-actions-overlay">
-                  <el-button circle :icon="Edit" size="small" @click.stop="handleEdit(product)" />
-                </div>
+      <el-row v-if="viewMode === 'grid'" :gutter="20" v-loading="loading" style="padding: 16px; overflow-y: auto; flex: 1; margin: 0; display: block; height: 100%;">
+        <div style="display: flex; flex-wrap: wrap; margin: -10px;">
+        <el-col v-for="product in products" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6" style="padding: 10px;">
+          <el-card class="product-card" shadow="hover">
+            <div class="product-image-container">
+              <el-image :src="product.image_url" fit="cover" class="product-image">
+                <template #error>
+                  <div class="image-placeholder"><el-icon :size="48"><Picture /></el-icon></div>
+                </template>
+              </el-image>
+              <div class="product-actions-overlay">
+                <el-button circle :icon="Edit" size="small" @click.stop="handleEdit(product)" />
               </div>
-              
-              <div class="product-details">
-                <div class="category-tag">{{ getCategoryName(product.category) }}</div>
-                <h4 class="product-title" @click="handleEdit(product)">{{ product.name }}</h4>
-                <div class="price-row">
-                  <span class="price-value">{{ formatCurrency(product.price, product.currency) }}</span>
-                  <span class="price-unit">/ {{ getUomName(product.unit_of_measure) }}</span>
-                </div>
-                <div class="stock-row">
-                  <span class="stock-label">Запас:</span>
-                  <span class="stock-value dm-mono" :class="product.stock_balance <= 0 ? 'stock-red' : 'stock-green'">
-                    {{ product.stock_balance }} {{ getUomName(product.unit_of_measure) }}
-                  </span>
-                </div>
+            </div>
+            <div class="product-details">
+              <div class="category-tag">{{ getCategoryName(product.category) }}</div>
+              <h4 class="product-title" @click="handleEdit(product)">{{ product.name }}</h4>
+              <div class="price-row">
+                <span class="price-value">{{ formatCurrency(product.price, product.currency) }}</span>
+                <span class="price-unit">/ {{ getUomName(product.unit_of_measure) }}</span>
               </div>
-            </el-card>
-          </el-col>
-          <el-col :span="24" v-if="!loading && products.length === 0">
-            <el-empty description="Товарів не знайдено" />
-          </el-col>
+              <div class="stock-row">
+                <span class="stock-label">Запас:</span>
+                <span class="stock-value" :class="getStockClass(product.stock_balance)">
+                  {{ product.stock_balance }} {{ getUomName(product.unit_of_measure) }}
+                </span>
+              </div>
+              <el-progress
+                :percentage="getStockPercentage(product.stock_balance)"
+                :status="getStockProgressStatus(product.stock_balance)"
+                :show-text="false"
+                style="margin-top: 6px;"
+              />
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="24" v-if="!loading && products.length === 0">
+          <el-empty description="Товарів не знайдено" />
+        </el-col>
+        
         </div>
         
         <!-- Grid pagination -->
@@ -187,77 +173,82 @@
           :data="products"
           height="100%"
           style="width: 100%"
-          class="light-premium-table"
+          class="kimi-table"
           @row-click="handleEdit"
+          row-class-name="kimi-row"
+          header-row-class-name="kimi-header-row"
         >
-          <!-- Photo / Initial Circle -->
-          <el-table-column width="90" align="center" label="Фото">
+          <!-- Photo -->
+          <el-table-column width="80" align="center">
+            <template #header>ФОТО</template>
             <template #default="scope">
-              <div @click.stop class="photo-avatar-cell">
+              <div @click.stop>
                 <el-image 
-                  v-if="scope.row.image_url"
                   :src="scope.row.image_url" 
                   class="list-image" 
                   fit="cover"
-                  :preview-src-list="[scope.row.image_url]"
+                  :preview-src-list="scope.row.image_url ? [scope.row.image_url] : []"
                   :preview-teleported="true"
-                />
-                <div v-else class="avatar-sku-circle">
-                  {{ scope.row.sku ? scope.row.sku.charAt(0).toUpperCase() : 'P' }}
-                </div>
+                  :hide-on-click-modal="true"
+                >
+                  <template #error>
+                    <div class="list-image-placeholder"><el-icon><Picture /></el-icon></div>
+                  </template>
+                </el-image>
               </div>
             </template>
           </el-table-column>
 
-          <!-- Name & SKU Combined -->
-          <el-table-column min-width="250" label="Назва та Артикул">
+          <!-- SKU -->
+          <el-table-column width="130">
+            <template #header>АРТИКУЛ</template>
             <template #default="scope">
-              <div class="name-sku-col">
-                <span class="product-name-row">{{ scope.row.name }}</span>
-                <span class="product-sku-row dm-mono">{{ scope.row.sku || 'БЕЗ АРТИКУЛУ' }}</span>
-              </div>
+              <span class="kimi-text-indigo-600 kimi-font-medium kimi-text-sm">{{ scope.row.sku }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- Name -->
+          <el-table-column min-width="200">
+            <template #header>НАЗВА</template>
+            <template #default="scope">
+              <span class="kimi-text-sm kimi-font-medium">{{ scope.row.name }}</span>
             </template>
           </el-table-column>
 
           <!-- Category -->
-          <el-table-column width="200" label="Категорія">
+          <el-table-column width="200">
+            <template #header>КАТЕГОРІЯ</template>
             <template #default="scope">
-              <el-tag size="small" effect="plain" type="info" v-if="scope.row.category">{{ getCategoryName(scope.row.category) }}</el-tag>
-              <span v-else>—</span>
+              <span class="kimi-text-slate-400 kimi-text-sm">{{ getCategoryName(scope.row.category) }}</span>
             </template>
           </el-table-column>
 
           <!-- Stock -->
-          <el-table-column width="150" align="right" label="Запас">
+          <el-table-column width="140" align="right">
+            <template #header>ЗАПАС</template>
             <template #default="scope">
-              <span :class="scope.row.stock_balance <= 0 ? 'stock-red' : 'stock-green'" class="dm-mono font-600">
+              <span :class="['kimi-text-sm kimi-font-medium', getStockColorClass(scope.row.stock_balance)]">
                 {{ scope.row.stock_balance }} {{ getUomName(scope.row.unit_of_measure) }}
               </span>
             </template>
           </el-table-column>
 
           <!-- Price -->
-          <el-table-column width="150" align="right" label="Ціна">
+          <el-table-column width="120" align="right">
+            <template #header>ЦІНА</template>
             <template #default="scope">
-              <span class="dm-mono font-600">{{ formatCurrency(scope.row.price, scope.row.currency) }}</span>
+              <span class="kimi-text-sm kimi-font-medium">{{ formatCurrency(scope.row.price, scope.row.currency) }}</span>
             </template>
           </el-table-column>
 
           <!-- Actions -->
-          <el-table-column width="120" align="center" label="Дії">
+          <el-table-column width="80" align="center">
+            <template #header>ДІЇ</template>
             <template #default="scope">
-              <div class="actions-row-wrapper" @click.stop>
-                <el-button type="primary" size="small" class="quick-preview-btn" @click="handleQuickPreview(scope.row)">
-                  Швидкий перегляд 👁
-                </el-button>
-                <el-dropdown trigger="click">
-                  <span class="ellipsis-action">⋯</span>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item :icon="Edit" @click="handleEdit(scope.row)">Редагувати</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+              <div class="kimi-actions-col">
+                <button class="kimi-ghost-btn" @click.stop="handleEdit(scope.row)">
+                  <el-icon><Edit /></el-icon>
+                </button>
               </div>
             </template>
           </el-table-column>
@@ -281,46 +272,25 @@
         </div>
       </div>
     </div>
-
-    <!-- AI Floating Action Assistant Button -->
-    <div class="ai-fab-wrapper">
-      <div class="ai-fab-button" @click="aiDrawerVisible = true">
-        <span class="ai-fab-pulse"></span>
-        <span class="ai-fab-text">✦ AI Асистент</span>
-      </div>
-    </div>
-
-    <!-- AI Side Drawer Panel -->
-    <el-drawer v-model="aiDrawerVisible" title="✦ AI Складський Асистент" size="360px" append-to-body>
-      <div class="ai-drawer-content">
-        <p class="ai-prompt-helper">Чим я можу допомогти вам сьогодні?</p>
-        
-        <div class="ai-quick-actions">
-          <el-button class="ai-shortcut-btn" @click="askAI('zero')">"Знайди товари з нульовим залишком"</el-button>
-          <el-button class="ai-shortcut-btn" @click="askAI('buy')">"Що потрібно закупити цього тижня?"</el-button>
-          <el-button class="ai-shortcut-btn" @click="askAI('compare')">"Порівняй категорії за сумою"</el-button>
-        </div>
-        
-        <div v-if="aiResponse" class="ai-response-box mt-4">
-          <strong>🤖 AI Відповідь:</strong>
-          <p class="mt-2">{{ aiResponse }}</p>
-        </div>
-      </div>
-    </el-drawer>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Search, Edit, Picture, Grid, Fold } from '@element-plus/icons-vue'
+import {
+  Plus, Search, Edit, Picture,
+  Box, Coordinate, Warning, CircleClose, Grid, Fold
+} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
 
 const dictStore = useDictionaryStore()
+
 const router = useRouter()
 
+// State
 const loading = ref(false)
 const products = ref([])
 const stats = ref({ total_products: 0, in_stock: 0, low_stock: 0, out_of_stock: 0 })
@@ -328,45 +298,19 @@ const total = ref(0)
 const skip = ref(0)
 const limit = ref(20)
 const currentPage = ref(1)
-
 const searchQuery = ref('')
 const filterCategory = ref('')
 const filterStock = ref('')
-const viewMode = ref('list')
+const viewMode = ref('list') // default to list
 
-// AI Drawer State
-const aiDrawerVisible = ref(false)
-const aiResponse = ref('')
+const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
+const uomOptions = computed(() => dictStore.getCategory('UOM'))
 
-const categoryOptions = computed(() => dictStore.getCategory('product_category'))
-const getCategoryName = (code) => dictStore.getName('product_category', code)
-const getUomName = (code) => dictStore.getShortName('uom', code)
-
-const formatCurrency = (val, currency = 'UAH') => {
-  return new Intl.NumberFormat('uk-UA', {
-    style: 'currency', currency: currency, minimumFractionDigits: 2
-  }).format(val || 0)
-}
-
-const fetchData = async () => {
-  loading.value = true
+const fetchDictionaries = async () => {
   try {
-    const res = await api.get('/api/v1/products', {
-      params: {
-        skip: (currentPage.value - 1) * limit.value,
-        limit: limit.value,
-        search: searchQuery.value || undefined,
-        category: filterCategory.value || undefined,
-        stock_status: filterStock.value || undefined
-      }
-    })
-    products.value = res.data.items
-    total.value = res.data.total
-  } catch (e) {
-    console.error(e)
-    ElMessage.error('Не вдалося завантажити номенклатуру')
-  } finally {
-    loading.value = false
+    await dictStore.fetchMultiple(['PRODUCT_CATEGORY', 'UOM'])
+  } catch (error) {
+    console.error('Failed to load dictionaries', error)
   }
 }
 
@@ -374,72 +318,136 @@ const fetchStatistics = async () => {
   try {
     const res = await api.get('/api/v1/products/statistics')
     stats.value = res.data
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+    console.error('Failed to fetch statistics', error)
   }
 }
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchData()
+const fetchProducts = async () => {
+  loading.value = true
+  try {
+    const params = {
+      skip: skip.value,
+      limit: limit.value,
+      search: searchQuery.value || undefined,
+      category: filterCategory.value || undefined
+    }
+    const response = await api.get('/api/v1/products', { params })
+    let results = response.data
+    
+    // Front-end filter for stock status since backend doesn't support it directly yet
+    if (filterStock.value) {
+      if (filterStock.value === 'in_stock') {
+        results = results.filter(p => p.stock_balance > 0)
+      } else if (filterStock.value === 'low_stock') {
+        results = results.filter(p => p.stock_balance > 0 && p.stock_balance <= 5)
+      } else if (filterStock.value === 'out_of_stock') {
+        results = results.filter(p => p.stock_balance <= 0)
+      }
+    }
+    products.value = results
+
+    if (!searchQuery.value && !filterCategory.value && !filterStock.value) {
+      total.value = stats.value.total_products
+    } else {
+      total.value = products.value.length < limit.value ? skip.value + products.value.length : skip.value + limit.value + 1
+    }
+  } catch (error) {
+    ElMessage.error('Помилка завантаження товарів')
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleCategorySelect = () => {
+let searchTimer = null
+const handleSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    skip.value = 0
+    currentPage.value = 1
+    fetchProducts()
+  }, 400)
+}
+
+const handleCategorySelect = (code) => {
+  filterCategory.value = code
+  skip.value = 0
   currentPage.value = 1
-  fetchData()
+  fetchProducts()
 }
 
 const handleFilterChange = () => {
+  skip.value = 0
   currentPage.value = 1
-  fetchData()
+  fetchProducts()
+}
+
+const handleSizeChange = (size) => {
+  limit.value = size
+  skip.value = 0
+  currentPage.value = 1
+  fetchProducts()
 }
 
 const handlePageChange = (page) => {
   currentPage.value = page
-  fetchData()
+  skip.value = (page - 1) * limit.value
+  fetchProducts()
 }
 
-const handleSizeChange = (val) => {
-  limit.value = val
-  currentPage.value = 1
-  fetchData()
+const handleEdit = (row) => {
+  router.push(`/inventory/nomenclature/${row.id}`)
 }
 
-const goToCreate = () => router.push('/inventory/nomenclature/new')
-const handleEdit = (row) => router.push(`/inventory/nomenclature/${row.id}`)
-
-const handleQuickPreview = (row) => {
-  ElMessage.info(`Швидкий перегляд: ${row.name}`)
+const goToCreate = () => {
+  router.push('/inventory/nomenclature/new')
 }
 
-const askAI = (type) => {
-  if (type === 'zero') {
-    const zeroStock = products.value.filter(p => p.stock_balance <= 0)
-    if (zeroStock.length) {
-      aiResponse.value = `Виявлено ${zeroStock.length} позицій з нульовим залишком. Наприклад: ${zeroStock.map(p => p.name).join(', ')}.`
-    } else {
-      aiResponse.value = `Всі товари наразі в наявності на складі.`
-    }
-  } else if (type === 'buy') {
-    const lowStock = products.value.filter(p => p.stock_balance > 0 && p.stock_balance <= 5)
-    if (lowStock.length) {
-      aiResponse.value = `Рекомендовано до закупівлі ${lowStock.length} товарів з низьким залишком: ${lowStock.map(p => p.name).join(', ')}.`
-    } else {
-      aiResponse.value = `Залишки оптимальні. Критичних поповнень не виявлено.`
-    }
-  } else {
-    aiResponse.value = `Категорії за сумою: категорія "DSP" лідирує по залишках (84%).`
-  }
+// Helpers
+const getCategoryName = (code) => {
+  return dictStore.getName('PRODUCT_CATEGORY', code)
+}
+
+const getUomName = (code) => {
+  return dictStore.getShortName('UOM', code)
+}
+
+const getStockClass = (qty) => {
+  if (qty <= 0) return 'stock-none'
+  if (qty <= 5) return 'stock-low'
+  return 'stock-ok'
+}
+
+const getStockColorClass = (qty) => {
+  if (qty <= 0) return 'text-rose-600'
+  if (qty <= 5) return 'text-amber-600'
+  return 'text-emerald-600'
+}
+
+const getStockProgressStatus = (qty) => {
+  if (qty <= 0) return 'exception'
+  if (qty <= 5) return 'warning'
+  return 'success'
+}
+
+const getStockPercentage = (qty) => {
+  return Math.min(100, Math.round((qty / 100) * 100))
+}
+
+const formatCurrency = (amount, currency = 'UAH') => {
+  if (amount == null) return '—'
+  const c = currency || 'UAH'
+  const sym = c === 'UAH' ? 'грн' : c === 'USD' ? '$' : c
+  return `${parseFloat(amount).toFixed(0)} ${sym}`
 }
 
 onMounted(() => {
-  dictStore.fetchMultiple(['product_category', 'uom']).then(() => {
-    fetchStatistics().then(() => fetchData())
-  })
+  fetchDictionaries()
+  fetchStatistics().then(() => fetchProducts())
 })
 
 onActivated(() => {
-  fetchData()
+  fetchStatistics().then(() => fetchProducts())
 })
 </script>
 
@@ -466,14 +474,16 @@ onActivated(() => {
   flex-direction: column;
 }
 
-.premium-stats-grid {
+/* ===== STAT CARDS ===== */
+.kimi-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+  margin-bottom: 20px;
 }
 
-.premium-stat-card {
-  background: #FFFFFF;
+.kimi-stat-card {
+  background: #FFFFFF !important;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -481,76 +491,72 @@ onActivated(() => {
   align-items: center;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease;
+  border: none !important;
 }
-.premium-stat-card:hover {
+.kimi-stat-card:hover {
   transform: translateY(-2px);
 }
 
-.premium-stat-label {
+.kimi-stat-label {
   font-size: 0.8rem;
   font-family: 'Syne', sans-serif;
   font-weight: 700;
   color: #64748B;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.premium-stat-value {
+.kimi-stat-value {
   font-size: 1.8rem;
   font-family: 'DM Mono', monospace;
-  color: #0F172A;
+  color: #0F172A !important;
   margin: 5px 0;
 }
-.premium-stat-value.text-red {
-  color: #EF4444;
+
+/* Red text for out of stock */
+.kimi-stat-rose .kimi-stat-value {
+  color: #EF4444 !important;
 }
 
-.premium-stat-sublabel {
-  font-size: 0.75rem;
-  color: #94A3B8;
-}
-
-.premium-stat-icon {
-  width: 40px; height: 40px;
+.kimi-stat-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent !important;
+  color: #6C63FF !important;
+  font-size: 24px;
 }
-.linear-svg {
-  width: 28px; height: 28px;
-  stroke: #6C63FF;
-  fill: none;
-  stroke-width: 1.5;
-}
-.linear-svg-red {
-  width: 28px; height: 28px;
-  stroke: #EF4444;
-  fill: none;
-  stroke-width: 1.5;
+.kimi-stat-rose .kimi-stat-icon-wrapper {
+  color: #EF4444 !important;
 }
 
-/* Filters */
-.premium-filter-bar {
+/* ===== FILTERS TOOLBAR ===== */
+.kimi-filter-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 16px;
 }
-.premium-filter-left {
+.kimi-filter-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.premium-styled-input, .premium-styled-select {
-  height: 38px;
-}
-:deep(.premium-styled-input .el-input__wrapper),
-:deep(.premium-styled-select .el-input__wrapper) {
-  border-radius: 10px;
+:deep(.el-input__wrapper) {
+  border-radius: 10px !important;
+  height: 38px !important;
   border: 1px solid #E2E8F0 !important;
   box-shadow: none !important;
 }
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #6C63FF !important;
+}
 
-.action-primary-btn {
+.kimi-primary-btn {
   background: linear-gradient(135deg, #6C63FF, #00C9A7) !important;
   border: none !important;
   border-radius: 10px;
@@ -558,99 +564,94 @@ onActivated(() => {
   font-family: 'Syne', sans-serif;
   color: white !important;
   box-shadow: 0 4px 12px rgba(108, 99, 255, 0.25);
+  padding: 0 20px;
+  height: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s ease;
+}
+.kimi-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.35);
 }
 
-/* Views */
+/* ===== CONTENT AREA ===== */
 .table-container {
-  flex: 1; background: #FFFFFF; border-radius: 16px 16px 0 0;
-  display: flex; flex-direction: column; margin: 20px 20px 0;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06); overflow: hidden;
+  flex: 1;
+  background: #FFFFFF;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: none !important;
 }
 
-.grid-view-wrapper {
-  padding: 16px; overflow-y: auto; flex: 1; margin: 0; display: block; height: 100%;
-}
-.grid-products-layout {
-  display: flex; flex-wrap: wrap; margin: -10px;
-}
-
-.premium-product-card {
-  border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; transition: all 0.2s;
-}
-.premium-product-card:hover {
-  transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+.table-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.avatar-sku-circle-grid {
-  width: 100%; height: 100%; background: linear-gradient(135deg, #6C63FF, #00C9A7);
-  color: white; font-size: 32px; font-family: 'Syne', sans-serif; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
+/* el-table visual styles */
+.kimi-table :deep(th.el-table__cell) {
+  background: #F8FAFC !important;
+  color: #64748B;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #F1F5F9 !important;
 }
 
-.avatar-sku-circle {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: linear-gradient(135deg, #6C63FF, #00C9A7);
-  color: white; font-size: 16px; font-family: 'Syne', sans-serif; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
+.kimi-table :deep(td.el-table__cell) {
+  border-bottom: 1px solid #F1F5F9 !important;
+  font-family: 'Inter', sans-serif;
 }
 
-.stock-red { color: #EF4444; }
-.stock-green { color: #10B981; }
-.dm-mono { font-family: 'DM Mono', monospace; }
-.font-600 { font-weight: 600; }
-
-.name-sku-col {
-  display: flex; flex-direction: column;
-}
-.product-name-row { font-weight: 600; color: #1E293B; }
-.product-sku-row { font-size: 11.5px; color: #64748B; margin-top: 2px; }
-
-.actions-row-wrapper {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
+:deep(.kimi-row:hover) {
+  background: linear-gradient(90deg, rgba(108, 99, 255, 0.03), transparent) !important;
 }
 
-.quick-preview-btn {
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.list-image {
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
-}
-:deep(.el-table__row:hover) .quick-preview-btn {
-  opacity: 1;
+  border: 1px solid #E2E8F0;
 }
 
-.ellipsis-action {
-  font-size: 20px; font-weight: bold; color: #94A3B8; cursor: pointer; transition: color 0.2s;
+.kimi-ghost-btn {
+  background: #F1F5F9;
+  border: none;
+  cursor: pointer;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  transition: all 0.2s;
 }
-.ellipsis-action:hover { color: #6C63FF; }
-
-/* Floating AI Button */
-.ai-fab-wrapper {
-  position: fixed; bottom: 35px; right: 35px; z-index: 9999;
-}
-.ai-fab-button {
-  background: linear-gradient(135deg, #6C63FF, #00C9A7);
-  color: white; font-family: 'Syne', sans-serif; font-weight: 700;
-  padding: 12px 24px; border-radius: 30px; cursor: pointer;
-  box-shadow: 0 6px 20px rgba(108, 99, 255, 0.35);
-  display: flex; align-items: center; gap: 8px;
-  position: relative; transition: transform 0.2s ease;
-}
-.ai-fab-button:hover { transform: scale(1.05); }
-
-.ai-quick-actions {
-  display: flex; flex-direction: column; gap: 12px; margin-top: 20px;
-}
-.ai-shortcut-btn {
-  text-align: left; justify-content: flex-start; border-radius: 10px;
-  height: auto; padding: 12px 16px; white-space: normal; line-height: 1.4;
+.kimi-ghost-btn:hover {
+  background: #6C63FF;
+  color: white;
 }
 
-.ai-response-box {
-  background: #F8FAFC; padding: 16px; border-radius: 12px; border: 1px solid #E2E8F0;
-}
-
-/* Pagination footer overrides */
 .pagination-footer {
-  background-color: #FFFFFF;
+  background: #FFFFFF;
+  padding: 16px 20px;
+  border-top: 1px solid #F1F5F9;
+}
+
+/* Helper tags */
+:deep(.el-tag--info.is-plain) {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+  border-radius: 6px;
 }
 </style>
