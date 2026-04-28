@@ -29,10 +29,14 @@
           <el-menu-item index="/inventory/stock" v-if="userStore.hasPermission('inventory.stock.view')">Залишки</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/crm">
-          <el-icon><Tickets /></el-icon>
-          <template #title>CRM</template>
-        </el-menu-item>
+        <el-sub-menu index="crm">
+          <template #title>
+            <el-icon><Tickets /></el-icon>
+            <span>CRM</span>
+          </template>
+          <el-menu-item index="/crm">Замовлення</el-menu-item>
+          <el-menu-item index="/crm/analytics">Аналітика</el-menu-item>
+        </el-sub-menu>
 
         <el-sub-menu index="sales" v-if="userStore.hasPermission('sales.view')">
           <template #title>

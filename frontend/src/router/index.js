@@ -285,6 +285,12 @@ const router = createRouter({
                     component: () => import('@/views/CRM/CrmOrderEditor.vue'),
                     meta: { title: 'CRM — Замовлення' }
                 },
+                {
+                    path: '/crm/analytics',
+                    name: 'crm-analytics',
+                    component: () => import('@/views/CRM/CrmAnalytics.vue'),
+                    meta: { title: 'Аналітика CRM' }
+                },
                 // Settings
                 {
                     path: '/settings/users',

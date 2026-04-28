@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract, and_
 from typing import List, Optional
+from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
 
@@ -208,3 +209,42 @@ def create_transaction(
     db.commit()
     db.refresh(db_transaction)
     return db_transaction
+
+
+@router.delete("/transactions/{transaction_id}")
+def delete_transaction(
+    transaction_id: UUID,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    transaction = db.query(FinancialTransaction).filter(FinancialTransaction.id == transaction_id).first()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    order_id = transaction.order_id
+    
+    db.delete(transaction)
+    db.commit()
+    
+    # Recalculate order paid amount if it was an income transaction
+    if order_id:
+        from app.models.order import Order
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if order:
+            total_paid = db.query(func.sum(FinancialTransaction.amount)).filter(
+                FinancialTransaction.order_id == order_id,
+                FinancialTransaction.transaction_type == TransactionType.IN
+            ).scalar() or 0
+            
+            order.paid_amount = total_paid
+            
+            if order.paid_amount >= order.total_amount:
+                order.payment_status = "paid"
+            elif order.paid_amount > 0:
+                order.payment_status = "partially_paid"
+            else:
+                order.payment_status = "unpaid"
+            
+            db.commit()
+            
+    return {"ok": True}

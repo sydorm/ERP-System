@@ -13,6 +13,7 @@
       <div class="crm-header-right">
         <div class="crm-view-switch">
           <button class="view-btn active">Kanban</button>
+          <button class="view-btn" @click="router.push('/crm/analytics')">Аналітика</button>
         </div>
 
         <!-- SEARCH -->
@@ -80,6 +81,18 @@
           </div>
         </el-popover>
 
+        <el-dropdown trigger="click" @command="handleExport">
+          <button class="crm-export-btn">
+            <el-icon><Download /></el-icon> Експорт
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="excel">Excel (.csv)</el-dropdown-item>
+              <el-dropdown-item command="pdf" disabled>PDF (скоро)</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+
         <button class="crm-new-btn-indigo" @click="openNewOrder">
           <el-icon><Plus /></el-icon> Нове замовлення
         </button>
@@ -132,11 +145,21 @@
             v-for="order in filteredOrdersInStage(stage.key)"
             :key="order.id"
             class="order-card"
+            :class="{ 'is-selected': selectedOrderIds.includes(order.id) }"
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
             @click="openEditor(order)"
           >
+            <!-- CHECKBOX FOR BULK ACTIONS -->
+            <div class="card-selection-overlay" @click.stop="toggleSelection(order.id)">
+              <el-checkbox 
+                :model-value="selectedOrderIds.includes(order.id)" 
+                @change="toggleSelection(order.id)" 
+                @click.stop
+              />
+            </div>
+
             <div class="card-header">
               <span class="card-order-no">#{{ order.order_number }}</span>
               <!-- Priority Dot (Top Right) -->
@@ -187,6 +210,53 @@
       </div>
     </div>
 
+    <!-- BULK ACTIONS BAR -->
+    <transition name="el-zoom-in-bottom">
+      <div v-if="selectedOrderIds.length > 1" class="selection-bar">
+        <div class="selection-info">
+          <el-icon @click="clearSelection" class="close-selection"><Close /></el-icon>
+          <span>Вибрано: <strong>{{ selectedOrderIds.length }}</strong> замовлень</span>
+        </div>
+        <div class="selection-actions">
+          <el-dropdown @command="handleBulkManager" trigger="click">
+            <el-button type="primary" plain size="default">
+              Змінити менеджера <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item 
+                  v-for="u in users" 
+                  :key="u.id" 
+                  :command="u.id"
+                >
+                  {{ u.name }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <el-dropdown @command="handleBulkStage" trigger="click">
+            <el-button type="primary" plain size="default">
+              Змінити статус <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item 
+                  v-for="s in stages" 
+                  :key="s.key" 
+                  :command="s.key"
+                >
+                  {{ s.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <el-button type="danger" plain @click="handleBulkCancel">Скасувати</el-button>
+        </div>
+      </div>
+    </transition>
+
     <!-- Modals -->
     <el-dialog v-model="rescheduleVisible" title="Перенести передзвон" width="380px">
       <div v-if="selectedTask" class="reschedule-body">
@@ -225,8 +295,8 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 
 const router = useRouter()
@@ -256,6 +326,8 @@ const stageSkip = ref({
 })
 const stageHasMore = ref({})
 
+const selectedOrderIds = ref([])
+
 const isAnyFilterActive = computed(() => {
   return activeFiltersCount.value > 0 || sortOption.value !== 'created_desc' || searchQuery.value !== ''
 })
@@ -281,6 +353,28 @@ const callTask = ref(null)
 const overdueTasks = computed(() => {
   return todayTasks.value.filter(t => isTaskOverdue(t))
 })
+
+const handleExport = async (type) => {
+  if (type === 'pdf') return
+  
+  try {
+    const response = await api.get('/api/v1/orders/export', {
+      responseType: 'blob'
+    })
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const date = new Date().toISOString().slice(0, 10)
+    link.setAttribute('download', `orders_export_${date}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (e) {
+    ElMessage.error('Помилка при експорті')
+    console.error(e)
+  }
+}
 
 const stages = [
   { key: 'new', label: 'Нові', color: '#3D3AA8' },
@@ -336,6 +430,44 @@ const fetchAll = async () => {
 const loadMore = async (stage) => {
   stageSkip.value[stage] += 20
   await fetchStage(stage, false)
+}
+
+// Bulk Actions Logic
+const toggleSelection = (id) => {
+  const index = selectedOrderIds.value.indexOf(id)
+  if (index === -1) {
+    selectedOrderIds.value.push(id)
+  } else {
+    selectedOrderIds.value.splice(index, 1)
+  }
+}
+
+const clearSelection = () => {
+  selectedOrderIds.value = []
+}
+
+const handleBulkUpdate = async (data) => {
+  try {
+    const idsString = selectedOrderIds.value.join('&ids=')
+    await api.patch(`/api/v1/orders/bulk-update?ids=${idsString}`, data)
+    ElMessage.success(`Оновлено ${selectedOrderIds.value.length} замовлень`)
+    clearSelection()
+    await fetchAll()
+  } catch (e) {
+    ElMessage.error('Помилка групового оновлення')
+  }
+}
+
+const handleBulkManager = (managerId) => handleBulkUpdate({ manager_id: managerId })
+const handleBulkStage = (stage) => handleBulkUpdate({ crm_stage: stage })
+const handleBulkCancel = () => {
+  ElMessageBox.confirm('Ви впевнені, що хочете скасувати вибрані замовлення?', 'Увага', {
+    confirmButtonText: 'Так, скасувати',
+    cancelButtonText: 'Ні',
+    type: 'warning'
+  }).then(() => {
+    handleBulkUpdate({ status: 'cancelled' })
+  })
 }
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
@@ -522,6 +654,15 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   background: #fff; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; 
   font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569; position: relative;
 }
+.crm-export-btn {
+  background: #fff; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; 
+  font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569;
+  transition: all 0.2s;
+}
+.crm-export-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
 .crm-reset-all-btn {
   background: transparent; border: none; color: #ef4444; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0 8px; transition: color 0.2s;
 }
@@ -595,9 +736,23 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   transition: all 0.15s;
   position: relative;
 }
-.order-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #e5e7eb; }
+.order-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #e5e7eb; }
+.order-card.is-selected { border: 2px solid #3D3AA8; background: #f0f0ff; }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.card-selection-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.order-card:hover .card-selection-overlay,
+.order-card.is-selected .card-selection-overlay {
+  opacity: 1;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-left: 24px; }
 .card-order-no { font-size: 10px; color: #94a3b8; font-weight: 600; }
 
 /* Priority Dot Indicator */
@@ -661,5 +816,49 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .load-more-btn:hover {
   background: rgba(61, 58, 168, 0.1);
   color: #2a287a;
+}
+
+/* SELECTION BAR */
+.selection-bar {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3D3AA8;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  box-shadow: 0 10px 30px rgba(61, 58, 168, 0.4);
+  z-index: 2000;
+}
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+.close-selection {
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+.close-selection:hover {
+  transform: scale(1.2);
+}
+.selection-actions {
+  display: flex;
+  gap: 12px;
+}
+.selection-actions .el-button--primary.is-plain {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+.selection-actions .el-button--primary.is-plain:hover {
+  background: white;
+  color: #3D3AA8;
 }
 </style>

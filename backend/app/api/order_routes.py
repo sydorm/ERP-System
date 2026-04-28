@@ -4,6 +4,10 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from fastapi.responses import StreamingResponse
+import csv
+from io import StringIO
+from datetime import datetime
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_active_user
@@ -260,6 +264,48 @@ async def update_order(
     )
 
     return order
+
+
+@router.patch("/orders/bulk-update")
+async def bulk_update_orders(
+    ids: List[UUID] = Query(...),
+    data: dict = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update multiple orders at once (e.g., change manager or stage)."""
+    if not ids or not data:
+        raise HTTPException(status_code=400, detail="Ids and data are required")
+
+    orders = db.query(Order).filter(
+        Order.id.in_(ids),
+        Order.company_id == current_user.company_id
+    ).all()
+
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found")
+
+    # Allowed fields for bulk update
+    allowed_fields = {"manager_id", "crm_stage", "status"}
+    update_payload = {k: v for k, v in data.items() if k in allowed_fields}
+
+    if not update_payload:
+        raise HTTPException(status_code=400, detail="No valid fields provided for update")
+
+    for order in orders:
+        for field, value in update_payload.items():
+            setattr(order, field, value)
+            
+        # Special logic for stage transitions
+        if "crm_stage" in update_payload:
+            stage = update_payload["crm_stage"]
+            if stage == "done":
+                order.status = "completed"
+            elif stage == "production":
+                order.status = "confirmed"
+
+    db.commit()
+    return {"status": "success", "updated_count": len(orders)}
 
 
 @router.patch("/orders/{id}/stage", response_model=OrderResponse)
@@ -528,3 +574,49 @@ async def delete_order(
     db.delete(order)
     db.commit()
     return None
+
+
+@router.get("/export")
+async def export_orders(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Export orders to CSV format for Excel."""
+    query = db.query(Order).filter(Order.company_id == current_user.company_id)
+    orders = query.order_by(Order.order_date.desc()).all()
+    populate_product_summary(orders, db)
+    
+    # Headers: Номер | Клієнт | Виріб | Сума | Передоплата | Статус | Менеджер | Дедлайн
+    headers = ["Номер", "Клієнт", "Виріб", "Сума", "Передоплата", "Статус", "Менеджер", "Дедлайн"]
+    
+    output = StringIO()
+    # Use semicolon as delimiter and utf-8-sig for Excel compatibility in Ukraine/Europe
+    writer = csv.writer(output, delimiter=';')
+    writer.writerow(headers)
+    
+    for o in orders:
+        client_name = o.counterparty.name if o.counterparty else "—"
+        manager_name = o.manager.name if o.manager else "—"
+        deadline = o.deadline_date.strftime("%d.%m.%Y") if o.deadline_date else "—"
+        
+        writer.writerow([
+            o.order_number,
+            client_name,
+            o.product_summary,
+            str(o.total_amount),
+            str(o.paid_amount or 0),
+            o.crm_stage,
+            manager_name,
+            deadline
+        ])
+    
+    filename = f"orders_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+    # Return as streaming response with BOM for Excel
+    content = output.getvalue().encode("utf-8-sig")
+    
+    return StreamingResponse(
+        iter([content]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

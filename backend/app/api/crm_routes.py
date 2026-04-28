@@ -25,6 +25,83 @@ def _next_working_day(dt: datetime) -> datetime:
     return next_dt.replace(hour=10, minute=0, second=0, microsecond=0)
 
 
+@router.get("/analytics")
+async def get_crm_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get CRM Analytics: funnel, conversion, top managers, and avg time per stage."""
+    company_id = current_user.company_id
+    
+    # 1. Funnel
+    stages = ["new", "processing", "confirmed", "payment", "production", "done"]
+    funnel_data = []
+    for s in stages:
+        res = db.query(
+            func.count(Order.id),
+            func.coalesce(func.sum(Order.total_amount), 0)
+        ).filter(
+            Order.company_id == company_id,
+            Order.crm_stage == s,
+        ).first()
+        funnel_data.append({
+            "stage": s,
+            "count": res[0],
+            "total": float(res[1])
+        })
+
+    # 2. Conversion
+    conversion_data = []
+    for i in range(len(funnel_data) - 1):
+        curr = funnel_data[i]
+        nxt = funnel_data[i+1]
+        percent = 0
+        # Simple ratio: next stage count / current stage count
+        if curr["count"] > 0:
+            percent = round((nxt["count"] / curr["count"]) * 100)
+        conversion_data.append({
+            "from": curr["stage"],
+            "to": nxt["stage"],
+            "percent": min(percent, 100)
+        })
+
+    # 3. Top Managers (by total amount of 'done' orders)
+    from sqlalchemy import func
+    top_managers = db.query(
+        User.name,
+        func.count(Order.id),
+        func.coalesce(func.sum(Order.total_amount), 0)
+    ).join(User, Order.manager_id == User.id).filter(
+        Order.company_id == company_id,
+        Order.crm_stage == "done"
+    ).group_by(User.id, User.name).order_by(func.sum(Order.total_amount).desc()).limit(5).all()
+
+    managers_list = [
+        {"name": m[0], "count": m[1], "total": float(m[2])}
+        for m in top_managers
+    ]
+
+    # 4. Avg Stage Days
+    avg_days_data = []
+    for s in stages:
+        res = db.query(
+            func.avg(func.extract('epoch', func.now() - Order.order_date))
+        ).filter(
+            Order.company_id == company_id,
+            Order.crm_stage == s
+        ).scalar()
+        
+        days = round((res or 0) / 86400, 1)
+        avg_days_data.append({"stage": s, "days": days})
+
+    return {
+        "funnel": funnel_data,
+        "conversion": conversion_data,
+        "top_managers": managers_list,
+        "avg_stage_days": avg_days_data
+    }
+
+
 # ─── Contact log ──────────────────────────────────────────────────────────────
 
 @router.post("/orders/{order_id}/contacts", response_model=CrmContactResponse,
