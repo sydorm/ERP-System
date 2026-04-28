@@ -1,29 +1,9 @@
 <template>
   <div class="orders-page" :class="{ 'dense-mode': isCompactMode }">
     <div class="top-section">
-      <div class="page-header-premium">
-        <div class="breadcrumbs-premium">Головна / Номенклатура</div>
-        <div class="header-flex-premium">
-          <div>
-            <h1 class="page-title-premium">Номенклатура</h1>
-            <p class="page-subtitle-premium">Товари, матеріали, комплектуючі та готові вироби</p>
-          </div>
-          <div class="header-actions-premium">
-            <button class="secondary-premium-btn" @click="ElMessage.info('Імпорт Excel/CSV')">
-              📥 Імпорт
-            </button>
-            <button class="secondary-premium-btn" @click="ElMessage.info('Експорт Excel/CSV')">
-              📤 Експорт
-            </button>
-            <button class="primary-dense-button" @click="goToCreate">
-              <el-icon><Plus /></el-icon> Створити товар
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- ===== KPI STAT CARDS ===== -->
-      <div class="stats-row-dense kimi-mb-4">
+      <div class="stats-row-dense">
         <!-- Всього позицій -->
         <div class="stats-card-dense">
           <div class="stats-card-dense__icon total">
@@ -32,7 +12,7 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">Всього позицій</span>
             <span class="stats-card-dense__value">{{ stats.total_products }}</span>
-            <span class="stats-card-dense__subtext">+12 за останні 30 днів</span>
+            <span class="stats-card-dense__subtext">+12 за 30 днів</span>
           </div>
           <div class="stats-card-dense__sparkline">
             <svg width="60" height="20"><path d="M0,10 L10,15 L20,5 L30,18 L40,8 L50,12 L60,2" fill="none" stroke="#635bff" stroke-width="2"/></svg>
@@ -47,7 +27,7 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">В наявності</span>
             <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
-            <span class="stats-card-dense__subtext">+18 за останні 30 днів</span>
+            <span class="stats-card-dense__subtext">+18 за 30 днів</span>
           </div>
           <div class="stats-card-dense__sparkline">
             <svg width="60" height="20"><path d="M0,18 L10,12 L20,15 L30,8 L40,10 L50,5 L60,2" fill="none" stroke="#22c55e" stroke-width="2"/></svg>
@@ -62,7 +42,7 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">Закінчуються</span>
             <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
-            <span class="stats-card-dense__subtext">+4 за останні 30 днів</span>
+            <span class="stats-card-dense__subtext">+4 за 30 днів</span>
           </div>
           <div class="stats-card-dense__sparkline">
             <svg width="60" height="20"><path d="M0,5 L10,8 L20,2 L30,12 L40,5 L50,15 L60,18" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
@@ -77,7 +57,7 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">Немає</span>
             <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
-            <span class="stats-card-dense__subtext">-3 за останні 30 днів</span>
+            <span class="stats-card-dense__subtext">-3 за 30 днів</span>
           </div>
           <div class="stats-card-dense__sparkline">
             <svg width="60" height="20"><path d="M0,2 L10,5 L20,12 L30,8 L40,15 L50,12 L60,18" fill="none" stroke="#ef4444" stroke-width="2"/></svg>
@@ -85,22 +65,43 @@
         </div>
       </div>
 
-      <!-- ===== AI ASSISTANT BLOCK ===== -->
-      <div class="ai-banner-premium kimi-mb-4">
-        <div class="ai-banner-content">
-          <span class="ai-banner-icon">🤖</span>
-          <div>
-            <h4 class="ai-banner-title">AI-помічник номенклатури</h4>
-            <p class="ai-banner-desc">Пошук дублікатів, аналіз дефіциту та розумні рекомендації.</p>
+      <!-- ===== ACTION BUTTONS ROW (under KPI) ===== -->
+      <div class="action-row">
+        <div class="action-row__left">
+          <!-- Quick Filter Tabs -->
+          <div class="quick-tabs-premium">
+            <div
+              class="quick-tab-item"
+              :class="{ active: activeTab === 'all' }"
+              @click="activeTab = 'all'; filterCategory = ''"
+            >Усі</div>
+            <div
+              class="quick-tab-item"
+              :class="{ active: activeTab === 'materials' }"
+              @click="activeTab = 'materials'; filterCategory = 'MATERIAL'"
+            >Матеріали</div>
+            <div
+              class="quick-tab-item"
+              :class="{ active: activeTab === 'products' }"
+              @click="activeTab = 'products'; filterCategory = 'PRODUCT'"
+            >Готові вироби</div>
           </div>
         </div>
-        <button class="ai-banner-btn" @click="aiDrawerVisible = true">
-          Запустити AI-аналіз
-        </button>
+        <div class="action-row__right">
+          <button class="act-btn act-btn--secondary" @click="ElMessage.info('Імпорт Excel/CSV')">
+            📥 Імпорт
+          </button>
+          <button class="act-btn act-btn--secondary" @click="ElMessage.info('Експорт Excel/CSV')">
+            📤 Експорт
+          </button>
+          <button class="act-btn act-btn--primary" @click="goToCreate">
+            <el-icon><Plus /></el-icon> Створити товар
+          </button>
+        </div>
       </div>
 
       <!-- ===== FILTERS TOOLBAR ===== -->
-      <div class="toolbar-dense kimi-mb-4">
+      <div class="toolbar-dense">
         <div class="toolbar-dense__left">
           <div class="search-dense-wrapper">
             <el-icon class="search-dense-icon"><Search /></el-icon>
@@ -111,7 +112,7 @@
               @input="handleSearch"
             />
           </div>
-          
+
           <el-select
             v-model="filterCategory"
             placeholder="Всі категорії"
@@ -134,7 +135,7 @@
             clearable
             @change="handleFilterChange"
             class="filter-dense-select pill-select"
-            style="width: 160px;"
+            style="width: 140px;"
           >
             <el-option label="Усі типи" value="" />
             <el-option label="Готовий виріб" value="product" />
@@ -148,46 +149,14 @@
             clearable
             @change="handleFilterChange"
             class="filter-dense-select pill-select"
-            style="width: 140px;"
+            style="width: 130px;"
           >
             <el-option label="Всі" value="" />
             <el-option label="В наявності" value="in_stock" />
             <el-option label="Закінчуються" value="low_stock" />
             <el-option label="Немає" value="out_of_stock" />
           </el-select>
-          
-          <!-- Кнопка Швидкі дії -->
-          <el-dropdown trigger="click">
-            <button class="column-toggle-btn">
-              ⚡ Дії
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="ElMessage.info('Масове архівування')">Архівувати</el-dropdown-item>
-                <el-dropdown-item @click="ElMessage.info('Змінити категорію')">Змінити категорію</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
         </div>
-      </div>
-
-      <!-- Quick Filter Tabs -->
-      <div class="quick-tabs-premium kimi-mb-4">
-        <div 
-          class="quick-tab-item" 
-          :class="{ active: activeTab === 'all' }"
-          @click="activeTab = 'all'; filterCategory = ''"
-        >Усі</div>
-        <div 
-          class="quick-tab-item" 
-          :class="{ active: activeTab === 'materials' }"
-          @click="activeTab = 'materials'; filterCategory = 'MATERIAL'"
-        >Матеріали</div>
-        <div 
-          class="quick-tab-item" 
-          :class="{ active: activeTab === 'products' }"
-          @click="activeTab = 'products'; filterCategory = 'PRODUCT'"
-        >Готові вироби</div>
       </div>
     </div>
 
@@ -485,6 +454,56 @@
         </div>
       </div>
     </el-drawer>
+
+    <!-- ===== FLOATING AI BUTTON ===== -->
+    <el-popover
+      v-model:visible="aiPopoverVisible"
+      placement="top-end"
+      :width="320"
+      trigger="click"
+      popper-class="ai-popover"
+    >
+      <template #reference>
+        <button class="ai-float-btn" title="AI-помічник">
+          🤖
+          <span class="ai-float-label">AI</span>
+        </button>
+      </template>
+
+      <div class="ai-pop-content">
+        <div class="ai-pop-header">
+          <span class="ai-pop-title">🤖 AI-помічник</span>
+          <span class="ai-pop-sub">Номенклатура · аналіз</span>
+        </div>
+
+        <div class="ai-pop-input-row">
+          <input
+            v-model="aiCommand"
+            class="ai-pop-input"
+            placeholder="Напишіть запит..."
+            @keyup.enter="runAiAssistantPop"
+          />
+          <button class="ai-pop-send" @click="runAiAssistantPop">→</button>
+        </div>
+
+        <div v-if="aiAnalysisResult" class="ai-pop-result">
+          {{ aiAnalysisResult }}
+        </div>
+
+        <div class="ai-pop-quick">
+          <div class="ai-pop-quick-title">Швидкі дії:</div>
+          <div class="ai-pop-pills">
+            <button class="ai-pill" @click="aiQuickAction('Знайди дублікати')">🔍 Дублікати</button>
+            <button class="ai-pill" @click="aiQuickAction('Покажи дефіцит')">⚠️ Дефіцит</button>
+            <button class="ai-pill" @click="aiQuickAction('Без ціни')">💰 Без ціни</button>
+            <button class="ai-pill" @click="aiQuickAction('Нульові залишки')">📦 Нуль</button>
+            <button class="ai-pill" @click="aiQuickAction('Треба дозамовити')">🛒 Дозамовити</button>
+            <button class="ai-pill" @click="aiDrawerVisible = true; aiPopoverVisible = false">📊 Повний аналіз</button>
+          </div>
+        </div>
+      </div>
+    </el-popover>
+
   </div>
 </template>
 
@@ -537,6 +556,7 @@ const visibleColumns = ref({
 
 // AI Assistant Logic
 const aiDrawerVisible = ref(false)
+const aiPopoverVisible = ref(false)
 const aiCommand = ref('')
 const aiAnalysisResult = ref('')
 
@@ -550,6 +570,15 @@ const runAiAssistant = () => {
   } else {
     aiAnalysisResult.value = `🤖 AI Результат: За вашим запитом "${aiCommand.value}" оброблено дані. Рекомендовано звернути увагу на категорію "Метал".`
   }
+}
+
+const runAiAssistantPop = () => {
+  runAiAssistant()
+}
+
+const aiQuickAction = (cmd) => {
+  aiCommand.value = cmd
+  runAiAssistant()
 }
 
 const handleRowClick = (row) => {
@@ -833,35 +862,206 @@ onActivated(() => {
   --danger-bg: #fee2e2;
   --danger-text: #ef4444;
 
-  padding: 24px;
+  padding: 16px 24px 24px;
   background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 28%), var(--page-bg);
   min-height: calc(100vh - 64px);
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
-}
-
-/* ===== HEADER ===== */
-.page-header-premium {
-  margin-bottom: 20px;
-}
-.breadcrumbs-premium {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-  font-weight: 500;
-}
-.page-title-premium {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
+  position: relative; /* for floating button */
 }
 
 /* ===== STAT CARDS ===== */
 .stats-row-dense {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ===== ACTION ROW (under KPI) ===== */
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.action-row__left {
+  display: flex;
+  align-items: center;
+}
+.action-row__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Compact action buttons */
+.act-btn {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  border: none;
+}
+.act-btn--secondary {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+.act-btn--secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+.act-btn--primary {
+  background: linear-gradient(135deg, #635bff, #7c3aed);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(99,91,255,0.32);
+}
+.act-btn--primary:hover {
+  box-shadow: 0 6px 20px rgba(99,91,255,0.42);
+  transform: translateY(-1px);
+}
+
+/* ===== FLOATING AI BUTTON ===== */
+.ai-float-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 200;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #635bff, #7c3aed);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 8px 24px rgba(99,91,255,0.45);
+  transition: all 0.2s ease;
+  font-size: 20px;
+  line-height: 1;
+}
+.ai-float-btn:hover {
+  box-shadow: 0 12px 30px rgba(99,91,255,0.55);
+  transform: translateY(-2px);
+}
+.ai-float-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* ===== AI POPOVER CONTENT ===== */
+.ai-pop-content {
+  padding: 4px 0;
+}
+.ai-pop-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+.ai-pop-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.ai-pop-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.ai-pop-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ai-pop-input {
+  flex: 1;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  background: #f8fafc;
+}
+.ai-pop-input:focus {
+  border-color: #635bff;
+  background: #ffffff;
+}
+.ai-pop-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #635bff;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.ai-pop-send:hover { background: #4f46e5; }
+.ai-pop-result {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #334155;
+  background: #f0f4ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.ai-pop-quick {
+  margin-top: 4px;
+}
+.ai-pop-quick-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.ai-pop-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ai-pill {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.ai-pill:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
 }
 .stats-card-dense {
   background: var(--card-bg);
