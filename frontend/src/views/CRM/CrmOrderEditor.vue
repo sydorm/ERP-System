@@ -265,87 +265,92 @@
       </div><!-- /left col -->
 
       <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-      <div class="crm-right-col">
+      <div class="crm-right-col" style="width: 320px; display: flex; flex-direction: column; gap: 12px;">
 
-        <!-- ══ SUMMARY ══ -->
-        <div class="crm-section crm-summary" style="background: #fff; border-radius: 12px; padding: 16px 18px; border: 1px solid #e2e8f0;">
-          <div class="crm-section-title" style="margin-bottom:16px; font-size: 14px; font-weight: 700; color: #1e293b;">ПІДСУМОК ЗАМОВЛЕННЯ</div>
+        <!-- ══ ПІДСУМОК ЗАМОВЛЕННЯ ══ -->
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
+          <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
+            ПІДСУМОК ЗАМОВЛЕННЯ
+          </div>
 
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
-            <tr>
-              <td style="width: 50%; padding-right: 8px; vertical-align: top;">
-                <input
-                  v-model.number="form.total_amount"
-                  type="number"
-                  style="font-size: 28px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; margin: 0;"
-                  :class="{ 'field-error': vErrors.amount }"
-                  placeholder="0"
-                  @input="calcPrepayment"
-                  @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
-                  @blur="$event.target.style.borderBottomColor = 'transparent'"
-                /><br>
-                <span style="font-size: 12px; color: #6B7280;">сума грн</span>
-              </td>
-              <td style="width: 50%; padding-left: 8px; vertical-align: top;">
-                <input
-                  v-model.number="form.prepayment_amount"
-                  type="number"
-                  style="font-size: 28px; font-weight: 700; color: #3D3AA8; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; cursor: text; outline: none; padding-bottom: 4px; margin: 0;"
-                  placeholder="0"
-                  @input="onPrepaymentInput"
-                  @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
-                  @blur="$event.target.style.borderBottomColor = 'transparent'"
-                /><br>
-                <span style="font-size: 12px; color: #6B7280;">
-                  передоплата
-                  <span v-if="form.total_amount > 0" style="color: #3D3AA8; font-weight: 600;">
-                    ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
-                  </span>
+          <!-- Metric cards (сума/передоплата) -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+            <div style="background: #F8F9FF; border-radius: 10px; padding: 10px; text-align: center;">
+              <div style="font-size: 22px; font-weight: 700; color: #111827;">
+                {{ formatCurrency(form.total_amount) }}
+              </div>
+              <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">
+                сума грн
+              </div>
+            </div>
+            <div style="background: #F8F9FF; border-radius: 10px; padding: 10px; text-align: center;">
+              <div style="font-size: 22px; font-weight: 700; color: #3D3AA8;">
+                {{ formatCurrency(form.prepayment_amount) }}
+              </div>
+              <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">
+                передоплата
+                <span v-if="form.total_amount > 0">
+                  ({{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%)
                 </span>
-              </td>
-            </tr>
-          </table>
+              </div>
+            </div>
+          </div>
 
-          <div style="margin-bottom: 20px;">
+          <!-- Inline input суми -->
+          <div style="position: relative; margin-bottom: 12px;">
+            <input
+              v-model.number="form.total_amount"
+              type="number"
+              style="font-size: 26px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; padding: 4px 0; outline: none; transition: all 0.2s ease;"
+              :class="{ 'field-error': vErrors.amount }"
+              placeholder="0"
+              @input="calcPrepayment"
+              @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
+              @blur="$event.target.style.borderBottomColor = 'transparent'"
+            />
+            <span v-if="form.total_amount > 0" style="position: absolute; right: 0; bottom: 6px; font-size: 26px; font-weight: 700; color: #111827; pointer-events: none;">₴</span>
+          </div>
+
+          <!-- Кнопки передоплати -->
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
             <button
               v-for="pct in [20, 30, 50, 100]"
               :key="pct"
               :style="{
-                borderRadius: '20px',
-                padding: '5px 14px',
                 border: '1.5px solid #E0E0FF',
-                background: form.prepayment_percent === pct ? '#3D3AA8' : 'white',
-                color: form.prepayment_percent === pct ? 'white' : '#3D3AA8',
+                borderRadius: '20px',
+                padding: '5px 12px',
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                marginRight: '8px',
-                marginBottom: '8px',
-                display: 'inline-block',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                background: form.prepayment_percent === pct ? '#3D3AA8' : 'white',
+                color: form.prepayment_percent === pct ? 'white' : '#3D3AA8',
+                borderColor: form.prepayment_percent === pct ? '#3D3AA8' : '#E0E0FF'
               }"
               @click="setPrepayPct(pct)"
             >{{ pct }}%</button>
             <button
               :style="{
-                borderRadius: '20px',
-                padding: '5px 14px',
                 border: '1.5px solid #E0E0FF',
-                background: form.prepayment_percent === 0 ? '#3D3AA8' : 'white',
-                color: form.prepayment_percent === 0 ? 'white' : '#3D3AA8',
+                borderRadius: '20px',
+                padding: '5px 12px',
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                display: 'inline-block',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                background: form.prepayment_percent === 0 ? '#3D3AA8' : 'white',
+                color: form.prepayment_percent === 0 ? 'white' : '#3D3AA8',
+                borderColor: form.prepayment_percent === 0 ? '#3D3AA8' : '#E0E0FF'
               }"
               @click="setPrepayPct(0)"
             >Без</button>
           </div>
 
+          <!-- Бейдж оплати -->
           <div
             class="payment-badge-new"
-            style="border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;"
+            style="border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;"
             :style="{
               background: autoPaymentStatus.key === 'unpaid' ? '#F9FAFB' : autoPaymentStatus.key === 'partial' ? '#FFFBEB' : '#ECFDF5',
               color: autoPaymentStatus.key === 'unpaid' ? '#6B7280' : autoPaymentStatus.key === 'partial' ? '#92400E' : '#065F46'
@@ -361,8 +366,8 @@
             {{ autoPaymentStatus.label }}
           </div>
 
-          <div class="crm-field" v-if="form.payment_status !== 'unpaid'" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;">
-            <label class="crm-label" style="font-size: 12px; font-weight: 500; color: #64748b;">Рахунок для зарахування</label>
+          <!-- Вибір банку -->
+          <div class="crm-field" v-if="form.payment_status !== 'unpaid'" style="margin-bottom: 12px;">
             <el-select v-model="form.bank_account_id" placeholder="Оберіть банк" style="width:100%">
               <el-option
                 v-for="acc in bankAccounts"
@@ -373,7 +378,8 @@
             </el-select>
           </div>
 
-          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-top: 16px;">
+          <!-- Дата та дедлайн -->
+          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-top: 8px;">
             <div class="date-item">Дата: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
             <div class="date-item">
               Дедлайн: 
@@ -390,118 +396,132 @@
           </div>
         </div>
 
-        <!-- ══ PRODUCTION ══ -->
-        <div class="crm-section">
-          <div class="crm-section-title" style="margin-bottom:10px">Виробництво</div>
+        <!-- ══ ВИРОБНИЦТВО ══ -->
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
+          <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
+            ВИРОБНИЦТВО
+          </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Пріоритет</label>
+          <div class="crm-field" style="margin-bottom: 0;">
             <el-select v-model="form.priority" placeholder="Оберіть пріоритет" style="width:100%">
+              <template #prefix>
+                <span
+                  v-if="priorities.find(p => p.value === form.priority)?.color"
+                  style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 2px;"
+                  :style="{ background: priorities.find(p => p.value === form.priority)?.color }"
+                />
+              </template>
               <el-option
                 v-for="p in priorities"
                 :key="p.value"
                 :label="p.label"
                 :value="p.value"
               >
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full" :style="{ background: p.color || '#94a3b8' }" />
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; display: inline-block;" :style="{ background: p.color || '#94a3b8' }" />
                   {{ p.label }}
                 </div>
               </el-option>
             </el-select>
           </div>
-
-
         </div>
 
         <!-- ══ КОМУНІКАЦІЯ ══ -->
-        <div class="crm-section">
-          <div class="comm-section-head">
-            <span class="crm-section-title">Комунікація</span>
-            <span class="attempts-badge" v-if="form.contact_attempts > 0">
-              {{ form.contact_attempts }} {{ form.contact_attempts === 1 ? 'спроба' : 'спроби' }}
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px;">
+              КОМУНІКАЦІЯ
+            </div>
+            <span style="font-size: 10px; font-weight: 600; color: #3D3AA8; background: #EEEDFE; padding: 2px 6px; border-radius: 4px;" v-if="form.contact_attempts > 0">
+              {{ form.contact_attempts }} спроби
             </span>
           </div>
 
-          <!-- New Compact Communication Block -->
-          <div class="comm-compact-block">
-            <div class="crm-field">
-              <label class="crm-label">Канал зв'язку</label>
-              <div class="comm-pills-row">
-                <button
-                  v-for="ct in communicationTypes"
-                  :key="ct.code"
-                  class="comm-pill"
-                  :class="{ active: contactCommType === ct.code }"
-                  @click="contactCommType = ct.code"
-                  type="button"
-                >
-                  <span class="pill-icon">{{ ct.icon }}</span>
-                  <span class="pill-name">{{ ct.name }}</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="crm-field">
-              <label class="crm-label">Результат контакту</label>
-              <div class="results-grid-2x2">
-                <button
-                  v-for="cr in contactResults"
-                  :key="cr.code"
-                  class="result-tile"
-                  :class="[cr.code.toLowerCase(), { active: contactResult === cr.code }]"
-                  @click="contactResult = contactResult === cr.code ? null : cr.code"
-                >
-                  <span class="tile-icon">{{ cr.icon }}</span>
-                  <span class="tile-label">{{ cr.name }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Compact Reminder Bar -->
-            <Transition name="fade-slide">
-              <div class="reminder-bar" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
-                <div class="reminder-head">
-                  <el-icon class="bell-icon"><Clock /></el-icon>
-                  <span>Нагадати:</span>
-                </div>
-                <div class="reminder-pickers">
-                  <el-date-picker
-                    v-model="contactNextAt"
-                    type="datetime"
-                    size="small"
-                    format="DD.MM HH:mm"
-                    value-format="YYYY-MM-DDTHH:mm:ss"
-                    placeholder="Дата та час"
-                    class="compact-picker"
-                  />
-                </div>
-              </div>
-            </Transition>
+          <!-- Канали комунікації -->
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+            <button
+              v-for="ct in communicationTypes"
+              :key="ct.code"
+              :style="{
+                borderRadius: '20px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                border: '1.5px solid #E0E0FF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s',
+                background: contactCommType === ct.code ? '#3D3AA8' : 'white',
+                color: contactCommType === ct.code ? 'white' : '#3D3AA8',
+                borderColor: contactCommType === ct.code ? '#3D3AA8' : '#E0E0FF'
+              }"
+              @click="contactCommType = ct.code"
+              type="button"
+            >
+              <span>{{ ct.icon }}</span>
+            </button>
           </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Наступний контакт (план)</label>
-            <el-date-picker
-              v-model="form.next_contact_at"
-              type="datetime"
-              format="DD.MM.YYYY HH:mm"
-              value-format="YYYY-MM-DDTHH:mm:ss"
-              style="width:100%"
-              placeholder="Вкажіть час наступного контакту"
-            />
+          <!-- Результат контакту -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+            <button
+              v-for="cr in contactResults"
+              :key="cr.code"
+              :style="{
+                borderRadius: '8px',
+                padding: '8px',
+                fontSize: '12px',
+                border: '1.5px solid #EBEBEB',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.2s',
+                background: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#FEF2F2' : cr.code === 'THINKING' ? '#FFFBEB' : cr.code === 'REFUSED' ? '#F9FAFB' : '#ECFDF5') : 'white',
+                color: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#991B1B' : cr.code === 'THINKING' ? '#92400E' : cr.code === 'REFUSED' ? '#374151' : '#065F46') : '#3D3AA8',
+                borderColor: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#FCA5A5' : cr.code === 'FCD34D' ? '#FCD34D' : cr.code === 'REFUSED' ? '#D1D5DB' : '#6EE7B7') : '#EBEBEB'
+              }"
+              @click="contactResult = contactResult === cr.code ? null : cr.code"
+              type="button"
+            >
+              {{ cr.name }}
+            </button>
           </div>
 
-          <div class="crm-field" v-if="contactResult === 'REFUSED'">
-            <label class="crm-label">Причина відмови</label>
+          <!-- Compact Reminder Bar -->
+          <Transition name="fade-slide">
+            <div style="background: #F8F9FF; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #3D3AA8; font-weight: 600;">
+                <span>🔔</span>
+                <span>Нагадати:</span>
+              </div>
+              <el-date-picker
+                v-model="contactNextAt"
+                type="datetime"
+                size="small"
+                format="DD.MM HH:mm"
+                value-format="YYYY-MM-DDTHH:mm:ss"
+                placeholder="Дата/час"
+                style="width: 130px;"
+              />
+            </div>
+          </Transition>
+
+          <!-- Причина відмови -->
+          <div class="crm-field" v-if="contactResult === 'REFUSED'" style="margin-bottom: 10px;">
             <el-input v-model="contactNote" placeholder="Чому відмовився..." />
           </div>
 
-          <button class="log-contact-btn" @click="logContact"
-            :disabled="!contactResult || savingContact || !orderId">
+          <!-- Кнопка зберегти контакт -->
+          <button
+            style="width: 100%; background: #3D3AA8; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.2s;"
+            @click="logContact"
+            :disabled="!contactResult || savingContact || !orderId"
+          >
             <el-icon v-if="savingContact" class="is-loading"><Loading /></el-icon>
-            {{ orderId ? 'Записати результат' : 'Збережіть заявку, щоб записати контакт' }}
+            {{ orderId ? 'Зберегти контакт' : 'Збережіть заявку спочатку' }}
           </button>
+
+        </div>
 
           <div v-if="contacts.length" style="margin-top:20px">
             <div class="crm-section-title" style="margin-bottom:12px">Історія комунікацій</div>
