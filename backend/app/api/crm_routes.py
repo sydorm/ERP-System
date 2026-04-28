@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date, time as dt_time
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_active_user
@@ -66,7 +67,6 @@ async def get_crm_analytics(
         })
 
     # 3. Top Managers (by total amount of 'done' orders)
-    from sqlalchemy import func
     top_managers = db.query(
         User.name,
         func.count(Order.id),
