@@ -261,7 +261,7 @@
                 <div 
                   class="stock-progress-fill" 
                   :class="getStockBadgeClass(row.stock_balance, row.min_stock)"
-                  :style="{ width: Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
+                  :style="{ width: row.stock_balance <= 0 ? '8%' : Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
                 ></div>
               </div>
             </div>
@@ -288,23 +288,33 @@
           </template>
         </el-table-column>
 
-        <!-- Actions (4 icons) -->
-        <el-table-column width="160" align="right" class-name="table-cell-dense">
+        <!-- Actions (Dropdown menu) -->
+        <el-table-column width="120" align="right" class-name="table-cell-dense">
           <template #header>Дії</template>
           <template #default="{ row }">
             <div class="actions-cell-premium" @click.stop>
               <button class="action-btn-premium" @click="handleEdit(row)" title="Редагувати">
                 <el-icon><Edit /></el-icon>
               </button>
-              <button class="action-btn-premium" @click="handleViewStock(row)" title="Склад">
-                <el-icon><Box /></el-icon>
-              </button>
-              <button class="action-btn-premium" @click="handleViewMovement(row)" title="Рух">
-                <el-icon><Coordinate /></el-icon>
-              </button>
-              <button class="action-btn-premium" @click="handleRowClick(row)" title="Перегляд">
-                <el-icon><View /></el-icon>
-              </button>
+              
+              <el-dropdown trigger="click" @click.stop>
+                <button class="action-btn-premium" title="Більше">
+                  <el-icon><More /></el-icon>
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="handleRowClick(row)">
+                      <el-icon><View /></el-icon> Перегляд
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleViewStock(row)">
+                      <el-icon><Box /></el-icon> Залишки на складах
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleViewMovement(row)">
+                      <el-icon><Coordinate /></el-icon> Рух товару
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </template>
         </el-table-column>
@@ -485,7 +495,7 @@ import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus, Search, Edit, Picture,
-  Box, Coordinate, Warning, CircleClose, Grid, Fold, View
+  Box, Coordinate, Warning, CircleClose, Grid, Fold, View, More
 } from '@element-plus/icons-vue'
 
 import { ElMessage } from 'element-plus'
@@ -1039,7 +1049,7 @@ onActivated(() => {
   background: linear-gradient(90deg, rgba(99, 91, 255, 0.03), rgba(255, 255, 255, 0)) !important;
 }
 :deep(.table-cell-dense) {
-  padding: 12px 16px !important;
+  padding: 8px 16px !important;
   border-bottom: 1px solid #eef2f7 !important;
 }
 
@@ -1084,13 +1094,13 @@ onActivated(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: #eef2ff;
-  color: #4f46e5;
-  border: 1px solid #dbe4ff;
-  padding: 5px 10px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .stock-badge-premium {
@@ -1229,18 +1239,20 @@ onActivated(() => {
   background: linear-gradient(135deg, rgba(99, 91, 255, 0.08), rgba(139, 92, 246, 0.08));
   border: 1px solid rgba(99, 91, 255, 0.2);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 56px;
+  box-sizing: border-box;
 }
 .ai-banner-content {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 .ai-banner-icon {
-  font-size: 28px;
+  font-size: 20px;
 }
 .ai-banner-title {
   font-size: 15px;
@@ -1254,7 +1266,7 @@ onActivated(() => {
   margin: 2px 0 0 0;
 }
 .ai-banner-btn {
-  padding: 10px 18px;
+  padding: 6px 14px;
   background: #4f46e5;
   color: #ffffff;
   border: none;
@@ -1271,26 +1283,35 @@ onActivated(() => {
 
 .quick-tabs-premium {
   display: flex;
-  gap: 8px;
+  gap: 24px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
+  padding: 0 10px 8px 10px;
+  margin-top: 16px;
 }
 .quick-tab-item {
-  padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  position: relative;
+  transition: color 0.2s ease;
+  padding-bottom: 8px;
 }
 .quick-tab-item:hover {
-  background: rgba(99, 91, 255, 0.05);
   color: var(--primary);
 }
 .quick-tab-item.active {
-  background: rgba(99, 91, 255, 0.1);
   color: var(--primary);
+}
+.quick-tab-item.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -9px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
 }
 
 .stock-progress-wrapper {
@@ -1317,7 +1338,7 @@ onActivated(() => {
 }
 .stock-progress-fill.success { background-color: var(--success-text); }
 .stock-progress-fill.warning { background-color: var(--warning-text); }
-.stock-progress-fill.danger { background-color: var(--danger-text); }
+.stock-progress-fill.danger { background-color: #f43f5e; }
 
 .ai-assistant-content {
   padding: 20px;
