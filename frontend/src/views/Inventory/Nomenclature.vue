@@ -1,8 +1,14 @@
 <template>
   <div class="orders-page" :class="{ 'dense-mode': isCompactMode }">
     <div class="top-section">
+      <div class="page-header-premium">
+        <div class="breadcrumbs-premium">Головна / Номенклатура</div>
+        <h1 class="page-title-premium">Номенклатура</h1>
+      </div>
+
       <!-- ===== STAT CARDS ===== -->
       <div class="stats-row-dense kimi-mb-4">
+
         <!-- Всього товарів -->
         <div class="stats-card-dense">
           <div class="stats-card-dense__icon total">
@@ -128,12 +134,8 @@
         :header-row-class-name="() => 'table-header-dense'"
         @row-click="handleRowClick"
       >
-        <!-- Left Indicator Line (via CSS) -->
-        <el-table-column width="16" class-name="indicator-col">
-          <template #default="{ row }">
-            <div class="row-status-indicator" :class="getStockBadgeClass(row.stock_balance, row.min_stock)"></div>
-          </template>
-        </el-table-column>
+
+
 
         <!-- Photo -->
         <el-table-column width="64" class-name="table-cell-dense">
@@ -239,17 +241,18 @@
           <template #default="{ row }">
             <div class="actions-cell-premium" @click.stop>
               <button class="action-btn-premium" @click="handleEdit(row)" title="Редагувати">
-                ✏️
+                <el-icon><Edit /></el-icon>
               </button>
               <button class="action-btn-premium" @click="handleViewStock(row)" title="Склад">
-                📦
+                <el-icon><Box /></el-icon>
               </button>
               <button class="action-btn-premium" @click="handleViewMovement(row)" title="Рух">
-                📊
+                <el-icon><Coordinate /></el-icon>
               </button>
               <button class="action-btn-premium" @click="handleRowClick(row)" title="Перегляд">
-                👁️
+                <el-icon><View /></el-icon>
               </button>
+
             </div>
           </template>
         </el-table-column>
@@ -323,8 +326,9 @@ import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus, Search, Edit, Picture,
-  Box, Coordinate, Warning, CircleClose, Grid, Fold
+  Box, Coordinate, Warning, CircleClose, Grid, Fold, View
 } from '@element-plus/icons-vue'
+
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
@@ -554,34 +558,43 @@ onActivated(() => {
 
 <style scoped>
 .orders-page {
-  --page-bg: #f4f7fb;
-  --card-bg: rgba(255, 255, 255, 0.82);
-  --text-main: #0f172a;
+  --page-bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text-primary: #0f172a;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --border-premium: rgba(226, 232, 240, 0.9);
-  
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
+  --border: #e2e8f0;
 
+  --primary: #635bff;
   --success-bg: #dcfce7;
   --success-text: #16a34a;
-
   --warning-bg: #fef3c7;
   --warning-text: #d97706;
-
   --danger-bg: #fee2e2;
-  --danger-text: #dc2626;
+  --danger-text: #ef4444;
 
-  height: calc(100vh - 64px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  padding: 24px;
   background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 28%), var(--page-bg);
-  padding: 20px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: var(--text-main);
-  box-sizing: border-box;
+  min-height: calc(100vh - 64px);
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+}
+
+/* ===== HEADER ===== */
+.page-header-premium {
+  margin-bottom: 20px;
+}
+.breadcrumbs-premium {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.page-title-premium {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 /* ===== STAT CARDS ===== */
@@ -592,27 +605,29 @@ onActivated(() => {
 }
 .stats-card-dense {
   background: var(--card-bg);
-  border: 1px solid var(--border-premium);
+  border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 12px 16px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease;
+  gap: 14px;
+  box-shadow: 0 12px 32px rgba(15,23,42,0.04);
+  transition: all 0.2s ease;
+  height: 72px;
+  box-sizing: border-box;
 }
 .stats-card-dense:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(15,23,42,0.08);
 }
 .stats-card-dense__icon {
   width: 42px;
   height: 42px;
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
 }
 .stats-card-dense__icon.total { background: #eff6ff; color: #2563eb; }
 .stats-card-dense__icon.success { background: var(--success-bg); color: var(--success-text); }
@@ -622,45 +637,48 @@ onActivated(() => {
 .stats-card-dense__content {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .stats-card-dense__label {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 .stats-card-dense__value {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-main);
-  line-height: 1.2;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
 }
 
 /* ===== TOOLBAR ===== */
 .toolbar-dense {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 12px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 28px rgba(15,23,42,0.03);
   margin-top: 16px;
+  gap: 16px;
 }
 .toolbar-dense__left {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
 }
 .search-dense-wrapper {
   position: relative;
-  width: 300px;
+  width: 320px;
 }
 .search-dense-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
@@ -668,9 +686,9 @@ onActivated(() => {
 .search-dense-input {
   width: 100%;
   height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px 0 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0 12px 0 38px;
   font-size: 14px;
   background: #ffffff;
   transition: all 0.2s ease;
@@ -678,46 +696,41 @@ onActivated(() => {
 .search-dense-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
 }
-
-.filter-dense-select.pill-select {
-  :deep(.el-select__wrapper) {
-    height: 42px !important;
-    border-radius: 999px !important;
-    border: 1px solid #e2e8f0 !important;
-    background: #f8fafc !important;
-    box-shadow: none !important;
-  }
+.pill-select :deep(.el-select__wrapper) {
+  height: 42px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
 }
-
 .column-toggle-btn {
   height: 42px;
   padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
   background: #ffffff;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 .column-toggle-btn:hover {
   background: #f8fafc;
   border-color: var(--primary);
 }
-
 .primary-dense-button {
-  height: 44px;
+  height: 42px;
   padding: 0 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
   color: white;
   border: none;
-  border-radius: 14px;
-  font-weight: 700;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.28);
+  box-shadow: 0 12px 28px rgba(99, 91, 255, 0.28);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -725,25 +738,22 @@ onActivated(() => {
 }
 .primary-dense-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 34px rgba(99, 102, 241, 0.34);
+  box-shadow: 0 16px 34px rgba(99, 91, 255, 0.34);
 }
 
-/* ===== TABLE ===== */
+/* ===== TABLE SECTION ===== */
 .table-section {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 22px;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
-  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.05);
+  margin-top: 20px;
+  overflow: hidden;
 }
-
 :deep(.table-header-dense th) {
   background: #f8fafc !important;
-  color: #64748b !important;
-  font-weight: 800 !important;
+  color: var(--text-secondary) !important;
+  font-weight: 700 !important;
   font-size: 11px !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -757,24 +767,12 @@ onActivated(() => {
   transition: all 0.16s ease;
 }
 :deep(.table-row-dense:hover td) {
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), rgba(255, 255, 255, 0)) !important;
+  background: linear-gradient(90deg, rgba(99, 91, 255, 0.03), rgba(255, 255, 255, 0)) !important;
 }
 :deep(.table-cell-dense) {
   padding: 12px 16px !important;
   border-bottom: 1px solid #eef2f7 !important;
 }
-
-.indicator-col {
-  padding: 0 !important;
-}
-.row-status-indicator {
-  width: 3px;
-  height: 40px;
-  border-radius: 0 4px 4px 0;
-}
-.row-status-indicator.danger { background: var(--danger-text); }
-.row-status-indicator.warning { background: var(--warning-text); }
-.row-status-indicator.success { background: var(--success-text); }
 
 .product-item-block {
   display: flex;
@@ -782,27 +780,26 @@ onActivated(() => {
   gap: 12px;
 }
 .product-thumb-compact {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   object-fit: cover;
-  border: 1px solid rgba(226,232,240,0.8);
+  border: 1px solid var(--border);
   background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-muted);
 }
 .product-info-compact {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .product-title-compact {
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 15px;
   color: #0f172a;
-  display: flex;
-  align-items: center;
 }
 .product-sku-compact {
   font-size: 12px;
@@ -810,16 +807,6 @@ onActivated(() => {
 }
 .sku-divider {
   margin: 0 4px;
-}
-.ai-warning-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #f59e0b;
-  border-radius: 50%;
-  margin-left: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
 .category-badge-premium {
@@ -831,46 +818,48 @@ onActivated(() => {
   background: #eef2ff;
   color: #4f46e5;
   border: 1px solid #dbe4ff;
-  padding: 5px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .stock-badge-premium {
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 .stock-badge-premium.danger { background: var(--danger-bg); color: var(--danger-text); }
 .stock-badge-premium.warning { background: var(--warning-bg); color: var(--warning-text); }
 .stock-badge-premium.success { background: var(--success-bg); color: var(--success-text); }
 
 .price-cell-dense {
-  font-weight: 800;
+  font-weight: 600;
   font-size: 14px;
   color: #0f172a;
+}
+.price-cell-dense.empty {
+  color: var(--text-muted);
 }
 
 .actions-cell-premium {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 .action-btn-premium {
   width: 34px;
   height: 34px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.16s ease;
-  font-size: 14px;
+  transition: all 0.2s ease;
 }
 .action-btn-premium:hover {
   background: #eef2ff;
@@ -879,63 +868,57 @@ onActivated(() => {
   transform: translateY(-1px);
 }
 
-/* ===== COMPACT MODE MODIFIERS ===== */
-.dense-mode {
-  padding: 12px;
-  height: calc(100vh - 64px);
+.pagination-dense {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid #eef2f7;
 }
-.dense-mode .stats-row-dense {
-  gap: 8px;
+
+/* ===== COMPACT MODE ===== */
+.dense-mode {
+  padding: 16px;
 }
 .dense-mode .stats-card-dense {
-  height: 44px;
-  border-radius: 12px;
-  padding: 8px 12px;
+  height: 56px;
+  padding: 10px 14px;
 }
 .dense-mode .stats-card-dense__value {
-  font-size: 18px;
+  font-size: 20px;
 }
 .dense-mode .toolbar-dense {
-  height: 48px;
-  padding: 8px;
-  border-radius: 12px;
-  margin-top: 8px;
-}
-.dense-mode .search-dense-input {
-  height: 34px;
+  padding: 10px 12px;
+  margin-top: 12px;
 }
 .dense-mode .table-section {
-  border-radius: 16px;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 .dense-mode :deep(.table-row-dense) {
   height: 56px;
 }
 .dense-mode :deep(.table-cell-dense) {
-  padding: 6px 12px !important;
+  padding: 8px 14px !important;
 }
 
-/* AI Popover override */
-:deep(.premium-ai-popover) {
-  background: #ffffff !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15) !important;
-  padding: 12px !important;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-.ai-popover-title {
-  margin: 0 0 6px 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-.ai-popover-desc {
-  margin: 0;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.4;
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
 }
 </style>
+
+
 
 
 
