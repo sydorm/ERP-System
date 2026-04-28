@@ -26,41 +26,59 @@ async def get_warehouses_stock(
     current_user: User = Depends(get_current_active_user)
 ):
     """Get current stock for all warehouses grouped by product and variant"""
-    from app.models import AccumulationRegister, RegisterType, Product, ProductVariant
+    from app.models import AccumulationRegister, RegisterType, Product
     from sqlalchemy import func
 
     results = db.query(
         AccumulationRegister.warehouse_id,
+        AccumulationRegister.product_id,
+        AccumulationRegister.variant_id,
         Product.name.label("product_name"),
-        ProductVariant.sku.label("variant_sku"),
-        ProductVariant.values.label("variant_values"),
         func.sum(AccumulationRegister.quantity).label("quantity"),
     ).join(
         Product, Product.id == AccumulationRegister.product_id
-    ).outerjoin(
-        ProductVariant, ProductVariant.id == AccumulationRegister.variant_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
         AccumulationRegister.register_type == RegisterType.STOCK,
     ).group_by(
         AccumulationRegister.warehouse_id,
-        Product.name,
-        ProductVariant.sku,
-        ProductVariant.values
+        AccumulationRegister.product_id,
+        AccumulationRegister.variant_id,
+        Product.name
     ).all()
+
+    variant_skus: dict = {}
+    variant_labels: dict = {}
+    variant_ids = [r.variant_id for r in results if r.variant_id]
+    
+    if variant_ids:
+        from app.models.variant import ProductVariant, VariantValue
+        variants = db.query(ProductVariant).filter(ProductVariant.id.in_(variant_ids)).all()
+        all_vv = db.query(VariantValue).filter(VariantValue.variant_id.in_(variant_ids)).all()
+        vv_by_variant: dict = {}
+        
+        for vv in all_vv:
+            vv_by_variant.setdefault(str(vv.variant_id), []).append(vv)
+            
+        for v in variants:
+            vid = str(v.id)
+            variant_skus[vid] = v.sku
+            text_parts = []
+            for vv in vv_by_variant.get(vid, []):
+                if vv.text_value:
+                    text_parts.append(vv.text_value)
+                elif vv.option_id:
+                    from app.models.attribute import AttributeOption
+                    opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
+                    if opt:
+                        text_parts.append(opt.value)
+            variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
 
     out = []
     for r in results:
-        label = ""
-        if r.variant_values:
-            vals = []
-            for v in r.variant_values:
-                if isinstance(v, dict) and "value" in v:
-                    vals.append(str(v["value"]))
-            label = " x ".join(vals)
-        elif r.variant_sku:
-            label = r.variant_sku
-
+        vid = str(r.variant_id) if r.variant_id else None
+        label = variant_labels.get(vid, "") if vid else ""
+        
         out.append({
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_name": r.product_name,
