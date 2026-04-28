@@ -401,6 +401,7 @@
           </el-table>
         </div>
       </div>
+    </el-drawer>
     <!-- ===== PRODUCT FORM DRAWER (CREATE & EDIT) ===== -->
     <el-drawer
       v-model="formDrawerVisible"
