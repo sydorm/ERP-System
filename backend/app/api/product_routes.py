@@ -57,6 +57,105 @@ async def get_product_stock(
         } for r in results
     ]
 
+@router.post("/products/{product_id}/variants/find-or-create")
+async def find_or_create_variant(
+    product_id: UUID,
+    body: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Find an existing variant matching the given attribute values,
+    or create a new one if no match is found.
+    Used for materials that skip the variant creation dialog.
+    
+    Body: { "values": [ { "attribute_id": "...", "option_id": "...", "text_value": "..." }, ... ] }
+    """
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.company_id == current_user.company_id
+    ).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    values = body.get("values", [])
+    if not values:
+        raise HTTPException(status_code=400, detail="No attribute values provided")
+    
+    # Build a fingerprint from incoming values for comparison
+    def make_fingerprint(vals):
+        """Create a sorted tuple of (attr_id, option_id_or_text) for matching."""
+        parts = []
+        for v in vals:
+            attr_id = str(v.get("attribute_id", ""))
+            key = str(v.get("option_id") or v.get("text_value") or "")
+            parts.append((attr_id, key))
+        return tuple(sorted(parts))
+    
+    incoming_fp = make_fingerprint(values)
+    
+    # Search existing variants
+    existing_variants = db.query(ProductVariant).filter(
+        ProductVariant.product_id == product_id,
+        ProductVariant.is_active == True
+    ).all()
+    
+    for variant in existing_variants:
+        variant_vals = []
+        for vv in variant.values:
+            variant_vals.append({
+                "attribute_id": str(vv.attribute_id),
+                "option_id": str(vv.option_id) if vv.option_id else None,
+                "text_value": vv.text_value
+            })
+        if make_fingerprint(variant_vals) == incoming_fp:
+            # Found matching variant
+            return {
+                "id": str(variant.id),
+                "sku": variant.sku,
+                "product_id": str(variant.product_id),
+                "created": False
+            }
+    
+    # No match — create new variant
+    # Generate SKU suffix from values
+    suffix_parts = []
+    for v in values:
+        txt = v.get("text_value") or ""
+        if txt:
+            suffix_parts.append(txt.replace("×", "x").replace(" ", ""))
+    
+    suffix = "-".join(suffix_parts) if suffix_parts else str(len(existing_variants) + 1)
+    new_sku = f"{product.sku}-{suffix}"
+    
+    db_variant = ProductVariant(
+        product_id=product_id,
+        sku=new_sku,
+        is_active=True,
+        is_primary=False
+    )
+    db.add(db_variant)
+    db.flush()
+    
+    for v in values:
+        db_val = VariantValue(
+            variant_id=db_variant.id,
+            attribute_id=v["attribute_id"],
+            option_id=v.get("option_id"),
+            text_value=v.get("text_value")
+        )
+        db.add(db_val)
+    
+    db.commit()
+    db.refresh(db_variant)
+    
+    return {
+        "id": str(db_variant.id),
+        "sku": db_variant.sku,
+        "product_id": str(db_variant.product_id),
+        "created": True
+    }
+
 @router.get("/products", response_model=List[ProductResponse])
 async def list_products(
     skip: int = 0,
