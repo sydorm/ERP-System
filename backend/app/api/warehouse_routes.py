@@ -187,8 +187,8 @@ async def get_inventory_movements(
     return [
         {
             "id": str(r.id),
-            "created_at": r.created_at.isoformat(),
-            "quantity": float(r.quantity),
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "quantity": float(r.quantity) if r.quantity is not None else 0.0,
             "document_type": r.document_type,
             "document_id": str(r.document_id) if r.document_id else None,
             "product_name": r.product_name,
