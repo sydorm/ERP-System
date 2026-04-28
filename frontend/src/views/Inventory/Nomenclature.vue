@@ -272,7 +272,7 @@ import {
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
-import MetricCard from '../../components/MetricCard.vue'
+import MetricCard from '../../../components/MetricCard.vue'
 
 const dictStore = useDictionaryStore()
 
