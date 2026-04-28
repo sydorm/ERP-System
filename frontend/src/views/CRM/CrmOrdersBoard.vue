@@ -130,22 +130,27 @@
         <!-- Column Header -->
         <div class="kanban-column-header" :style="{ borderTopColor: stage.color }">
           <div class="crm-col-title-row">
-            <span class="crm-col-dot" :style="{ background: stage.color }" />
-            <span class="crm-col-title">{{ stage.label }}</span>
-            <span class="crm-col-count-bubble">{{ filteredOrdersInStage(stage.key).length }}</span>
+            <div class="crm-col-title-left">
+              <span class="crm-col-dot" :style="{ background: stage.color }" />
+              <span class="crm-col-title">{{ stage.label }}</span>
+            </div>
+            <span class="crm-col-count-badge" :style="{ background: `${stage.color}33`, color: stage.color }">
+              {{ filteredOrdersInStage(stage.key).length }}
+            </span>
           </div>
-          <div class="crm-col-subheader">
-            ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ГРН
+          <div class="crm-col-subheader" :style="{ color: stage.color }">
+            ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ₴
           </div>
         </div>
 
         <!-- Cards -->
         <div class="kanban-column-content">
           <div
-            v-for="order in filteredOrdersInStage(stage.key)"
+            v-for="(order, index) in filteredOrdersInStage(stage.key)"
             :key="order.id"
             class="order-card"
             :class="{ 'is-selected': selectedOrderIds.includes(order.id) }"
+            :style="{ animationDelay: `${index * 50}ms` }"
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
@@ -160,38 +165,74 @@
               />
             </div>
 
-            <div class="card-header">
+            <!-- Рядок 1 -->
+            <div class="card-row-1">
               <span class="card-order-no">#{{ order.order_number }}</span>
-              <!-- Priority Dot (Top Right) -->
-              <div class="priority-dot-indicator" :class="getPriorityDotClass(order.priority)" />
-            </div>
-            
-            <div class="card-main">
-              <div class="order-card-title">{{ getCounterpartyName(order.counterparty_id) || order.client_name || '—' }}</div>
-              <div class="order-card-details">{{ order.product_name || 'Індивідуальне замовлення' }}</div>
+              <div class="priority-wrapper" :class="order.priority">
+                <span class="priority-dot" :style="{ background: getPriorityColor(order.priority) }" />
+                <span class="priority-text" :style="{ color: getPriorityColor(order.priority) }">
+                  {{ getPriorityLabel(order.priority) }}
+                </span>
+              </div>
             </div>
 
-            <div class="card-financial">
+            <!-- Рядок 2 (джерело/компанія) -->
+            <div class="card-row-2" v-if="order.source || getCounterpartyName(order.counterparty_id)">
+              {{ order.source || getCounterpartyName(order.counterparty_id) }}
+            </div>
+
+            <!-- Назва виробу -->
+            <div class="order-card-title">
+              {{ order.product_name || 'Індивідуальне замовлення' }}
+            </div>
+
+            <!-- Рядок 4: Сума + Дедлайн -->
+            <div class="card-row-financial">
               <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span class="deadline-chip" v-if="order.deadline">
-                <el-icon><Calendar /></el-icon> {{ formatDate(order.deadline) }}
+              <span 
+                class="deadline-chip" 
+                v-if="order.deadline"
+                :class="getDeadlineClass(order.deadline)"
+              >
+                📅 {{ formatDate(order.deadline) }} <span v-if="getDeadlineDaysText(order.deadline)">· {{ getDeadlineDaysText(order.deadline) }}</span>
               </span>
             </div>
 
-            <div class="card-footer">
-              <div class="card-badges">
-                <span class="payment-badge" :class="`payment-${order.payment_status}`">
-                  {{ getPaymentLabel(order.payment_status) }}
-                </span>
+            <!-- Рядок 5: Бейдж оплати -->
+            <div class="card-badges">
+              <span class="payment-badge" :class="`payment-${order.payment_status}`">
+                ● {{ getPaymentLabel(order.payment_status) }}
+              </span>
+            </div>
+
+            <!-- Розділювач -->
+            <div class="card-divider"></div>
+
+            <!-- Останній контакт -->
+            <div class="card-last-contact" v-if="order.last_contact">
+              <el-icon v-if="isReminderToday(order.next_contact_at)" class="contact-channel-icon reminder"><Bell /></el-icon>
+              <el-icon v-else class="contact-channel-icon" :class="order.last_contact.communication_type">
+                <component :is="getChannelIcon(order.last_contact.communication_type)" />
+              </el-icon>
+              <span class="contact-result" :class="order.last_contact.result">
+                {{ getContactResultLabel(order.last_contact.result) }}
+              </span>
+              <span class="contact-time">{{ formatRelativeTime(order.last_contact.contacted_at) }}</span>
+            </div>
+
+            <!-- Іконки + аватар -->
+            <div class="card-footer-new">
+              <div class="card-comm-channels">
+                <span class="channel-icon phone" @click.stop="handleComm(order, 'phone')"><el-icon><Phone /></el-icon></span>
+                <span class="channel-icon viber" @click.stop="handleComm(order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
+                <span class="channel-icon telegram" @click.stop="handleComm(order, 'telegram')"><el-icon><Promotion /></el-icon></span>
+                <span class="channel-icon instagram" @click.stop="handleComm(order, 'instagram')"><el-icon><Camera /></el-icon></span>
               </div>
-              <div class="card-meta">
+              <div class="card-meta-right">
                 <el-tooltip :content="getManagerName(order.manager_id)" placement="top">
                   <div class="card-avatar">{{ (getManagerName(order.manager_id) || '?').charAt(0) }}</div>
                 </el-tooltip>
-                <div class="card-comm-icons">
-                  <el-icon class="comm-icon"><ChatDotRound /></el-icon>
-                  <el-icon class="comm-icon"><Phone /></el-icon>
-                </div>
+                <button class="card-arrow-btn" @click.stop="openEditor(order)">→</button>
               </div>
             </div>
           </div>
@@ -295,9 +336,91 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download, Promotion, Camera } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
+
+const getPriorityLabel = (p) => {
+  const map = { critical: 'Критичний', urgent: 'Високий', normal: 'Середній', low: 'Низький' }
+  return map[p] || 'Середній'
+}
+const getPriorityColor = (p) => {
+  const map = { critical: '#EF4444', urgent: '#F97316', normal: '#F59E0B', low: '#10B981' }
+  return map[p] || '#F59E0B'
+}
+const getDeadlineClass = (deadlineStr) => {
+  if (!deadlineStr) return ''
+  const now = new Date()
+  const dl = new Date(deadlineStr)
+  const diffDays = (dl - now) / (1000 * 60 * 60 * 24)
+  if (diffDays < 3) return 'deadline-danger'
+  if (diffDays < 7) return 'deadline-warning'
+  return ''
+}
+const getDeadlineDaysText = (deadlineStr) => {
+  if (!deadlineStr) return ''
+  const now = new Date()
+  const dl = new Date(deadlineStr)
+  const diffDays = Math.ceil((dl - now) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return 'прострочено'
+  if (diffDays === 0) return 'сьогодні'
+  return `${diffDays} дн.`
+}
+const isReminderToday = (nextContactAt) => {
+  if (!nextContactAt) return false
+  const todayStr = new Date().toDateString()
+  return new Date(nextContactAt).toDateString() === todayStr
+}
+const getChannelIcon = (type) => {
+  const map = {
+    phone: 'Phone',
+    viber: 'ChatDotRound',
+    telegram: 'Promotion',
+    instagram: 'Camera'
+  }
+  return map[type] || 'ChatDotRound'
+}
+const getChannelName = (type) => {
+  const map = { phone: '📞 Телефон', viber: '💬 Viber', telegram: '✈ Telegram', instagram: '📸 Instagram' }
+  return map[type] || type
+}
+const getContactResultLabel = (res) => {
+  const map = {
+    thinking: 'Думає',
+    no_answer: 'Не відповів',
+    confirmed: 'Підтвердив',
+    refused: 'Відмовився'
+  }
+  return map[res] || res
+}
+const handleComm = (order, channel) => {
+  if (channel === 'phone') {
+    handleCall({
+      id: order.id,
+      order_id: order.id,
+      order_number: order.order_number,
+      client_name: getCounterpartyName(order.counterparty_id) || order.client_name,
+      client_phone: order.client_phone
+    })
+  } else {
+    ElMessage.info(`Канал зв'язку: ${channel}`)
+  }
+}
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return ''
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} хв тому`
+  if (diffHours < 24) return `${diffHours} год тому`
+  if (diffDays === 1) return 'вчора'
+  if (diffDays < 7) return `${diffDays} дні тому`
+  return date.toLocaleDateString('uk-UA')
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -391,14 +514,30 @@ const fetchStage = async (stage, reset = false) => {
     const res = await api.get(
       `/api/v1/orders?crm_stage=${stage}&limit=20&skip=${stageSkip.value[stage]}`
     )
+    
+    const ordersWithContacts = await Promise.all(
+      res.data.map(async (order) => {
+        try {
+          const contactsRes = await api.get(`/api/v1/crm/orders/${order.id}/contacts`)
+          if (contactsRes.data && contactsRes.data.length > 0) {
+            order.last_contact = contactsRes.data[0]
+          } else {
+            order.last_contact = null
+          }
+        } catch (err) {
+          order.last_contact = null
+        }
+        return order
+      })
+    )
+
     if (reset) {
       orders.value = orders.value
         .filter(o => o.crm_stage !== stage)
-        .concat(res.data)
+        .concat(ordersWithContacts)
     } else {
-      // Avoid duplicates
-      const newIds = new Set(res.data.map(o => o.id))
-      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(res.data)
+      const newIds = new Set(ordersWithContacts.map(o => o.id))
+      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(ordersWithContacts)
     }
     stageHasMore.value[stage] = res.data.length === 20
   } catch (e) {
@@ -685,59 +824,100 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 .kanban-column {
   flex-shrink: 0;
-  width: 220px;
+  width: 280px;
   flex: 1;
-  min-width: 200px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 200px);
-  background-color: rgba(249, 250, 251, 0.5);
-  border-radius: 12px;
+  background: white;
+  border-radius: 16px;
+  border-top: 3px solid #3D3AA8; /* Updated dynamically in inline style */
+  padding: 16px;
 }
 
 .kanban-column-header {
-  padding: 12px;
-  background-color: #ffffff;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  border: 1px solid #f3f4f6;
-  border-top-width: 3px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
 }
 
-.crm-col-title-row { display: flex; align-items: center; gap: 6px; position: relative; }
-.crm-col-dot { width: 8px; height: 8px; border-radius: 50%; }
-.crm-col-title { font-weight: 700; color: #1e293b; font-size: 13px; }
-.crm-col-count-bubble { 
-  background: #f1f5f9; color: #94a3b8; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; 
+.crm-col-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.crm-col-menu { position: absolute; right: 0; color: #cbd5e1; cursor: pointer; font-size: 16px; }
-.crm-col-subheader { font-size: 9px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.crm-col-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-col-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.crm-col-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+}
+
+.crm-col-count-badge {
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.crm-col-subheader {
+  font-size: 12px;
+  font-weight: 600;
+}
 
 .kanban-column-content {
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   overflow-y: auto;
   flex: 1;
 }
 
 /* ─── Order Card ─── */
-.order-card {
-  background-color: #ffffff;
-  padding: 12px;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #f3f4f6;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.order-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #e5e7eb; }
-.order-card.is-selected { border: 2px solid #3D3AA8; background: #f0f0ff; }
+
+.order-card {
+  width: 100%;
+  min-height: 160px;
+  border-radius: 16px;
+  background: #FFFFFF;
+  border: 1px solid #F0F0F8;
+  box-shadow: 0 4px 20px rgba(61,58,168,0.06);
+  transition: all 0.2s ease;
+  padding: 16px;
+  cursor: pointer;
+  position: relative;
+  opacity: 0;
+  animation: cardIn 0.3s ease forwards;
+}
+
+.order-card:hover {
+  box-shadow: 0 8px 32px rgba(61,58,168,0.14);
+  transform: translateY(-2px);
+  border-color: #C7C4F0;
+}
+
+.order-card.is-selected {
+  border: 2px solid #3D3AA8;
+  background: #F5F3FF;
+}
 
 .card-selection-overlay {
   position: absolute;
@@ -752,39 +932,194 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   opacity: 1;
 }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-left: 24px; }
-.card-order-no { font-size: 10px; color: #94a3b8; font-weight: 600; }
+/* Рядок 1 */
+.card-row-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.card-order-no {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+.priority-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
 
-/* Priority Dot Indicator */
-.priority-dot-indicator { width: 8px; height: 8px; border-radius: 50%; }
-.dot-red { background: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.5); }
-.dot-orange { background: #f97316; }
-.dot-yellow { background: #eab308; }
-.dot-green { background: #22c55e; }
+/* Рядок 2 */
+.card-row-2 {
+  font-size: 11px;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
 
-.order-card-title { font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 2px; }
-.order-card-details { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+/* Назва виробу */
+.order-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 8px 0;
+}
 
-.card-financial { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.card-price { font-weight: 700; color: #1e293b; font-size: 13px; }
-
+/* Сума + Дедлайн */
+.card-row-financial {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.card-price {
+  font-size: 17px;
+  font-weight: 700;
+  color: #3D3AA8;
+}
 .deadline-chip {
-  display: flex; align-items: center; gap: 4px; padding: 2px 6px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; 
-  font-size: 9px; font-weight: 600; color: #64748b;
+  font-size: 12px;
+  color: #6B7280;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.deadline-chip.deadline-danger {
+  color: #EF4444;
+  background: #FEF2F2;
+}
+.deadline-chip.deadline-warning {
+  color: #F59E0B;
+  background: #FFFBEB;
 }
 
-.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 4px; }
-.payment-badge { padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
-.payment-paid { background-color: #dcfce7; color: #15803d; }
-.payment-partial { background-color: #fef9c3; color: #a16207; }
-.payment-unpaid { background-color: #f1f5f9; color: #475569; }
+/* Бейдж оплати */
+.payment-badge {
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.payment-badge.payment-paid { background: #ECFDF5; color: #065F46; }
+.payment-badge.payment-partial { background: #FFFBEB; color: #92400E; }
+.payment-badge.payment-unpaid { background: #F9FAFB; color: #6B7280; }
 
-.card-meta { display: flex; align-items: center; gap: 6px; }
+/* Розділювач */
+.card-divider {
+  border-top: 1px solid #F3F4F6;
+  margin: 10px 0;
+}
+
+/* Останній контакт */
+.card-last-contact {
+  font-size: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.contact-channel-icon {
+  font-size: 14px;
+}
+.contact-channel-icon.reminder {
+  color: #EF4444;
+}
+.contact-channel-icon.phone { color: #16A34A; }
+.contact-channel-icon.viber { color: #7C3AED; }
+.contact-channel-icon.telegram { color: #2563EB; }
+.contact-channel-icon.instagram { color: #DB2777; }
+
+.contact-result {
+  font-weight: 600;
+}
+.contact-result.thinking { color: #F59E0B; }
+.contact-result.no_answer { color: #EF4444; }
+.contact-result.confirmed { color: #10B981; }
+.contact-result.refused { color: #6B7280; }
+
+.contact-time {
+  color: #9CA3AF;
+}
+
+/* Іконки каналів + аватар */
+.card-footer-new {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-comm-channels {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.channel-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.channel-icon.phone { background: #F0FDF4; color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.3); }
+.channel-icon.viber { background: #F5F3FF; color: #7C3AED; border: 1px solid rgba(124, 58, 237, 0.3); }
+.channel-icon.telegram { background: #EFF6FF; color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.3); }
+.channel-icon.instagram { background: #FDF2F8; color: #DB2777; border: 1px solid rgba(219, 39, 119, 0.3); }
+
+.channel-icon:hover {
+  filter: brightness(0.95);
+  transform: scale(1.05);
+}
+
+.card-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .card-avatar {
-  width: 20px; height: 20px; background: #3D3AA8; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #3D3AA8;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.card-comm-icons { display: flex; align-items: center; gap: 4px; color: #94a3b8; font-size: 14px; }
-.comm-icon:hover { color: #3D3AA8; }
+
+.card-arrow-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #F5F3FF;
+  color: #3D3AA8;
+  border: 1px solid #E0E0FF;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.card-arrow-btn:hover {
+  background: #3D3AA8;
+  color: white;
+}
 
 .add-order-button {
   margin: 6px; padding: 8px 0; border: 1px dashed #cbd5e1; border-radius: 8px; background: transparent; 
