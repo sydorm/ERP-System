@@ -198,11 +198,19 @@
               </span>
             </div>
 
-            <!-- Рядок 5: Бейдж оплати -->
+            <!-- Рядок 5: Бейдж оплати + SLA таймер -->
             <div class="card-badges">
               <span class="payment-badge" :class="`payment-${order.payment_status}`">
                 ● {{ getPaymentLabel(order.payment_status) }}
               </span>
+              <span
+                v-if="getSlaLevel(order.id) === 'warning'"
+                class="sla-badge sla-warning"
+              >⏱ {{ getSlaHours(order.id) }} год</span>
+              <span
+                v-else-if="getSlaLevel(order.id) === 'critical' || getSlaLevel(order.id) === 'urgent'"
+                class="sla-badge sla-critical"
+              >🔴 {{ getSlaHours(order.id) }} год</span>
             </div>
 
             <!-- Розділювач -->
@@ -434,6 +442,19 @@ const users = ref([])
 const todayTasks = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
+const slaStatus = ref({})
+
+const getSlaLevel = (orderId) => slaStatus.value[orderId]?.sla_level || 'ok'
+const getSlaHours = (orderId) => {
+  const h = slaStatus.value[orderId]?.hours_since_activity || 0
+  return h % 1 === 0 ? h.toFixed(0) : h.toFixed(1)
+}
+const fetchSlaStatus = async () => {
+  try {
+    const res = await api.get('/api/v1/crm/orders/sla-status')
+    slaStatus.value = res.data
+  } catch { /* non-critical */ }
+}
 
 // Filter State
 const filters = ref({
@@ -560,8 +581,11 @@ const fetchAll = async () => {
     users.value = usersRes.data
     todayTasks.value = tasksRes.data
 
-    // Fetch all stages
-    await Promise.all(stages.map(s => fetchStage(s.key, true)))
+    // Fetch all stages + SLA status in parallel
+    await Promise.all([
+      ...stages.map(s => fetchStage(s.key, true)),
+      fetchSlaStatus()
+    ])
   } catch (e) {
     ElMessage.error('Помилка завантаження даних')
   } finally {
@@ -1206,6 +1230,27 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .channel-icon.instagram { display: none; }
 /* Hide avatar (?) and arrow (→) button */
 .card-meta-right { display: none; }
+
+/* ─── SLA badges ─── */
+.sla-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.sla-warning {
+  background: #FEF9C3;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.sla-critical {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
 
 /* ─── Header cleanup ─── */
 .crm-subtitle { display: none; }

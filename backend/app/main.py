@@ -194,6 +194,34 @@ app.include_router(finance_router, prefix="/api/v1", tags=["Finance"])
 from app.api.notification_routes import router as notification_router
 app.include_router(notification_router, prefix="/api/v1", tags=["Notifications"])
 
+# ─── APScheduler: SLA cron job ────────────────────────────────────────────────
+from apscheduler.schedulers.background import BackgroundScheduler
+
+_scheduler = BackgroundScheduler()
+
+@app.on_event("startup")
+def start_sla_scheduler():
+    from app.services.sla_service import run_sla_check
+    from app.db.session import SessionLocal
+
+    def _sla_job():
+        db = SessionLocal()
+        try:
+            run_sla_check(db)
+        except Exception as exc:
+            print(f"[SLA] cron error: {exc}")
+        finally:
+            db.close()
+
+    _scheduler.add_job(_sla_job, "interval", minutes=30, id="sla_check", replace_existing=True)
+    _scheduler.start()
+    print("✅ SLA scheduler started (every 30 min)")
+
+@app.on_event("shutdown")
+def stop_sla_scheduler():
+    if _scheduler.running:
+        _scheduler.shutdown(wait=False)
+
 from app.api.hr_routes import router as hr_router
 app.include_router(hr_router, prefix="/api/v1", tags=["Personnel"])
 

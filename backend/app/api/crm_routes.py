@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.api.dependencies import get_current_active_user
 from app.models import Order, User
 from app.models.crm import CrmContact, CrmTask
+from app.models.order_activity_log import OrderActivityLog
 from app.schemas.crm import (
     CrmContactCreate, CrmContactResponse,
     CrmTaskResponse, CrmTaskReschedule,
@@ -128,6 +129,12 @@ async def log_contact(
         contacted_at=datetime.utcnow(),
     )
     db.add(contact)
+    db.add(OrderActivityLog(
+        order_id=order_id,
+        company_id=order.company_id,
+        action_type="contact",
+        manager_id=current_user.id,
+    ))
 
     responsible = order.manager_id or current_user.id
 
@@ -248,3 +255,18 @@ async def reschedule_task(
         order.next_contact_at = data.scheduled_at
     db.commit()
     return {"ok": True}
+
+
+# ─── SLA Status ───────────────────────────────────────────────────────────────
+
+@router.get("/orders/sla-status")
+async def get_sla_status(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Return SLA status for all active orders of the company.
+    Response: { order_id: { sla_level: "ok"|"warning"|"critical"|"urgent", hours_since_activity: float } }
+    """
+    from app.services.sla_service import get_sla_status_for_company
+    return get_sla_status_for_company(db, current_user.company_id)
