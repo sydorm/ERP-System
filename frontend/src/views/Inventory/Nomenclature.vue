@@ -470,7 +470,6 @@ onActivated(() => {
   font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Dark theme override via parent class attached to html */
 :global(html.dark) .orders-page {
   --bg: #0F1117;
   --surface: #1A1D27;
@@ -483,7 +482,7 @@ onActivated(() => {
   flex-shrink: 0;
   z-index: 100;
   background: var(--bg);
-  padding: 20px 20px 0;
+  padding: 16px 20px 0;
   display: flex;
   flex-direction: column;
 }
@@ -492,26 +491,22 @@ onActivated(() => {
 .kimi-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .kimi-stat-card {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 12px;
-  padding: 20px;
+  padding: 14px;
+  height: 90px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: none !important;
-  transition: transform 0.15s ease;
-}
-.kimi-stat-card:hover {
-  transform: translateY(-2px);
 }
 
-/* Dynamic card left accents mapping */
 .kimi-stat-indigo { border-left: 3px solid #3B82F6 !important; }
 .kimi-stat-emerald { border-left: 3px solid #22C55E !important; }
 .kimi-stat-amber { border-left: 3px solid #F59E0B !important; }
@@ -527,30 +522,28 @@ onActivated(() => {
 }
 
 .kimi-stat-value {
-  font-size: 36px;
+  font-size: 32px;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   line-height: 1;
 }
 
-/* Mapped number colors */
 .kimi-stat-indigo .kimi-stat-value { color: #3B82F6 !important; }
 .kimi-stat-emerald .kimi-stat-value { color: #22C55E !important; }
 .kimi-stat-amber .kimi-stat-value { color: #F59E0B !important; }
 .kimi-stat-rose .kimi-stat-value { color: #EF4444 !important; }
 
 .kimi-stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 18px;
 }
 
-/* Colorful background opacity wrapper */
 .kimi-stat-indigo .kimi-stat-icon-wrapper { background: rgba(59, 130, 246, 0.15) !important; color: #3B82F6 !important; }
 .kimi-stat-emerald .kimi-stat-icon-wrapper { background: rgba(34, 197, 94, 0.15) !important; color: #22C55E !important; }
 .kimi-stat-amber .kimi-stat-icon-wrapper { background: rgba(245, 158, 11, 0.15) !important; color: #F59E0B !important; }
@@ -571,15 +564,18 @@ onActivated(() => {
 
 :deep(.el-input__wrapper) {
   background-color: var(--surface) !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   height: 38px !important;
-  border: 1px solid var(--border) !important;
+  border: 1.5px solid #E5E7EB !important;
   box-shadow: none !important;
-  color: var(--text) !important;
 }
-:deep(.el-input__wrapper .el-input__inner) {
-  color: var(--text) !important;
-  font-family: 'Space Grotesk', sans-serif;
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+:deep(.el-input__icon) {
+  color: #9CA3AF !important;
+  font-size: 16px !important;
 }
 
 .kimi-primary-btn {
@@ -620,51 +616,66 @@ onActivated(() => {
   overflow: hidden;
 }
 
-/* el-table visual styles */
 .kimi-table :deep(th.el-table__cell) {
-  background: var(--surface) !important;
-  color: var(--text-muted);
+  background: #F3F4F6 !important;
+  color: #6B7280;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid #F3F4F6 !important;
+  padding: 10px 8px !important;
 }
 
 .kimi-table :deep(td.el-table__cell) {
-  background-color: var(--bg) !important;
-  color: var(--text);
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid #F3F4F6 !important;
   padding: 12px 8px !important;
 }
 
+/* Zero and Positive stock highlights */
+:deep(.kimi-row td) {
+  transition: all 0.2s ease;
+}
+:deep(.kimi-row[class*="out_of_stock"] td) {
+  background-color: rgba(239, 68, 68, 0.03) !important;
+  border-left: 2px solid #EF4444 !important;
+}
+:deep(.kimi-row:not([class*="out_of_stock"]) td) {
+  background-color: rgba(34, 197, 94, 0.03) !important;
+  border-left: 2px solid #22C55E !important;
+}
+
 :deep(.kimi-row:hover td) {
-  background-color: var(--surface) !important;
+  background-color: #F8FAFF !important;
+  border-left: 2px solid #3B82F6 !important;
 }
 
-/* Left border highlight on row hover */
-:deep(.kimi-row:hover td:first-child) {
-  border-left: 3px solid #3B82F6 !important;
+/* SKU and Name */
+.kimi-text-indigo-600 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #6B7280;
 }
 
-/* Table text fonts override */
 .kimi-text-sm {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 14px;
-  color: var(--text);
-}
-.kimi-text-indigo-600 {
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text-muted);
+  color: #18181B;
+  font-weight: 500;
 }
 
-/* Price and Stock column colors override */
+.kimi-text-slate-400 {
+  font-size: 13px;
+  color: #6B7280;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Prices */
 .kimi-table :deep(.kimi-row) span {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Zero and positive stock logic */
 :deep(.kimi-text-rose-600), :deep(.text-rose-600) {
   color: #EF4444 !important;
   font-weight: 700 !important;
@@ -677,22 +688,51 @@ onActivated(() => {
 }
 
 .list-image-placeholder {
-  width: 32px;
-  height: 32px;
-  background: var(--surface);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+  background: #EFF6FF;
+  color: #3B82F6;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
   font-weight: 600;
 }
 
+/* Pagination overrides */
 .pagination-footer {
-  background: var(--bg);
+  background: #FFFFFF;
   padding: 16px 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #F3F4F6;
+}
+
+:deep(.limit-select .el-input__wrapper) {
+  border: 1.5px solid #E5E7EB !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+}
+:deep(.limit-select .el-input__inner) {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 13px !important;
+}
+
+:deep(.el-pager li) {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px !important;
+  border: 1.5px solid #E5E7EB !important;
+  background: #FFFFFF !important;
+  color: #18181B !important;
+  margin: 0 4px;
+}
+:deep(.el-pager li.is-active) {
+  background: #18181B !important;
+  color: #FFFFFF !important;
+  border-color: #18181B !important;
+}
+:deep(.el-pager li:hover:not(.is-active)) {
+  background: #F3F4F6 !important;
 }
 </style>
