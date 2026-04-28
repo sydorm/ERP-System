@@ -319,7 +319,7 @@ const initializeSelector = () => {
       const attr = allCategoryAttributes.value.find(a => a.id === v.attribute_id)
       const type = attr?.type || v.attribute?.type
 
-      if (type === 'DIMENSIONS') {
+      if (type === 'DIMENSIONS' || (v.text_value && (v.text_value.includes('x') || v.text_value.includes('×')))) {
           // Priority: numeric width/height, fallback: parse text_value
           if (v.width && v.height) {
               dimSelections.value[v.attribute_id] = { w: v.width, h: v.height }
