@@ -389,7 +389,11 @@ const getContactResultLabel = (res) => {
     thinking: 'Думає',
     no_answer: 'Не відповів',
     confirmed: 'Підтвердив',
-    refused: 'Відмовився'
+    refused: 'Відмовився',
+    THINKING: 'Думає',
+    NO_ANSWER: 'Не відповів',
+    CONFIRMED: 'Підтвердив',
+    REFUSED: 'Відмовився'
   }
   return map[res] || res
 }
@@ -501,9 +505,8 @@ const handleExport = async (type) => {
 
 const stages = [
   { key: 'new', label: 'Нові', color: '#3D3AA8' },
-  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
-  { key: 'confirmed', label: 'Підтверджено', color: '#3B82F6' },
   { key: 'payment', label: 'Оплата', color: '#F97316' },
+  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
   { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
   { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]

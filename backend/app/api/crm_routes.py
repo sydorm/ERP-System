@@ -34,7 +34,7 @@ async def get_crm_analytics(
     company_id = current_user.company_id
     
     # 1. Funnel
-    stages = ["new", "processing", "confirmed", "payment", "production", "done"]
+    stages = ["new", "payment", "processing", "production", "done"]
     funnel_data = []
     for s in stages:
         res = db.query(
@@ -148,7 +148,7 @@ async def log_contact(
         order.crm_stage = "cancelled"
 
     elif data.result == "confirmed":
-        order.crm_stage = "confirmed"
+        order.crm_stage = "payment"
         order.contact_attempts = 0
 
     db.commit()
