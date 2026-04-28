@@ -177,7 +177,7 @@
             </div>
 
             <!-- Рядок 2 (джерело/компанія) -->
-            <div class="card-row-2" v-if="order.source || getCounterpartyName(order.counterparty_id)">
+            <div class="card-row-2 clickable-client" v-if="order.source || getCounterpartyName(order.counterparty_id)" @click.stop="openClientProfile(order.counterparty_id)">
               {{ order.source || getCounterpartyName(order.counterparty_id) }}
             </div>
 
@@ -337,6 +337,11 @@
       @success="onCallSuccess" 
     />
 
+    <ClientProfile 
+      v-model="clientProfileVisible"
+      :client-id="selectedClientId"
+    />
+
   </div>
 </template>
 
@@ -347,6 +352,16 @@ import api from '@/api'
 import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download, Promotion, Camera } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
+import ClientProfile from '@/views/CRM/ClientProfile.vue'
+
+const clientProfileVisible = ref(false)
+const selectedClientId = ref(null)
+
+const openClientProfile = (clientId) => {
+  if (!clientId) return
+  selectedClientId.value = clientId
+  clientProfileVisible.value = true
+}
 
 const getPriorityLabel = (p) => {
   const map = { critical: 'Критичний', urgent: 'Високий', normal: 'Середній', low: 'Низький' }
@@ -1254,4 +1269,13 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 /* ─── Header cleanup ─── */
 .crm-subtitle { display: none; }
+
+.clickable-client {
+  cursor: pointer;
+  color: #3D3AA8;
+  font-weight: 600;
+}
+.clickable-client:hover {
+  text-decoration: underline;
+}
 </style>

@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from app.db.session import get_db
 from app.api.dependencies import get_current_active_user
-from app.models import Order, User
+from app.models import Order, User, Counterparty, AuditLog
 from app.models.crm import CrmContact, CrmTask
 from app.models.order_activity_log import OrderActivityLog
 from app.schemas.crm import (
@@ -270,3 +270,83 @@ async def get_sla_status(
     """
     from app.services.sla_service import get_sla_status_for_company
     return get_sla_status_for_company(db, current_user.company_id)
+
+
+@router.get("/clients/{client_id}/profile")
+async def get_client_profile(
+    client_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    company_id = current_user.company_id
+    
+    client = db.query(Counterparty).filter(
+        Counterparty.id == client_id,
+        Counterparty.company_id == company_id
+    ).first()
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+        
+    orders = db.query(Order).filter(
+        Order.counterparty_id == client_id,
+        Order.company_id == company_id
+    ).order_by(Order.created_at.desc()).all()
+    
+    ltv = sum(o.total_amount for o in orders)
+    orders_count = len(orders)
+    
+    # Last action
+    last_log = db.query(AuditLog).join(User, AuditLog.user_id == User.id).filter(
+        User.company_id == company_id,
+        AuditLog.entity_type == 'counterparty',
+        AuditLog.entity_id == client_id
+    ).order_by(AuditLog.created_at.desc()).first()
+    
+    last_contact = db.query(CrmContact).join(Order, CrmContact.order_id == Order.id).filter(
+        Order.counterparty_id == client_id
+    ).order_by(CrmContact.contacted_at.desc()).first()
+    
+    last_action = "Немає дій"
+    last_action_at = None
+    
+    if last_log and last_contact:
+        if last_log.created_at > last_contact.contacted_at:
+            last_action = f"Лог: {last_log.action}"
+            last_action_at = last_log.created_at
+        else:
+            last_action = f"Контакт: {last_contact.communication_type}"
+            last_action_at = last_contact.contacted_at
+    elif last_log:
+        last_action = f"Лог: {last_log.action}"
+        last_action_at = last_log.created_at
+    elif last_contact:
+        last_action = f"Контакт: {last_contact.communication_type}"
+        last_action_at = last_contact.contacted_at
+        
+    # Channel name
+    channel_name = "Невідомо"
+    if client.acquisition_channel:
+        channel_name = client.acquisition_channel.name
+        
+    return {
+        "id": client.id,
+        "name": client.name,
+        "phone": client.phone,
+        "channel": channel_name,
+        "ltv": float(ltv),
+        "orders_count": orders_count,
+        "last_action": last_action,
+        "last_action_at": last_action_at.isoformat() if last_action_at else None,
+        "notes": client.notes,
+        "orders": [
+            {
+                "id": o.id,
+                "order_number": o.order_number,
+                "total_amount": float(o.total_amount),
+                "crm_stage": o.crm_stage,
+                "created_at": o.created_at.isoformat() if hasattr(o, 'created_at') else None
+            }
+            for o in orders
+        ]
+    }
