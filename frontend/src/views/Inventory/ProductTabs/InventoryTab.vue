@@ -5,7 +5,7 @@
           <h3>Складські залишки</h3>
           <p>Поточна наявність товару на всіх складах підприємства</p>
        </div>
-       <div class="header-stats" v-if="stockLevels.length > 0">
+       <div class="header-stats" v-if="groupedStock.length > 0">
           <div class="stat-item">
              <span class="stat-label">Всього на складах</span>
              <span class="stat-value">{{ totalStock }}</span>
@@ -13,7 +13,7 @@
        </div>
     </div>
 
-    <div v-if="stockLevels.length === 0" class="empty-inventory">
+    <div v-if="groupedStock.length === 0" class="empty-inventory">
        <el-empty description="Товар відсутній на складах">
           <template #extra>
              <p class="text-xs text-gray-400">Спробуйте створити Закупівлю або Виробництво для поповнення залишків.</p>
@@ -21,16 +21,28 @@
        </el-empty>
     </div>
 
-    <el-table v-else :data="stockLevels" class="stock-table" border stripe>
-      <el-table-column prop="warehouse" label="Склад">
+    <el-table
+      v-else
+      :data="groupedStock"
+      class="stock-table"
+      border
+      stripe
+      row-key="rowKey"
+      :tree-props="{ children: 'children' }"
+      default-expand-all
+    >
+      <el-table-column label="Склад / Характеристика">
         <template #default="scope">
-           <div class="warehouse-cell">
-              <el-icon class="mr-2"><OfficeBuilding /></el-icon>
-              <span>{{ scope.row.warehouse }}</span>
-           </div>
+          <div class="warehouse-cell" v-if="!scope.row.isVariant">
+            <el-icon class="mr-2"><OfficeBuilding /></el-icon>
+            <span>{{ scope.row.warehouse }}</span>
+          </div>
+          <div class="variant-cell" v-else>
+            <span class="variant-label">{{ scope.row.label }}</span>
+          </div>
         </template>
       </el-table-column>
-      
+
       <el-table-column prop="quantity" label="Наявність" width="160" align="right">
         <template #default="scope">
           <span class="qty-value" :class="scope.row.quantity <= 0 ? 'text-rose-500' : 'text-slate-700'">
@@ -57,7 +69,7 @@
 
       <el-table-column label="Мін. поріг" width="180" align="center">
         <template #default="scope">
-          <div class="flex items-center justify-center gap-2">
+          <div class="flex items-center justify-center gap-2" v-if="!scope.row.isVariant">
              <el-input-number v-model="scope.row.minLevel" :min="0" size="small" controls-position="right" class="min-level-input" />
              <el-tooltip content="Система повідомить, коли залишок опуститься нижче цього рівня">
                 <el-icon class="text-gray-300"><InfoFilled /></el-icon>
@@ -67,7 +79,7 @@
       </el-table-column>
     </el-table>
 
-    <div class="inventory-footer mt-6" v-if="stockLevels.length > 0">
+    <div class="inventory-footer mt-6" v-if="groupedStock.length > 0">
        <el-alert
          title="Управління запасами"
          type="info"
@@ -90,12 +102,52 @@ const props = defineProps({
   }
 })
 
-const totalStock = computed(() => {
-  return props.stockLevels.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0).toFixed(2)
+const totalStock = computed(() =>
+  props.stockLevels
+    .reduce((sum, row) => sum + (parseFloat(row.quantity) || 0), 0)
+    .toFixed(2)
+)
+
+const groupedStock = computed(() => {
+  const map = new Map()
+
+  for (const row of props.stockLevels) {
+    if (!map.has(row.warehouse)) {
+      map.set(row.warehouse, {
+        rowKey: row.warehouse,
+        warehouse: row.warehouse,
+        quantity: 0,
+        reserved: 0,
+        available: 0,
+        minLevel: 5,
+        isVariant: false,
+        children: [],
+      })
+    }
+    const entry = map.get(row.warehouse)
+    entry.quantity += parseFloat(row.quantity) || 0
+    entry.reserved += parseFloat(row.reserved) || 0
+    entry.available += parseFloat(row.available) || 0
+
+    if (row.variant_id) {
+      entry.children.push({
+        rowKey: `${row.warehouse}__${row.variant_id}`,
+        warehouse: row.warehouse,
+        label: row.variant_label || row.variant_sku || row.variant_id,
+        quantity: parseFloat(row.quantity) || 0,
+        reserved: parseFloat(row.reserved) || 0,
+        available: parseFloat(row.available) || 0,
+        minLevel: null,
+        isVariant: true,
+      })
+    }
+  }
+
+  return Array.from(map.values())
 })
 
 const formatQty = (val) => {
-  if (val == null) return "0.00"
+  if (val == null) return '0.00'
   return parseFloat(val).toFixed(2)
 }
 </script>
@@ -161,6 +213,17 @@ const formatQty = (val) => {
   align-items: center;
   font-weight: 600;
   color: #334155;
+}
+
+.variant-cell {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.variant-label {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .qty-value {

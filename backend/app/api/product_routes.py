@@ -51,19 +51,28 @@ async def get_product_stock(
         AccumulationRegister.variant_id,
     ).all()
 
-    # Enrich with variant SKU when variant_id is present
     variant_skus: dict = {}
+    variant_labels: dict = {}
     variant_ids = [r.variant_id for r in results if r.variant_id]
     if variant_ids:
-        from app.models.variant import ProductVariant
+        from app.models.variant import ProductVariant, VariantValue
         variants = db.query(ProductVariant).filter(ProductVariant.id.in_(variant_ids)).all()
-        variant_skus = {str(v.id): v.sku for v in variants}
+        all_vv = db.query(VariantValue).filter(VariantValue.variant_id.in_(variant_ids)).all()
+        vv_by_variant: dict = {}
+        for vv in all_vv:
+            vv_by_variant.setdefault(str(vv.variant_id), []).append(vv)
+        for v in variants:
+            vid = str(v.id)
+            variant_skus[vid] = v.sku
+            text_parts = [vv.text_value for vv in vv_by_variant.get(vid, []) if vv.text_value]
+            variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
 
     return [
         {
             "warehouse": r.warehouse,
             "variant_id": str(r.variant_id) if r.variant_id else None,
             "variant_sku": variant_skus.get(str(r.variant_id)) if r.variant_id else None,
+            "variant_label": variant_labels.get(str(r.variant_id)) if r.variant_id else None,
             "quantity": float(r.quantity),
             "reserved": 0,
             "available": float(r.quantity),
