@@ -5,46 +5,49 @@
       <!-- ===== STAT CARDS ===== -->
       <div class="kimi-stats-row">
         <!-- Всього товарів -->
-        <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Всього товарів</p>
-            <h3 class="kimi-stat-value text-indigo-600">{{ stats.total_products }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
-            <el-icon><Box /></el-icon>
+        <div class="metric-card" style="--card-accent: #3B82F6;">
+          <div class="metric-card__label">ВСЬОГО ТОВАРІВ</div>
+          <div class="metric-card__value">{{ stats.total_products }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 20 L 30 10 L 60 18 L 100 5" fill="none" stroke="#3B82F6" stroke-width="2" />
+            </svg>
           </div>
         </div>
 
         <!-- В наявності -->
-        <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">В наявності</p>
-            <h3 class="kimi-stat-value text-emerald-600">{{ stats.in_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
-            <el-icon><Coordinate /></el-icon>
+        <div class="metric-card" style="--card-accent: #22C55E;">
+          <div class="metric-card__label">В НАЯВНОСТІ</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +5%</span>
+          <div class="metric-card__value">{{ stats.in_stock }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 25 Q 25 5, 50 20 T 100 10" fill="none" stroke="#22C55E" stroke-width="2" />
+            </svg>
           </div>
         </div>
 
         <!-- Закінчуються -->
-        <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Закінчуються</p>
-            <h3 class="kimi-stat-value text-amber-600">{{ stats.low_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
-            <el-icon><Warning /></el-icon>
+        <div class="metric-card" style="--card-accent: #F59E0B;">
+          <div class="metric-card__label">ЗАКІНЧУЮТЬСЯ</div>
+          <span class="metric-card__trend metric-card__trend--down">↓ -2%</span>
+          <div class="metric-card__value">{{ stats.low_stock }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 15 Q 20 25, 40 5 T 80 20 T 100 5" fill="none" stroke="#F59E0B" stroke-width="2" />
+            </svg>
           </div>
         </div>
 
         <!-- Немає -->
-        <div class="kimi-stat-card kimi-stat-rose">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Немає</p>
-            <h3 class="kimi-stat-value text-rose-600">{{ stats.out_of_stock }}</h3>
-          </div>
-          <div class="kimi-stat-icon-wrapper bg-rose-100 text-rose-600">
-            <el-icon><CircleClose /></el-icon>
+        <div class="metric-card" style="--card-accent: #EF4444;">
+          <div class="metric-card__label">НЕМАЄ</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +12%</span>
+          <div class="metric-card__value">{{ stats.out_of_stock }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 20 L 30 10 L 60 18 L 100 5" fill="none" stroke="#EF4444" stroke-width="2" />
+            </svg>
           </div>
         </div>
       </div>
@@ -500,78 +503,58 @@ onActivated(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
-.kimi-stat-card {
-  background: #FFFFFF !important;
-  border: none !important;
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 85px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
+.metric-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #F3F4F6;
+  padding: 16px 20px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.kimi-stat-card:hover {
-  transform: translateY(-3px);
-}
-
-.kimi-stat-label {
+.metric-card__label {
   font-size: 10px;
-  color: #64748B;
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  color: #9CA3AF;
+  margin-bottom: 8px;
 }
 
-.kimi-stat-value {
+.metric-card__value {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 28px;
   font-weight: 500;
-  color: #0F172A;
-  font-family: 'DM Mono', monospace;
-  margin-top: 4px;
-  line-height: 1.2;
+  color: #18181B;
 }
 
-.kimi-stat-indigo .kimi-stat-value { color: #0F172A !important; }
-.kimi-stat-emerald .kimi-stat-value { color: #0F172A !important; }
-.kimi-stat-amber .kimi-stat-value { color: #0F172A !important; }
-.kimi-stat-rose .kimi-stat-value { color: #0F172A !important; }
-
-/* Sparkline emulation line */
-.kimi-stat-card::after {
-  content: '';
+.metric-card__trend {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-}
-.kimi-stat-indigo::after { background: #3B82F6; }
-.kimi-stat-emerald::after { background: #22C55E; }
-.kimi-stat-amber::after { background: #F59E0B; }
-.kimi-stat-rose::after { background: #EF4444; }
-
-/* Trend percentages via pseudo content */
-.kimi-stat-card::before {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
   font-size: 11px;
   font-weight: 600;
 }
-.kimi-stat-indigo::before { content: '↑ +5%'; color: #22C55E; }
-.kimi-stat-emerald::before { content: '↑ +5%'; color: #22C55E; }
-.kimi-stat-amber::before { content: '↓ -2%'; color: #F59E0B; }
-.kimi-stat-rose::before { content: '↑ +12%'; color: #EF4444; }
 
-.kimi-stat-icon-wrapper {
-  display: none !important;
+.metric-card__trend--up   { color: #22C55E; }
+.metric-card__trend--down { color: #EF4444; }
+
+.metric-card__sparkline {
+  margin-top: 12px;
+  height: 40px;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--card-accent);
 }
 
 /* ===== FILTERS TOOLBAR ===== */

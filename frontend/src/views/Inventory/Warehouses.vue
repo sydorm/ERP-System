@@ -52,58 +52,53 @@
     <!-- Stats Dashboard -->
     <el-row :gutter="20" class="stats-row mt-4">
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Складів</span>
-            <span class="metric-trend">↑ +5%</span>
-          </div>
-          <span class="metric-value">{{ warehouses.length }}</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 25 Q 25 5, 50 20 T 100 10" fill="none" stroke="url(#violetMint)" stroke-width="2" />
+        <div class="metric-card" style="--card-accent: #3B82F6;">
+          <div class="metric-card__label">СКЛАДІВ</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +5%</span>
+          <div class="metric-card__value">{{ warehouses.length }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 25 Q 25 5, 50 20 T 100 10" fill="none" stroke="#3B82F6" stroke-width="2" />
             </svg>
           </div>
         </div>
       </el-col>
       
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Загальний запас</span>
-            <span class="metric-trend">↑ +12%</span>
-          </div>
-          <span class="metric-value">{{ totalStockQty }} шт</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 15 Q 20 25, 40 5 T 80 20 T 100 5" fill="none" stroke="url(#violetMint)" stroke-width="2" />
+        <div class="metric-card" style="--card-accent: #22C55E;">
+          <div class="metric-card__label">ЗАГАЛЬНИЙ ЗАПАС</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +12%</span>
+          <div class="metric-card__value">{{ totalStockQty }} шт</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 15 Q 20 25, 40 5 T 80 20 T 100 5" fill="none" stroke="#22C55E" stroke-width="2" />
             </svg>
           </div>
         </div>
       </el-col>
 
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card">
-          <div class="metric-header">
-            <span class="metric-title">Оцінка капіталу</span>
-            <span class="metric-trend">↑ +2.4%</span>
-          </div>
-          <span class="metric-value">{{ formatCurrency(totalStockValue) }}</span>
-          <div class="metric-chart-container">
-            <svg class="metric-sparkline" viewBox="0 0 100 30">
-              <path d="M0 20 L 30 10 L 60 18 L 100 5" fill="none" stroke="url(#violetMint)" stroke-width="2" />
+        <div class="metric-card" style="--card-accent: #F59E0B;">
+          <div class="metric-card__label">ОЦІНКА КАПІТАЛУ</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +2.4%</span>
+          <div class="metric-card__value">{{ formatCurrency(totalStockValue) }}</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 20 L 30 10 L 60 18 L 100 5" fill="none" stroke="#F59E0B" stroke-width="2" />
             </svg>
           </div>
         </div>
       </el-col>
 
       <el-col :xs="24" :sm="12" :md="6">
-        <div class="premium-metric-card card-efficiency">
-          <div class="metric-header">
-            <span class="metric-title">Ефективність</span>
-          </div>
-          <div class="efficiency-content mt-2">
-            <el-progress :percentage="85" :stroke-width="8" class="gradient-progress" :show-text="false" />
-            <span class="metric-value-sub mt-1">85% Optimal</span>
+        <div class="metric-card" style="--card-accent: #EF4444;">
+          <div class="metric-card__label">ЕФЕКТИВНІСТЬ</div>
+          <span class="metric-card__trend metric-card__trend--up">↑ +1%</span>
+          <div class="metric-card__value">85%</div>
+          <div class="metric-card__sparkline">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+              <path d="M0 20 Q 30 5, 60 25 T 100 15" fill="none" stroke="#EF4444" stroke-width="2" />
+            </svg>
           </div>
         </div>
       </el-col>
@@ -640,68 +635,55 @@ onMounted(() => {
 }
 
 /* Stats Dashboard */
-.premium-metric-card {
+.metric-card {
   background: #FFFFFF;
-  border: none;
   border-radius: 16px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 120px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #F3F4F6;
+  padding: 16px 20px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.premium-metric-card:hover {
-  transform: translateY(-3px);
 }
 
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.metric-title {
-  font-size: 0.8rem;
-  color: #64748B;
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
+.metric-card__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  color: #9CA3AF;
+  margin-bottom: 8px;
 }
 
-.metric-trend {
-  font-size: 0.75rem;
-  color: #00C9A7;
-  font-weight: 700;
-  background: rgba(0, 201, 167, 0.1);
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-.metric-value {
-  font-size: 1.7rem;
+.metric-card__value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
   font-weight: 500;
-  color: #0F172A;
-  font-family: 'DM Mono', monospace;
-  margin-top: 10px;
-  z-index: 2;
+  color: #18181B;
 }
 
-.metric-chart-container {
+.metric-card__trend {
   position: absolute;
-  bottom: -5px;
-  left: 0; right: 0;
-  height: 40px;
-  z-index: 1;
-  opacity: 0.6;
+  top: 16px;
+  right: 16px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.metric-sparkline {
-  width: 100%; height: 100%;
+.metric-card__trend--up   { color: #22C55E; }
+.metric-card__trend--down { color: #EF4444; }
+
+.metric-card__sparkline {
+  margin-top: 12px;
+  height: 40px;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--card-accent);
 }
 
 .metric-value-sub {
