@@ -624,18 +624,41 @@ onActivated(() => {
 
 /* Header styling */
 .kimi-table :deep(th.el-table__cell) {
-  background: linear-gradient(135deg, rgba(108,99,255,0.06), rgba(0,201,167,0.06)) !important;
-  color: #374151;
+  background: #FFFFFF !important;
+  color: #9CA3AF !important;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 2px solid rgba(108,99,255,0.15) !important;
+  letter-spacing: 0.08em;
+  border-top: 1px solid #F3F4F6 !important;
+  border-bottom: 1px solid #F3F4F6 !important;
   padding: 10px 8px !important;
 }
 
-/* Table Row Highlighting Rules */
+/* Colored Header Dots */
+.kimi-table :deep(th.el-table__cell .cell::before) {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.kimi-table :deep(th.el-table__cell:nth-child(2) .cell::before) { background-color: #6B7280; }
+.kimi-table :deep(th.el-table__cell:nth-child(3) .cell::before) { background-color: #6C63FF; }
+.kimi-table :deep(th.el-table__cell:nth-child(4) .cell::before) { background-color: #00C9A7; }
+.kimi-table :deep(th.el-table__cell:nth-child(5) .cell::before) { background-color: #F59E0B; }
+.kimi-table :deep(th.el-table__cell:nth-child(6) .cell::before) { background-color: #22C55E; }
+
+.kimi-table :deep(th.el-table__cell:nth-child(1) .cell::before),
+.kimi-table :deep(th.el-table__cell:nth-child(7) .cell::before) {
+  display: none !important;
+}
+
+/* Table Row Highlighting Rules - Zebra Effect */
 .kimi-table :deep(.el-table__row) {
   height: 48px !important;
 }
@@ -646,28 +669,20 @@ onActivated(() => {
   border-bottom: 1px solid #F3F4F6 !important;
 }
 
-/* Stock 0 formatting */
-:deep(.kimi-row[class*="out_of_stock"] td) {
-  background-color: rgba(239, 68, 68, 0.02) !important;
-}
-:deep(.kimi-row[class*="out_of_stock"] td:first-child) {
-  border-left: 2px solid #EF4444 !important;
+.kimi-table :deep(.el-table__row:nth-child(even) td) {
+  background-color: #FAFBFF !important;
 }
 
-/* Stock > 0 formatting */
-:deep(.kimi-row:not([class*="out_of_stock"]) td) {
-  background-color: rgba(34, 197, 94, 0.02) !important;
-}
-:deep(.kimi-row:not([class*="out_of_stock"]) td:first-child) {
-  border-left: 2px solid #22C55E !important;
+.kimi-table :deep(.el-table__row:nth-child(odd) td) {
+  background-color: #FFFFFF !important;
 }
 
 /* Hover state */
 :deep(.kimi-row:hover td) {
-  background: linear-gradient(90deg, rgba(108, 99, 255, 0.04), transparent) !important;
+  background-color: #F5F3FF !important;
 }
 :deep(.kimi-row:hover td:first-child) {
-  border-left: 2px solid #6C63FF !important;
+  border-left: 3px solid #6C63FF !important;
 }
 
 /* SKU and Name */
