@@ -338,9 +338,9 @@ const viewMode = ref('list')
 const aiDrawerVisible = ref(false)
 const aiResponse = ref('')
 
-const categoryOptions = computed(() => dictStore.categories || [])
-const getCategoryName = (code) => dictStore.getCategoryName(code)
-const getUomName = (code) => dictStore.getUomName(code)
+const categoryOptions = computed(() => dictStore.getCategory('product_category'))
+const getCategoryName = (code) => dictStore.getName('product_category', code)
+const getUomName = (code) => dictStore.getShortName('uom', code)
 
 const formatCurrency = (val, currency = 'UAH') => {
   return new Intl.NumberFormat('uk-UA', {
@@ -433,7 +433,7 @@ const askAI = (type) => {
 }
 
 onMounted(() => {
-  dictStore.fetchDictionaries().then(() => {
+  dictStore.fetchMultiple(['product_category', 'uom']).then(() => {
     fetchStatistics().then(() => fetchData())
   })
 })
