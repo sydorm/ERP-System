@@ -12,8 +12,10 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    role: str = Field("worker", pattern="^(admin|manager|worker)$")
+    role: str = Field("worker", pattern="^(admin|manager|worker|production|accountant)$")
     permissions: dict = Field(default_factory=dict)
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -39,9 +41,11 @@ class UserUpdate(BaseModel):
     """Schema for updating user profile"""
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    role: Optional[str] = Field(None, pattern="^(admin|manager|worker)$")
+    role: Optional[str] = Field(None, pattern="^(admin|manager|worker|production|accountant)$")
     email: Optional[EmailStr] = None
     permissions: Optional[dict] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 
 class UserPasswordUpdate(BaseModel):

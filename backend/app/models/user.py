@@ -1,7 +1,7 @@
 """
 User model - represents system users
 """
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
@@ -28,6 +28,12 @@ class User(BaseModel):
     role = Column(String(50), default="worker", nullable=False)  # admin, manager, worker
     permissions = Column(JSON, default={}, nullable=False)
     
+    # New fields
+    phone = Column(String(50), nullable=True)
+    blocked_at = Column(DateTime, nullable=True)
+    last_login_at = Column(DateTime, nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
@@ -44,3 +50,15 @@ class User(BaseModel):
     
     def __repr__(self):
         return f"<User {self.email}>"
+
+
+class UserLoginLog(BaseModel):
+    """
+    User login logs
+    """
+    __tablename__ = "user_login_logs"
+    
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    ip_address = Column(String(50), nullable=True)
+    
+    user = relationship("User", backref="login_logs")

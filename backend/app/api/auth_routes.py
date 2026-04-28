@@ -2,12 +2,12 @@
 Authentication API routes
 Handles user registration, login, and profile management
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from app.db.session import get_db
-from app.models import User
+from app.models import User, UserLoginLog
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, UserUpdate, Token,
     CompanyRegistrationRequest, UserPasswordUpdate, ForgotPasswordRequest
@@ -137,7 +137,7 @@ async def register_company(reg_data: CompanyRegistrationRequest, db: Session = D
 
 
 @router.post("/auth/login", response_model=Token)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+async def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     """
     Login user and return JWT token
     
@@ -168,6 +168,24 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
         )
+        
+    # Check if user is blocked
+    if user.blocked_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Користувач заблокований"
+        )
+        
+    # Update last login
+    user.last_login_at = datetime.utcnow()
+    
+    # Log login
+    login_log = UserLoginLog(
+        user_id=user.id,
+        ip_address=request.client.host if request.client else None
+    )
+    db.add(login_log)
+    db.commit()
     
     # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

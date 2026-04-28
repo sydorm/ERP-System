@@ -68,9 +68,11 @@ async def create_user(
         hashed_password=get_password_hash(user_in.password),
         first_name=user_in.first_name,
         last_name=user_in.last_name,
+        phone=user_in.phone,
+        avatar_url=user_in.avatar_url,
         role=user_in.role or "worker",
         permissions=user_in.permissions or {},
-        company_id=current_user.company_id, # Link to admin's company
+        company_id=current_user.company_id,
         is_active=True,
         is_superuser=False
     )
@@ -125,6 +127,10 @@ async def update_user(
         user.role = user_in.role
     if user_in.permissions is not None:
         user.permissions = user_in.permissions
+    if user_in.phone is not None:
+        user.phone = user_in.phone
+    if user_in.avatar_url is not None:
+        user.avatar_url = user_in.avatar_url
         
     db.commit()
     db.refresh(user)
@@ -213,3 +219,19 @@ async def reset_user_password(
     # For now, let's just return the user. The password will be shown in the UI once after reset.
     user.temp_password = new_password # Temporal property for response (not in DB)
     return user
+
+
+@router.patch("/users/{user_id}/block")
+async def block_user(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    from datetime import datetime
+    user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Користувача не знайдено")
+        
+    user.blocked_at = datetime.utcnow()
+    db.commit()
+    return {"status": "blocked", "blocked_at": user.blocked_at.isoformat()}
