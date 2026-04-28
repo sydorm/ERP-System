@@ -181,6 +181,10 @@ app.include_router(production_router, prefix="/api/v1/production", tags=["Produc
 from app.api.crm_routes import router as crm_router
 app.include_router(crm_router, prefix="/api/v1", tags=["CRM"])
 
+from app.api.dashboard_routes import router as dashboard_router
+app.include_router(dashboard_router, prefix="/api/v1", tags=["Dashboard"])
+
+
 from app.api.tax_settings_routes import router as tax_settings_router
 app.include_router(tax_settings_router, prefix="/api/v1", tags=["Organization"])
 
