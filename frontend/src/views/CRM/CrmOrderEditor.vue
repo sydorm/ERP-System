@@ -555,7 +555,6 @@
               </div>
             </div>
           </div>
-        </div>
 
         <!-- ══ HISTORY ══ -->
         <div class="crm-section">
