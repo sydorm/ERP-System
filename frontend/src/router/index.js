@@ -95,12 +95,7 @@ const router = createRouter({
                     component: () => import('@/views/Inventory/Warehouses.vue'),
                     meta: { title: 'Склади' }
                 },
-                {
-                    path: '/inventory/warehouses/dashboard',
-                    name: 'warehouses-dashboard',
-                    component: () => import('@/views/Inventory/WarehouseDashboard.vue'),
-                    meta: { title: 'Аналітика Складу' }
-                },
+
                 // Sales routes
                 {
                     path: '/sales/counterparties',
