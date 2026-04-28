@@ -312,17 +312,8 @@
     </el-drawer>
   </div>
 </template>
-="productMovements" style="width: 100%" size="small">
-            <el-table-column prop="date" label="Дата" width="100" />
-            <el-table-column prop="type" label="Операція" width="100" />
-            <el-table-column prop="qty" label="К-сть" align="right" width="70" />
-            <el-table-column prop="note" label="Коментар" />
-          </el-table>
-        </div>
-      </div>
-    </el-drawer>
-  </div>
-</template>
+
+
 
 
 
