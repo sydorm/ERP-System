@@ -275,18 +275,53 @@
 
           <!-- Metric cards (сума/передоплата) -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
-            <div style="background: #F8F9FF; border-radius: 10px; padding: 10px; text-align: center;">
-              <div style="font-size: 22px; font-weight: 700; color: #111827;">
+            <div 
+              style="border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s;"
+              :style="{
+                background: '#F8F9FF',
+                border: editTotalAmount ? '2px solid #3D3AA8' : '2px solid transparent'
+              }"
+              @click="editTotalAmount = true; $nextTick(() => $refs.totalAmountInput?.focus())"
+            >
+              <div v-if="!editTotalAmount" style="font-size: 22px; font-weight: 700; color: #111827;">
                 {{ formatCurrency(form.total_amount) }}
               </div>
+              <input
+                v-else
+                ref="totalAmountInput"
+                v-model.number="form.total_amount"
+                type="number"
+                style="font-size: 18px; font-weight: 700; color: #111827; border: none; background: transparent; width: 100%; text-align: center; outline: none;"
+                @input="calcPrepayment"
+                @blur="editTotalAmount = false"
+                @keyup.enter="editTotalAmount = false"
+              />
               <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">
                 сума грн
               </div>
             </div>
-            <div style="background: #F8F9FF; border-radius: 10px; padding: 10px; text-align: center;">
-              <div style="font-size: 22px; font-weight: 700; color: #3D3AA8;">
+
+            <div 
+              style="border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s;"
+              :style="{
+                background: '#F8F9FF',
+                border: editPrepaymentAmount ? '2px solid #3D3AA8' : '2px solid transparent'
+              }"
+              @click="editPrepaymentAmount = true; $nextTick(() => $refs.prepaymentAmountInput?.focus())"
+            >
+              <div v-if="!editPrepaymentAmount" style="font-size: 22px; font-weight: 700; color: #3D3AA8;">
                 {{ formatCurrency(form.prepayment_amount) }}
               </div>
+              <input
+                v-else
+                ref="prepaymentAmountInput"
+                v-model.number="form.prepayment_amount"
+                type="number"
+                style="font-size: 18px; font-weight: 700; color: #3D3AA8; border: none; background: transparent; width: 100%; text-align: center; outline: none;"
+                @input="onPrepaymentInput"
+                @blur="editPrepaymentAmount = false"
+                @keyup.enter="editPrepaymentAmount = false"
+              />
               <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">
                 передоплата
                 <span v-if="form.total_amount > 0">
@@ -294,21 +329,6 @@
                 </span>
               </div>
             </div>
-          </div>
-
-          <!-- Inline input суми -->
-          <div style="position: relative; margin-bottom: 12px;">
-            <input
-              v-model.number="form.total_amount"
-              type="number"
-              style="font-size: 26px; font-weight: 700; color: #111827; border: none; border-bottom: 2px solid transparent; background: transparent; width: 100%; padding: 4px 0; outline: none; transition: all 0.2s ease;"
-              :class="{ 'field-error': vErrors.amount }"
-              placeholder="0"
-              @input="calcPrepayment"
-              @focus="$event.target.style.borderBottomColor = '#3D3AA8'"
-              @blur="$event.target.style.borderBottomColor = 'transparent'"
-            />
-            <span v-if="form.total_amount > 0" style="position: absolute; right: 0; bottom: 6px; font-size: 26px; font-weight: 700; color: #111827; pointer-events: none;">₴</span>
           </div>
 
           <!-- Кнопки передоплати -->
@@ -640,6 +660,9 @@ const paymentStatusesRes = ref([])
 const prioritiesRes = ref([])
 const bankAccounts = ref([])
 const deliveryMethods = ref([])
+
+const editTotalAmount = ref(false)
+const editPrepaymentAmount = ref(false)
 
 const defaultCommTypes = [
   { code: 'CALL', name: 'Дзвінок', icon: '📞' },
