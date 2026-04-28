@@ -797,13 +797,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569; position: relative;
 }
 .crm-export-btn {
-  background: #fff; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; 
-  font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569;
-  transition: all 0.2s;
-}
-.crm-export-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  display: none;
 }
 .crm-reset-all-btn {
   background: transparent; border: none; color: #ef4444; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0 8px; transition: color 0.2s;
@@ -1199,4 +1193,20 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   background: white;
   color: #3D3AA8;
 }
+
+/* ─── Column colors by stage position ─── */
+.crm-kanban .kanban-column:nth-child(1) { background: #EFF6FF; border-top-color: #3B82F6; }
+.crm-kanban .kanban-column:nth-child(2) { background: #FFF7ED; border-top-color: #F59E0B; }
+.crm-kanban .kanban-column:nth-child(3) { background: #F0FDF4; border-top-color: #22C55E; }
+.crm-kanban .kanban-column:nth-child(4) { background: #FDF4FF; border-top-color: #A855F7; }
+.crm-kanban .kanban-column:nth-child(5) { background: #F0FDF4; border-top-color: #16A34A; }
+
+/* ─── Hide extra card icons (keep phone + viber/comment) ─── */
+.channel-icon.telegram { display: none; }
+.channel-icon.instagram { display: none; }
+/* Hide avatar (?) and arrow (→) button */
+.card-meta-right { display: none; }
+
+/* ─── Header cleanup ─── */
+.crm-subtitle { display: none; }
 </style>
