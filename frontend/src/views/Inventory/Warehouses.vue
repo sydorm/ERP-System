@@ -1,128 +1,91 @@
 <template>
   <div class="erp-light-container">
-    <!-- Toolbar -->
-    <div class="erp-toolbar">
-      <div class="erp-toolbar-left">
-        <h2 class="page-title">Керування Складами</h2>
+    <!-- Top Actions Bar (Compact, unified) -->
+    <div class="erp-actions-toolbar">
+      <div class="actions-left">
+        <el-button class="compact-action-btn" :icon="Download" @click="quickProcurement" type="primary" size="small" plain>
+          Прихід
+        </el-button>
+        <el-button class="compact-action-btn" :icon="DocumentDelete" @click="quickWriteOff" type="danger" size="small" plain>
+          Списання
+        </el-button>
+        <el-button class="compact-action-btn" :icon="Switch" @click="quickTransfer" type="info" size="small" plain>
+          Переміщення
+        </el-button>
+        
+        <!-- Collapsed Filters Popover -->
+        <el-popover placement="bottom" title="Фільтрація запасів" :width="300" trigger="click" class="light-popover">
+          <template #reference>
+            <el-button :icon="Search" size="small" class="compact-action-btn ml-2">Фільтри</el-button>
+          </template>
+          <div class="popover-filters-grid">
+            <el-input v-model="searchQuery" placeholder="Пошук складу..." :prefix-icon="Search" size="small" clearable class="mb-2" />
+            <el-input v-model="filterProduct" placeholder="Пошук товару..." :prefix-icon="Search" size="small" clearable class="mb-2" />
+            <el-select v-model="filterCategory" placeholder="Категорія" clearable size="small" class="mb-2 w-100">
+              <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
+            </el-select>
+            <el-select v-model="filterWarehouse" placeholder="Обрати склад" clearable size="small" class="w-100">
+              <el-option v-for="wh in warehouses" :key="wh.id" :label="wh.name" :value="wh.id" />
+            </el-select>
+          </div>
+        </el-popover>
+
+        <el-button :icon="List" size="small" class="compact-action-btn ml-2" @click="drawerVisible = true">
+          Історія рухів
+        </el-button>
       </div>
-      <div class="erp-toolbar-right">
-        <el-button type="primary" :icon="Plus" @click="openCreateDialog" class="action-primary-btn">
+
+      <div class="actions-right">
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog" size="small" class="action-primary-btn">
           Додати Склад
         </el-button>
       </div>
     </div>
 
-    <!-- Filters and Search Panel -->
-    <div class="filters-panel mt-4">
-      <el-row :gutter="15">
-        <el-col :span="6">
-          <el-input
-            v-model="searchQuery"
-            placeholder="Пошук складу за назвою..."
-            :prefix-icon="Search"
-            clearable
-            class="light-filter-input"
-          />
-        </el-col>
-        <el-col :span="6">
-          <el-input
-            v-model="filterProduct"
-            placeholder="Пошук по товару..."
-            :prefix-icon="Search"
-            clearable
-            class="light-filter-input"
-          />
-        </el-col>
-        <el-col :span="6">
-          <el-select v-model="filterCategory" placeholder="Категорія товару" clearable style="width: 100%">
-            <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
-          </el-select>
-        </el-col>
-        <el-col :span="6">
-          <el-select v-model="filterWarehouse" placeholder="Обрати склад" clearable style="width: 100%">
-            <el-option v-for="wh in warehouses" :key="wh.id" :label="wh.name" :value="wh.id" />
-          </el-select>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- Quick Actions Bar -->
-    <div class="quick-actions-grid mt-4">
-      <el-button class="soft-action-btn" :icon="Download" @click="quickProcurement" type="primary" plain>
-        Прихід товару
-      </el-button>
-      <el-button class="soft-action-btn" :icon="DocumentDelete" @click="quickWriteOff" type="danger" plain>
-        Списання
-      </el-button>
-      <el-button class="soft-action-btn" :icon="Switch" @click="quickTransfer" type="info" plain>
-        Переміщення
-      </el-button>
-    </div>
-
     <!-- Stats Dashboard -->
-    <el-row :gutter="20" class="stats-row mt-4">
-      <el-col :xs="24" :sm="12" :md="6">
+    <el-row :gutter="15" class="stats-row mt-3">
+      <el-col :xs="12" :sm="6">
         <div class="premium-metric-card">
-          <div class="metric-meta">
-            <span class="metric-title">Всього складів</span>
-            <span class="metric-badge blue">+2% AI Opt</span>
-          </div>
-          <div class="metric-value-row">
-            <span class="metric-value">{{ warehouses.length }}</span>
-          </div>
+          <span class="metric-title">Складів</span>
+          <span class="metric-value">{{ warehouses.length }}</span>
         </div>
       </el-col>
       
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="12" :sm="6">
         <div class="premium-metric-card">
-          <div class="metric-meta">
-            <span class="metric-title">Загальний запас</span>
-            <span class="metric-badge purple">Live Sync</span>
-          </div>
-          <div class="metric-value-row">
-            <span class="metric-value">{{ totalStockQty }} шт</span>
-          </div>
+          <span class="metric-title">Загальний запас</span>
+          <span class="metric-value">{{ totalStockQty }} шт</span>
         </div>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="12" :sm="6">
         <div class="premium-metric-card">
-          <div class="metric-meta">
-            <span class="metric-title">Оцінка капіталу</span>
-            <span class="metric-badge green">Закупівля</span>
-          </div>
-          <div class="metric-value-row">
-            <span class="metric-value">{{ formatCurrency(totalStockValue) }}</span>
-          </div>
+          <span class="metric-title">Оцінка капіталу</span>
+          <span class="metric-value">{{ formatCurrency(totalStockValue) }}</span>
         </div>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :md="6">
+      <el-col :xs="12" :sm="6">
         <div class="premium-metric-card">
-          <div class="metric-meta">
-            <span class="metric-title">Ефективність місця</span>
-            <span class="metric-badge orange">84% Load</span>
-          </div>
-          <div class="metric-value-row">
-            <span class="metric-value">A+</span>
-          </div>
+          <span class="metric-title">Ефективність</span>
+          <span class="metric-value">A+</span>
         </div>
       </el-col>
     </el-row>
 
     <!-- Main Content: Warehouse Expandable Grid -->
-    <div class="mt-6 list-container">
-      <el-table v-loading="loading" :data="filteredWarehouses" style="width: 100%" class="light-premium-table">
+    <div class="mt-4 list-container">
+      <el-table v-loading="loading" :data="filteredWarehouses" style="width: 100%" class="light-premium-table" size="small">
         <el-table-column type="expand">
           <template #default="props">
             <div class="expand-content">
               <div class="expand-header">
-                <h4>Товарні залишки на складі: <strong>{{ props.row.name }}</strong></h4>
+                <h4>Залишки на складі: <strong>{{ props.row.name }}</strong></h4>
                 <span class="financial-valuation">Вартість активів: <strong>{{ formatCurrency(getWarehouseStockValue(props.row.id)) }}</strong></span>
               </div>
 
-              <el-table :data="getWarehouseStock(props.row.id)" size="small" class="light-inner-table mt-3" stripe border>
-                <el-table-column label="Товар" min-width="220">
+              <el-table :data="getWarehouseStock(props.row.id)" size="small" class="light-inner-table mt-2" stripe border>
+                <el-table-column label="Товар" min-width="200">
                   <template #default="scope">
                     <router-link :to="'/inventory/nomenclature/' + scope.row.product_id" class="product-link" v-if="scope.row.product_id">
                       {{ scope.row.product_name }}
@@ -136,23 +99,23 @@
                     <span v-else>—</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Характеристика" prop="variant_label" min-width="150">
+                <el-table-column label="Характеристика" prop="variant_label" min-width="120">
                   <template #default="scope">
                     <span v-if="scope.row.variant_label">{{ scope.row.variant_label }}</span>
                     <span class="empty-text" v-else>—</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Собівартість" width="130" align="right">
+                <el-table-column label="Собівартість" width="120" align="right">
                   <template #default="scope">
                     {{ formatCurrency(scope.row.cost) }}
                   </template>
                 </el-table-column>
-                <el-table-column label="Кількість" prop="quantity" width="120" align="right">
+                <el-table-column label="Кількість" prop="quantity" width="100" align="right">
                   <template #default="scope">
                     <span class="stock-qty">{{ scope.row.quantity }} шт</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Сума" width="140" align="right">
+                <el-table-column label="Сума" width="120" align="right">
                   <template #default="scope">
                     <span class="total-amount">{{ formatCurrency(scope.row.quantity * scope.row.cost) }}</span>
                   </template>
@@ -160,13 +123,13 @@
               </el-table>
               
               <div v-if="!getWarehouseStock(props.row.id).length" class="empty-stock-state">
-                <span>За вашим фільтром товарів на цьому складі не знайдено.</span>
+                <span>Немає товарів.</span>
               </div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="Назва" prop="name" min-width="250">
+        <el-table-column label="Назва" prop="name" min-width="180">
           <template #default="scope">
             <div class="warehouse-name-cell">
               <span class="warehouse-name">{{ scope.row.name }}</span>
@@ -177,20 +140,36 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Адреса" prop="address" min-width="250">
+        <el-table-column label="Адреса" prop="address" min-width="180">
           <template #default="scope">
             <span>{{ scope.row.address || '—' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Статус" prop="is_active" width="150" align="center">
+        <el-table-column label="К-ть позицій" width="120" align="center">
           <template #default="scope">
-            <span class="status-dot" :class="scope.row.is_active ? 'active' : 'inactive'"></span>
-            <span class="status-text">{{ scope.row.is_active ? 'Активний' : 'Заповнений' }}</span>
+            <span>{{ getWarehouseItemsCount(scope.row.id) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Дії" width="150" align="center">
+        <el-table-column label="% заповненості" width="140" align="center">
+          <template #default="scope">
+            <el-progress 
+              :percentage="getWarehouseCapacity(scope.row.id)" 
+              :status="getWarehouseCapacity(scope.row.id) > 80 ? 'exception' : 'success'" 
+              :stroke-width="6" 
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Статус" prop="is_active" width="120" align="center">
+          <template #default="scope">
+            <span class="status-dot" :class="scope.row.is_active ? 'active' : 'inactive'"></span>
+            <span class="status-text">{{ scope.row.is_active ? 'Активний' : 'Повний' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Дії" width="120" align="center">
           <template #default="scope">
             <div class="actions-cell">
               <el-button type="primary" :icon="Edit" circle size="small" @click="openEditDialog(scope.row)" />
@@ -201,95 +180,86 @@
       </el-table>
     </div>
 
-    <!-- Product Movement History -->
-    <div class="premium-ai-card mt-6">
-      <div class="ai-header">
-        <el-icon class="ai-icon" color="#6366f1"><List /></el-icon>
-        <h3 class="ai-title">Історія руху товарів</h3>
-      </div>
-      <div class="ai-body mt-3">
-        <el-table :data="movements" size="small" border class="light-inner-table" stripe>
-          <el-table-column prop="created_at" label="Дата" width="180">
-            <template #default="scope">{{ formatDate(scope.row.created_at) }}</template>
-          </el-table-column>
-          <el-table-column prop="product_name" label="Товар" min-width="180" />
-          <el-table-column prop="warehouse_name" label="Склад" width="150" />
-          <el-table-column prop="quantity" label="Кількість" width="120" align="right">
-            <template #default="scope">
-              <span :class="scope.row.quantity > 0 ? 'qty-plus' : 'qty-minus'" class="qty-badge">
-                {{ scope.row.quantity > 0 ? '+' : '' }}{{ scope.row.quantity }} шт
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="document_type" label="Документ" width="180">
-            <template #default="scope">
-              <el-tag type="info" size="small">{{ mapDocType(scope.row.document_type) }}</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div v-if="!movements.length" class="empty-stock-state">
-          Історії рухів ще немає. Проведіть будь-який документ приходу чи продажу.
-        </div>
-      </div>
+    <!-- Side Drawer for Movement History -->
+    <el-drawer v-model="drawerVisible" title="Історія руху товарів" size="45%">
+      <el-table :data="movements" size="small" border stripe>
+        <el-table-column prop="created_at" label="Дата" width="150">
+          <template #default="scope">{{ formatDate(scope.row.created_at) }}</template>
+        </el-table-column>
+        <el-table-column prop="product_name" label="Товар" min-width="150" />
+        <el-table-column prop="quantity" label="К-ть" width="90" align="right">
+          <template #default="scope">
+            <span :class="scope.row.quantity > 0 ? 'qty-plus' : 'qty-minus'" class="qty-badge">
+              {{ scope.row.quantity > 0 ? '+' : '' }}{{ scope.row.quantity }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="document_type" label="Документ" width="150">
+          <template #default="scope">
+            <span class="doc-type-text">{{ mapDocType(scope.row.document_type) }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-drawer>
+
+    <!-- AI Floating Action Button (FAB) -->
+    <div class="ai-fab-button" @click="aiDialogVisible = true">
+      <span class="ai-fab-pulse"></span>
+      <el-icon><MagicStick /></el-icon>
     </div>
 
-    <!-- AI Demand Analyzer & Forecast Widget -->
-    <div class="premium-ai-card mt-6">
-      <div class="ai-header">
-        <el-icon class="ai-icon" color="#6366f1"><MagicStick /></el-icon>
-        <h3 class="ai-title">AI Помічник: Аналізатор руху товарів</h3>
-      </div>
-      <div class="ai-body mt-3">
-        <div class="ai-analysis-block">
-          <span class="ai-glow-robot">🤖</span>
-          <div class="ai-analysis-text">
-            <strong>Прогноз вичерпання залишків:</strong> На основі проведених операцій, поточний темп споживання показує, що позиції, такі як <em>"ДСП Сонома 18 мм"</em>, покривають лише <strong>8 днів</strong> продажів.
-            <br />
-            <span class="ai-suggestion mt-2"><strong>Рекомендація:</strong> Сформувати замовлення постачальнику на поповнення запасів у розмірі 50 шт.</span>
+    <!-- AI Assistant Insights Dialog -->
+    <el-dialog v-model="aiDialogVisible" title="AI Помічник" width="400px" class="ai-insight-dialog" append-to-body>
+      <div class="ai-chat-block">
+        <div class="ai-chat-header">
+          <span class="ai-avatar">🤖</span>
+          <div class="ai-meta">
+            <strong>Складський Аналітик</strong>
+            <p>Аналіз залишків у реальному часі</p>
           </div>
         </div>
-
-        <el-row :gutter="24" class="mt-4 ai-stats-row">
-          <el-col :span="12">
-            <div class="ai-stat-box blue">
-              <span class="ai-stat-lbl">ШВИДКІСТЬ ОБОРОТУ</span>
-              <span class="ai-stat-val">1.2 рази/міс</span>
+        <div class="ai-chat-body mt-3">
+          <div class="ai-message">
+            <strong>Прогноз вичерпання:</strong> "ДСП Сонома 18 мм" вичерпається приблизно за <strong>8 днів</strong>.
+            <br/><br/>
+            💡 <strong>Рекомендація:</strong> Створити замовлення постачальнику на поповнення (мінімум 50 шт).
+          </div>
+          <div class="ai-metrics-grid mt-3">
+            <div class="ai-metric-item">
+              <span class="lbl">ОБОРОТНІСТЬ</span>
+              <span class="val">1.2 рази/міс</span>
             </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="ai-stat-box green">
-              <span class="ai-stat-lbl">ОПТИМАЛЬНИЙ РЕЗЕРВ</span>
-              <span class="ai-stat-val">10-15 днів</span>
+            <div class="ai-metric-item">
+              <span class="lbl">РЕЗЕРВ</span>
+              <span class="val">10 днів</span>
             </div>
-          </el-col>
-        </el-row>
+          </div>
+        </div>
       </div>
-    </div>
+      <template #footer>
+        <el-button type="primary" class="w-100" @click="aiDialogVisible = false">Зрозуміло</el-button>
+      </template>
+    </el-dialog>
 
     <!-- Create/Edit Dialog -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" class="light-dialog">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="450px" class="light-dialog">
       <el-form :model="form" :rules="rules" ref="formRef" label-position="top" size="small">
         <el-form-item label="Назва складу" prop="name">
           <el-input v-model="form.name" placeholder="Напр. Центральний Хаб А1" />
         </el-form-item>
-
         <el-form-item label="Адреса">
           <el-input v-model="form.address" type="textarea" :rows="2" placeholder="Вкажіть адресу складу" />
         </el-form-item>
-
         <el-form-item>
           <el-checkbox v-model="form.is_default" label="Зробити цей склад основним" />
         </el-form-item>
-
         <el-form-item>
           <el-checkbox v-model="form.is_active" label="Активний для використання" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false" size="small">Скасувати</el-button>
-          <el-button type="primary" :loading="submitting" @click="saveWarehouse" size="small">Зберегти</el-button>
-        </div>
+        <el-button @click="dialogVisible = false" size="small">Скасувати</el-button>
+        <el-button type="primary" :loading="submitting" @click="saveWarehouse" size="small">Зберегти</el-button>
       </template>
     </el-dialog>
   </div>
@@ -315,6 +285,8 @@ const allStock = ref([])
 const movements = ref([])
 
 const dialogVisible = ref(false)
+const drawerVisible = ref(false)
+const aiDialogVisible = ref(false)
 const dialogTitle = ref('Створити склад')
 const formRef = ref(null)
 
@@ -333,32 +305,36 @@ const categories = computed(() => {
 
 const filteredWarehouses = computed(() => {
   let list = warehouses.value
-  
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     list = list.filter(w => w.name.toLowerCase().includes(query))
   }
-  
   if (filterWarehouse.value) {
     list = list.filter(w => w.id === filterWarehouse.value)
   }
-  
   return list
 })
 
 const getWarehouseStock = (warehouseId) => {
   let stock = allStock.value.filter(item => item.warehouse_id === warehouseId)
-  
   if (filterProduct.value) {
     const prodQuery = filterProduct.value.toLowerCase()
     stock = stock.filter(i => i.product_name.toLowerCase().includes(prodQuery))
   }
-  
   if (filterCategory.value) {
     stock = stock.filter(i => i.category === filterCategory.value)
   }
-  
   return stock
+}
+
+const getWarehouseItemsCount = (warehouseId) => {
+  return allStock.value.filter(item => item.warehouse_id === warehouseId).length
+}
+
+const getWarehouseCapacity = (warehouseId) => {
+  const itemsCount = getWarehouseItemsCount(warehouseId)
+  // Simulated capacity
+  return Math.min(100, Math.round((itemsCount / 15) * 100)) || 0
 }
 
 const quickProcurement = () => {
@@ -424,17 +400,15 @@ const formatDate = (dateString) => {
   return date.toLocaleString('uk-UA', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    year: 'numeric'
   })
 }
 
 const mapDocType = (type) => {
   const maps = {
-    'purchase_receipt': 'Прибуткова накладна',
-    'sales_invoice': 'Видаткова накладна',
-    'production_order': 'Виробничий звіт'
+    'purchase_receipt': 'Прихід',
+    'sales_invoice': 'Продаж',
+    'production_order': 'Випуск'
   }
   return maps[type] || type
 }
@@ -522,259 +496,190 @@ onMounted(() => {
 
 <style scoped>
 .erp-light-container {
-  padding: 20px;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 64px);
-  color: #1e293b;
+  padding: 15px;
+  background-color: #fafafa;
+  min-height: calc(100vh - 60px);
+  color: #2c3e50;
 }
 
-.erp-toolbar {
+.erp-actions-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.page-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.filters-panel {
   background: white;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
-  border: 1px solid #e2e8f0;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #eaedf0;
+}
+
+.compact-action-btn {
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .action-primary-btn {
-  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-  border: none !important;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
 }
-.action-primary-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
-}
 
-.quick-actions-grid {
+.popover-filters-grid {
   display: flex;
-  gap: 12px;
-}
-
-.soft-action-btn {
-  border-radius: 8px;
-  font-weight: 500;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .premium-metric-card {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #eaedf0;
+  border-radius: 8px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 110px;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
-}
-
-.metric-meta {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  min-height: 80px;
 }
 
 .metric-title {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-.metric-badge {
   font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.metric-badge.blue { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-.metric-badge.purple { color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
-.metric-badge.green { color: #10b981; background: rgba(16, 185, 129, 0.1); }
-.metric-badge.orange { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
 
 .metric-value {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: #0f172a;
-  margin-top: 10px;
+  color: #2c3e50;
+  margin-top: 5px;
 }
 
 .light-premium-table {
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #eaedf0;
 }
 
 .warehouse-name {
   font-weight: 600;
-  color: #0f172a;
+  color: #2c3e50;
 }
 
 .default-tag {
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-left: 8px;
-  border-radius: 4px;
+  font-size: 0.6rem;
+  margin-left: 5px;
 }
 
 .status-dot {
   display: inline-block;
-  width: 8px; height: 8px;
+  width: 6px; height: 6px;
   border-radius: 50%;
-  margin-right: 8px;
+  margin-right: 5px;
 }
-.status-dot.active { background: #10b981; }
-.status-dot.inactive { background: #f43f5e; }
+.status-dot.active { background: #2ecc71; }
+.status-dot.inactive { background: #e74c3c; }
 
 .status-text {
-  font-size: 0.85rem;
-  color: #334155;
+  font-size: 0.8rem;
 }
 
 .expand-content {
-  background: #f8fafc;
-  padding: 16px;
-  border-radius: 8px;
-  margin: 5px;
-  border: 1px solid #edf2f7;
-}
-
-.expand-header h4 {
-  margin: 0;
-  color: #334155;
-}
-.financial-valuation {
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.light-inner-table {
+  background: #fcfcfc;
+  padding: 12px;
   border-radius: 6px;
-  overflow: hidden;
+  margin: 5px;
 }
 
 .product-link {
-  color: #4f46e5;
-  font-weight: 500;
+  color: #3498db;
   text-decoration: none;
-}
-.product-link:hover {
-  text-decoration: underline;
 }
 
 .qty-badge {
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
 }
-.qty-plus { color: #059669; background: rgba(16, 185, 129, 0.1); }
-.qty-minus { color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+.qty-plus { color: #2ecc71; }
+.qty-minus { color: #e74c3c; }
 
-.empty-stock-state {
-  text-align: center;
-  padding: 20px;
-  color: #94a3b8;
-  font-style: italic;
-}
-
-/* Premium AI Widget */
-.premium-ai-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.02);
-}
-
-.ai-header {
+/* Floating Action Button (FAB) */
+.ai-fab-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
   display: flex;
   align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.2s ease;
+}
+.ai-fab-button:hover {
+  transform: scale(1.1);
+}
+
+.ai-fab-pulse {
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.4);
+  animation: pulse 2s infinite;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* AI Dialog Chat Layout */
+.ai-chat-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #eaedf0;
+  padding-bottom: 10px;
+}
+.ai-avatar { font-size: 1.8rem; }
+.ai-meta strong { font-size: 0.95rem; color: #2c3e50; }
+.ai-meta p { font-size: 0.75rem; color: #7f8c8d; margin: 0; }
+
+.ai-message {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #eaedf0;
+  font-size: 0.85rem;
+  color: #34495e;
+}
+
+.ai-metrics-grid {
+  display: flex;
   gap: 10px;
 }
-.ai-icon { font-size: 1.4rem; }
-.ai-title { margin: 0; font-size: 1.2rem; color: #0f172a; }
 
-.ai-desc { font-size: 0.9rem; color: #475569; line-height: 1.6; }
-
-.ai-analysis-block {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  background: #f8fafc;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #edf2f7;
-}
-.ai-glow-robot { font-size: 2rem; }
-.ai-analysis-text { font-size: 0.9rem; color: #334155; line-height: 1.6; }
-.ai-suggestion { display: block; color: #4f46e5; }
-
-.ai-stat-box {
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-}
-.ai-stat-box.blue { background: #eff6ff; border-left: 4px solid #3b82f6; }
-.ai-stat-box.green { background: #f0fdf4; border-left: 4px solid #10b981; }
-
-.ai-stat-lbl { font-size: 0.7rem; color: #64748b; font-weight: 600; letter-spacing: 1px; }
-.ai-stat-val { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
-.ai-stat-box.blue .ai-stat-val { color: #1d4ed8; }
-.ai-stat-box.green .ai-stat-val { color: #15803d; }
-
-.simulation-monitor {
-  background: #f8fafc;
-  border: 1px solid #edf2f7;
-  padding: 16px;
-  border-radius: 12px;
-}
-
-.sim-title { margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; letter-spacing: 0.5px; }
-
-.sim-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #334155;
-  margin-bottom: 8px;
-}
-
-.sim-dot.success {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #10b981;
-}
-
-.sim-res { margin-left: auto; color: #059669; font-weight: 600; }
-
-.ai-activate-btn {
-  width: 100%;
+.ai-metric-item {
+  flex: 1;
+  background: white;
+  border: 1px solid #eaedf0;
+  padding: 10px;
   border-radius: 8px;
-  background: #f1f5f9 !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #64748b !important;
+  text-align: center;
 }
 
-.mr-4 { margin-right: 16px; }
+.ai-metric-item .lbl { font-size: 0.6rem; color: #95a5a6; text-transform: uppercase; }
+.ai-metric-item .val { font-size: 1rem; font-weight: 700; color: #2c3e50; display: block; margin-top: 4px; }
+
+.ml-2 { margin-left: 8px; }
+.mb-2 { margin-bottom: 8px; }
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
 .mt-4 { margin-top: 16px; }
-.mt-6 { margin-top: 24px; }
+.w-100 { width: 100%; }
+.doc-type-text { font-size: 0.75rem; }
 </style>
