@@ -320,17 +320,32 @@ const initializeSelector = () => {
       const type = attr?.type || v.attribute?.type
 
       if (type === 'DIMENSIONS' || (v.text_value && (v.text_value.includes('x') || v.text_value.includes('×')))) {
-          // Priority: numeric width/height, fallback: parse text_value
-          if (v.width && v.height) {
-              dimSelections.value[v.attribute_id] = { w: v.width, h: v.height }
-          } else if (v.text_value) {
-              // Normalize and split
-              const norm = v.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '')
-              const [w, h] = norm.split('x')
-              dimSelections.value[v.attribute_id] = { w: parseInt(w) || null, h: parseInt(h) || null }
+          let targetAttrId = v.attribute_id
+          if (!targetAttrId || !allCategoryAttributes.value.some(a => a.id === targetAttrId)) {
+              const dimAttr = allCategoryAttributes.value.find(a => a.type === 'DIMENSIONS')
+              if (dimAttr) targetAttrId = dimAttr.id
+          }
+          
+          if (targetAttrId) {
+              // Priority: numeric width/height, fallback: parse text_value
+              if (v.width && v.height) {
+                  dimSelections.value[targetAttrId] = { w: v.width, h: v.height }
+              } else if (v.text_value) {
+                  // Normalize and split
+                  const norm = v.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '')
+                  const [w, h] = norm.split('x')
+                  dimSelections.value[targetAttrId] = { w: parseInt(w) || null, h: parseInt(h) || null }
+              }
           }
       } else {
-          selections.value[v.attribute_id] = v.option_id || v.text_value
+          let targetAttrId = v.attribute_id
+          if (!targetAttrId || !allCategoryAttributes.value.some(a => a.id === targetAttrId)) {
+              const nonDimAttr = allCategoryAttributes.value.find(a => a.type !== 'DIMENSIONS')
+              if (nonDimAttr) targetAttrId = nonDimAttr.id
+          }
+          if (targetAttrId) {
+              selections.value[targetAttrId] = v.option_id || v.text_value
+          }
       }
     })
   }

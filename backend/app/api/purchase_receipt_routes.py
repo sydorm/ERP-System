@@ -31,7 +31,11 @@ async def create_purchase_receipt(
     # 0. Generate Number if empty or "Авто"
     receipt_num = receipt_data.receipt_number
     if not receipt_num or receipt_num.lower() in ["авто", "автоматично", "auto"]:
-        receipt_num = SequenceService.get_next_number(db, "purchase_receipt", "PR-")
+        while True:
+            receipt_num = SequenceService.get_next_number(db, "purchase_receipt", "PR-")
+            existing = db.query(PurchaseReceipt).filter(PurchaseReceipt.receipt_number == receipt_num).first()
+            if not existing:
+                break
 
     # 1. Create Receipt
     receipt = PurchaseReceipt(
