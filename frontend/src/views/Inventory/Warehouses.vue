@@ -6,10 +6,31 @@
         <h2 class="page-title">Управління складами</h2>
       </div>
       <div class="erp-toolbar-right">
+        <el-input
+          v-model="searchQuery"
+          placeholder="Пошук складу за назвою чи адресою..."
+          :prefix-icon="Search"
+          clearable
+          class="search-input mr-4"
+          style="width: 300px;"
+        />
         <el-button type="warning" :icon="Plus" @click="openCreateDialog" class="erp-btn-primary">
           Створити склад
         </el-button>
       </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="quick-actions-bar mt-4">
+      <el-button type="primary" :icon="Download" @click="quickProcurement" plain>
+        Прихід товару
+      </el-button>
+      <el-button type="danger" :icon="DocumentDelete" @click="quickWriteOff" plain>
+        Списання
+      </el-button>
+      <el-button type="info" :icon="Switch" @click="quickTransfer" plain>
+        Переміщення
+      </el-button>
     </div>
 
     <!-- Stats Dashboard -->
@@ -73,7 +94,7 @@
 
     <!-- Main Content -->
     <div class="content-card mt-6">
-      <el-table v-loading="loading" :data="warehouses" style="width: 100%" class="premium-table">
+      <el-table v-loading="loading" :data="filteredWarehouses" style="width: 100%" class="premium-table">
         <el-table-column type="expand">
           <template #default="props">
             <div class="expand-content">
@@ -189,10 +210,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Edit, Delete, Box, Location, List, InfoFilled, Money } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import { Plus, Edit, Delete, Box, Location, List, InfoFilled, Money, Search, Download, DocumentDelete, Switch } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
+const router = useRouter()
+const searchQuery = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const warehouses = ref([])
@@ -209,6 +233,27 @@ const form = ref({
   is_default: false,
   is_active: true
 })
+
+const filteredWarehouses = computed(() => {
+  if (!searchQuery.value) return warehouses.value
+  const query = searchQuery.value.toLowerCase()
+  return warehouses.value.filter(w => 
+    w.name.toLowerCase().includes(query) || 
+    (w.address && w.address.toLowerCase().includes(query))
+  )
+})
+
+const quickProcurement = () => {
+  router.push('/purchases/receipts/new')
+}
+
+const quickWriteOff = () => {
+  ElMessage.info('Модуль списання запасів знаходиться в розробці')
+}
+
+const quickTransfer = () => {
+  ElMessage.info('Модуль переміщення між складами знаходиться в розробці')
+}
 
 const rules = {
   name: [
@@ -353,6 +398,19 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.quick-actions-bar {
+  display: flex;
+  gap: 12px;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+}
+
+.mr-4 {
+  margin-right: 16px;
 }
 
 .page-title {
