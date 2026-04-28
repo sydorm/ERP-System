@@ -142,21 +142,6 @@ async def create_warehouse(
     db.refresh(warehouse)
     return warehouse
 
-@router.get("/warehouses/{warehouse_id}", response_model=WarehouseResponse)
-async def get_warehouse(
-    warehouse_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get a specific warehouse"""
-    warehouse = db.query(Warehouse).filter(
-        Warehouse.id == warehouse_id,
-        Warehouse.company_id == current_user.company_id
-    ).first()
-    if not warehouse:
-        raise HTTPException(status_code=404, detail="Warehouse not found")
-    return warehouse
-
 @router.get("/warehouses/movements")
 async def get_inventory_movements(
     db: Session = Depends(get_db),
@@ -196,6 +181,21 @@ async def get_inventory_movements(
         }
         for r in results
     ]
+
+@router.get("/warehouses/{warehouse_id}", response_model=WarehouseResponse)
+async def get_warehouse(
+    warehouse_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a specific warehouse"""
+    warehouse = db.query(Warehouse).filter(
+        Warehouse.id == warehouse_id,
+        Warehouse.company_id == current_user.company_id
+    ).first()
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+    return warehouse
 
 @router.put("/warehouses/{warehouse_id}", response_model=WarehouseResponse)
 async def update_warehouse(
