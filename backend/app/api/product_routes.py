@@ -102,7 +102,7 @@ async def find_or_create_variant(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    values = body.get("values", [])
+    values = body.get("values") or body.get("attribute_values") or []
     if not values:
         raise HTTPException(status_code=400, detail="No attribute values provided")
     
