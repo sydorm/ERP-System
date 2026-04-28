@@ -345,28 +345,16 @@
 
           <div
             class="payment-badge-new"
+            style="border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;"
             :style="{
-              borderRadius: '8px',
-              padding: '8px 14px',
-              fontSize: '13px',
-              fontWeight: '600',
-              width: '100%',
-              textAlign: 'center',
-              display: 'flex',
-              align-items: center,
-              justify-content: center,
-              gap: 8px,
-              marginBottom: '20px',
               background: autoPaymentStatus.key === 'unpaid' ? '#F9FAFB' : autoPaymentStatus.key === 'partial' ? '#FFFBEB' : '#ECFDF5',
               color: autoPaymentStatus.key === 'unpaid' ? '#6B7280' : autoPaymentStatus.key === 'partial' ? '#92400E' : '#065F46'
             }"
           >
             <span
               class="status-dot-new"
+              style="width: 8px; height: 8px; border-radius: 50%;"
               :style="{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
                 background: autoPaymentStatus.key === 'unpaid' ? '#9CA3AF' : autoPaymentStatus.key === 'partial' ? '#F59E0B' : '#10B981'
               }"
             />
