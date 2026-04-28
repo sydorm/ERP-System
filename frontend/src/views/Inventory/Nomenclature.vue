@@ -490,7 +490,7 @@ onActivated(() => {
   flex-shrink: 0;
   z-index: 100;
   background: var(--bg);
-  padding: 25px 25px 0;
+  padding: 12px 25px 0;
   display: flex;
   flex-direction: column;
 }
@@ -500,18 +500,18 @@ onActivated(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .kimi-stat-card {
   background: #FFFFFF !important;
   border: none !important;
-  border-radius: 16px;
-  padding: 22px;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 120px;
+  min-height: 85px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
   position: relative;
   overflow: hidden;
@@ -523,7 +523,7 @@ onActivated(() => {
 }
 
 .kimi-stat-label {
-  font-size: 0.8rem;
+  font-size: 10px;
   color: #64748B;
   font-family: 'Syne', sans-serif;
   font-weight: 700;
@@ -532,11 +532,11 @@ onActivated(() => {
 }
 
 .kimi-stat-value {
-  font-size: 1.7rem;
+  font-size: 28px;
   font-weight: 500;
   color: #0F172A;
   font-family: 'DM Mono', monospace;
-  margin-top: 10px;
+  margin-top: 4px;
   line-height: 1.2;
 }
 
@@ -550,15 +550,28 @@ onActivated(() => {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 4px;
+  height: 2px;
 }
-.kimi-stat-indigo::after { background: linear-gradient(90deg, #6C63FF, #00C9A7); }
-.kimi-stat-emerald::after { background: linear-gradient(90deg, #00C9A7, #6C63FF); }
-.kimi-stat-amber::after { background: linear-gradient(90deg, #F59E0B, #FF6B6B); }
-.kimi-stat-rose::after { background: linear-gradient(90deg, #FF6B6B, #F59E0B); }
+.kimi-stat-indigo::after { background: #3B82F6; }
+.kimi-stat-emerald::after { background: #22C55E; }
+.kimi-stat-amber::after { background: #F59E0B; }
+.kimi-stat-rose::after { background: #EF4444; }
+
+/* Trend percentages via pseudo content */
+.kimi-stat-card::before {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.kimi-stat-indigo::before { content: '↑ +5%'; color: #22C55E; }
+.kimi-stat-emerald::before { content: '↑ +5%'; color: #22C55E; }
+.kimi-stat-amber::before { content: '↓ -2%'; color: #F59E0B; }
+.kimi-stat-rose::before { content: '↑ +12%'; color: #EF4444; }
 
 .kimi-stat-icon-wrapper {
-  display: none !important; /* Hiding icons to match metric sizes */
+  display: none !important;
 }
 
 /* ===== FILTERS TOOLBAR ===== */
@@ -731,8 +744,15 @@ onActivated(() => {
 
 /* Dropdown menu styling (10 / 20 / 50 / 100) */
 :global(.el-select__popper) {
+  width: 80px !important;
+  min-width: 80px !important;
   max-width: 80px !important;
   border-radius: 8px !important;
+}
+
+:global(.el-select-dropdown) {
+  width: 80px !important;
+  min-width: 80px !important;
 }
 
 :global(.el-select-dropdown__item) {
@@ -757,12 +777,27 @@ onActivated(() => {
   border-top: 1px solid #F1F5F9;
 }
 
+:deep(.limit-select),
+:deep(.limit-select .el-input__wrapper),
+:deep(.limit-select .el-select__wrapper) {
+  width: 70px !important;
+  min-width: 70px !important;
+  max-width: 70px !important;
+}
+
 :deep(.limit-select .el-input__wrapper) {
   border: 1px solid #E2E8F0 !important;
   border-radius: 8px !important;
   padding: 4px 8px !important;
   height: 30px !important;
-  width: 70px !important;
+}
+
+/* Parent container size limit checks */
+.custom-pagination-container {
+  width: auto !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 :deep(.el-pager li) {
