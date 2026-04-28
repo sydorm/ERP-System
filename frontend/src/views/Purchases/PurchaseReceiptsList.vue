@@ -73,9 +73,17 @@
           </el-button>
         </div>
         <div class="kimi-filter-right">
-          <button class="kimi-primary-btn" @click="handleCreate">
-            <el-icon><Plus /></el-icon> Нова накладна
-          </button>
+          <el-dropdown trigger="click" @command="handleCreateCommand">
+            <button class="kimi-primary-btn">
+              <el-icon><Plus /></el-icon> Нова накладна <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="empty">Нова (порожня)</el-dropdown-item>
+                <el-dropdown-item command="from_po">На підставі замовлення PO</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
     </div>
@@ -171,6 +179,44 @@
         />
       </div>
     </div>
+
+    <!-- ===== PO SELECTION DIALOG ===== -->
+    <el-dialog v-model="showPoDialog" title="Вибір замовлення постачальнику" width="700px" destroy-on-close>
+      <el-table
+        :data="availableOrders"
+        v-loading="poLoading"
+        size="small"
+        style="width:100%"
+        @row-click="selectPo"
+        row-class-name="kimi-row"
+        highlight-current-row
+      >
+        <el-table-column prop="order_number" label="Номер" width="140" />
+        <el-table-column label="Постачальник" min-width="200">
+          <template #default="{ row }">
+            {{ getCounterpartyName(row.supplier_id) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Сума" width="140" align="right">
+          <template #default="{ row }">
+            {{ formatCurrency(row.total_amount) }} ₴
+          </template>
+        </el-table-column>
+        <el-table-column label="Дата" width="120">
+          <template #default="{ row }">
+            {{ formatDate(row.order_date) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Статус" width="130" align="center">
+          <template #default="{ row }">
+            <span class="kimi-badge kimi-status-emerald">{{ row.status === 'confirmed' ? 'Підтверджено' : row.status }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div v-if="!poLoading && availableOrders.length === 0" class="empty-state" style="padding:24px">
+        Немає підтверджених замовлень для створення накладної
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -178,7 +224,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Plus, Search, Document, Wallet, Check, Clock, Refresh, Edit, Delete
+  Plus, Search, Document, Wallet, Check, Clock, Refresh, Edit, Delete, ArrowDown
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -247,6 +293,40 @@ const fetchReceipts = async () => {
 const handleSearch = () => { currentPage.value = 1 }
 const handleRowClick = (row) => { handleEdit(row) }
 const handleCreate = () => router.push('/purchases/receipts/new')
+
+// PO selection dialog
+const showPoDialog = ref(false)
+const poLoading = ref(false)
+const availableOrders = ref([])
+
+const handleCreateCommand = (cmd) => {
+  if (cmd === 'empty') {
+    handleCreate()
+  } else if (cmd === 'from_po') {
+    openPoDialog()
+  }
+}
+
+const openPoDialog = async () => {
+  showPoDialog.value = true
+  poLoading.value = true
+  try {
+    const res = await api.get('/api/v1/purchase-orders')
+    availableOrders.value = res.data.filter(o => o.status === 'confirmed' || o.status === 'in_progress')
+  } catch {
+    ElMessage.error('Помилка завантаження замовлень')
+  } finally {
+    poLoading.value = false
+  }
+}
+
+const selectPo = (row) => {
+  showPoDialog.value = false
+  router.push({
+    path: '/purchases/receipts/new',
+    query: { base_order_id: row.id }
+  })
+}
 const handleEdit = (row) => router.push(`/purchases/receipts/${row.id}`)
 
 const handleDelete = (row) => {
