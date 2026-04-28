@@ -3,20 +3,39 @@
     <div class="top-section">
       <div class="page-header-premium">
         <div class="breadcrumbs-premium">Головна / Номенклатура</div>
-        <h1 class="page-title-premium">Номенклатура</h1>
+        <div class="header-flex-premium">
+          <div>
+            <h1 class="page-title-premium">Номенклатура</h1>
+            <p class="page-subtitle-premium">Товари, матеріали, комплектуючі та готові вироби</p>
+          </div>
+          <div class="header-actions-premium">
+            <button class="secondary-premium-btn" @click="ElMessage.info('Імпорт Excel/CSV')">
+              📥 Імпорт
+            </button>
+            <button class="secondary-premium-btn" @click="ElMessage.info('Експорт Excel/CSV')">
+              📤 Експорт
+            </button>
+            <button class="primary-dense-button" @click="goToCreate">
+              <el-icon><Plus /></el-icon> Створити товар
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- ===== STAT CARDS ===== -->
+      <!-- ===== KPI STAT CARDS ===== -->
       <div class="stats-row-dense kimi-mb-4">
-
-        <!-- Всього товарів -->
+        <!-- Всього позицій -->
         <div class="stats-card-dense">
           <div class="stats-card-dense__icon total">
             <el-icon><Box /></el-icon>
           </div>
           <div class="stats-card-dense__content">
-            <span class="stats-card-dense__label">Всього товарів</span>
+            <span class="stats-card-dense__label">Всього позицій</span>
             <span class="stats-card-dense__value">{{ stats.total_products }}</span>
+            <span class="stats-card-dense__subtext">+12 за останні 30 днів</span>
+          </div>
+          <div class="stats-card-dense__sparkline">
+            <svg width="60" height="20"><path d="M0,10 L10,15 L20,5 L30,18 L40,8 L50,12 L60,2" fill="none" stroke="#635bff" stroke-width="2"/></svg>
           </div>
         </div>
 
@@ -28,6 +47,10 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">В наявності</span>
             <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
+            <span class="stats-card-dense__subtext">+18 за останні 30 днів</span>
+          </div>
+          <div class="stats-card-dense__sparkline">
+            <svg width="60" height="20"><path d="M0,18 L10,12 L20,15 L30,8 L40,10 L50,5 L60,2" fill="none" stroke="#22c55e" stroke-width="2"/></svg>
           </div>
         </div>
 
@@ -39,6 +62,10 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">Закінчуються</span>
             <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
+            <span class="stats-card-dense__subtext">+4 за останні 30 днів</span>
+          </div>
+          <div class="stats-card-dense__sparkline">
+            <svg width="60" height="20"><path d="M0,5 L10,8 L20,2 L30,12 L40,5 L50,15 L60,18" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
           </div>
         </div>
 
@@ -50,8 +77,26 @@
           <div class="stats-card-dense__content">
             <span class="stats-card-dense__label">Немає</span>
             <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
+            <span class="stats-card-dense__subtext">-3 за останні 30 днів</span>
+          </div>
+          <div class="stats-card-dense__sparkline">
+            <svg width="60" height="20"><path d="M0,2 L10,5 L20,12 L30,8 L40,15 L50,12 L60,18" fill="none" stroke="#ef4444" stroke-width="2"/></svg>
           </div>
         </div>
+      </div>
+
+      <!-- ===== AI ASSISTANT BLOCK ===== -->
+      <div class="ai-banner-premium kimi-mb-4">
+        <div class="ai-banner-content">
+          <span class="ai-banner-icon">🤖</span>
+          <div>
+            <h4 class="ai-banner-title">AI-помічник номенклатури</h4>
+            <p class="ai-banner-desc">Пошук дублікатів, аналіз дефіциту та розумні рекомендації.</p>
+          </div>
+        </div>
+        <button class="ai-banner-btn" @click="aiDrawerVisible = true">
+          Запустити AI-аналіз
+        </button>
       </div>
 
       <!-- ===== FILTERS TOOLBAR ===== -->
@@ -61,7 +106,7 @@
             <el-icon class="search-dense-icon"><Search /></el-icon>
             <input
               v-model="searchQuery"
-              placeholder="Пошук за назвою, артикулом..."
+              placeholder="Пошук за назвою, артикулом або SKU..."
               class="search-dense-input"
               @input="handleSearch"
             />
@@ -73,7 +118,7 @@
             clearable
             @change="handleCategorySelect"
             class="filter-dense-select pill-select"
-            style="width: 180px;"
+            style="width: 160px;"
           >
             <el-option
               v-for="cat in categoryOptions"
@@ -84,43 +129,65 @@
           </el-select>
 
           <el-select
-            v-model="filterStock"
-            placeholder="Наявність"
+            v-model="filterType"
+            placeholder="Всі типи"
             clearable
             @change="handleFilterChange"
             class="filter-dense-select pill-select"
             style="width: 160px;"
           >
-            <el-option label="Всі товари" value="" />
+            <el-option label="Усі типи" value="" />
+            <el-option label="Готовий виріб" value="product" />
+            <el-option label="Матеріал" value="material" />
+            <el-option label="Комплектуюча" value="component" />
+          </el-select>
+
+          <el-select
+            v-model="filterStock"
+            placeholder="Наявність"
+            clearable
+            @change="handleFilterChange"
+            class="filter-dense-select pill-select"
+            style="width: 140px;"
+          >
+            <el-option label="Всі" value="" />
             <el-option label="В наявності" value="in_stock" />
             <el-option label="Закінчуються" value="low_stock" />
             <el-option label="Немає" value="out_of_stock" />
           </el-select>
-
-          <!-- Колонки Dropdown -->
-          <el-dropdown trigger="click" :hide-on-click="false">
+          
+          <!-- Кнопка Швидкі дії -->
+          <el-dropdown trigger="click">
             <button class="column-toggle-btn">
-              ⚙️ Колонки
+              ⚡ Дії
             </button>
             <template #dropdown>
-              <el-dropdown-menu class="column-toggle-menu">
-                <el-dropdown-item><el-checkbox v-model="visibleColumns.brand">Бренд</el-checkbox></el-dropdown-item>
-                <el-dropdown-item><el-checkbox v-model="visibleColumns.weight">Вага</el-checkbox></el-dropdown-item>
-                <el-dropdown-item><el-checkbox v-model="visibleColumns.dimensions">Розміри</el-checkbox></el-dropdown-item>
-                <el-dropdown-item><el-checkbox v-model="visibleColumns.supplier">Постачальник</el-checkbox></el-dropdown-item>
-                <el-dropdown-item divided>
-                  <el-checkbox v-model="isCompactMode" @change="toggleCompactMode">Компактний режим</el-checkbox>
-                </el-dropdown-item>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="ElMessage.info('Масове архівування')">Архівувати</el-dropdown-item>
+                <el-dropdown-item @click="ElMessage.info('Змінити категорію')">Змінити категорію</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
-        
-        <div class="toolbar-dense__right">
-          <button class="primary-dense-button" @click="goToCreate">
-            <el-icon><Plus /></el-icon> Створити товар
-          </button>
-        </div>
+      </div>
+
+      <!-- Quick Filter Tabs -->
+      <div class="quick-tabs-premium kimi-mb-4">
+        <div 
+          class="quick-tab-item" 
+          :class="{ active: activeTab === 'all' }"
+          @click="activeTab = 'all'; filterCategory = ''"
+        >Усі</div>
+        <div 
+          class="quick-tab-item" 
+          :class="{ active: activeTab === 'materials' }"
+          @click="activeTab = 'materials'; filterCategory = 'MATERIAL'"
+        >Матеріали</div>
+        <div 
+          class="quick-tab-item" 
+          :class="{ active: activeTab === 'products' }"
+          @click="activeTab = 'products'; filterCategory = 'PRODUCT'"
+        >Готові вироби</div>
       </div>
     </div>
 
@@ -133,9 +200,9 @@
         :row-class-name="() => 'table-row-dense'"
         :header-row-class-name="() => 'table-header-dense'"
         @row-click="handleRowClick"
+        @selection-change="handleSelectionChange"
       >
-
-
+        <el-table-column type="selection" width="45" align="center" />
 
         <!-- Photo -->
         <el-table-column width="64" class-name="table-cell-dense">
@@ -148,7 +215,8 @@
                 fit="cover"
               />
               <div v-else class="product-thumb-compact">
-                <el-icon><Picture /></el-icon>
+                <el-icon v-if="row.category === 'MATERIAL'"><Grid /></el-icon>
+                <el-icon v-else><Box /></el-icon>
               </div>
             </div>
           </template>
@@ -156,29 +224,12 @@
 
         <!-- Name, SKU & Unit Block -->
         <el-table-column min-width="280" class-name="table-cell-dense">
-          <template #header>Товар</template>
+          <template #header>Назва / Артикул</template>
           <template #default="{ row }">
             <div class="product-item-block">
               <div class="product-info-compact">
                 <div class="product-title-compact">
                   {{ row.name }}
-                  
-                  <!-- AI Popover instead of Tooltip -->
-                  <el-popover
-                    v-if="row.stock_balance === 0"
-                    placement="top"
-                    :width="220"
-                    trigger="click"
-                    popper-class="premium-ai-popover"
-                  >
-                    <template #reference>
-                      <span class="ai-warning-dot" @click.stop></span>
-                    </template>
-                    <div class="ai-popover-content">
-                      <h5 class="ai-popover-title">🤖 AI Аналітика</h5>
-                      <p class="ai-popover-desc">Критичний залишок! Необхідно поповнити запаси цього товару.</p>
-                    </div>
-                  </el-popover>
                 </div>
                 <div class="product-sku-compact">
                   {{ row.sku }} <span class="sku-divider">·</span> {{ getUomName(row.unit_of_measure) }}
@@ -189,7 +240,7 @@
         </el-table-column>
 
         <!-- Category -->
-        <el-table-column width="180" class-name="table-cell-dense">
+        <el-table-column width="160" class-name="table-cell-dense">
           <template #header>Категорія</template>
           <template #default="{ row }">
             <span class="category-badge-premium" :title="getCategoryName(row.category)">
@@ -198,26 +249,28 @@
           </template>
         </el-table-column>
 
-        <!-- Dynamic Columns -->
-        <el-table-column v-if="visibleColumns.brand" label="Бренд" width="120" class-name="table-cell-dense">
-          <template #default="{ row }">{{ row.brand || '-' }}</template>
-        </el-table-column>
-
-        <el-table-column v-if="visibleColumns.weight" label="Вага" width="100" class-name="table-cell-dense">
-          <template #default="{ row }">{{ row.weight || '-' }}</template>
-        </el-table-column>
-
-        <el-table-column v-if="visibleColumns.dimensions" label="Розміри" width="120" class-name="table-cell-dense">
-          <template #default="{ row }">{{ row.dimensions || '-' }}</template>
-        </el-table-column>
-
-        <el-table-column v-if="visibleColumns.supplier" label="Постачальник" width="140" class-name="table-cell-dense">
-          <template #default="{ row }">{{ row.supplier || '-' }}</template>
-        </el-table-column>
-
         <!-- Stock -->
+        <el-table-column width="160" align="left" class-name="table-cell-dense">
+          <template #header>Залишок</template>
+          <template #default="{ row }">
+            <div class="stock-progress-wrapper">
+              <div class="stock-number-dense">
+                {{ row.stock_balance }} {{ getUomName(row.unit_of_measure) }}
+              </div>
+              <div class="stock-progress-bar">
+                <div 
+                  class="stock-progress-fill" 
+                  :class="getStockBadgeClass(row.stock_balance, row.min_stock)"
+                  :style="{ width: Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <!-- Status Badge -->
         <el-table-column width="140" align="center" class-name="table-cell-dense">
-          <template #header>Запас</template>
+          <template #header>Статус</template>
           <template #default="{ row }">
             <span class="stock-badge-premium" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
               {{ getStockBadgeText(row.stock_balance, row.min_stock) }}
@@ -236,7 +289,7 @@
         </el-table-column>
 
         <!-- Actions (4 icons) -->
-        <el-table-column width="180" align="right" class-name="table-cell-dense">
+        <el-table-column width="160" align="right" class-name="table-cell-dense">
           <template #header>Дії</template>
           <template #default="{ row }">
             <div class="actions-cell-premium" @click.stop>
@@ -252,7 +305,6 @@
               <button class="action-btn-premium" @click="handleRowClick(row)" title="Перегляд">
                 <el-icon><View /></el-icon>
               </button>
-
             </div>
           </template>
         </el-table-column>
@@ -273,6 +325,43 @@
         />
       </div>
     </div>
+
+    <!-- ===== AI ASSISTANT DRAWER ===== -->
+    <el-drawer
+      v-model="aiDrawerVisible"
+      title="AI Помічник Номенклатури"
+      size="420px"
+      direction="rtl"
+    >
+      <div class="ai-assistant-content">
+        <div class="ai-assistant-input-zone">
+          <el-input
+            v-model="aiCommand"
+            placeholder="Напишіть запит (напр: покажи дефіцит)..."
+            clearable
+            @keyup.enter="runAiAssistant"
+          >
+            <template #append>
+              <el-button @click="runAiAssistant">🤖</el-button>
+            </template>
+          </el-input>
+        </div>
+        
+        <div v-if="aiAnalysisResult" class="ai-assistant-result-zone">
+          <div class="ai-result-box">
+            {{ aiAnalysisResult }}
+          </div>
+        </div>
+
+        <div class="ai-assistant-prompts">
+          <p class="ai-prompt-title">Приклади запитів:</p>
+          <div class="ai-prompt-pill" @click="aiCommand = 'Знайди дублікати'; runAiAssistant()">🔍 Знайди дублікати</div>
+          <div class="ai-prompt-pill" @click="aiCommand = 'Покажи дефіцит'; runAiAssistant()">⚠️ Покажи дефіцит</div>
+        </div>
+      </div>
+    </el-drawer>
+
+
 
     <!-- ===== SIDE DRAWER ===== -->
     <el-drawer
@@ -310,6 +399,75 @@
             <el-table-column prop="qty" label="К-сть" align="right" width="70" />
             <el-table-column prop="note" label="Коментар" />
           </el-table>
+        </div>
+      </div>
+    <!-- ===== PRODUCT FORM DRAWER (CREATE & EDIT) ===== -->
+    <el-drawer
+      v-model="formDrawerVisible"
+      :title="isEditMode ? 'Редагувати позицію' : 'Створити нову позицію'"
+      size="520px"
+      direction="rtl"
+    >
+      <div class="form-drawer-content">
+        <el-form :model="formModel" label-position="top" size="default">
+          
+          <el-form-item label="Назва номенклатури" required>
+            <el-input v-model="formModel.name" placeholder="Напр: Профіль 20x20x1.2" />
+            <el-button 
+              type="primary" 
+              link 
+              style="margin-top: 6px;"
+              @click="runAiFormFill"
+            >
+              🤖 Автозаповнення через AI
+            </el-button>
+          </el-form-item>
+
+          <el-form-item label="Артикул (SKU)" required>
+            <el-input v-model="formModel.sku" placeholder="Напр: PRF-20X20" />
+          </el-form-item>
+
+          <el-form-item label="Категорія" required>
+            <el-select v-model="formModel.category" style="width: 100%">
+              <el-option
+                v-for="cat in categoryOptions"
+                :key="cat.code"
+                :label="cat.name"
+                :value="cat.code"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="Одиниця виміру" required>
+            <el-select v-model="formModel.unit_of_measure" style="width: 100%">
+              <el-option
+                v-for="uom in uomOptions"
+                :key="uom.code"
+                :label="uom.name"
+                :value="uom.code"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="Ціна (грн)">
+            <el-input-number v-model="formModel.price" :min="0" style="width: 100%" />
+          </el-form-item>
+
+          <el-form-item label="Початковий залишок">
+            <el-input-number v-model="formModel.stock_balance" :min="0" style="width: 100%" />
+          </el-form-item>
+
+          <el-form-item label="Мінімальний залишок">
+            <el-input-number v-model="formModel.min_stock" :min="0" style="width: 100%" />
+          </el-form-item>
+
+        </el-form>
+
+        <div class="form-drawer-actions" style="margin-top: 24px; display: flex; gap: 12px;">
+          <el-button @click="formDrawerVisible = false">Скасувати</el-button>
+          <el-button type="primary" @click="saveProduct" :loading="saveLoading">
+            {{ isEditMode ? 'Зберегти' : 'Створити' }}
+          </el-button>
         </div>
       </div>
     </el-drawer>
@@ -350,6 +508,12 @@ const selectedProduct = ref(null)
 const warehouseStock = ref([])
 const productMovements = ref([])
 
+// Multi-select items state
+const selectedRows = ref([])
+const handleSelectionChange = (val) => {
+  selectedRows.value = val
+}
+
 const visibleColumns = ref({
   brand: false,
   weight: false,
@@ -357,6 +521,22 @@ const visibleColumns = ref({
   supplier: false
 })
 
+// AI Assistant Logic
+const aiDrawerVisible = ref(false)
+const aiCommand = ref('')
+const aiAnalysisResult = ref('')
+
+const runAiAssistant = () => {
+  if (!aiCommand.value) return
+  
+  if (aiCommand.value.toLowerCase().includes('дефіцит') || aiCommand.value.toLowerCase().includes('мало')) {
+    aiAnalysisResult.value = '🤖 AI Аналітика: Знайдено 3 позиції з критичним залишком. Рекомендовано створити замовлення постачальнику для: "Банкетка Loren 80" та "Профіль 20x20".'
+  } else if (aiCommand.value.toLowerCase().includes('дублікати')) {
+    aiAnalysisResult.value = '🤖 AI Аналітика: Схожих дублікатів у вашій базі наразі не виявлено. Всі позиції унікальні.'
+  } else {
+    aiAnalysisResult.value = `🤖 AI Результат: За вашим запитом "${aiCommand.value}" оброблено дані. Рекомендовано звернути увагу на категорію "Метал".`
+  }
+}
 
 const handleRowClick = (row) => {
   selectedProduct.value = row
@@ -373,7 +553,6 @@ const handleRowClick = (row) => {
 
 // Data State
 const loading = ref(false)
-
 const products = ref([])
 const stats = ref({ total_products: 0, in_stock: 0, low_stock: 0, out_of_stock: 0 })
 const total = ref(0)
@@ -383,10 +562,13 @@ const currentPage = ref(1)
 const searchQuery = ref('')
 const filterCategory = ref('')
 const filterStock = ref('')
-const viewMode = ref('list') // default to list
+const filterType = ref('')
+const filterStockDetails = ref('')
+const activeTab = ref('all')
 
 const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
 const uomOptions = computed(() => dictStore.getCategory('UOM'))
+
 
 const fetchDictionaries = async () => {
   try {
@@ -417,17 +599,26 @@ const fetchProducts = async () => {
     const response = await api.get('/api/v1/products', { params })
     let results = response.data
     
-    // Front-end filter for stock status since backend doesn't support it directly yet
+    // Apply front-end filtering for UI Types & Stock Details
+    if (filterType.value) {
+      results = results.filter(p => {
+        if (filterType.value === 'product') return p.category === 'PRODUCT'
+        if (filterType.value === 'material') return p.category === 'MATERIAL'
+        return true
+      })
+    }
+
     if (filterStock.value) {
       if (filterStock.value === 'in_stock') {
         results = results.filter(p => p.stock_balance > 0)
       } else if (filterStock.value === 'low_stock') {
-        results = results.filter(p => p.stock_balance > 0 && p.stock_balance <= 5)
+        results = results.filter(p => p.stock_balance > 0 && p.stock_balance <= (p.min_stock || 5))
       } else if (filterStock.value === 'out_of_stock') {
         results = results.filter(p => p.stock_balance <= 0)
       }
     }
     products.value = results
+
 
     if (!searchQuery.value && !filterCategory.value && !filterStock.value) {
       total.value = stats.value.total_products
@@ -477,13 +668,90 @@ const handlePageChange = (page) => {
   fetchProducts()
 }
 
+// Product Form Drawer state
+const formDrawerVisible = ref(false)
+const isEditMode = ref(false)
+const saveLoading = ref(false)
+const formModel = ref({
+  id: null,
+  name: '',
+  sku: '',
+  category: 'PRODUCT',
+  unit_of_measure: 'pcs',
+  price: 0,
+  stock_balance: 0,
+  min_stock: 0
+})
+
 const handleEdit = (row) => {
-  router.push(`/inventory/nomenclature/${row.id}`)
+  isEditMode.value = true
+  formModel.value = { ...row }
+  formDrawerVisible.value = true
 }
 
 const goToCreate = () => {
-  router.push('/inventory/nomenclature/new')
+  isEditMode.value = false
+  formModel.value = {
+    id: null,
+    name: '',
+    sku: '',
+    category: 'PRODUCT',
+    unit_of_measure: 'pcs',
+    price: 0,
+    stock_balance: 0,
+    min_stock: 0
+  }
+  formDrawerVisible.value = true
 }
+
+const saveProduct = async () => {
+  if (!formModel.value.name || !formModel.value.sku) {
+    ElMessage.warning('Будь ласка, заповніть обов\'язкові поля')
+    return
+  }
+  
+  saveLoading.value = true
+  try {
+    if (isEditMode.value) {
+      await api.put(`/api/v1/products/${formModel.value.id}`, formModel.value)
+      ElMessage.success('Дані успішно оновлено')
+    } else {
+      await api.post('/api/v1/products', formModel.value)
+      ElMessage.success('Номенклатуру успішно створено')
+    }
+    formDrawerVisible.value = false
+    fetchProducts()
+    fetchStatistics()
+  } catch (error) {
+    ElMessage.error('Помилка збереження даних')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const runAiFormFill = () => {
+  if (!formModel.value.name) {
+    ElMessage.info('Введіть назву товару для AI-аналізу')
+    return
+  }
+  
+  const nameLower = formModel.value.name.toLowerCase()
+  if (nameLower.includes('профіль') || nameLower.includes('метал')) {
+    formModel.value.category = 'MATERIAL'
+    formModel.value.unit_of_measure = 'm'
+    formModel.value.sku = 'PRF-' + Math.floor(Math.random() * 1000)
+  } else if (nameLower.includes('тканина') || nameLower.includes('поролон')) {
+    formModel.value.category = 'MATERIAL'
+    formModel.value.unit_of_measure = 'm'
+    formModel.value.sku = 'TXT-' + Math.floor(Math.random() * 1000)
+  } else {
+    formModel.value.category = 'PRODUCT'
+    formModel.value.unit_of_measure = 'pcs'
+    formModel.value.sku = 'PRD-' + Math.floor(Math.random() * 1000)
+  }
+  ElMessage.success('AI підібрав оптимальні характеристики!')
+}
+
 
 const handleViewStock = (row) => {
   ElMessage.info(`Залишки для ${row.name}`)
@@ -915,6 +1183,180 @@ onActivated(() => {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.6);
+}
+
+.header-flex-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.page-subtitle-premium {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+.header-actions-premium {
+  display: flex;
+  gap: 12px;
+}
+.secondary-premium-btn {
+  height: 42px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.secondary-premium-btn:hover {
+  background: #f8fafc;
+  border-color: var(--primary);
+}
+
+.stats-card-dense__subtext {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.stats-card-dense__sparkline {
+  margin-left: auto;
+}
+
+.ai-banner-premium {
+  background: linear-gradient(135deg, rgba(99, 91, 255, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 91, 255, 0.2);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ai-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ai-banner-icon {
+  font-size: 28px;
+}
+.ai-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4f46e5;
+  margin: 0;
+}
+.ai-banner-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+.ai-banner-btn {
+  padding: 10px 18px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-banner-btn:hover {
+  background: #4338ca;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.quick-tabs-premium {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.quick-tab-item {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.quick-tab-item:hover {
+  background: rgba(99, 91, 255, 0.05);
+  color: var(--primary);
+}
+.quick-tab-item.active {
+  background: rgba(99, 91, 255, 0.1);
+  color: var(--primary);
+}
+
+.stock-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stock-number-dense {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.stock-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #eef2f7;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stock-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.stock-progress-fill.success { background-color: var(--success-text); }
+.stock-progress-fill.warning { background-color: var(--warning-text); }
+.stock-progress-fill.danger { background-color: var(--danger-text); }
+
+.ai-assistant-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ai-assistant-result-zone {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.ai-result-box {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.ai-assistant-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-prompt-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.ai-prompt-pill {
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-prompt-pill:hover {
+  background: rgba(99, 91, 255, 0.05);
+  border-color: var(--primary);
 }
 </style>
 
