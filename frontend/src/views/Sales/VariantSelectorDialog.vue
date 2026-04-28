@@ -360,11 +360,14 @@ const getAvailableOptions = (attrId) => {
 }
 
 const allAttributesSelected = computed(() => {
-  if (variantAttributes.value.length === 0) return false
-  return variantAttributes.value.every(a => {
+  const attrs = variantAttributes.value.length > 0 ? variantAttributes.value : extraAttributes.value
+  if (attrs.length === 0) return false
+  
+  return attrs.every(a => {
     if (a.type === 'DIMENSIONS') {
       const d = dimSelections.value[a.id]
-      return d && d.w > 0 && d.h > 0
+      const s = selections.value[a.id]
+      return (s && String(s).length > 0) || (d && d.w > 0 && d.h > 0)
     }
     return !!selections.value[a.id]
   })
