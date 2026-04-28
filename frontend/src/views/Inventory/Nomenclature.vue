@@ -453,9 +453,16 @@ onActivated(() => {
 
 <style scoped>
 .orders-page {
+  --bg: #FFFFFF;
+  --surface: #F9FAFB;
+  --text: #18181B;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #F9FAFB;
+  background: var(--bg);
+  color: var(--text);
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -463,10 +470,19 @@ onActivated(() => {
   font-family: 'Space Grotesk', sans-serif;
 }
 
+/* Dark theme override via parent class attached to html */
+:global(html.dark) .orders-page {
+  --bg: #0F1117;
+  --surface: #1A1D27;
+  --text: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --border: #2D313E;
+}
+
 .fixed-top-area {
   flex-shrink: 0;
   z-index: 100;
-  background: #F9FAFB;
+  background: var(--bg);
   padding: 20px 20px 0;
   display: flex;
   flex-direction: column;
@@ -481,26 +497,31 @@ onActivated(() => {
 }
 
 .kimi-stat-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E5E7EB !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 12px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: none !important;
-  transition: transform 0.15s ease-in-out;
+  transition: transform 0.15s ease;
+}
+.kimi-stat-card:hover {
+  transform: translateY(-2px);
 }
 
-.kimi-stat-card:hover {
-  transform: translateY(-1px);
-}
+/* Dynamic card left accents mapping */
+.kimi-stat-indigo { border-left: 3px solid #3B82F6 !important; }
+.kimi-stat-emerald { border-left: 3px solid #22C55E !important; }
+.kimi-stat-amber { border-left: 3px solid #F59E0B !important; }
+.kimi-stat-rose { border-left: 3px solid #EF4444 !important; }
 
 .kimi-stat-label {
   font-size: 11px;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
-  color: #6B7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -509,37 +530,31 @@ onActivated(() => {
   font-size: 36px;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #18181B !important;
-  margin: 8px 0;
+  margin: 8px 0 0;
   line-height: 1;
 }
 
-/* "НЕМАЄ" special color */
-.kimi-stat-rose .kimi-stat-value {
-  color: #EF4444 !important;
-}
-
-/* Subtle sub-labels */
-.kimi-stat-info::after {
-  content: 'залишки в реальному часі';
-  display: block;
-  font-size: 12px;
-  color: #9CA3AF;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 400;
-}
+/* Mapped number colors */
+.kimi-stat-indigo .kimi-stat-value { color: #3B82F6 !important; }
+.kimi-stat-emerald .kimi-stat-value { color: #22C55E !important; }
+.kimi-stat-amber .kimi-stat-value { color: #F59E0B !important; }
+.kimi-stat-rose .kimi-stat-value { color: #EF4444 !important; }
 
 .kimi-stat-icon-wrapper {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent !important;
-  color: #D1D5DB !important;
   font-size: 24px;
 }
+
+/* Colorful background opacity wrapper */
+.kimi-stat-indigo .kimi-stat-icon-wrapper { background: rgba(59, 130, 246, 0.15) !important; color: #3B82F6 !important; }
+.kimi-stat-emerald .kimi-stat-icon-wrapper { background: rgba(34, 197, 94, 0.15) !important; color: #22C55E !important; }
+.kimi-stat-amber .kimi-stat-icon-wrapper { background: rgba(245, 158, 11, 0.15) !important; color: #F59E0B !important; }
+.kimi-stat-rose .kimi-stat-icon-wrapper { background: rgba(239, 68, 68, 0.15) !important; color: #EF4444 !important; }
 
 /* ===== FILTERS TOOLBAR ===== */
 .kimi-filter-bar {
@@ -555,14 +570,16 @@ onActivated(() => {
 }
 
 :deep(.el-input__wrapper) {
+  background-color: var(--surface) !important;
   border-radius: 8px !important;
   height: 38px !important;
-  border: 1px solid #E5E7EB !important;
+  border: 1px solid var(--border) !important;
   box-shadow: none !important;
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text) !important;
 }
-:deep(.el-input__wrapper.is-focus) {
-  border-color: #18181B !important;
+:deep(.el-input__wrapper .el-input__inner) {
+  color: var(--text) !important;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .kimi-primary-btn {
@@ -587,12 +604,12 @@ onActivated(() => {
 /* ===== CONTENT AREA ===== */
 .table-container {
   flex: 1;
-  background: #FFFFFF;
+  background: var(--bg);
   border-radius: 12px 12px 0 0;
   display: flex;
   flex-direction: column;
   margin: 0 20px;
-  border: 1px solid #E5E7EB !important;
+  border: 1px solid var(--border) !important;
   overflow: hidden;
 }
 
@@ -605,102 +622,77 @@ onActivated(() => {
 
 /* el-table visual styles */
 .kimi-table :deep(th.el-table__cell) {
-  background: #F3F4F6 !important;
-  color: #6B7280;
+  background: var(--surface) !important;
+  color: var(--text-muted);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid #F3F4F6 !important;
-  padding: 10px 8px !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
 .kimi-table :deep(td.el-table__cell) {
-  border-bottom: 1px solid #F3F4F6 !important;
+  background-color: var(--bg) !important;
+  color: var(--text);
+  border-bottom: 1px solid var(--border) !important;
   padding: 12px 8px !important;
 }
 
 :deep(.kimi-row:hover td) {
-  background-color: #F9FAFB !important;
+  background-color: var(--surface) !important;
 }
 
-/* Photo placeholder fallback */
-.list-image {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #E5E7EB;
+/* Left border highlight on row hover */
+:deep(.kimi-row:hover td:first-child) {
+  border-left: 3px solid #3B82F6 !important;
+}
+
+/* Table text fonts override */
+.kimi-text-sm {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+.kimi-text-indigo-600 {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
+
+/* Price and Stock column colors override */
+.kimi-table :deep(.kimi-row) span {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Zero and positive stock logic */
+:deep(.kimi-text-rose-600), :deep(.text-rose-600) {
+  color: #EF4444 !important;
+  font-weight: 700 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+:deep(.kimi-text-emerald-600), :deep(.text-emerald-600) {
+  color: #22C55E !important;
+  font-weight: 700 !important;
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
 .list-image-placeholder {
   width: 32px;
   height: 32px;
-  background: #F3F4F6;
+  background: var(--surface);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6B7280;
+  color: var(--text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
   font-weight: 600;
 }
 
-/* Text styles */
-.kimi-text-indigo-600 {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: #6B7280;
-}
-
-.kimi-text-sm {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
-  color: #18181B;
-  font-weight: 500;
-}
-
-/* Stock balance color styles */
-.kimi-table :deep(.kimi-row) span {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* Dynamic classes generated by original codebase helpers */
-:deep(.kimi-text-rose-600), :deep(.text-rose-600) {
-  color: #EF4444 !important;
-  font-family: 'JetBrains Mono', monospace !important;
-}
-:deep(.kimi-text-emerald-600), :deep(.text-emerald-600) {
-  color: #16A34A !important;
-  font-family: 'JetBrains Mono', monospace !important;
-}
-
-.kimi-ghost-btn {
-  background: #F3F4F6;
-  border: none;
-  cursor: pointer;
-  width: 32px; height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6B7280;
-  transition: all 0.2s;
-}
-.kimi-ghost-btn:hover {
-  background: #18181B;
-  color: #FFFFFF;
-}
-
 .pagination-footer {
-  background: #FFFFFF;
+  background: var(--bg);
   padding: 16px 20px;
-  border-top: 1px solid #F3F4F6;
-}
-
-/* Toggle buttons */
-.kimi-view-toggle :deep(.el-radio-button__inner) {
-  font-family: 'Space Grotesk', sans-serif;
+  border-top: 1px solid var(--border);
 }
 </style>
