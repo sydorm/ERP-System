@@ -64,7 +64,15 @@ async def get_product_stock(
         for v in variants:
             vid = str(v.id)
             variant_skus[vid] = v.sku
-            text_parts = [vv.text_value for vv in vv_by_variant.get(vid, []) if vv.text_value]
+            text_parts = []
+            for vv in vv_by_variant.get(vid, []):
+                if vv.text_value:
+                    text_parts.append(vv.text_value)
+                elif vv.option_id:
+                    from app.models.attribute import AttributeOption
+                    opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
+                    if opt:
+                        text_parts.append(opt.value)
             variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
 
     return [
