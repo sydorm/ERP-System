@@ -130,23 +130,52 @@ class PostingService:
         db.flush()
 
     @staticmethod
-    def get_stock_balances(db: Session, company_id: UUID, product_ids: Optional[List[UUID]] = None):
+    def get_stock_balances(
+        db: Session,
+        company_id: UUID,
+        product_ids: Optional[List[UUID]] = None,
+        group_by_variant: bool = False,
+    ):
         """
         Get current stock balances for products.
-        Returns a dictionary mapping product_id to current quantity.
+        When group_by_variant=False (default): {product_id: quantity}
+        When group_by_variant=True: {product_id: {variant_id_or_None: quantity}}
         """
         from sqlalchemy import func
+
+        if group_by_variant:
+            query = db.query(
+                AccumulationRegister.product_id,
+                AccumulationRegister.variant_id,
+                func.sum(AccumulationRegister.quantity).label("balance"),
+            ).filter(
+                AccumulationRegister.company_id == company_id,
+                AccumulationRegister.register_type == RegisterType.STOCK,
+            )
+            if product_ids:
+                query = query.filter(AccumulationRegister.product_id.in_(product_ids))
+            results = query.group_by(
+                AccumulationRegister.product_id,
+                AccumulationRegister.variant_id,
+            ).all()
+            out: dict = {}
+            for r in results:
+                if not r.product_id:
+                    continue
+                pid = str(r.product_id)
+                vid = str(r.variant_id) if r.variant_id else None
+                out.setdefault(pid, {})[vid] = float(r.balance or 0)
+            return out
+
         query = db.query(
             AccumulationRegister.product_id,
-            func.sum(AccumulationRegister.quantity).label("balance")
+            func.sum(AccumulationRegister.quantity).label("balance"),
         ).filter(
             AccumulationRegister.company_id == company_id,
-            AccumulationRegister.register_type == RegisterType.STOCK
+            AccumulationRegister.register_type == RegisterType.STOCK,
         )
-
         if product_ids:
             query = query.filter(AccumulationRegister.product_id.in_(product_ids))
-
         results = query.group_by(AccumulationRegister.product_id).all()
         return {str(r.product_id): float(r.balance or 0) for r in results if r.product_id}
 
