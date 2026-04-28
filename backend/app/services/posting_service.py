@@ -63,7 +63,7 @@ class PostingService:
                 document_type=document_type,
                 document_id=document_id,
                 notes=entry.notes,
-                attribute_values=entry.attribute_values
+                extra_data={"attribute_values": entry.attribute_values} if entry.attribute_values else None
             )
             db.add(db_record)
         
