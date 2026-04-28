@@ -52,11 +52,11 @@
           <template #default="scope">
             <el-input-number 
               size="small" 
-              v-model="scope.row.quantity" 
+              :model-value="Number(scope.row.quantity) || 0" 
+              @update:model-value="val => { scope.row.quantity = val; onLineChange(scope.row) }"
               :min="0.001" 
               :precision="3" 
               :controls="false" 
-              @change="onLineChange(scope.row)" 
               class="erp-cell-input num" 
               style="width:100%" 
             />
@@ -68,11 +68,11 @@
           <template #default="scope">
             <el-input-number 
               size="small" 
-              v-model="scope.row.price" 
+              :model-value="Number(scope.row.price) || 0" 
+              @update:model-value="val => { scope.row.price = val; onLineChange(scope.row) }"
               :min="0" 
               :precision="2" 
               :controls="false" 
-              @change="onLineChange(scope.row)" 
               class="erp-cell-input num" 
               style="width:100%" 
             />
@@ -84,11 +84,11 @@
           <template #default="scope">
             <el-input-number 
               size="small" 
-              v-model="scope.row.total" 
+              :model-value="Number(scope.row.total) || 0" 
+              @update:model-value="val => { scope.row.total = val; onTotalChange(scope.row) }"
               :min="0" 
               :precision="2" 
               :controls="false" 
-              @change="onTotalChange(scope.row)" 
               class="erp-cell-input num sum-input" 
               style="width:100%" 
             />
