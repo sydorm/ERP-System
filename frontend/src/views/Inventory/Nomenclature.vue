@@ -452,23 +452,21 @@ onActivated(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
-
 .orders-page {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #F7F8FC;
+  background: #F9FAFB;
   z-index: 10;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .fixed-top-area {
   flex-shrink: 0;
   z-index: 100;
-  background: #F7F8FC;
+  background: #F9FAFB;
   padding: 20px 20px 0;
   display: flex;
   flex-direction: column;
@@ -478,59 +476,69 @@ onActivated(() => {
 .kimi-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
 .kimi-stat-card {
   background: #FFFFFF !important;
-  border-radius: 16px;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease;
-  border: none !important;
+  box-shadow: none !important;
+  transition: transform 0.15s ease-in-out;
 }
+
 .kimi-stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .kimi-stat-label {
-  font-size: 0.8rem;
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  color: #64748B;
+  font-size: 11px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  color: #6B7280;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .kimi-stat-value {
-  font-size: 1.8rem;
-  font-family: 'DM Mono', monospace;
-  color: #0F172A !important;
-  margin: 5px 0;
+  font-size: 36px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #18181B !important;
+  margin: 8px 0;
+  line-height: 1;
 }
 
-/* Red text for out of stock */
+/* "НЕМАЄ" special color */
 .kimi-stat-rose .kimi-stat-value {
   color: #EF4444 !important;
+}
+
+/* Subtle sub-labels */
+.kimi-stat-info::after {
+  content: 'залишки в реальному часі';
+  display: block;
+  font-size: 12px;
+  color: #9CA3AF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 400;
 }
 
 .kimi-stat-icon-wrapper {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent !important;
-  color: #6C63FF !important;
+  color: #D1D5DB !important;
   font-size: 24px;
-}
-.kimi-stat-rose .kimi-stat-icon-wrapper {
-  color: #EF4444 !important;
 }
 
 /* ===== FILTERS TOOLBAR ===== */
@@ -547,47 +555,45 @@ onActivated(() => {
 }
 
 :deep(.el-input__wrapper) {
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   height: 38px !important;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #E5E7EB !important;
   box-shadow: none !important;
+  font-family: 'Space Grotesk', sans-serif;
 }
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #6C63FF !important;
+  border-color: #18181B !important;
 }
 
 .kimi-primary-btn {
-  background: linear-gradient(135deg, #6C63FF, #00C9A7) !important;
+  background: #18181B !important;
   border: none !important;
-  border-radius: 10px;
-  font-weight: 700;
-  font-family: 'Syne', sans-serif;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.25);
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #FFFFFF !important;
   padding: 0 20px;
   height: 38px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: transform 0.2s ease;
+  transition: background-color 0.2s;
 }
 .kimi-primary-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.35);
+  background: #27272A !important;
 }
 
 /* ===== CONTENT AREA ===== */
 .table-container {
   flex: 1;
   background: #FFFFFF;
-  border-radius: 16px 16px 0 0;
+  border-radius: 12px 12px 0 0;
   display: flex;
   flex-direction: column;
   margin: 0 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB !important;
   overflow: hidden;
-  border: none !important;
 }
 
 .table-wrapper {
@@ -599,59 +605,102 @@ onActivated(() => {
 
 /* el-table visual styles */
 .kimi-table :deep(th.el-table__cell) {
-  background: #F8FAFC !important;
-  color: #64748B;
-  font-family: 'Syne', sans-serif;
+  background: #F3F4F6 !important;
+  color: #6B7280;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid #F1F5F9 !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid #F3F4F6 !important;
+  padding: 10px 8px !important;
 }
 
 .kimi-table :deep(td.el-table__cell) {
-  border-bottom: 1px solid #F1F5F9 !important;
-  font-family: 'Inter', sans-serif;
+  border-bottom: 1px solid #F3F4F6 !important;
+  padding: 12px 8px !important;
 }
 
-:deep(.kimi-row:hover) {
-  background: linear-gradient(90deg, rgba(108, 99, 255, 0.03), transparent) !important;
+:deep(.kimi-row:hover td) {
+  background-color: #F9FAFB !important;
 }
 
+/* Photo placeholder fallback */
 .list-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #E5E7EB;
 }
 
-.kimi-ghost-btn {
-  background: #F1F5F9;
-  border: none;
-  cursor: pointer;
-  width: 32px; height: 32px;
-  border-radius: 8px;
+.list-image-placeholder {
+  width: 32px;
+  height: 32px;
+  background: #F3F4F6;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748B;
+  color: #6B7280;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Text styles */
+.kimi-text-indigo-600 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.kimi-text-sm {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: #18181B;
+  font-weight: 500;
+}
+
+/* Stock balance color styles */
+.kimi-table :deep(.kimi-row) span {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Dynamic classes generated by original codebase helpers */
+:deep(.kimi-text-rose-600), :deep(.text-rose-600) {
+  color: #EF4444 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+:deep(.kimi-text-emerald-600), :deep(.text-emerald-600) {
+  color: #16A34A !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.kimi-ghost-btn {
+  background: #F3F4F6;
+  border: none;
+  cursor: pointer;
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
   transition: all 0.2s;
 }
 .kimi-ghost-btn:hover {
-  background: #6C63FF;
-  color: white;
+  background: #18181B;
+  color: #FFFFFF;
 }
 
 .pagination-footer {
   background: #FFFFFF;
   padding: 16px 20px;
-  border-top: 1px solid #F1F5F9;
+  border-top: 1px solid #F3F4F6;
 }
 
-/* Helper tags */
-:deep(.el-tag--info.is-plain) {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #475569;
-  border-radius: 6px;
+/* Toggle buttons */
+.kimi-view-toggle :deep(.el-radio-button__inner) {
+  font-family: 'Space Grotesk', sans-serif;
 }
 </style>
