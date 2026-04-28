@@ -14,7 +14,7 @@
 
     <!-- Stats Dashboard -->
     <el-row :gutter="20" class="stats-row mt-4">
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover" class="stats-card purple-gradient">
           <div class="stats-content">
             <div class="stats-icon-wrapper">
@@ -28,7 +28,7 @@
         </el-card>
       </el-col>
       
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover" class="stats-card blue-gradient">
           <div class="stats-content">
             <div class="stats-icon-wrapper">
@@ -42,7 +42,7 @@
         </el-card>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover" class="stats-card orange-gradient">
           <div class="stats-content">
             <div class="stats-icon-wrapper">
@@ -55,6 +55,20 @@
           </div>
         </el-card>
       </el-col>
+
+      <el-col :span="6">
+        <el-card shadow="hover" class="stats-card green-gradient">
+          <div class="stats-content">
+            <div class="stats-icon-wrapper">
+              <el-icon class="stats-icon"><Money /></el-icon>
+            </div>
+            <div class="stats-data">
+              <span class="stats-label">Оцінка складу</span>
+              <span class="stats-value">{{ formatCurrency(totalStockValue) }}</span>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
 
     <!-- Main Content -->
@@ -63,18 +77,47 @@
         <el-table-column type="expand">
           <template #default="props">
             <div class="expand-content">
-              <h4>Товарні залишки на складі: <strong>{{ props.row.name }}</strong></h4>
+              <div class="expand-header">
+                <h4>Товарні залишки на складі: <strong>{{ props.row.name }}</strong></h4>
+                <span class="financial-valuation">Вартість товарів: <strong>{{ formatCurrency(getWarehouseStockValue(props.row.id)) }}</strong></span>
+              </div>
+
               <el-table :data="getWarehouseStock(props.row.id)" size="small" border stripe class="mt-3">
-                <el-table-column label="Товар" prop="product_name" min-width="200" />
+                <el-table-column label="Товар" min-width="220">
+                  <template #default="scope">
+                    <router-link :to="'/inventory/nomenclature/' + scope.row.product_id" class="product-link" v-if="scope.row.product_id">
+                      {{ scope.row.product_name }}
+                    </router-link>
+                    <span v-else>{{ scope.row.product_name }}</span>
+                  </template>
+                </el-table-column>
                 <el-table-column label="Характеристика" prop="variant_label" min-width="150">
                   <template #default="scope">
                     <span v-if="scope.row.variant_label">{{ scope.row.variant_label }}</span>
                     <span class="empty-text" v-else>—</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="Залишок" prop="quantity" width="150" align="right">
+                <el-table-column label="Собівартість" width="130" align="right">
+                  <template #default="scope">
+                    {{ formatCurrency(scope.row.cost) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="Кількість" prop="quantity" width="120" align="right">
                   <template #default="scope">
                     <span class="stock-qty">{{ scope.row.quantity }} шт</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="Сума" width="140" align="right">
+                  <template #default="scope">
+                    <span class="total-amount">{{ formatCurrency(scope.row.quantity * scope.row.cost) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="Стан" width="120" align="center">
+                  <template #default="scope">
+                    <el-tooltip v-if="scope.row.quantity <= scope.row.min_stock" :content="'Нижче мін. порогу: ' + scope.row.min_stock + ' шт'" placement="top">
+                      <el-tag type="danger" size="small" effect="dark">Дефіцит</el-tag>
+                    </el-tooltip>
+                    <el-tag v-else type="success" size="small" effect="light">Норма</el-tag>
                   </template>
                 </el-table-column>
               </el-table>
@@ -153,7 +196,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Edit, Delete, Box, Location, List, InfoFilled } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Box, Location, List, InfoFilled, Money } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
@@ -189,6 +232,10 @@ const totalStockQty = computed(() => {
   return allStock.value.reduce((sum, item) => sum + item.quantity, 0)
 })
 
+const totalStockValue = computed(() => {
+  return allStock.value.reduce((sum, item) => sum + (item.quantity * item.cost), 0)
+})
+
 const fetchData = async () => {
   loading.value = true
   try {
@@ -207,6 +254,18 @@ const fetchData = async () => {
 
 const getWarehouseStock = (warehouseId) => {
   return allStock.value.filter(item => item.warehouse_id === warehouseId)
+}
+
+const getWarehouseStockValue = (warehouseId) => {
+  return getWarehouseStock(warehouseId).reduce((sum, item) => sum + (item.quantity * item.cost), 0)
+}
+
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('uk-UA', {
+    style: 'currency',
+    currency: 'UAH',
+    minimumFractionDigits: 2
+  }).format(value || 0)
 }
 
 const openCreateDialog = () => {
@@ -346,6 +405,10 @@ onMounted(() => {
   background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
 }
 
+.green-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
 .stats-content {
   display: flex;
   align-items: center;
@@ -412,15 +475,43 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.expand-content h4 {
-  margin-top: 0;
+.expand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 12px;
+}
+
+.expand-header h4 {
+  margin: 0;
   color: #334155;
+}
+
+.financial-valuation {
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.product-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.product-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .stock-qty {
   font-weight: 600;
   color: #1e293b;
+}
+
+.total-amount {
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .empty-stock-state {

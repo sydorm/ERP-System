@@ -34,6 +34,8 @@ async def get_warehouses_stock(
         AccumulationRegister.product_id,
         AccumulationRegister.variant_id,
         Product.name.label("product_name"),
+        Product.cost,
+        Product.min_stock,
         func.sum(AccumulationRegister.quantity).label("quantity"),
     ).join(
         Product, Product.id == AccumulationRegister.product_id
@@ -44,7 +46,9 @@ async def get_warehouses_stock(
         AccumulationRegister.warehouse_id,
         AccumulationRegister.product_id,
         AccumulationRegister.variant_id,
-        Product.name
+        Product.name,
+        Product.cost,
+        Product.min_stock
     ).all()
 
     variant_skus: dict = {}
@@ -81,9 +85,12 @@ async def get_warehouses_stock(
         
         out.append({
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
+            "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
             "variant_label": label,
-            "quantity": float(r.quantity or 0)
+            "quantity": float(r.quantity or 0),
+            "cost": float(r.cost or 0),
+            "min_stock": float(r.min_stock or 0)
         })
     return out
 
