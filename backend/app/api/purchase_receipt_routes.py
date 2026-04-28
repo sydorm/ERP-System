@@ -57,11 +57,83 @@ async def create_purchase_receipt(
         ).update({"status": PurchaseOrderStatus.DONE})
     
     # 2. Add Lines
+    # 2. Add Lines
+    from app.models.variant import ProductVariant, VariantValue
+    from app.models.product import Product
+    
+    resolved_variants = {}
+    
     for line_data in receipt_data.lines:
+        resolved_variant_id = line_data.variant_id
+        
+        if not resolved_variant_id and line_data.attribute_values:
+            vals = line_data.attribute_values
+            
+            def get_fp(v_list):
+                parts = []
+                for v in v_list:
+                    a_id = str(v.get("attribute_id", ""))
+                    key = str(v.get("option_id") or v.get("text_value") or "")
+                    parts.append((a_id, key))
+                return tuple(sorted(parts))
+            
+            incoming_fp = get_fp(vals)
+            
+            existing = db.query(ProductVariant).filter(
+                ProductVariant.product_id == line_data.product_id,
+                ProductVariant.is_active == True
+            ).all()
+            
+            match_found = None
+            for var in existing:
+                var_vals = [{
+                    "attribute_id": str(vv.attribute_id),
+                    "option_id": str(vv.option_id) if vv.option_id else None,
+                    "text_value": vv.text_value
+                } for vv in var.values]
+                if get_fp(var_vals) == incoming_fp:
+                    match_found = var
+                    break
+            
+            if match_found:
+                resolved_variant_id = match_found.id
+            else:
+                product = db.query(Product).filter(Product.id == line_data.product_id).first()
+                if product:
+                    suffix_parts = []
+                    for v in vals:
+                        txt = v.get("text_value") or ""
+                        if txt:
+                            suffix_parts.append(txt.replace("×", "x").replace(" ", ""))
+                    suffix = "-".join(suffix_parts) if suffix_parts else str(len(existing) + 1)
+                    new_sku = f"{product.sku}-{suffix}"
+                    
+                    db_var = ProductVariant(
+                        product_id=line_data.product_id,
+                        sku=new_sku,
+                        is_active=True,
+                        is_primary=False
+                    )
+                    db.add(db_var)
+                    db.flush()
+                    
+                    for v in vals:
+                        db_vv = VariantValue(
+                            variant_id=db_var.id,
+                            attribute_id=UUID(v["attribute_id"]) if isinstance(v["attribute_id"], str) else v["attribute_id"],
+                            option_id=UUID(v["option_id"]) if v.get("option_id") else None,
+                            text_value=v.get("text_value")
+                        )
+                        db.add(db_vv)
+                    db.flush()
+                    resolved_variant_id = db_var.id
+        
+        resolved_variants[id(line_data)] = resolved_variant_id
+        
         line = PurchaseReceiptLine(
             receipt_id=receipt.id,
             product_id=line_data.product_id,
-            variant_id=line_data.variant_id,
+            variant_id=resolved_variant_id,
             quantity=line_data.quantity,
             price=line_data.price,
             total=line_data.total,
@@ -79,7 +151,7 @@ async def create_purchase_receipt(
         entries.append(PostingEntry(
             register_type=RegisterType.STOCK,
             product_id=line_data.product_id,
-            variant_id=line_data.variant_id,
+            variant_id=resolved_variants.get(id(line_data)),
             warehouse_id=receipt.warehouse_id,
             quantity=float(line_data.quantity),
             amount=float(line_data.total),
