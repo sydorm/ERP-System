@@ -1,5 +1,5 @@
 <template>
-  <div class="related-docs-block" v-if="docs.length || loading">
+  <div class="related-docs-block">
     <div class="related-docs-header">
       <el-icon class="header-icon"><Connection /></el-icon>
       <span>Пов'язані документи</span>

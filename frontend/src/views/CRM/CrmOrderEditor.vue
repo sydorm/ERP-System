@@ -852,10 +852,9 @@ const clientPhone = ref('')
 // Config fetched during loadData
 const stages = [
   { key: 'new',        label: 'Нова заявка' },
-  { key: 'processing', label: 'В обробці' },
-  { key: 'confirmed',  label: 'Підтверджено' },
   { key: 'payment',    label: 'Оплата' },
-  { key: 'production', label: 'У виробництві' },
+  { key: 'processing', label: 'В роботі' },
+  { key: 'production', label: 'Виробництво' },
   { key: 'done',       label: 'Виконано' },
 ]
 const stageIndex = computed(() => stages.findIndex(s => s.key === form.crm_stage))
@@ -987,6 +986,52 @@ const onPrepaymentInput = () => {
 
 // ─── Stage ────────────────────────────────────────────────────────────────────
 const setStage = async (key) => {
+  // Rule 1: Payment Stage
+  if (key === 'payment') {
+    const hasClient = form.counterparty_id || clientName.value || clientPhone.value
+    const hasProduct = form.product_id
+    const hasAmount = Number(form.total_amount || 0) > 0
+    if (!hasClient || !hasProduct || !hasAmount) {
+      ElMessage.warning('Для переходу в "Оплата" вкажіть клієнта або телефон, виріб та суму замовлення.')
+      return
+    }
+  }
+
+  // Rule 2: Processing (В роботі) Stage
+  if (key === 'processing') {
+    const hasClient = form.counterparty_id || clientName.value
+    const hasPhone = clientPhone.value
+    const hasProduct = form.product_id
+    const hasAttrs = requiredAttributesFilled.value
+    const hasAmount = Number(form.total_amount || 0) > 0
+    const hasDeadline = form.deadline_date
+    const hasTerms = form.prepayment_percent !== null || form.prepayment_amount !== null || form.payment_status
+
+    if (!hasDeadline) {
+      ElMessage.warning('Вкажіть дату готовності перед передачею заявки в роботу.')
+      return
+    }
+    if (!hasClient || !hasPhone || !hasProduct || !hasAttrs || !hasAmount || !hasTerms) {
+      ElMessage.warning('Для переходу "В роботу" заповніть клієнта, телефон, виріб, характеристики, суму та умови оплати.')
+      return
+    }
+  }
+
+  // Rule 3: Production (Виробництво) Stage
+  if (key === 'production') {
+    if (form.crm_stage !== 'processing') {
+      ElMessage.warning('Перехід у "Виробництво" дозволений тільки зі статусу "В роботі".')
+      return
+    }
+    const hasDeadline = form.deadline_date
+    const hasAttrs = requiredAttributesFilled.value
+    const hasComment = form.comment || form.internal_notes
+    if (!hasDeadline || !hasAttrs || !hasComment) {
+      ElMessage.warning('Для переходу у "Виробництво" вкажіть дату готовності, характеристики та коментар для виробництва.')
+      return
+    }
+  }
+
   if (key === 'processing' && orderId.value) {
     try {
       const res = await api.post('/api/v1/business-process/event', {
@@ -1014,7 +1059,7 @@ const setStage = async (key) => {
               source_type: 'crm_lead',
               source_id: orderId.value,
             })
-          } catch { /* non-critical, order already saved */ }
+          } catch { /* non-critical */ }
         }
       }
     } catch (err) {

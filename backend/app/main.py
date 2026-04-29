@@ -42,13 +42,16 @@ def on_startup():
     try:
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS height INTEGER"))
-        
+
         # Add columns to document lines
         db.execute(text("ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS characteristic_width NUMERIC(15,2)"))
         db.execute(text("ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS characteristic_height NUMERIC(15,2)"))
         db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_width NUMERIC(15,2)"))
         db.execute(text("ALTER TABLE purchase_receipt_lines ADD COLUMN IF NOT EXISTS characteristic_height NUMERIC(15,2)"))
-        
+
+        # Data Migration for CRM Stages
+        db.execute(text("UPDATE orders SET crm_stage = 'processing' WHERE crm_stage = 'confirmed'"))
+
         db.commit()
         print("✅ Database schema check: OK")
     except Exception as e:

@@ -153,12 +153,11 @@ const analytics = ref({
 })
 
 const stages = [
-  { key: 'new', label: 'Нові', color: '#3b82f6' },
-  { key: 'processing', label: 'В роботі', color: '#8b5cf6' },
-  { key: 'confirmed', label: 'Підтверджені', color: '#f59e0b' },
-  { key: 'payment', label: 'Оплата', color: '#10b981' },
-  { key: 'production', label: 'Виробництво', color: '#6366f1' },
-  { key: 'done', label: 'Виконані', color: '#22c55e' }
+  { key: 'new',        label: 'Нові',        color: '#3D3AA8' },
+  { key: 'payment',    label: 'Оплата',     color: '#F97316' },
+  { key: 'processing', label: 'В роботі',    color: '#F59E0B' },
+  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
+  { key: 'done',       label: 'Виконані',    color: '#22C55E' }
 ]
 
 const getStageLabel = (key) => stages.find(s => s.key === key)?.label || key

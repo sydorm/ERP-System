@@ -316,7 +316,7 @@ async def update_order_stage(
     current_user: User = Depends(get_current_active_user)
 ):
     """Move an order to a new CRM pipeline stage (for Kanban drag & drop)."""
-    valid_stages = {"new", "processing", "confirmed", "payment", "production", "done"}
+    valid_stages = {"new", "payment", "processing", "production", "done"}
     if stage not in valid_stages:
         raise HTTPException(status_code=400, detail=f"Invalid stage. Must be one of: {valid_stages}")
 
@@ -327,7 +327,16 @@ async def update_order_stage(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Validate transition to processing (deadline, client, amount required)
+    # Rule 1: Payment
+    if stage == "payment":
+        if not order.counterparty_id:
+            raise HTTPException(status_code=422, detail="Для переходу в 'Оплата' вкажіть клієнта")
+        if not order.lines:
+            raise HTTPException(status_code=422, detail="Для переходу в 'Оплата' додайте виріб")
+        if not order.total_amount or float(order.total_amount) <= 0:
+            raise HTTPException(status_code=422, detail="Для переходу в 'Оплата' вкажіть суму")
+
+    # Rule 2: Processing (В роботі)
     if stage == "processing":
         if not order.counterparty_id:
             raise HTTPException(status_code=422, detail="Клієнт не заповнений")
@@ -335,6 +344,13 @@ async def update_order_stage(
             raise HTTPException(status_code=422, detail="Вкажіть дату готовності перед передачею заявки в роботу")
         if not order.total_amount or float(order.total_amount) <= 0:
             raise HTTPException(status_code=422, detail="Сума замовлення має бути більше 0")
+
+    # Rule 3: Production
+    if stage == "production":
+        if order.crm_stage != "processing":
+            raise HTTPException(status_code=422, detail="Перехід у Виробництво дозволений тільки зі статусу 'В роботі'")
+        if not order.deadline_date:
+            raise HTTPException(status_code=422, detail="Вкажіть дату готовності перед передачею у виробництво")
 
     order.crm_stage = stage
     if stage == "done":
