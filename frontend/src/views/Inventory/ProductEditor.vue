@@ -1,12 +1,25 @@
 <template>
   <div class="page-container">
-    <!-- === TOP BAR === -->
-    <div class="page-header">
+    <!-- === STICKY HEADER === -->
+    <div class="sticky-header">
       <div class="header-left">
         <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" title="Назад" />
-        <div>
-          <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
-          <p class="page-subtitle">{{ isEditMode ? `Артикул: ${form.sku}` : 'Створення нової номенклатури' }}</p>
+        <div class="header-titles">
+          <div class="header-top-row">
+            <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+            <div class="header-badges" v-if="isEditMode">
+              <span class="status-badge" :class="form.is_active ? 'active' : 'inactive'">
+                {{ form.is_active ? 'Активний' : 'В архіві' }}
+              </span>
+              <span class="category-badge" v-if="form.category">
+                {{ getCategoryName(form.category) }}
+              </span>
+            </div>
+          </div>
+          <div class="header-bottom-row">
+            <span class="product-title">{{ form.name || 'Новий товар' }}</span>
+            <span class="product-sku" v-if="form.sku && isEditMode">Артикул: {{ form.sku }}</span>
+          </div>
         </div>
       </div>
       <div class="header-actions">
@@ -275,6 +288,11 @@ const uomOptions = computed(() => dictStore.getCategory('UOM'))
 const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
 const currencyOptions = computed(() => dictStore.getCategory('CURRENCY'))
 
+const getCategoryName = (code) => {
+  const cat = categoryOptions.value.find(c => c.code === code)
+  return cat ? cat.name : code
+}
+
 // Data
 const stockLevels = ref([])
 const suppliers = ref([])
@@ -462,23 +480,24 @@ onMounted(() => {
   top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  background-color: #f4f5f9;
+  background-color: #f8fafc;
   z-index: 100;
   overflow: hidden;
 }
 
-/* === TOP BAR === */
-.page-header {
+/* === STICKY HEADER === */
+.sticky-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #ffffff;
-  padding: 4px 20px;
-  height: 42px;
-  border-bottom: 1px solid #eef0f5;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  z-index: 10;
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px -2px rgba(148, 163, 184, 0.08);
 }
 
 .header-left {
@@ -487,35 +506,89 @@ onMounted(() => {
   gap: 16px;
 }
 
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .back-btn {
-  border: 1px solid #eef2f7;
+  border: 1px solid #e2e8f0;
   color: #64748b;
   transition: all 0.2s ease;
 }
 
 .back-btn:hover {
-  background-color: #f8fafc;
-  color: #6366f1;
-  border-color: #6366f1;
-  transform: translateX(-2px);
+  background-color: #f1f5f9;
+  color: #4f46e5;
+  border-color: #cbd5e1;
 }
 
-.header-left h2 {
+.header-titles h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: #1e293b;
-  letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
-.page-subtitle {
-  margin-top: 2px;
-  font-size: 10px;
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  font-size: 11px;
   font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.status-badge.active {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+.status-badge.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.category-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: #f5f3ff;
+  color: #4f46e5;
+  border: 1px solid #ddd6fe;
+  line-height: 1;
+}
+
+.product-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.product-sku {
+  font-size: 12px;
+  font-weight: 500;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .header-actions {
@@ -529,8 +602,9 @@ onMounted(() => {
   color: #64748b;
   font-weight: 600;
   font-size: 13px;
-  border-radius: 10px;
-  padding: 8px 16px;
+  border-radius: 12px;
+  height: 40px;
+  padding: 0 16px;
   transition: all 0.2s ease;
 }
 
@@ -542,44 +616,42 @@ onMounted(() => {
 
 .btn-delete {
   font-weight: 600;
+  border-radius: 12px;
+  height: 40px;
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: #4f46e5;
   border: none;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
   color: #ffffff;
-  border-radius: 10px;
-  padding: 8px 20px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  height: 40px;
+  padding: 0 20px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s ease;
 }
 
 .btn-save:hover {
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
-  transform: translateY(-1px);
-  filter: brightness(1.1);
-}
-
-.btn-save:active {
-  transform: translateY(0);
+  background: #4338ca;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
 }
 
 /* === EDITOR CONTENT === */
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 12px;
-  background-color: #f4f5f9;
+  padding: 20px;
+  background-color: #f8fafc;
 }
 
 /* === CONTENT CARD === */
 .content-card {
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  border: 1px solid #eef0f5;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.1), 0 2px 8px -1px rgba(148, 163, 184, 0.05);
+  border: 1px solid #e2e8f0;
   overflow: hidden;
   width: 100%;
 }
@@ -588,8 +660,8 @@ onMounted(() => {
 .product-tabs :deep(.el-tabs__header) {
   margin: 0;
   background: #ffffff;
-  padding: 0 24px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 24px 0 24px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .product-tabs :deep(.el-tabs__nav-wrap::after) {
@@ -597,34 +669,33 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__item) {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #94a3b8;
-  height: 44px;
-  line-height: 44px;
-  padding: 0 16px !important;
+  color: #64748b;
+  height: 48px;
+  line-height: 48px;
+  padding: 0 20px !important;
   transition: all 0.2s ease;
 }
 
 .product-tabs :deep(.el-tabs__item:hover) {
-  color: #6366f1;
+  color: #4f46e5;
 }
 
 .product-tabs :deep(.el-tabs__item.is-active) {
-  color: #6366f1;
+  color: #4f46e5;
 }
 
 .product-tabs :deep(.el-tabs__active-bar) {
-  background-color: #6366f1;
+  background-color: #4f46e5;
   height: 3px;
   border-radius: 3px 3px 0 0;
 }
 
 .product-tabs :deep(.el-tabs__content) {
-  padding: 16px 0 0 0;
+  padding: 0;
 }
 
-/* Specialized tab areas */
 .empty-tab {
   padding: 80px 40px;
   text-align: center;
