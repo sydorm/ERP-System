@@ -132,6 +132,23 @@
         <small>{{ overdueTasks.length }} прострочено</small>
       </div>
     </div>
+
+    <div v-if="attentionOrders.length" class="director-attention-strip">
+      <div class="attention-strip-title">
+        <span></span>
+        <strong>Потребують уваги</strong>
+        <small>{{ attentionOrders.length }} заявок</small>
+      </div>
+      <button
+        v-for="order in attentionOrders.slice(0, 4)"
+        :key="order.id"
+        class="attention-order-pill"
+        @click="openEditor(order)"
+      >
+        <b>#{{ order.order_number }}</b>
+        <span>{{ getAttentionReason(order) }}</span>
+      </button>
+    </div>
     </div>
 
     <!-- ===== KANBAN BOARD ===== -->
@@ -241,6 +258,11 @@
               >🔴 {{ getSlaHours(order.id) }} год</span>
             </div>
 
+            <div v-if="getAttentionReason(order)" class="card-next-action" :class="getAttentionClass(order)">
+              <el-icon><Bell /></el-icon>
+              <span>{{ getAttentionReason(order) }}</span>
+            </div>
+
             <!-- Розділювач -->
             <div class="card-divider"></div>
 
@@ -259,15 +281,36 @@
             <!-- Іконки + аватар -->
             <div class="card-footer-new">
               <div class="card-comm-channels">
-                <span class="channel-icon phone" @click.stop="handleComm(order, 'phone')"><el-icon><Phone /></el-icon></span>
-                <span class="channel-icon viber" @click.stop="handleComm(order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
-                <span class="channel-icon telegram" @click.stop="handleComm(order, 'telegram')"><el-icon><Promotion /></el-icon></span>
-                <span class="channel-icon instagram" @click.stop="handleComm(order, 'instagram')"><el-icon><Camera /></el-icon></span>
+                <el-tooltip content="Подзвонити" placement="top">
+                  <span class="channel-icon phone" @click.stop="handleComm(order, 'phone')"><el-icon><Phone /></el-icon></span>
+                </el-tooltip>
+                <el-tooltip content="Viber / коментар" placement="top">
+                  <span class="channel-icon viber" @click.stop="handleComm(order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
+                </el-tooltip>
+                <el-tooltip content="Telegram" placement="top">
+                  <span class="channel-icon telegram" @click.stop="handleComm(order, 'telegram')"><el-icon><Promotion /></el-icon></span>
+                </el-tooltip>
+                <el-tooltip content="Instagram" placement="top">
+                  <span class="channel-icon instagram" @click.stop="handleComm(order, 'instagram')"><el-icon><Camera /></el-icon></span>
+                </el-tooltip>
               </div>
               <div class="card-meta-right">
                 <el-tooltip :content="getManagerName(order.manager_id)" placement="top">
                   <div class="card-avatar">{{ (getManagerName(order.manager_id) || '?').charAt(0) }}</div>
                 </el-tooltip>
+                <el-dropdown trigger="click" @command="(cmd) => handleCardCommand(cmd, order)" @click.stop>
+                  <button class="card-more-btn" @click.stop>
+                    <el-icon><MoreFilled /></el-icon>
+                  </button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
+                      <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
+                      <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
+                      <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
                 <button class="card-arrow-btn" @click.stop="openEditor(order)">→</button>
               </div>
             </div>
@@ -552,6 +595,13 @@ const paymentProgress = computed(() => {
   return Math.round((paidCount / orders.value.length) * 100)
 })
 
+const attentionOrders = computed(() => {
+  return orders.value
+    .filter(order => getAttentionScore(order) > 0)
+    .slice()
+    .sort((a, b) => getAttentionScore(b) - getAttentionScore(a))
+})
+
 const stageShare = (stage) => {
   if (!orders.value.length) return 0
   const count = orders.value.filter(order => order.crm_stage === stage).length
@@ -564,6 +614,34 @@ const getOrderHealthClass = (order) => {
   if (slaLevel === 'warning') return 'order-health-warning'
   if (order.payment_status === 'paid') return 'order-health-paid'
   return 'order-health-neutral'
+}
+
+const getAttentionScore = (order) => {
+  const slaLevel = getSlaLevel(order.id)
+  let score = 0
+  if (['critical', 'urgent'].includes(slaLevel)) score += 90
+  else if (slaLevel === 'warning') score += 60
+  if (order.deadline && new Date(order.deadline) < new Date()) score += 45
+  if (order.payment_status !== 'paid' && Number(order.total_amount || 0) > 0) score += 18
+  if (!order.last_contact) score += 12
+  return score
+}
+
+const getAttentionReason = (order) => {
+  const slaLevel = getSlaLevel(order.id)
+  if (['critical', 'urgent'].includes(slaLevel)) return `Без дії ${getSlaHours(order.id)} год`
+  if (slaLevel === 'warning') return `Наближається SLA: ${getSlaHours(order.id)} год`
+  if (order.deadline && new Date(order.deadline) < new Date()) return 'Прострочений дедлайн'
+  if (order.payment_status !== 'paid' && Number(order.total_amount || 0) > 0) return 'Потрібен контроль оплати'
+  if (!order.last_contact) return 'Немає останнього контакту'
+  return ''
+}
+
+const getAttentionClass = (order) => {
+  const slaLevel = getSlaLevel(order.id)
+  if (['critical', 'urgent'].includes(slaLevel)) return 'attention-critical'
+  if (slaLevel === 'warning') return 'attention-warning'
+  return 'attention-info'
 }
 
 const handleExport = async (type) => {
@@ -795,6 +873,37 @@ const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'Ч�
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
 const openNewOrderInStage = (s) => router.push(`/crm/orders/new?stage=${s}`)
+
+const handleCardCommand = async (command, order) => {
+  if (command === 'open') {
+    openEditor(order)
+    return
+  }
+
+  if (command === 'client') {
+    openClientProfile(order.counterparty_id)
+    return
+  }
+
+  if (command === 'call') {
+    handleComm(order, 'phone')
+    return
+  }
+
+  if (command === 'copy') {
+    const value = order.client_phone || order.order_number || ''
+    if (!value) {
+      ElMessage.warning('Немає даних для копіювання')
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(value)
+      ElMessage.success('Скопійовано')
+    } catch {
+      ElMessage.info(value)
+    }
+  }
+}
 
 const handleCall = (task) => {
   callTask.value = task
@@ -1844,10 +1953,6 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   margin-bottom: 7px;
 }
 
-.crm-sticky-workbar .crm-tools-row {
-  margin-bottom: 0;
-}
-
 .stage-meter {
   height: 4px;
   overflow: hidden;
@@ -1959,12 +2064,103 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   margin-top: 2px;
 }
 
+.director-attention-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  overflow-x: auto;
+  padding: 6px 8px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 12px;
+  background: rgba(255, 251, 235, 0.82);
+}
+
+.attention-strip-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  color: #92400e;
+}
+
+.attention-strip-title span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+}
+
+.attention-strip-title strong {
+  font-size: 12px;
+}
+
+.attention-strip-title small {
+  color: #b45309;
+  font-size: 11px;
+}
+
+.attention-order-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  max-width: 230px;
+  padding: 4px 9px;
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  border-radius: 999px;
+  color: #78350f;
+  background: rgba(255, 255, 255, 0.74);
+  cursor: pointer;
+}
+
+.attention-order-pill b,
+.attention-order-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attention-order-pill span {
+  min-width: 0;
+  color: #92400e;
+  font-size: 11px;
+}
+
+.card-next-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 7px 0 0;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.card-next-action.attention-critical {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.card-next-action.attention-warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.card-next-action.attention-info {
+  color: #334155;
+  background: #f1f5f9;
+}
+
 .card-meta-right {
   display: flex;
 }
 
 .card-avatar,
-.card-arrow-btn {
+.card-arrow-btn,
+.card-more-btn {
   border-radius: 10px;
 }
 
@@ -1982,14 +2178,40 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   line-height: 1;
 }
 
+.card-more-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #dbe4f0;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.card-more-btn:hover {
+  color: #2734a0;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
 .order-card.is-selected {
   box-shadow: 0 0 0 2px rgba(61, 58, 168, 0.16), 0 16px 34px rgba(15, 23, 42, 0.12);
+}
+
+.channel-icon.telegram,
+.channel-icon.instagram {
+  display: flex;
 }
 
 @media (max-width: 760px) {
   .crm-sticky-workbar {
     margin: -16px -12px 8px;
     padding: 12px;
+  }
+
+  .director-attention-strip {
+    align-items: flex-start;
   }
 }
 </style>
