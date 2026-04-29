@@ -133,21 +133,28 @@
       </div>
     </div>
 
-    <div v-if="attentionOrders.length" class="director-attention-strip">
-      <div class="attention-strip-title">
+    <div
+      v-if="attentionOrders.length"
+      class="director-attention-strip"
+      :class="{ 'is-expanded': attentionExpanded }"
+    >
+      <button class="attention-strip-title" @click="attentionExpanded = !attentionExpanded">
         <span></span>
         <strong>Потребують уваги</strong>
         <small>{{ attentionOrders.length }} заявок</small>
-      </div>
-      <button
-        v-for="order in attentionOrders.slice(0, 4)"
-        :key="order.id"
-        class="attention-order-pill"
-        @click="openEditor(order)"
-      >
-        <b>#{{ order.order_number }}</b>
-        <span>{{ getAttentionReason(order) }}</span>
+        <em>{{ attentionExpanded ? 'Згорнути' : 'Розгорнути' }}</em>
       </button>
+      <template v-if="attentionExpanded">
+        <button
+          v-for="order in attentionOrders.slice(0, 4)"
+          :key="order.id"
+          class="attention-order-pill"
+          @click="openEditor(order)"
+        >
+          <b>#{{ order.order_number }}</b>
+          <span>{{ getAttentionReason(order) }}</span>
+        </button>
+      </template>
     </div>
     </div>
 
@@ -529,6 +536,7 @@ const todayTasks = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const slaStatus = ref({})
+const attentionExpanded = ref(false)
 
 const getSlaLevel = (orderId) => slaStatus.value[orderId]?.sla_level || 'ok'
 const getSlaHours = (orderId) => {
@@ -2081,7 +2089,11 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   align-items: center;
   gap: 7px;
   flex-shrink: 0;
+  min-height: 26px;
+  border: 0;
   color: #92400e;
+  background: transparent;
+  cursor: pointer;
 }
 
 .attention-strip-title span {
@@ -2099,6 +2111,26 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .attention-strip-title small {
   color: #b45309;
   font-size: 11px;
+}
+
+.attention-strip-title em {
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #78350f;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.director-attention-strip:not(.is-expanded) {
+  width: fit-content;
+  max-width: 100%;
+  padding-right: 10px;
+}
+
+.director-attention-strip.is-expanded {
+  flex-wrap: wrap;
 }
 
 .attention-order-pill {
