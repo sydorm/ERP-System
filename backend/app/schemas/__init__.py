@@ -9,6 +9,7 @@ from .dictionary import DictionaryItemCreate, DictionaryItemUpdate, DictionaryIt
 from .counterparty import CounterpartyCreate, CounterpartyUpdate, CounterpartyResponse
 from .order import OrderCreate, OrderUpdate, OrderResponse, OrderLineCreate, OrderLineResponse
 from .sales_invoice import SalesInvoiceCreate, SalesInvoiceUpdate, SalesInvoiceResponse, SalesInvoiceLineCreate, SalesInvoiceLineResponse
+from .print_template import PrintTemplateCreate, PrintTemplateUpdate, PrintTemplateResponse
 
 __all__ = [
     "UserCreate",
@@ -44,4 +45,7 @@ __all__ = [
     "SalesInvoiceLineCreate",
     "SalesInvoiceLineResponse",
     "ForgotPasswordRequest",
+    "PrintTemplateCreate",
+    "PrintTemplateUpdate",
+    "PrintTemplateResponse",
 ]

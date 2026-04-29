@@ -376,12 +376,19 @@
         <el-button type="primary" @click="addPayment">Додати</el-button>
       </template>
     </el-dialog>
+
+    <PrintPreviewModal
+      v-model="printModalVisible"
+      :document-id="route.params.id"
+      document-type="invoice"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PrintPreviewModal from '@/components/PrintPreviewModal.vue'
 import { ArrowLeft, Plus, Delete, Search, Setting, ArrowDown, ArrowUp, Timer, MoreFilled, CopyDocument, Printer, Promotion, Download, Phone, Message, Location, Box, Van, CreditCard, Document, Tools, View, List } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
@@ -740,9 +747,17 @@ const statusLabel = computed(() => {
 
 const goBack = () => router.push('/sales/orders')
 
+const printModalVisible = ref(false)
+
 // New action handlers
 const handleCopyOrder = () => ElMessage.info('Копіювання замовлення (в розробці)')
-const handlePrint = () => ElMessage.info('Друк замовлення (в розробці)')
+const handlePrint = () => {
+  if (!route.params.id) {
+    ElMessage.warning('Збережіть замовлення перед друком')
+    return
+  }
+  printModalVisible.value = true
+}
 const printBOM = () => {
   window.print()
 }

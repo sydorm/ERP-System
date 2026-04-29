@@ -28,6 +28,7 @@ from .notification import Notification
 from .hr import Department, Employee, EmployeeRole, AttendanceRecord, PayrollTransaction
 from .brigade import Brigade, BrigadeMember
 from .supplier_price import SupplierPrice
+from .print_template import PrintTemplate
 
 
 __all__ = [
@@ -90,5 +91,6 @@ __all__ = [
     "BrigadeMember",
     "SupplierPrice",
     "UserLoginLog",
+    "PrintTemplate",
 ]
 

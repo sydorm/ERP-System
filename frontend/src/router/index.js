@@ -71,6 +71,24 @@ const router = createRouter({
                     component: () => import('@/views/Settings/CompanySettings.vue'),
                     meta: { requiresAuth: true, title: 'Організація', permission: 'admin.all' }
                 },
+                {
+                    path: '/settings/print-templates',
+                    name: 'print-templates',
+                    component: () => import('@/views/Settings/PrintTemplatesList.vue'),
+                    meta: { requiresAuth: true, title: 'Шаблони документів' }
+                },
+                {
+                    path: '/settings/print-templates/new',
+                    name: 'print-template-new',
+                    component: () => import('@/views/Settings/PrintTemplateEditor.vue'),
+                    meta: { requiresAuth: true, title: 'Новий шаблон' }
+                },
+                {
+                    path: '/settings/print-templates/:id',
+                    name: 'print-template-edit',
+                    component: () => import('@/views/Settings/PrintTemplateEditor.vue'),
+                    meta: { requiresAuth: true, title: 'Редагування шаблону' }
+                },
                 // Inventory routes
                 {
                     path: '/inventory/nomenclature',

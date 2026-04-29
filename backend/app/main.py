@@ -231,6 +231,9 @@ app.include_router(payroll_router, prefix="/api/v1", tags=["Payroll"])
 from app.api.brigade_routes import router as brigade_router
 app.include_router(brigade_router, prefix="/api/v1", tags=["Production"])
 
+from app.api.print_routes import router as print_router
+app.include_router(print_router, prefix="/api/v1")
+
 # Debug/Dev helper for migrations
 @app.post("/api/v1/debug/migrate")
 async def run_migrations():
