@@ -73,34 +73,34 @@
               
               <div class="glossary-section">
                 <h4>Документ</h4>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{document.number}}')">{{ '{{document.number}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{document.date}}')">{{ '{{document.date}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{document.contract}}')">{{ '{{document.contract}}' }}</el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{document.number}}')" v-text="'{{document.number}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{document.date}}')" v-text="'{{document.date}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{document.contract}}')" v-text="'{{document.contract}}'"></el-tag>
               </div>
 
               <div class="glossary-section">
                 <h4>Постачальник</h4>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.name}}')">{{ '{{seller.name}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.edrpou}}')">{{ '{{seller.edrpou}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.iban}}')">{{ '{{seller.iban}}' }}</el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.name}}')" v-text="'{{seller.name}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.edrpou}}')" v-text="'{{seller.edrpou}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{seller.iban}}')" v-text="'{{seller.iban}}'"></el-tag>
               </div>
 
               <div class="glossary-section">
                 <h4>Покупець</h4>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{buyer.name}}')">{{ '{{buyer.name}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{buyer.edrpou}}')">{{ '{{buyer.edrpou}}' }}</el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{buyer.name}}')" v-text="'{{buyer.name}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{buyer.edrpou}}')" v-text="'{{buyer.edrpou}}'"></el-tag>
               </div>
 
               <div class="glossary-section">
                 <h4>Таблиця товарів</h4>
-                <el-tag class="variable-tag type-table" @click="copyToClipboard('{{items_table}}')">{{ '{{items_table}}' }}</el-tag>
+                <el-tag class="variable-tag type-table" @click="copyToClipboard('{{items_table}}')" v-text="'{{items_table}}'"></el-tag>
               </div>
 
               <div class="glossary-section">
                 <h4>Підсумки</h4>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.total_with_vat}}')">{{ '{{totals.total_with_vat}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.vat}}')">{{ '{{totals.vat}}' }}</el-tag>
-                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.total_in_words}}')">{{ '{{totals.total_in_words}}' }}</el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.total_with_vat}}')" v-text="'{{totals.total_with_vat}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.vat}}')" v-text="'{{totals.vat}}'"></el-tag>
+                <el-tag class="variable-tag" @click="copyToClipboard('{{totals.total_in_words}}')" v-text="'{{totals.total_in_words}}'"></el-tag>
               </div>
             </div>
           </el-card>
