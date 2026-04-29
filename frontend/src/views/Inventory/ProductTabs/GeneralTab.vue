@@ -853,5 +853,3 @@ const handleImageChange = async (event) => {
 .mr-1 { margin-right: 4px; }
 </style>
 
-</style>
-
