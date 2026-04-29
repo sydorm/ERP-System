@@ -104,7 +104,7 @@
               </div>
             </div>
           </el-card>
-        </col>
+        </el-col>
       </el-row>
     </el-form>
   </div>
