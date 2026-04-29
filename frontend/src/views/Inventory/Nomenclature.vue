@@ -1129,29 +1129,33 @@ onActivated(() => {
 .toolbar-dense__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
 }
 .search-dense-wrapper {
   position: relative;
-  width: 320px;
+  width: 300px;
 }
 .search-dense-icon {
   position: absolute;
-  left: 12px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 .search-dense-input {
   width: 100%;
-  height: 42px;
+  height: 38px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  padding: 0 12px 0 38px;
-  font-size: 14px;
+  padding: 0 12px 0 35px;
+  font-size: 13px;
   background: #ffffff;
   transition: all 0.2s ease;
+  color: #0f172a;
 }
 .search-dense-input:focus {
   outline: none;
@@ -1159,11 +1163,12 @@ onActivated(() => {
   box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
 }
 .pill-select :deep(.el-select__wrapper) {
-  height: 42px !important;
+  height: 38px !important;
   border-radius: 12px !important;
   border: 1px solid var(--border) !important;
   background: #ffffff !important;
   box-shadow: none !important;
+  font-size: 13px !important;
 }
 .column-toggle-btn {
   height: 42px;
@@ -1348,9 +1353,9 @@ onActivated(() => {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: #f3f4ff;
+  color: #4f46e5;
+  border: 1px solid #dde3ff;
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 12px;
