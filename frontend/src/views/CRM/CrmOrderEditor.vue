@@ -537,6 +537,8 @@
           </el-button>
         </div>
 
+        <!-- ══ РЕЗУЛЬТАТ КОНТАКТУ ══ -->
+        <div class="crm-section control-card">
           <div class="contact-script-panel">
             <div class="script-panel-title">Результат контакту</div>
             <button
@@ -777,7 +779,6 @@
       :document-id="orderId"
       document-type="invoice"
     />
-
   </div>
 </template>
 
