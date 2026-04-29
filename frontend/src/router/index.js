@@ -273,7 +273,7 @@ const router = createRouter({
                     path: '/crm',
                     name: 'crm-board',
                     component: () => import('@/views/CRM/CrmOrdersBoard.vue'),
-                    meta: { title: 'CRM — Замовлення' }
+                    meta: { title: 'CRM' }
                 },
                 {
                     path: '/crm/orders/new',

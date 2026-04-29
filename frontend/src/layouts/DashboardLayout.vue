@@ -121,7 +121,7 @@
             @click="toggleSidebar"
             circle
           />
-          <h2 class="top-page-title">{{ currentRouteTitle }}</h2>
+          <TabsBar class="header-tabs" />
         </div>
 
         <div class="header-right">
@@ -246,7 +246,6 @@
             Увага! Дохід ФОП наближається до ліміту: <strong>{{ incomePercentage }}%</strong>. Решту ліміту: <strong>{{ formatCurrency(remainingLimit) }} грн</strong>.
         </div>
         
-        <TabsBar />
         <div class="view-container">
           <router-view v-slot="{ Component }">
             <keep-alive>
@@ -662,6 +661,8 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .top-page-title {
@@ -670,6 +671,28 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   font-size: 18px;
   font-weight: 700;
   color: #0F172A;
+}
+
+.header-tabs {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-tabs :deep(.tabs-container) {
+  height: 64px;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.header-tabs :deep(.el-tabs__item) {
+  height: 64px;
+  line-height: 64px;
+}
+
+.header-tabs :deep(.el-tabs__nav-prev),
+.header-tabs :deep(.el-tabs__nav-next) {
+  line-height: 64px;
 }
 
 .header-right {

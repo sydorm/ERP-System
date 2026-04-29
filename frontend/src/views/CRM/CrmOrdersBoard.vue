@@ -40,10 +40,19 @@
           <template #reference>
             <button class="crm-filter-btn">
               <el-icon><Operation /></el-icon> Фільтри
-              <el-badge v-if="activeFiltersCount" :value="activeFiltersCount" class="filter-badge" />
+              <el-badge v-if="activeControlsCount" :value="activeControlsCount" class="filter-badge" />
             </button>
           </template>
           <div class="filter-popover-content">
+            <div class="filter-section">
+              <label>Сортування</label>
+              <el-select v-model="sortOption" placeholder="Сортувати">
+                <el-option label="За датою (нові)" value="created_desc" />
+                <el-option label="За дедлайном" value="deadline_asc" />
+                <el-option label="За сумою (спадання)" value="amount_desc" />
+                <el-option label="За пріоритетом" value="priority_desc" />
+              </el-select>
+            </div>
             <div class="filter-section">
               <label>Пріоритет</label>
               <el-select v-model="filters.priority" placeholder="Всі" clearable>
@@ -122,22 +131,6 @@
         <strong>{{ todayTasks.length }}</strong>
         <small>{{ overdueTasks.length }} прострочено</small>
       </div>
-    </div>
-
-    <div class="crm-tools-row">
-      <el-dropdown trigger="click" @command="handleSort">
-        <div class="tool-item">
-          Сортувати: {{ currentSortLabel }} <el-icon><ArrowDown /></el-icon>
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="created_desc">За датою (нові)</el-dropdown-item>
-            <el-dropdown-item command="deadline_asc">За дедлайном</el-dropdown-item>
-            <el-dropdown-item command="amount_desc">За сумою (спадання)</el-dropdown-item>
-            <el-dropdown-item command="priority_desc">За пріоритетом</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
     </div>
     </div>
 
@@ -516,6 +509,9 @@ const filters = ref({
 const activeFiltersCount = computed(() => {
   return Object.values(filters.value).filter(v => v !== '').length
 })
+const activeControlsCount = computed(() => {
+  return activeFiltersCount.value + (sortOption.value !== 'created_desc' ? 1 : 0)
+})
 
 // Pagination state
 const stageSkip = ref({
@@ -532,16 +528,6 @@ const isAnyFilterActive = computed(() => {
 
 // Sort State
 const sortOption = ref('created_desc')
-const currentSortLabel = computed(() => {
-  const map = {
-    'deadline_asc': 'За дедлайном',
-    'amount_desc': 'За сумою',
-    'created_desc': 'За датою',
-    'priority_desc': 'За пріоритетом'
-  }
-  return map[sortOption.value]
-})
-
 const rescheduleVisible = ref(false)
 const rescheduleTime = ref('')
 const selectedTask = ref(null)
@@ -725,7 +711,6 @@ const normalizePhone = (phone) => {
   return phone.toString().replace(/\D/g, '').slice(-9)
 }
 
-const handleSort = (cmd) => { sortOption.value = cmd }
 const resetFilters = () => {
   filters.value = { priority: '', payment: '', manager: '', deadline: '' }
 }
