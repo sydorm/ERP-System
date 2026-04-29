@@ -24,7 +24,20 @@ def on_startup():
     except Exception as e:
         print(f"❌ Error creating tables: {e}")
 
-    # 2. Manually ensure specific columns exist (for hot-fixes)
+    # 2. Seed default business process rules for every company that has none
+    try:
+        from app.services.business_process_engine import seed_default_rules
+        from app.models import Company
+        db_seed = SessionLocal()
+        companies = db_seed.query(Company).filter(Company.is_active == True).all()
+        for company in companies:
+            seed_default_rules(db_seed, company.id)
+        db_seed.close()
+        print("✅ Business process rules seeded")
+    except Exception as e:
+        print(f"⚠️ Business process rules seed failed: {e}")
+
+    # 3. Manually ensure specific columns exist (for hot-fixes)
     db = SessionLocal()
     try:
         db.execute(text("ALTER TABLE attribute_options ADD COLUMN IF NOT EXISTS width INTEGER"))
@@ -194,6 +207,9 @@ app.include_router(finance_router, prefix="/api/v1", tags=["Finance"])
 from app.api.notification_routes import router as notification_router
 app.include_router(notification_router, prefix="/api/v1", tags=["Notifications"])
 
+from app.api.business_process_routes import router as bp_router
+app.include_router(bp_router, prefix="/api/v1", tags=["Business Process"])
+
 # ─── APScheduler: SLA cron job ────────────────────────────────────────────────
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -202,7 +218,9 @@ _scheduler = BackgroundScheduler()
 @app.on_event("startup")
 def start_sla_scheduler():
     from app.services.sla_service import run_sla_check
+    from app.services.business_process_engine import seed_default_rules
     from app.db.session import SessionLocal
+    from app.models.company import Company
 
     def _sla_job():
         db = SessionLocal()
@@ -216,6 +234,17 @@ def start_sla_scheduler():
     _scheduler.add_job(_sla_job, "interval", minutes=30, id="sla_check", replace_existing=True)
     _scheduler.start()
     print("✅ SLA scheduler started (every 30 min)")
+
+    db_seed = SessionLocal()
+    try:
+        companies = db_seed.query(Company).filter(Company.is_active == True).all()
+        for company in companies:
+            seed_default_rules(db_seed, company.id)
+        print(f"✅ Business process rules seeded for {len(companies)} companies")
+    except Exception as exc:
+        print(f"[BP] seed error: {exc}")
+    finally:
+        db_seed.close()
 
 @app.on_event("shutdown")
 def stop_sla_scheduler():

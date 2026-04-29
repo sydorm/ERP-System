@@ -666,8 +666,26 @@
           </div>
         </div>
 
+        <!-- ══ RELATED DOCUMENTS ══ -->
+        <RelatedDocumentsBlock
+          v-if="orderId"
+          ref="relatedDocsRef"
+          source-type="crm_lead"
+          :source-id="orderId"
+        />
+
       </div><!-- /right col -->
     </div><!-- /body -->
+
+    <!-- ===== AUTOMATION CONFIRM ===== -->
+    <AutomationConfirmModal
+      v-model="automationModal.visible"
+      :rule="automationModal.rule"
+      source-type="crm_lead"
+      :source-id="orderId"
+      @confirmed="relatedDocsRef?.refresh()"
+      @skipped="automationModal.rule = null"
+    />
 
     <!-- ===== NEW CLIENT DIALOG ===== -->
     <el-dialog v-model="showNewClientDialog" title="Новий клієнт" width="460px">
@@ -706,6 +724,8 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import PrintPreviewModal from '@/components/PrintPreviewModal.vue'
+import AutomationConfirmModal from '@/components/AutomationConfirmModal.vue'
+import RelatedDocumentsBlock from '@/components/RelatedDocumentsBlock.vue'
 import {
   ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock, Printer, User as UserIcon
 } from '@element-plus/icons-vue'
@@ -723,6 +743,8 @@ const orderId   = computed(() => route.params.id !== 'new' ? route.params.id : n
 const loading        = ref(false)
 const saving         = ref(false)
 const savingClient   = ref(false)
+const automationModal = reactive({ visible: false, rule: null })
+const relatedDocsRef = ref(null)
 const materialsLoading = ref(false)
 const products       = ref([])
 const counterparties = ref([])
@@ -964,7 +986,45 @@ const onPrepaymentInput = () => {
 }
 
 // ─── Stage ────────────────────────────────────────────────────────────────────
-const setStage = (key) => { form.crm_stage = key }
+const setStage = async (key) => {
+  if (key === 'processing' && orderId.value) {
+    try {
+      const res = await api.post('/api/v1/business-process/event', {
+        source_type: 'crm_lead',
+        source_id: orderId.value,
+        event_type: 'status_changed',
+        to_status: 'processing',
+      })
+      const { can_proceed, validation_error, rules } = res.data
+      if (!can_proceed) {
+        ElMessage.warning(validation_error || 'Не можна змінити статус')
+        return
+      }
+      form.crm_stage = key
+      const askRule = rules?.find(r => r.mode === 'ask_confirmation')
+      if (askRule) {
+        automationModal.rule = askRule
+        automationModal.visible = true
+      } else {
+        const autoRule = rules?.find(r => r.mode === 'automatic')
+        if (autoRule) {
+          try {
+            await api.post('/api/v1/business-process/execute', {
+              rule_id: autoRule.rule_id,
+              source_type: 'crm_lead',
+              source_id: orderId.value,
+            })
+          } catch { /* non-critical, order already saved */ }
+        }
+      }
+    } catch (err) {
+      ElMessage.error(err.response?.data?.detail || 'Помилка перевірки статусу')
+      return
+    }
+  } else {
+    form.crm_stage = key
+  }
+}
 
 // ─── Counterparty change ──────────────────────────────────────────────────────
 const onCounterpartyChange = (id) => {

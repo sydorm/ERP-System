@@ -327,6 +327,15 @@ async def update_order_stage(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # Validate transition to processing (deadline, client, amount required)
+    if stage == "processing":
+        if not order.counterparty_id:
+            raise HTTPException(status_code=422, detail="Клієнт не заповнений")
+        if not order.deadline_date:
+            raise HTTPException(status_code=422, detail="Вкажіть дату готовності перед передачею заявки в роботу")
+        if not order.total_amount or float(order.total_amount) <= 0:
+            raise HTTPException(status_code=422, detail="Сума замовлення має бути більше 0")
+
     order.crm_stage = stage
     if stage == "done":
         order.status = "completed"

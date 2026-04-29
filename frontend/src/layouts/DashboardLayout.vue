@@ -104,6 +104,7 @@
 
           <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
           <el-menu-item index="/settings/print-templates">Шаблони документів</el-menu-item>
+          <el-menu-item index="/settings/business-process-rules">Бізнес-процеси</el-menu-item>
           <el-menu-item index="/settings/trash-bin">Корзина</el-menu-item>
         </el-sub-menu>
 

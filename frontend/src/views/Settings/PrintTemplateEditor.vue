@@ -14,10 +14,40 @@
       </div>
     </div>
 
+    <div class="creation-mode-selector" v-if="isNew">
+      <el-radio-group v-model="creationMode" size="large">
+        <el-radio-button label="preset">З готового прикладу</el-radio-button>
+        <el-radio-button label="blank">Створити порожній</el-radio-button>
+      </el-radio-group>
+    </div>
+
     <el-form :model="form" :rules="rules" ref="formRef" label-position="top" class="form-layout">
       <el-row :gutter="20">
         <el-col :span="16">
           <el-card class="form-card" shadow="never">
+            <div v-if="isNew && creationMode === 'preset'" class="preset-select-block">
+              <el-form-item label="Оберіть базовий макет">
+                <div class="preset-grid">
+                  <div 
+                    class="preset-item" 
+                    :class="{ active: form.document_type === 'invoice' }"
+                    @click="selectPreset('invoice')"
+                  >
+                    <div class="preset-icon invoice"><el-icon size="24"><Document /></el-icon></div>
+                    <span>Рахунок на оплату</span>
+                  </div>
+                  <div 
+                    class="preset-item" 
+                    :class="{ active: form.document_type === 'sales_invoice' }"
+                    @click="selectPreset('sales_invoice')"
+                  >
+                    <div class="preset-icon sales_invoice"><el-icon size="24"><Document /></el-icon></div>
+                    <span>Видаткова накладна</span>
+                  </div>
+                </div>
+              </el-form-item>
+            </div>
+
             <el-form-item label="Назва шаблону" prop="name">
               <el-input v-model="form.name" placeholder="Наприклад: Рахунок стандартний" />
             </el-form-item>
@@ -25,7 +55,12 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="Тип документа" prop="document_type">
-                  <el-select v-model="form.document_type" placeholder="Оберіть тип" style="width: 100%">
+                  <el-select 
+                    v-model="form.document_type" 
+                    placeholder="Оберіть тип" 
+                    style="width: 100%"
+                    :disabled="isNew && creationMode === 'preset'"
+                  >
                     <el-option label="Рахунок на оплату" value="invoice" />
                     <el-option label="Видаткова накладна" value="sales_invoice" />
                     <el-option label="Акт виконаних робіт" value="act" />
@@ -49,15 +84,19 @@
               </el-form-item>
             </div>
 
-            <el-form-item label="HTML-код шаблону" prop="html_template" class="code-item">
-              <el-input 
-                v-model="form.html_template" 
-                type="textarea" 
-                :rows="20" 
-                placeholder="Введіть HTML структуру документа..." 
-                class="code-editor"
-              />
-            </el-form-item>
+            <el-collapse class="advanced-settings-collapse">
+              <el-collapse-item title="Розширені налаштування (HTML / CSS код)" name="advanced">
+                <el-form-item label="HTML-код шаблону" prop="html_template" class="code-item">
+                  <el-input 
+                    v-model="form.html_template" 
+                    type="textarea" 
+                    :rows="20" 
+                    placeholder="Введіть HTML структуру документа..." 
+                    class="code-editor"
+                  />
+                </el-form-item>
+              </el-collapse-item>
+            </el-collapse>
           </el-card>
         </el-col>
 
@@ -117,22 +156,43 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import axios from 'axios'
 
+import { DEFAULT_INVOICE_HTML, DEFAULT_SALES_INVOICE_HTML } from '@/utils/defaultTemplates'
+
 const route = useRoute()
 const router = useRouter()
 const formRef = ref(null)
 const saving = ref(false)
+const creationMode = ref('preset')
 
 const id = computed(() => route.params.id)
 const isNew = computed(() => !id.value || id.value === 'new')
 
 const form = reactive({
   name: '',
-  document_type: 'invoice',
+  document_type: '',
   description: '',
   html_template: '',
   css_template: '',
   is_default: false,
   is_active: true
+})
+
+const selectPreset = (type) => {
+  form.document_type = type
+  if (type === 'invoice') {
+    form.name = 'Рахунок на оплату — стандартний'
+    form.html_template = DEFAULT_INVOICE_HTML.trim()
+  } else if (type === 'sales_invoice') {
+    form.name = 'Видаткова накладна — стандартна'
+    form.html_template = DEFAULT_SALES_INVOICE_HTML.trim()
+  }
+}
+
+// Auto-select first preset if new
+onMounted(() => {
+  if (isNew.value) {
+    selectPreset('invoice')
+  }
 })
 
 const rules = {
@@ -242,6 +302,73 @@ onMounted(fetchTemplate)
 .form-card, .glossary-card {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+}
+
+.creation-mode-selector {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.preset-select-block {
+  margin-bottom: 24px;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+.preset-grid {
+  display: flex;
+  gap: 20px;
+}
+
+.preset-item {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #ffffff;
+}
+
+.preset-item:hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.preset-item.active {
+  border-color: #4f46e5;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.preset-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preset-icon.invoice {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.preset-icon.sales_invoice {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.advanced-settings-collapse {
+  margin-top: 20px;
+  border: none;
 }
 
 .switches-block {

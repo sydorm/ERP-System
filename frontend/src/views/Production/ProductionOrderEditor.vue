@@ -300,8 +300,27 @@
           </div>
         </div>
 
+        <RelatedDocumentsBlock
+          v-if="isEditMode"
+          ref="relatedDocsRef"
+          source-type="production_task"
+          :source-id="route.params.id"
+          class="mt-4"
+        />
+
       </div>
     </div>
+
+    <!-- ===== AUTOMATION CONFIRM ===== -->
+    <AutomationConfirmModal
+      v-model="automationModal.visible"
+      :rule="automationModal.rule"
+      source-type="production_task"
+      :source-id="route.params.id"
+      @confirmed="relatedDocsRef?.refresh()"
+      @skipped="automationModal.rule = null"
+    />
+
   </div>
 </template>
 
@@ -316,6 +335,8 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
+import AutomationConfirmModal from '@/components/AutomationConfirmModal.vue'
+import RelatedDocumentsBlock from '@/components/RelatedDocumentsBlock.vue'
 import dayjs from 'dayjs'
 import { useUserStore } from '@/stores/user'
 
@@ -326,6 +347,8 @@ const isEditMode = computed(() => !!route.params.id)
 const submitting = ref(false)
 const loading = ref(false)
 const activeSubTab = ref('stages')
+const automationModal = reactive({ visible: false, rule: null })
+const relatedDocsRef = ref(null)
 
 // --- DATA ---
 const products = ref([])
@@ -546,10 +569,54 @@ const saveOrder = async (targetStatus) => {
     ElMessage.warning('Оберіть виріб та кількість')
     return
   }
-  
+
   if (!form.company_id || !form.warehouse_id) {
     ElMessage.error('Помилка даних: не вказано компанію або склад.')
     return
+  }
+
+  if (targetStatus === 'completed' && isEditMode.value) {
+    try {
+      const res = await api.post('/api/v1/business-process/event', {
+        source_type: 'production_task',
+        source_id: route.params.id,
+        event_type: 'status_changed',
+        to_status: 'completed',
+      })
+      const { can_proceed, validation_error, rules } = res.data
+      if (!can_proceed) {
+        ElMessage.warning(validation_error || 'Не можна завершити завдання')
+        return
+      }
+      if (targetStatus) form.status = targetStatus
+      submitting.value = true
+      try {
+        await api.put(`/api/v1/production/${route.params.id}`, form)
+        ElMessage.success('Збережено')
+      } catch (e) { ElMessage.error('Помилка збереження'); return }
+      finally { submitting.value = false }
+
+      const askRule = rules?.find(r => r.mode === 'ask_confirmation')
+      if (askRule) {
+        automationModal.rule = askRule
+        automationModal.visible = true
+      } else {
+        const autoRule = rules?.find(r => r.mode === 'automatic')
+        if (autoRule) {
+          try {
+            await api.post('/api/v1/business-process/execute', {
+              rule_id: autoRule.rule_id,
+              source_type: 'production_task',
+              source_id: route.params.id,
+            })
+          } catch { /* non-critical */ }
+        }
+      }
+      return
+    } catch (err) {
+      ElMessage.error(err.response?.data?.detail || 'Помилка перевірки статусу')
+      return
+    }
   }
 
   if (targetStatus) form.status = targetStatus

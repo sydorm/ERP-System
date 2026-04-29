@@ -23,6 +23,7 @@ from .audit_log import AuditLog
 from .production import ProductionOrder, ProductionOrderLine, ProductionOrderMaterial
 from .crm import CrmContact, CrmTask
 from .order_activity_log import OrderActivityLog
+from .business_process import BusinessProcessRule, DocumentRelation, AutomationLog
 from .finance import FinancialTransaction, TransactionType
 from .notification import Notification
 from .hr import Department, Employee, EmployeeRole, AttendanceRecord, PayrollTransaction
@@ -80,6 +81,9 @@ __all__ = [
     "CrmContact",
     "CrmTask",
     "OrderActivityLog",
+    "BusinessProcessRule",
+    "DocumentRelation",
+    "AutomationLog",
     "FinancialTransaction",
     "TransactionType",
     "Department",

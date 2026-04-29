@@ -326,6 +326,12 @@ const router = createRouter({
                 },
 
                 {
+                    path: '/settings/business-process-rules',
+                    name: 'business-process-rules',
+                    component: () => import('@/views/Settings/BusinessProcessRules.vue'),
+                    meta: { requiresAuth: true, title: 'Бізнес-процеси' }
+                },
+                {
                     path: '/settings/trash-bin',
                     name: 'trash-bin',
                     component: () => import('@/views/Admin/TrashBin.vue'),
