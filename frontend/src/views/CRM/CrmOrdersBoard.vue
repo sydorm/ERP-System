@@ -100,6 +100,29 @@
     </div>
 
     <!-- ===== TOOLS (SORT) ===== -->
+    <div class="crm-insights-row">
+      <div class="crm-insight-card primary">
+        <span class="insight-label">Pipeline</span>
+        <strong>{{ formatCurrency(totalPipelineAmount) }} ₴</strong>
+        <small>{{ orders.length }} активних замовлень</small>
+      </div>
+      <div class="crm-insight-card">
+        <span class="insight-label">Гарячі SLA</span>
+        <strong>{{ hotSlaCount }}</strong>
+        <small>потребують уваги</small>
+      </div>
+      <div class="crm-insight-card">
+        <span class="insight-label">Оплата</span>
+        <strong>{{ paymentProgress }}%</strong>
+        <small>сплачених замовлень</small>
+      </div>
+      <div class="crm-insight-card">
+        <span class="insight-label">Сьогодні</span>
+        <strong>{{ todayTasks.length }}</strong>
+        <small>{{ overdueTasks.length }} прострочено</small>
+      </div>
+    </div>
+
     <div class="crm-tools-row">
       <el-dropdown trigger="click" @command="handleSort">
         <div class="tool-item">
@@ -515,6 +538,20 @@ const callTask = ref(null)
 
 const overdueTasks = computed(() => {
   return todayTasks.value.filter(t => isTaskOverdue(t))
+})
+
+const totalPipelineAmount = computed(() => {
+  return orders.value.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0)
+})
+
+const hotSlaCount = computed(() => {
+  return orders.value.filter(order => ['warning', 'critical', 'urgent'].includes(getSlaLevel(order.id))).length
+})
+
+const paymentProgress = computed(() => {
+  if (!orders.value.length) return 0
+  const paidCount = orders.value.filter(order => order.payment_status === 'paid').length
+  return Math.round((paidCount / orders.value.length) * 100)
 })
 
 const handleExport = async (type) => {
@@ -1277,5 +1314,325 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 .clickable-client:hover {
   text-decoration: underline;
+}
+
+/* ─── CRM visual refresh ─── */
+.crm-board-page {
+  padding: 24px 28px 18px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(59, 130, 246, 0.12), transparent 26rem),
+    radial-gradient(circle at 92% 8%, rgba(20, 184, 166, 0.12), transparent 24rem),
+    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+}
+
+.crm-board-header {
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.crm-header-left {
+  min-width: 260px;
+}
+
+.crm-title-row {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.crm-title {
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.crm-count-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(203, 213, 225, 0.86);
+}
+
+.crm-subtitle {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+}
+
+.crm-header-right {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.crm-view-switch {
+  padding: 3px;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  background: rgba(226, 232, 240, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.view-btn {
+  min-height: 30px;
+  padding: 6px 12px;
+}
+
+.crm-search-input {
+  width: 260px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(203, 213, 225, 0.9);
+}
+
+.crm-filter-btn,
+.tool-item {
+  min-height: 36px;
+  border-color: rgba(203, 213, 225, 0.9);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.crm-new-btn-indigo {
+  min-height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2f46d9, #4f46e5);
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.24);
+}
+
+.crm-insights-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.crm-insight-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px solid rgba(203, 213, 225, 0.76);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.07);
+}
+
+.crm-insight-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -36px;
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.crm-insight-card.primary {
+  color: #fff;
+  border-color: rgba(79, 70, 229, 0.2);
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(37, 99, 235, 0.9)),
+    #1e293b;
+}
+
+.crm-insight-card.primary::after {
+  background: rgba(125, 211, 252, 0.18);
+}
+
+.insight-label {
+  display: block;
+  margin-bottom: 8px;
+  color: inherit;
+  opacity: 0.72;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.crm-insight-card strong {
+  display: block;
+  color: inherit;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.crm-insight-card small {
+  display: block;
+  margin-top: 8px;
+  color: inherit;
+  opacity: 0.68;
+}
+
+.crm-tools-row {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.crm-kanban {
+  gap: 14px;
+  padding: 4px 2px 22px;
+  scroll-snap-type: x proximity;
+}
+
+.kanban-column {
+  min-width: 286px;
+  min-height: calc(100vh - 275px);
+  padding: 14px;
+  border: 1px solid rgba(203, 213, 225, 0.7);
+  border-top-width: 4px;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  scroll-snap-align: start;
+}
+
+.kanban-column.drag-target {
+  outline: 2px solid rgba(47, 70, 217, 0.35);
+  outline-offset: 2px;
+}
+
+.kanban-column-header {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.crm-col-count-badge {
+  min-width: 28px;
+  text-align: center;
+}
+
+.crm-col-subheader {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.order-card {
+  min-height: 168px;
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+}
+
+.order-card:hover {
+  border-color: rgba(47, 70, 217, 0.34);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.11);
+}
+
+.card-order-no,
+.card-row-2 {
+  color: #64748b;
+}
+
+.order-card-title {
+  line-height: 1.35;
+}
+
+.card-row-financial {
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.card-price {
+  color: #2734a0;
+}
+
+.deadline-chip,
+.payment-badge,
+.sla-badge {
+  border-radius: 999px;
+}
+
+.card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.card-last-contact {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.channel-icon {
+  border-radius: 10px;
+}
+
+.add-order-button {
+  min-height: 36px;
+  margin: 10px 2px 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.crm-kanban .kanban-column:nth-child(1) { background: linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%); }
+.crm-kanban .kanban-column:nth-child(2) { background: linear-gradient(180deg, #fff7ed 0%, #fffaf4 100%); }
+.crm-kanban .kanban-column:nth-child(3) { background: linear-gradient(180deg, #ecfdf5 0%, #f7fefb 100%); }
+.crm-kanban .kanban-column:nth-child(4) { background: linear-gradient(180deg, #faf5ff 0%, #fdfaff 100%); }
+.crm-kanban .kanban-column:nth-child(5) { background: linear-gradient(180deg, #ecfdf5 0%, #f6fff9 100%); }
+
+@media (max-width: 1280px) {
+  .crm-board-header {
+    flex-direction: column;
+  }
+
+  .crm-header-right {
+    justify-content: flex-start;
+  }
+
+  .crm-insights-row {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .crm-board-page {
+    padding: 16px 12px;
+  }
+
+  .crm-title {
+    font-size: 24px;
+  }
+
+  .crm-header-right,
+  .crm-view-switch,
+  .crm-search-input,
+  .crm-filter-btn,
+  .crm-new-btn-indigo {
+    width: 100%;
+  }
+
+  .crm-filter-btn,
+  .crm-new-btn-indigo {
+    justify-content: center;
+  }
+
+  .crm-insights-row {
+    grid-template-columns: 1fr;
+  }
+
+  .kanban-column {
+    min-width: 82vw;
+  }
+
+  .selection-bar {
+    width: calc(100vw - 24px);
+    bottom: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    border-radius: 16px;
+  }
+
+  .selection-actions {
+    flex-wrap: wrap;
+  }
 }
 </style>
