@@ -630,7 +630,7 @@ onActivated(() => {
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
 
-<style scoped>
+<style>
 .purchase-orders-page {
   position: absolute;
   inset: 0;
