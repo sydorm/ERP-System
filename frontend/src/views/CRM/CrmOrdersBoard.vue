@@ -1,5 +1,6 @@
 <template>
   <div class="crm-board-page">
+    <div class="crm-sticky-workbar">
 
     <!-- ===== HEADER ===== -->
     <div class="crm-board-header">
@@ -138,6 +139,7 @@
         </template>
       </el-dropdown>
     </div>
+    </div>
 
     <!-- ===== KANBAN BOARD ===== -->
     <div class="crm-kanban" v-loading="loading">
@@ -164,21 +166,31 @@
           <div class="crm-col-subheader" :style="{ color: stage.color }">
             ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ₴
           </div>
+          <div class="stage-meter" aria-hidden="true">
+            <span :style="{ width: `${stageShare(stage.key)}%`, background: stage.color }" />
+          </div>
         </div>
 
         <!-- Cards -->
         <div class="kanban-column-content">
+          <div v-if="!filteredOrdersInStage(stage.key).length" class="stage-empty-state">
+            <span :style="{ background: stage.color }"></span>
+            <strong>Немає заявок</strong>
+            <small>Стадія готова прийняти нові замовлення</small>
+          </div>
+
           <div
             v-for="(order, index) in filteredOrdersInStage(stage.key)"
             :key="order.id"
             class="order-card"
-            :class="{ 'is-selected': selectedOrderIds.includes(order.id) }"
+            :class="[{ 'is-selected': selectedOrderIds.includes(order.id) }, getOrderHealthClass(order)]"
             :style="{ animationDelay: `${index * 50}ms` }"
             draggable="true"
             @dragstart="onDragStart(order)"
             @dragend="dragOrderId = null"
             @click="openEditor(order)"
           >
+            <span class="card-health-rail" />
             <!-- CHECKBOX FOR BULK ACTIONS -->
             <div class="card-selection-overlay" @click.stop="toggleSelection(order.id)">
               <el-checkbox 
@@ -553,6 +565,20 @@ const paymentProgress = computed(() => {
   const paidCount = orders.value.filter(order => order.payment_status === 'paid').length
   return Math.round((paidCount / orders.value.length) * 100)
 })
+
+const stageShare = (stage) => {
+  if (!orders.value.length) return 0
+  const count = orders.value.filter(order => order.crm_stage === stage).length
+  return Math.max(8, Math.round((count / orders.value.length) * 100))
+}
+
+const getOrderHealthClass = (order) => {
+  const slaLevel = getSlaLevel(order.id)
+  if (['critical', 'urgent'].includes(slaLevel)) return 'order-health-critical'
+  if (slaLevel === 'warning') return 'order-health-warning'
+  if (order.payment_status === 'paid') return 'order-health-paid'
+  return 'order-health-neutral'
+}
 
 const handleExport = async (type) => {
   if (type === 'pdf') return
@@ -1807,6 +1833,178 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   .crm-board-header {
     display: grid;
     grid-template-columns: minmax(260px, auto) 1fr;
+  }
+}
+
+/* ─── Sticky workbar and card redesign ─── */
+.crm-sticky-workbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: -14px -22px 8px;
+  padding: 12px 22px 10px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.72);
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(239, 246, 255, 0.92)),
+    rgba(248, 250, 252, 0.94);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+.crm-sticky-workbar .crm-board-header {
+  margin-bottom: 8px;
+}
+
+.crm-sticky-workbar .crm-insights-row {
+  margin-bottom: 7px;
+}
+
+.crm-sticky-workbar .crm-tools-row {
+  margin-bottom: 0;
+}
+
+.stage-meter {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.stage-meter span {
+  display: block;
+  height: 100%;
+  min-width: 16px;
+  border-radius: inherit;
+  opacity: 0.86;
+}
+
+.stage-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 126px;
+  padding: 16px 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.46);
+  border-radius: 12px;
+  color: #64748b;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.stage-empty-state span {
+  width: 10px;
+  height: 10px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  opacity: 0.78;
+}
+
+.stage-empty-state strong {
+  color: #334155;
+  font-size: 13px;
+}
+
+.stage-empty-state small {
+  max-width: 190px;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.order-card {
+  overflow: hidden;
+  padding-left: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+}
+
+.card-health-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: #cbd5e1;
+}
+
+.order-health-critical .card-health-rail {
+  background: linear-gradient(180deg, #ef4444, #fb7185);
+}
+
+.order-health-warning .card-health-rail {
+  background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+.order-health-paid .card-health-rail {
+  background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.order-health-neutral .card-health-rail {
+  background: linear-gradient(180deg, #64748b, #94a3b8);
+}
+
+.card-row-1 {
+  gap: 8px;
+}
+
+.card-order-no {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.priority-wrapper {
+  min-width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.card-row-2.clickable-client {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 0;
+  color: #3348b5;
+}
+
+.order-card-title {
+  color: #0f172a;
+}
+
+.card-footer-new {
+  margin-top: 2px;
+}
+
+.card-meta-right {
+  display: flex;
+}
+
+.card-avatar,
+.card-arrow-btn {
+  border-radius: 10px;
+}
+
+.card-avatar {
+  background: linear-gradient(135deg, #243b86, #4f46e5);
+}
+
+.card-arrow-btn {
+  font-size: 0;
+}
+
+.card-arrow-btn::before {
+  content: "›";
+  font-size: 20px;
+  line-height: 1;
+}
+
+.order-card.is-selected {
+  box-shadow: 0 0 0 2px rgba(61, 58, 168, 0.16), 0 16px 34px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 760px) {
+  .crm-sticky-workbar {
+    margin: -16px -12px 8px;
+    padding: 12px;
   }
 }
 </style>
