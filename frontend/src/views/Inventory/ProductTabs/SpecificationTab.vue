@@ -129,9 +129,11 @@
                          size="small"
                       />
                       
-                      <div v-if="row.calc_type && row.calc_type !== 'fixed'" class="bom-qty-helper">
-                         Розраховано: {{ getBaseQuantity(row).toFixed(3) }}
-                         <span v-if="getTotalWastePercent(row) > 0" class="text-orange-400 font-bold"> (+{{ getTotalWastePercent(row) }}%)</span>
+                      <div class="bom-qty-helper">
+                         <template v-if="row.calc_type && row.calc_type !== 'fixed'">
+                            Розраховано: {{ getBaseQuantity(row).toFixed(3) }}
+                            <span v-if="getTotalWastePercent(row) > 0" class="text-orange-400 font-bold"> (+{{ getTotalWastePercent(row) }}%)</span>
+                         </template>
                       </div>
                    </div>
 
@@ -1132,11 +1134,10 @@ onMounted(() => {
 .bom-grid-row {
     display: grid;
     grid-template-columns: 1fr 140px 56px 40px 40px;
-    align-items: center;
+    align-items: start;
     gap: 12px;
-    padding: 10px 16px;
+    padding: 14px 16px;
     border-bottom: 1px solid #F1F5F9;
-    min-height: 52px;
 }
 
 .bom-grid-row:last-child {
@@ -1167,14 +1168,13 @@ onMounted(() => {
 .bom-col-settings,
 .bom-col-actions {
     display: flex;
-    align-items: center;
-    vertical-align: middle;
+    align-items: flex-start;
 }
 
 .bom-col-qty {
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .bom-col-actions {
@@ -1204,6 +1204,7 @@ onMounted(() => {
     font-weight: 500;
     margin-top: 4px;
     line-height: 1.2;
+    min-height: 14px;
 }
 
 .calc-indicator-grid {
