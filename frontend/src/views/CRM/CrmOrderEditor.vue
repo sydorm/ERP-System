@@ -19,6 +19,15 @@
         </button>
       </div>
       <div class="crm-top-actions">
+        <el-button 
+          v-if="orderId" 
+          type="info" 
+          circle 
+          :icon="Printer" 
+          @click="printModalVisible = true" 
+          style="margin-right: 12px;"
+          title="Друк рахунку"
+        />
         <button class="crm-draft-btn" @click="save('draft')" :disabled="saving">
           Записати чернетку
         </button>
@@ -682,6 +691,13 @@
       </template>
     </el-dialog>
 
+    <PrintPreviewModal
+      v-if="orderId"
+      v-model="printModalVisible"
+      :document-id="orderId"
+      document-type="invoice"
+    />
+
   </div>
 </template>
 
@@ -689,10 +705,13 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import PrintPreviewModal from '@/components/PrintPreviewModal.vue'
 import {
-  ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock, User as UserIcon
+  ArrowLeft, Plus, Check, Promotion, Picture, Loading, Clock, Printer, User as UserIcon
 } from '@element-plus/icons-vue'
 import api from '@/api'
+
+const printModalVisible = ref(false)
 import { useUserStore } from '@/stores/user'
 
 const router    = useRouter()
