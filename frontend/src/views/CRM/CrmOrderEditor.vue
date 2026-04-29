@@ -271,15 +271,10 @@
           <div v-else class="mat-empty">Специфікація не знайдена для цього товару</div>
         </div>
 
-      </div><!-- /left col -->
-
-      <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-      <div class="crm-right-col" style="width: 320px; display: flex; flex-direction: column; gap: 12px;">
-
-        <!-- ══ ПІДСУМОК ЗАМОВЛЕННЯ ══ -->
-        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
+        <!-- ══ ПІДСУМОК ЗАМОВЛЕННЯ / ФІНАНСИ ══ -->
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px; margin-top: 16px;">
           <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
-            ПІДСУМОК ЗАМОВЛЕННЯ
+            ФІНАНСИ
           </div>
 
           <!-- Metric cards (сума/передоплата) -->
@@ -406,12 +401,17 @@
               />
             </el-select>
           </div>
+        </div>
 
-          <!-- Дата та дедлайн -->
-          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-top: 8px;">
-            <div class="date-item">Дата: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
+        <!-- ══ ТЕРМІНИ / ДЕДЛАЙНИ ══ -->
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px; margin-top: 16px;">
+          <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
+            ТЕРМІНИ
+          </div>
+          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
+            <div class="date-item">Дата створення: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
             <div class="date-item">
-              Дедлайн: 
+              Бажаний дедлайн: 
               <span
                 class="date-val"
                 :style="{
@@ -425,35 +425,12 @@
           </div>
         </div>
 
-        <!-- ══ ВИРОБНИЦТВО ══ -->
-        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
-          <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
-            ВИРОБНИЦТВО
-          </div>
+      </div><!-- /left col -->
 
-          <div class="crm-field" style="margin-bottom: 0;">
-            <el-select v-model="form.priority" placeholder="Оберіть пріоритет" style="width:100%">
-              <template #prefix>
-                <span
-                  v-if="priorities.find(p => p.value === form.priority)?.color"
-                  style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 2px;"
-                  :style="{ background: priorities.find(p => p.value === form.priority)?.color }"
-                />
-              </template>
-              <el-option
-                v-for="p in priorities"
-                :key="p.value"
-                :label="p.label"
-                :value="p.value"
-              >
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; display: inline-block;" :style="{ background: p.color || '#94a3b8' }" />
-                  {{ p.label }}
-                </div>
-              </el-option>
-            </el-select>
-          </div>
-        </div>
+      <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
+      <div class="crm-right-col" style="width: 320px; display: flex; flex-direction: column; gap: 12px;">
+
+
 
         <!-- ══ ГОТОВНІСТЬ ЗАЯВКИ ══ -->
         <div class="crm-section control-card">
@@ -667,6 +644,33 @@
         </div>
 
         <!-- ══ RELATED DOCUMENTS ══ -->
+        <!-- ══ AI ASSISTANT WIDGET ══ -->
+        <div class="crm-section ai-assistant-card" style="background: #F0FDFA; border: 1px solid #CCFBF1; border-radius: 12px; padding: 16px; margin-top: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #0D9488; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">
+            <el-icon><MagicStick /></el-icon>
+            <span>AI Помічник</span>
+          </div>
+          
+          <div class="ai-insights-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #1F2937;">
+            <div class="ai-insight-item" v-if="readinessProgress < 100" style="display: flex; align-items: flex-start; gap: 6px;">
+              <el-icon style="color: #F59E0B; margin-top: 2px;"><Warning /></el-icon>
+              <span>Заявку заповнено на {{ readinessProgress }}%. Дозаповніть обов'язкові параметри для запуску.</span>
+            </div>
+            <div class="ai-insight-item" v-if="!form.next_contact_at" style="display: flex; align-items: flex-start; gap: 6px;">
+              <el-icon style="color: #EF4444; margin-top: 2px;"><Calendar /></el-icon>
+              <span>Наступний контакт не заплановано. Ризик втрати клієнта!</span>
+            </div>
+            <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="form.total_amount > 0 && (form.prepayment_amount || 0) < (form.total_amount * 0.2)">
+              <el-icon style="color: #3D3AA8; margin-top: 2px;"><Money /></el-icon>
+              <span>Низький рівень передоплати (менше 20%). Рекомендовано отримати завдаток.</span>
+            </div>
+            <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="readinessProgress === 100 && form.crm_stage === 'new'">
+              <el-icon style="color: #10B981; margin-top: 2px;"><SuccessFilled /></el-icon>
+              <span>Всі дані зібрані. Можна сміливо передавати заявку в роботу!</span>
+            </div>
+          </div>
+        </div>
+
         <RelatedDocumentsBlock
           v-if="orderId"
           ref="relatedDocsRef"
@@ -763,10 +767,11 @@ const editTotalAmount = ref(false)
 const editPrepaymentAmount = ref(false)
 
 const defaultCommTypes = [
-  { code: 'CALL', name: 'Дзвінок', icon: '📞' },
+  { code: 'CALL', name: 'Телефон', icon: '📞' },
   { code: 'VIBER', name: 'Viber', icon: '💬' },
   { code: 'TELEGRAM', name: 'Telegram', icon: '✈️' },
   { code: 'INSTAGRAM', name: 'Instagram', icon: '📸' },
+  { code: 'SMS', name: 'SMS', icon: '📱' },
   { code: 'EMAIL', name: 'Email', icon: '✉️' },
   { code: 'MEET', name: 'Зустріч', icon: '🤝' },
 ]
@@ -775,8 +780,11 @@ const communicationTypes = ref([...defaultCommTypes])
 const defaultContactResults = [
   { code: 'NO_ANSWER', name: 'Не відповів', icon: '🔴' },
   { code: 'THINKING',  name: 'Думає',      icon: '🤔' },
+  { code: 'CLARIFY',   name: 'Уточнює',    icon: '🔍' },
   { code: 'REFUSED',   name: 'Відмовився',  icon: '✗' },
   { code: 'CONFIRMED', name: 'Підтвердив', icon: '✓' },
+  { code: 'RETRY',     name: 'Потрібен повторний дзвінок', icon: '⏳' },
+  { code: 'FORWARD',   name: 'Передати далі', icon: '➡️' },
 ]
 const contactResults = ref([...defaultContactResults])
 
@@ -878,12 +886,14 @@ const requiredAttributesFilled = computed(() => {
 })
 
 const readinessItems = computed(() => [
-  { key: 'client', label: 'Клієнт обраний або введений', done: Boolean(form.counterparty_id || clientName.value) },
-  { key: 'phone', label: 'Є телефон для контакту', done: Boolean(clientPhone.value) },
-  { key: 'product', label: 'Виріб з номенклатури обрано', done: Boolean(form.product_id) },
-  { key: 'attrs', label: 'Характеристики виробу заповнені', done: requiredAttributesFilled.value },
-  { key: 'amount', label: 'Сума замовлення вказана', done: Number(form.total_amount || 0) > 0 },
-  { key: 'contact', label: 'Наступний контакт заплановано', done: Boolean(form.next_contact_at || contactNextAt.value) },
+  { key: 'client', label: 'Клієнт обраний', done: Boolean(form.counterparty_id) },
+  { key: 'phone', label: 'Телефон вказаний', done: Boolean(clientPhone.value) },
+  { key: 'product', label: 'Виріб обраний', done: Boolean(form.product_id) },
+  { key: 'attrs', label: 'Характеристики заповнені', done: requiredAttributesFilled.value },
+  { key: 'amount', label: 'Сума вказана', done: Number(form.total_amount || 0) > 0 },
+  { key: 'deadline', label: 'Дата готовності вказана', done: Boolean(form.deadline_date) },
+  { key: 'contact', label: 'Наступний контакт запланований', done: Boolean(form.next_contact_at) },
+  { key: 'payment', label: 'Спосіб оплати заданий', done: Boolean(form.bank_account_id) },
 ])
 
 const readinessProgress = computed(() => {
@@ -916,8 +926,11 @@ const getCommShort = (code) => ({
 const getResultHint = (code) => ({
   NO_ANSWER: 'створити нагадування',
   THINKING: 'запланувати дотик',
+  CLARIFY: 'уточнити деталі',
   REFUSED: 'зафіксувати причину',
   CONFIRMED: 'передати далі',
+  RETRY: 'повторити спробу',
+  FORWARD: 'передати наступному',
 }[code] || 'записати результат')
 
 const history = computed(() => {
