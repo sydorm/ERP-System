@@ -515,72 +515,51 @@
         </div>
 
         <!-- ══ КОМУНІКАЦІЯ ══ -->
-        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px;">
-              КОМУНІКАЦІЯ
+        <div class="crm-section contact-console">
+          <div class="contact-console-head">
+            <div>
+              <span class="console-kicker">КОМУНІКАЦІЯ</span>
+              <strong>Контакт з клієнтом</strong>
             </div>
-            <span style="font-size: 10px; font-weight: 600; color: #3D3AA8; background: #EEEDFE; padding: 2px 6px; border-radius: 4px;" v-if="form.contact_attempts > 0">
+            <span class="attempts-chip" v-if="form.contact_attempts > 0">
               {{ form.contact_attempts }} спроби
             </span>
           </div>
 
-          <!-- Канали комунікації -->
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+          <div class="contact-channel-grid">
             <button
               v-for="ct in communicationTypes"
               :key="ct.code"
-              :style="{
-                borderRadius: '20px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                border: '1.5px solid #E0E0FF',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                transition: 'all 0.2s',
-                background: contactCommType === ct.code ? '#3D3AA8' : 'white',
-                color: contactCommType === ct.code ? 'white' : '#3D3AA8',
-                borderColor: contactCommType === ct.code ? '#3D3AA8' : '#E0E0FF'
-              }"
+              class="contact-channel-card"
+              :class="{ active: contactCommType === ct.code }"
               @click="contactCommType = ct.code"
               type="button"
             >
-              <span>{{ ct.icon }}</span>
+              <span class="channel-code">{{ getCommShort(ct.code) }}</span>
+              <span class="channel-name">{{ ct.name }}</span>
             </button>
           </div>
 
-          <!-- Результат контакту -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+          <div class="contact-script-panel">
+            <div class="script-panel-title">Результат контакту</div>
             <button
               v-for="cr in contactResults"
               :key="cr.code"
-              :style="{
-                borderRadius: '8px',
-                padding: '8px',
-                fontSize: '12px',
-                border: '1.5px solid #EBEBEB',
-                cursor: 'pointer',
-                textAlign: 'center',
-                transition: 'all 0.2s',
-                background: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#FEF2F2' : cr.code === 'THINKING' ? '#FFFBEB' : cr.code === 'REFUSED' ? '#F9FAFB' : '#ECFDF5') : 'white',
-                color: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#991B1B' : cr.code === 'THINKING' ? '#92400E' : cr.code === 'REFUSED' ? '#374151' : '#065F46') : '#3D3AA8',
-                borderColor: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#FCA5A5' : cr.code === 'FCD34D' ? '#FCD34D' : cr.code === 'REFUSED' ? '#D1D5DB' : '#6EE7B7') : '#EBEBEB'
-              }"
+              class="result-card"
+              :class="[contactResult === cr.code ? 'active' : '', `result-${cr.code.toLowerCase()}`]"
               @click="applyContactResult(cr.code)"
               type="button"
             >
-              {{ cr.name }}
+              <strong>{{ cr.name }}</strong>
+              <small>{{ getResultHint(cr.code) }}</small>
             </button>
           </div>
 
-          <!-- Compact Reminder Bar -->
           <Transition name="fade-slide">
-            <div style="background: #F8F9FF; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;" v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #3D3AA8; font-weight: 600;">
-                <span>🔔</span>
-                <span>Нагадати:</span>
+            <div v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)" class="followup-box">
+              <div class="followup-head">
+                <strong>Повторний дотик</strong>
+                <span>{{ contactResult === 'NO_ANSWER' ? 'клієнт не відповів' : 'клієнт думає' }}</span>
               </div>
               <el-date-picker
                 v-model="contactNextAt"
@@ -588,33 +567,37 @@
                 size="small"
                 format="DD.MM HH:mm"
                 value-format="YYYY-MM-DDTHH:mm:ss"
-                placeholder="Дата/час"
-                style="width: 130px;"
+                placeholder="Дата/час контакту"
+                style="width: 100%;"
               />
+              <div class="contact-preset-row">
+                <button @click="setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })">+2 год</button>
+                <button @click="setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })">Завтра 10:00</button>
+                <button @click="setNextContactPreset({ days: 2, h: 10, reason: 'clarify', syncContactLog: true })">+2 дні</button>
+              </div>
             </div>
           </Transition>
 
-          <div v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)" class="contact-preset-row">
-            <button @click="setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })">+2 год</button>
-            <button @click="setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })">Завтра 10:00</button>
-            <button @click="setNextContactPreset({ days: 2, h: 10, reason: 'clarify', syncContactLog: true })">+2 дні</button>
+          <div class="crm-field contact-note-field">
+            <label class="crm-label">
+              {{ contactResult === 'REFUSED' ? 'Причина відмови' : 'Нотатка контакту' }}
+            </label>
+            <el-input
+              v-model="contactNote"
+              type="textarea"
+              :rows="2"
+              :placeholder="contactResult === 'REFUSED' ? 'Чому клієнт відмовився...' : 'Що сказав клієнт, домовленості, нюанси...'"
+            />
           </div>
 
-          <!-- Причина відмови -->
-          <div class="crm-field" v-if="contactResult === 'REFUSED'" style="margin-bottom: 10px;">
-            <el-input v-model="contactNote" placeholder="Чому відмовився..." />
-          </div>
-
-          <!-- Кнопка зберегти контакт -->
           <button
-            style="width: 100%; background: #3D3AA8; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.2s;"
+            class="save-contact-action"
             @click="logContact"
             :disabled="!contactResult || savingContact || !orderId"
           >
             <el-icon v-if="savingContact" class="is-loading"><Loading /></el-icon>
-            {{ orderId ? 'Зберегти контакт' : 'Збережіть заявку спочатку' }}
+            {{ orderId ? 'Зафіксувати контакт' : 'Збережіть заявку спочатку' }}
           </button>
-
         </div>
 
           <div v-if="contacts.length" style="margin-top:20px">
@@ -880,6 +863,22 @@ const nextTouchSummary = computed(() => {
   }
   return `${channel}: ${reasonMap[contactPlanReason.value] || 'контакт'} · ${formatDateTime(form.next_contact_at)}`
 })
+
+const getCommShort = (code) => ({
+  CALL: 'TEL',
+  VIBER: 'VIB',
+  TELEGRAM: 'TG',
+  INSTAGRAM: 'IG',
+  EMAIL: 'MAIL',
+  MEET: 'MEET',
+}[code] || String(code || '').slice(0, 4).toUpperCase())
+
+const getResultHint = (code) => ({
+  NO_ANSWER: 'створити нагадування',
+  THINKING: 'запланувати дотик',
+  REFUSED: 'зафіксувати причину',
+  CONFIRMED: 'передати далі',
+}[code] || 'записати результат')
 
 const history = computed(() => {
   const items = []
@@ -2164,6 +2163,220 @@ onMounted(loadData)
 .next-touch-summary.empty {
   color: #92400e;
   background: #fffbeb;
+}
+
+.contact-console {
+  padding: 16px;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, .9), #fff 42%),
+    #fff;
+}
+
+.contact-console-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.contact-console-head strong {
+  display: block;
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.console-kicker,
+.script-panel-title {
+  color: #8a94a6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.attempts-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #3730a3;
+  background: #eef2ff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.contact-channel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.contact-channel-card {
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s, box-shadow .18s, transform .18s, background .18s;
+}
+
+.contact-channel-card:hover {
+  border-color: #a5b4fc;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, .10);
+}
+
+.contact-channel-card.active {
+  border-color: #4338ca;
+  background: #eef2ff;
+  box-shadow: inset 3px 0 0 #4338ca;
+}
+
+.channel-code {
+  display: block;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.channel-name {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-script-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.contact-script-panel .script-panel-title {
+  grid-column: 1 / -1;
+}
+
+.result-card {
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #1e293b;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s, box-shadow .18s, transform .18s, background .18s;
+}
+
+.result-card strong,
+.result-card small {
+  display: block;
+}
+
+.result-card strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.result-card small {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.result-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+}
+
+.result-card.active {
+  box-shadow: inset 3px 0 0 currentColor, 0 10px 20px rgba(15, 23, 42, .08);
+}
+
+.result-no_answer.active {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.result-thinking.active {
+  color: #a16207;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.result-refused.active {
+  color: #475569;
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.result-confirmed.active {
+  color: #047857;
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.followup-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+}
+
+.followup-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.followup-head strong {
+  color: #7c2d12;
+  font-size: 12px;
+}
+
+.followup-head span {
+  color: #9a3412;
+  font-size: 11px;
+}
+
+.contact-note-field {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.save-contact-action {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #3730a3;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(55, 48, 163, .22);
+}
+
+.save-contact-action:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  box-shadow: none;
 }
 
 .crm-top-bar {
