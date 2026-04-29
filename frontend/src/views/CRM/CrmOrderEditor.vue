@@ -446,6 +446,74 @@
           </div>
         </div>
 
+        <!-- ══ ГОТОВНІСТЬ ЗАЯВКИ ══ -->
+        <div class="crm-section control-card">
+          <div class="side-card-title">
+            <span>ГОТОВНІСТЬ ЗАЯВКИ</span>
+            <b>{{ readinessProgress }}%</b>
+          </div>
+          <div class="readiness-meter">
+            <span :style="{ width: `${readinessProgress}%` }"></span>
+          </div>
+          <div class="readiness-list">
+            <div
+              v-for="item in readinessItems"
+              :key="item.key"
+              class="readiness-item"
+              :class="{ done: item.done }"
+            >
+              <span>{{ item.done ? '✓' : '•' }}</span>
+              <small>{{ item.label }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ НАСТУПНИЙ ДОТИК ══ -->
+        <div class="crm-section control-card next-touch-card">
+          <div class="side-card-title">
+            <span>НАСТУПНИЙ КОНТАКТ</span>
+            <b>{{ form.next_contact_at ? 'заплановано' : 'не задано' }}</b>
+          </div>
+
+          <div class="next-touch-grid">
+            <el-select v-model="contactCommType" placeholder="Канал" size="small">
+              <el-option
+                v-for="ct in communicationTypes"
+                :key="ct.code"
+                :label="`${ct.icon} ${ct.name}`"
+                :value="ct.code"
+              />
+            </el-select>
+            <el-select v-model="contactPlanReason" placeholder="Причина" size="small">
+              <el-option label="Перший контакт" value="first_touch" />
+              <el-option label="Повтор після не відповів" value="retry_no_answer" />
+              <el-option label="Уточнити деталі" value="clarify" />
+              <el-option label="Нагадати про оплату" value="payment" />
+              <el-option label="Погодити виробництво" value="production" />
+            </el-select>
+          </div>
+
+          <el-date-picker
+            v-model="form.next_contact_at"
+            type="datetime"
+            format="DD.MM.YYYY HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="Дата і час контакту"
+            style="width: 100%; margin-top: 8px;"
+          />
+
+          <div class="quick-touch-buttons">
+            <button @click="setNextContactPreset({ minutes: 15, reason: 'first_touch' })">+15 хв</button>
+            <button @click="setNextContactPreset({ hours: 2, reason: 'retry_no_answer' })">+2 год</button>
+            <button @click="setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify' })">Завтра 10:00</button>
+            <button @click="setNextContactPreset({ days: 2, h: 10, reason: 'payment' })">+2 дні</button>
+          </div>
+
+          <div class="next-touch-summary" :class="{ empty: !form.next_contact_at }">
+            {{ nextTouchSummary }}
+          </div>
+        </div>
+
         <!-- ══ КОМУНІКАЦІЯ ══ -->
         <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -500,7 +568,7 @@
                 color: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#991B1B' : cr.code === 'THINKING' ? '#92400E' : cr.code === 'REFUSED' ? '#374151' : '#065F46') : '#3D3AA8',
                 borderColor: contactResult === cr.code ? (cr.code === 'NO_ANSWER' ? '#FCA5A5' : cr.code === 'FCD34D' ? '#FCD34D' : cr.code === 'REFUSED' ? '#D1D5DB' : '#6EE7B7') : '#EBEBEB'
               }"
-              @click="contactResult = contactResult === cr.code ? null : cr.code"
+              @click="applyContactResult(cr.code)"
               type="button"
             >
               {{ cr.name }}
@@ -525,6 +593,12 @@
               />
             </div>
           </Transition>
+
+          <div v-if="['THINKING', 'NO_ANSWER'].includes(contactResult)" class="contact-preset-row">
+            <button @click="setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })">+2 год</button>
+            <button @click="setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })">Завтра 10:00</button>
+            <button @click="setNextContactPreset({ days: 2, h: 10, reason: 'clarify', syncContactLog: true })">+2 дні</button>
+          </div>
 
           <!-- Причина відмови -->
           <div class="crm-field" v-if="contactResult === 'REFUSED'" style="margin-bottom: 10px;">
@@ -693,6 +767,7 @@ const contactResult = ref(null)
 const contactCommType = ref('CALL')
 const contactNote   = ref('')
 const contactNextAt = ref(null)
+const contactPlanReason = ref('first_touch')
 const savingContact = ref(false)
 
 const vErrors = reactive({
@@ -702,21 +777,9 @@ const vErrors = reactive({
 
 // Watch contact result to auto-set reminder
 watch(() => contactResult.value, (newVal) => {
-  if (newVal === 'NO_ANSWER') {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    
-    // Format to local ISO-like string YYYY-MM-DDTHH:mm:ss
-    const pad = (n) => String(n).padStart(2, '0')
-    const y = tomorrow.getFullYear()
-    const m = pad(tomorrow.getMonth() + 1)
-    const d = pad(tomorrow.getDate())
-    const hh = pad(tomorrow.getHours())
-    const mm = pad(tomorrow.getMinutes())
-    const ss = pad(tomorrow.getSeconds())
-    
-    contactNextAt.value = `${y}-${m}-${d}T${hh}:${mm}:${ss}`
-  }
+  if (newVal === 'NO_ANSWER') setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })
+  if (newVal === 'THINKING') setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })
+  if (newVal === 'CONFIRMED') contactPlanReason.value = 'payment'
 })
 
 // Sync comm type with lead source for new orders
@@ -781,6 +844,42 @@ const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ valu
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const selectedProduct = computed(() => products.value.find(p => p.id === form.product_id) || null)
+
+const requiredAttributesFilled = computed(() => {
+  if (!productAttributes.value.length) return true
+  return productAttributes.value.every(attr => {
+    const value = form.attributes_values?.[attr.id]
+    if (attr.type === 'DIMENSIONS') return Boolean(value?.w && value?.h)
+    return value !== undefined && value !== null && value !== ''
+  })
+})
+
+const readinessItems = computed(() => [
+  { key: 'client', label: 'Клієнт обраний або введений', done: Boolean(form.counterparty_id || clientName.value) },
+  { key: 'phone', label: 'Є телефон для контакту', done: Boolean(clientPhone.value) },
+  { key: 'product', label: 'Виріб з номенклатури обрано', done: Boolean(form.product_id) },
+  { key: 'attrs', label: 'Характеристики виробу заповнені', done: requiredAttributesFilled.value },
+  { key: 'amount', label: 'Сума замовлення вказана', done: Number(form.total_amount || 0) > 0 },
+  { key: 'contact', label: 'Наступний контакт заплановано', done: Boolean(form.next_contact_at || contactNextAt.value) },
+])
+
+const readinessProgress = computed(() => {
+  const done = readinessItems.value.filter(item => item.done).length
+  return Math.round((done / readinessItems.value.length) * 100)
+})
+
+const nextTouchSummary = computed(() => {
+  if (!form.next_contact_at) return 'Додайте дату наступного контакту, щоб менеджер не загубив клієнта.'
+  const channel = getCommName(contactCommType.value)
+  const reasonMap = {
+    first_touch: 'перший контакт',
+    retry_no_answer: 'повтор після не відповів',
+    clarify: 'уточнити деталі',
+    payment: 'нагадати про оплату',
+    production: 'погодити виробництво'
+  }
+  return `${channel}: ${reasonMap[contactPlanReason.value] || 'контакт'} · ${formatDateTime(form.next_contact_at)}`
+})
 
 const history = computed(() => {
   const items = []
@@ -980,6 +1079,42 @@ const formatDateTime = (d) => {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
+}
+
+const toLocalDateTimeValue = (date) => {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+const setNextContactPreset = (opts = {}) => {
+  const d = new Date()
+  if (opts.minutes) d.setMinutes(d.getMinutes() + opts.minutes)
+  if (opts.hours) d.setHours(d.getHours() + opts.hours)
+  if (opts.tomorrow) {
+    d.setDate(d.getDate() + 1)
+    d.setHours(opts.h || 10, 0, 0, 0)
+  }
+  if (opts.days) {
+    d.setDate(d.getDate() + opts.days)
+    d.setHours(opts.h || 10, 0, 0, 0)
+  }
+
+  const value = toLocalDateTimeValue(d)
+  form.next_contact_at = value
+  if (opts.syncContactLog) contactNextAt.value = value
+  if (opts.reason) contactPlanReason.value = opts.reason
+}
+
+const applyContactResult = (code) => {
+  const nextValue = contactResult.value === code ? null : code
+  contactResult.value = nextValue
+  if (!nextValue) return
+  if (code === 'NO_ANSWER') setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })
+  if (code === 'THINKING') setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })
+  if (code === 'CONFIRMED') {
+    contactPlanReason.value = 'payment'
+    if (!form.next_contact_at) setNextContactPreset({ days: 1, h: 10, reason: 'payment' })
+  }
 }
 
 const loadContacts = async () => {
@@ -1897,5 +2032,168 @@ onMounted(loadData)
   color: #9CA3AF;
 }
 
-/* Keep existing styles below... */
+/* ─── CRM editor workflow refresh ─────────────────────────────────────────── */
+.control-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.side-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.side-card-title span {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+
+.side-card-title b {
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.readiness-meter {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2ff;
+  margin-bottom: 10px;
+}
+
+.readiness-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f46e5, #14b8a6);
+}
+
+.readiness-list {
+  display: grid;
+  gap: 6px;
+}
+
+.readiness-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #64748b;
+}
+
+.readiness-item span {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  color: #94a3b8;
+  background: #f1f5f9;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.readiness-item.done {
+  color: #166534;
+}
+
+.readiness-item.done span {
+  color: #fff;
+  background: #22c55e;
+}
+
+.readiness-item small {
+  line-height: 1.25;
+}
+
+.next-touch-card {
+  background:
+    linear-gradient(180deg, rgba(238, 242, 255, 0.74), rgba(255, 255, 255, 1)),
+    #fff;
+}
+
+.next-touch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.quick-touch-buttons,
+.contact-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.quick-touch-buttons button,
+.contact-preset-row button {
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  color: #4338ca;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quick-touch-buttons button:hover,
+.contact-preset-row button:hover {
+  background: #eef2ff;
+}
+
+.next-touch-summary {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #334155;
+  background: rgba(255, 255, 255, .8);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.next-touch-summary.empty {
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.crm-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+}
+
+.crm-section {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .04);
+}
+
+.crm-right-col {
+  position: sticky;
+  top: 74px;
+  align-self: flex-start;
+  max-height: calc(100vh - 86px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1100px) {
+  .crm-body {
+    flex-direction: column;
+  }
+
+  .crm-right-col {
+    position: static;
+    width: 100% !important;
+    max-height: none;
+  }
+}
 </style>
