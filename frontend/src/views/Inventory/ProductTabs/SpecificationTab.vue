@@ -42,13 +42,63 @@
            </el-button>
         </div>
         <div class="right-actions">
-           <el-button type="info" plain @click="openPreviewDialog" :disabled="!specForm.id">
-             <el-icon><Monitor /></el-icon> Перевірити розрахунок
-           </el-button>
-           <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
-             <el-icon><Check /></el-icon> Зберегти специфікацію
-           </el-button>
-        </div>
+            <span class="last-validation-label" style="font-size: 12px; color: #64748b; margin-right: 8px;">
+               Остання перевірка: {{ lastValidationDate || 'не виконувалась' }}
+            </span>
+            <el-button class="btn-validate" @click="validateBom" :disabled="!specForm.items || specForm.items.length === 0">
+              <el-icon><Monitor /></el-icon> Перевірити розрахунок
+            </el-button>
+            <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
+              <el-icon><Check /></el-icon> Зберегти специфікацію
+            </el-button>
+         </div>
+      </div>
+       
+      <!-- Validation Result Banner -->
+      <div v-if="validationResult.summary.rowsCount > 0 || validationResult.errors.length > 0" class="bom-validation-banner mt-4">
+         <el-alert 
+           v-if="validationResult.errors.length > 0" 
+           title="Знайдено помилки" 
+           type="error" 
+           show-icon 
+           :closable="false"
+         >
+            <div class="bom-alert-list" style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+               <div v-for="(err, idx) in validationResult.errors" :key="idx" class="bom-alert-item" style="font-size: 12px;">
+                  • {{ err.message }}
+               </div>
+            </div>
+         </el-alert>
+         
+         <el-alert 
+           v-if="validationResult.warnings.length > 0" 
+           title="Попередження" 
+           type="warning" 
+           show-icon 
+           :closable="false"
+           class="mt-2"
+         >
+            <div class="bom-alert-list" style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+               <div v-for="(warn, idx) in validationResult.warnings" :key="idx" class="bom-alert-item" style="font-size: 12px;">
+                  • {{ warn.message }}
+               </div>
+            </div>
+         </el-alert>
+
+         <div v-if="validationResult.isValid && validationResult.errors.length === 0" class="bom-success-summary mt-2">
+            <el-alert 
+               title="Розрахунок перевірено — все добре" 
+               type="success" 
+               show-icon 
+               :closable="false"
+            >
+               <div class="text-xs font-medium mt-1">
+                  Матеріалів: {{ validationResult.summary.materialsCount }} | 
+                  Проблем: 0 | 
+                  Орієнтовна собівартість: <strong>{{ validationResult.summary.totalMaterialCost }} грн</strong>
+               </div>
+            </el-alert>
+         </div>
       </div>
        
        <el-card shadow="never" class="mt-4">
@@ -92,7 +142,7 @@
              
              <!-- Body Rows -->
              <div class="bom-grid-body">
-                <div v-for="(row, index) in specForm.items" :key="index" class="bom-grid-row">
+                <div v-for="(row, index) in specForm.items" :key="index" class="bom-grid-row" :class="{'row-error': getRowValidationStatus(index + 1) === 'error', 'row-warning': getRowValidationStatus(index + 1) === 'warning'}">
                    <div class="bom-col-material">
                       <el-select
                          v-model="row.component_id"
@@ -916,12 +966,159 @@ const editSpec = (row) => {
     }
 }
 
+const validationResult = ref({
+    isValid: true,
+    errors: [],
+    warnings: [],
+    summary: {
+        rowsCount: 0,
+        materialsCount: 0,
+        totalMaterialCost: 0,
+        missingStockCount: 0,
+        duplicateCount: 0
+    }
+})
+
+const lastValidationDate = ref(null)
+
+const getRowValidationStatus = (rowIdx) => {
+    if (validationResult.value.errors.some(e => e.rowIndex === rowIdx)) return 'error'
+    if (validationResult.value.warnings.some(w => w.rowIndex === rowIdx)) return 'warning'
+    return 'success'
+}
+
+const validateBom = async () => {
+    const errors = []
+    const warnings = []
+    let totalMaterialCost = 0
+    let missingStockCount = 0
+    let duplicateCount = 0
+
+    const items = specForm.value.items || []
+
+    if (items.length === 0) {
+        errors.push({ rowIndex: -1, field: '', message: 'Специфікація не має жодного компонента.' })
+    }
+
+    const materialCounts = new Map()
+
+    for (let i = 0; i < items.length; i++) {
+        const row = items[i]
+        const rowIdx = i + 1
+
+        if (!row.component_id) {
+            errors.push({ rowIndex: rowIdx, field: 'component_id', message: `Рядок ${rowIdx}: не вибрано матеріал.` })
+            continue
+        }
+
+        if (materialCounts.has(row.component_id)) {
+            materialCounts.set(row.component_id, materialCounts.get(row.component_id) + 1)
+        } else {
+            materialCounts.set(row.component_id, 1)
+        }
+
+        const material = productSearchResults.value.find(p => p.id === row.component_id) || row.component
+        const materialName = material?.name || 'Матеріал'
+
+        if (row.calc_type === 'fixed' && (row.quantity == null || row.quantity <= 0)) {
+            errors.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): кількість має бути більше 0.` })
+        }
+
+        if (row.calc_type && row.calc_type !== 'fixed') {
+            const calcQty = calculateQuantityInternal(row, true)
+            if (calcQty === 'Помилка' || calcQty == null || calcQty <= 0) {
+                errors.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): помилка розрахунку калькулятора або значення <= 0.` })
+            } else {
+                if (row.quantity != null && Math.abs(row.quantity - calcQty) > 0.01) {
+                    warnings.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): ручна кількість (${row.quantity}) відрізняється від розрахованої (${calcQty.toFixed(3)}).` })
+                }
+            }
+        }
+
+        if (!row.unit_of_measure) {
+            warnings.push({ rowIndex: rowIdx, field: 'unit_of_measure', message: `Рядок ${rowIdx} (${materialName}): не вказано одиницю виміру.` })
+        }
+
+        const unitCost = parseFloat(material?.cost || 0)
+        if (unitCost <= 0) {
+            warnings.push({ rowIndex: rowIdx, field: 'cost', message: `Рядок ${rowIdx} (${materialName}): для матеріалу не вказана собівартість.` })
+        } else {
+            const actualQty = row.calc_type !== 'fixed' ? calculateQuantityInternal(row, true) : row.quantity
+            if (typeof actualQty === 'number') {
+                totalMaterialCost += actualQty * unitCost
+            }
+        }
+
+        const stockAvailable = parseFloat(material?.stock_quantity != null ? material.stock_quantity : (material?.stock_available != null ? material.stock_available : 1000))
+        const actualQtyForStock = row.calc_type !== 'fixed' ? calculateQuantityInternal(row, true) : row.quantity
+        
+        if (typeof actualQtyForStock === 'number' && stockAvailable < actualQtyForStock) {
+            missingStockCount++
+            warnings.push({ rowIndex: rowIdx, field: 'stock', message: `Рядок ${rowIdx} (${materialName}): недостатньо залишку на складі. Потрібно: ${actualQtyForStock.toFixed(3)}, Доступно: ${stockAvailable.toFixed(3)}` })
+        }
+    }
+
+    for (const [compId, count] of materialCounts.entries()) {
+        if (count > 1) {
+            duplicateCount++
+            const mat = productSearchResults.value.find(p => p.id === compId) || items.find(i => i.component_id === compId)?.component
+            warnings.push({ rowIndex: -1, field: '', message: `Матеріал "${mat?.name || 'Матеріал'}" доданий кілька разів.` })
+        }
+    }
+
+    validationResult.value = {
+        isValid: errors.length === 0,
+        errors,
+        warnings,
+        summary: {
+            rowsCount: items.length,
+            materialsCount: materialCounts.size,
+            totalMaterialCost: parseFloat(totalMaterialCost.toFixed(2)),
+            missingStockCount,
+            duplicateCount
+        }
+    }
+
+    lastValidationDate.value = new Date().toLocaleString('uk-UA')
+
+    if (errors.length === 0) {
+        ElMessage.success(`Розрахунок перевірено. Помилок не знайдено.`)
+    } else {
+        ElMessage.error(`Знайдено помилок: ${errors.length}`)
+    }
+}
+
 // Save logic
 const saveSpecification = async () => {
     if (!specForm.value.name) {
         ElMessage.warning('Вкажіть назву специфікації')
         return
     }
+
+    // Run validation
+    await validateBom()
+
+    if (!validationResult.value.isValid) {
+        ElMessageBox.alert('Не вдалося зберегти: специфікація містить помилки. Будь ласка, виправте їх.', 'Помилка валідації', { type: 'error' })
+        return
+    }
+
+    if (validationResult.value.warnings.length > 0) {
+        try {
+            await ElMessageBox.confirm(
+                'Специфікація має попередження. Ви впевнені, що хочете зберегти?',
+                'Попередження',
+                {
+                    confirmButtonText: 'Так, зберегти',
+                    cancelButtonText: 'Ні, перевірити',
+                    type: 'warning'
+                }
+            )
+        } catch (cancel) {
+            return
+        }
+    }
+
     const validItems = specForm.value.items.filter(i => i.component_id && (i.quantity > 0 || (i.calc_type && i.calc_type !== 'fixed')))
     specForm.value.items = validItems
     saving.value = true
@@ -1121,6 +1318,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.btn-validate {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #D1D5DB;
+}
+.btn-validate:hover {
+    background: #F9FAFB;
+    color: #1F2937;
+    border-color: #9CA3AF;
+}
+.bom-grid-row.row-error {
+    background-color: #FEF2F2 !important;
+    border-left: 3px solid #EF4444 !important;
+}
+.bom-grid-row.row-warning {
+    background-color: #FFFBEB !important;
+    border-left: 3px solid #F59E0B !important;
+}
+
 .bom-grid-table {
     display: flex;
     flex-direction: column;
