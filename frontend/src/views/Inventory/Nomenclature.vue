@@ -218,7 +218,11 @@
 
           <!-- Category -->
           <div class="nom-cell nom-cell--category">
-            <span class="nom-cat-badge" :title="getCategoryName(row.category)">
+            <span 
+              class="nom-cat-badge" 
+              :title="getCategoryName(row.category)"
+              :style="getCategoryBadgeStyle(row.category)"
+            >
               {{ getCategoryName(row.category) || '—' }}
             </span>
           </div>
@@ -784,6 +788,94 @@ const handleViewMovement = (row) => {
 
 
 // Helpers
+const colorMap = {
+  blue: '#3b82f6',
+  green: '#10b981',
+  orange: '#f59e0b',
+  red: '#ef4444',
+  purple: '#8b5cf6',
+  teal: '#14b8a6',
+  gray: '#64748b',
+  indigo: '#4f46e5',
+  pink: '#ec4899',
+  rose: '#f43f5e',
+  cyan: '#06b6d4',
+  amber: '#fcd34d'
+}
+
+const hexToRgba = (hex, opacity) => {
+  if (!hex) return 'rgba(0,0,0,0)'
+  let cleanHex = hex.replace('#', '').trim()
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.charAt(0) + cleanHex.charAt(0) +
+               cleanHex.charAt(1) + cleanHex.charAt(1) +
+               cleanHex.charAt(2) + cleanHex.charAt(2)
+  }
+  if (cleanHex.length === 8) {
+    cleanHex = cleanHex.substring(0, 6)
+  }
+  if (cleanHex.length !== 6) {
+    // If it's a CSS named color or rgb, we can't easily manipulate opacity here.
+    // Return the color itself.
+    return hex
+  }
+  const r = parseInt(cleanHex.substring(0, 2), 16)
+  const g = parseInt(cleanHex.substring(2, 4), 16)
+  const b = parseInt(cleanHex.substring(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
+
+const darkenColor = (hex, percent) => {
+  if (!hex) return '#000'
+  let cleanHex = hex.replace('#', '').trim()
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.charAt(0) + cleanHex.charAt(0) +
+               cleanHex.charAt(1) + cleanHex.charAt(1) +
+               cleanHex.charAt(2) + cleanHex.charAt(2)
+  }
+  if (cleanHex.length === 8) {
+    cleanHex = cleanHex.substring(0, 6)
+  }
+  if (cleanHex.length !== 6) return hex
+  let r = parseInt(cleanHex.substring(0, 2), 16)
+  let g = parseInt(cleanHex.substring(2, 4), 16)
+  let b = parseInt(cleanHex.substring(4, 6), 16)
+
+  r = Math.max(0, Math.floor(r * (1 - percent / 100)))
+  g = Math.max(0, Math.floor(g * (1 - percent / 100)))
+  b = Math.max(0, Math.floor(b * (1 - percent / 100)))
+
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+}
+
+const getCategoryBadgeStyle = (code) => {
+  const fallbackStyle = {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    color: '#475569'
+  }
+  
+  if (!code) return fallbackStyle
+  
+  const categories = dictStore.getCategory('PRODUCT_CATEGORY')
+  const category = categories.find(cat => cat.code === code)
+  
+  if (!category || !category.color) return fallbackStyle
+  
+  let baseColor = category.color
+  if (colorMap[baseColor.toLowerCase()]) {
+    baseColor = colorMap[baseColor.toLowerCase()]
+  } else if (!baseColor.startsWith('#')) {
+    baseColor = '#4f46e5'
+  }
+  
+  return {
+    backgroundColor: hexToRgba(baseColor, 0.10),
+    borderColor: hexToRgba(baseColor, 0.25),
+    color: darkenColor(baseColor, 10)
+  }
+}
+
 const getCategoryName = (code) => {
   return dictStore.getName('PRODUCT_CATEGORY', code)
 }
@@ -883,7 +975,7 @@ onActivated(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 .action-row__left {
   display: flex;
@@ -1123,7 +1215,7 @@ onActivated(() => {
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 10px 28px rgba(15,23,42,0.03);
-  margin-top: 16px;
+  margin-top: 12px;
   gap: 16px;
 }
 .toolbar-dense__left {
@@ -1353,17 +1445,15 @@ onActivated(() => {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  background: #f3f4ff;
-  color: #4f46e5;
-  border: 1px solid #dde3ff;
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 6px 10px;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1;
+  border: 1px solid transparent;
 }
 
 /* --- Stock cell --- */
