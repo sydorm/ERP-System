@@ -59,7 +59,7 @@
               />
             </el-form-item>
           </el-card>
-        </col>
+        </el-col>
 
         <el-col :span="8">
           <el-card class="glossary-card" shadow="never">
