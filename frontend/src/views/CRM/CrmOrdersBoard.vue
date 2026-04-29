@@ -1635,4 +1635,178 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
     flex-wrap: wrap;
   }
 }
+
+/* ─── Compact density pass ─── */
+.crm-board-page {
+  padding: 14px 22px 12px;
+}
+
+.crm-board-header {
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.crm-title {
+  font-size: 26px;
+}
+
+.crm-subtitle {
+  display: none;
+}
+
+.crm-header-right {
+  gap: 8px;
+}
+
+.crm-view-switch,
+.crm-filter-btn,
+.tool-item,
+.crm-new-btn-indigo {
+  min-height: 34px;
+}
+
+.view-btn {
+  min-height: 28px;
+  padding: 5px 11px;
+}
+
+.crm-search-input {
+  width: 260px;
+}
+
+.crm-insights-row {
+  grid-template-columns: 1.1fr repeat(3, minmax(150px, 0.72fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.crm-insight-card {
+  display: grid;
+  grid-template-columns: minmax(74px, auto) 1fr;
+  column-gap: 12px;
+  align-items: center;
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.crm-insight-card::after {
+  right: -34px;
+  bottom: -44px;
+  width: 78px;
+  height: 78px;
+}
+
+.insight-label {
+  margin: 0;
+  font-size: 11px;
+}
+
+.crm-insight-card strong {
+  font-size: 22px;
+}
+
+.crm-insight-card small {
+  grid-column: 2;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.crm-tools-row {
+  margin-bottom: 8px;
+}
+
+.tool-item {
+  padding: 4px 10px;
+}
+
+.crm-kanban {
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.kanban-column {
+  min-width: 276px;
+  min-height: calc(100vh - 214px);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.kanban-column-header {
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.crm-col-title {
+  font-size: 13px;
+}
+
+.crm-col-subheader {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.kanban-column-content {
+  gap: 10px;
+}
+
+.order-card {
+  min-height: 140px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.card-row-1 {
+  margin-bottom: 4px;
+}
+
+.card-row-2 {
+  margin-bottom: 6px;
+}
+
+.order-card-title {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.card-row-financial {
+  margin-bottom: 7px;
+}
+
+.card-price {
+  font-size: 16px;
+}
+
+.payment-badge,
+.sla-badge {
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.card-divider {
+  margin: 8px 0;
+}
+
+.card-last-contact {
+  margin-bottom: 8px;
+  padding: 5px 8px;
+}
+
+.channel-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.add-order-button {
+  min-height: 32px;
+  margin-top: 8px;
+}
+
+@media (min-width: 1281px) {
+  .crm-board-header {
+    display: grid;
+    grid-template-columns: minmax(260px, auto) 1fr;
+  }
+}
 </style>
