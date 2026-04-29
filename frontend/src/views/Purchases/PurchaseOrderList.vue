@@ -18,27 +18,68 @@
         </div>
       </div>
 
-      <div class="po-kpis">
-        <div class="po-kpi">
-          <span>Всього замовлень</span>
-          <strong>{{ orders.length }}</strong>
+      <div class="po-kpis" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px;">
+        
+        <!-- Всього замовлень -->
+        <div class="po-kpi-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Всього замовлень</span>
+            <strong style="font-size: 26px; font-weight: 800; color: #0F172A; display: block; margin-top: 4px;">{{ orders.length }}</strong>
+            <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">активні закупівлі</span>
+          </div>
+          <div style="background: #F1F5F9; color: #64748B; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+            <el-icon><List /></el-icon>
+          </div>
         </div>
-        <div class="po-kpi po-kpi-blue">
-          <span>Очікується поставка</span>
-          <strong>{{ expectedOrders.length }}</strong>
+
+        <!-- Очікується поставка -->
+        <div class="po-kpi-card" style="background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.5px;">Очікується поставка</span>
+            <strong style="font-size: 26px; font-weight: 800; color: #1E40AF; display: block; margin-top: 4px;">{{ expectedOrders.length }}</strong>
+            <span style="font-size: 11px; color: #60A5FA; margin-top: 2px; display: block;">в дорозі</span>
+          </div>
+          <div style="background: #DBEAFE; color: #2563EB; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+            <el-icon><Van /></el-icon>
+          </div>
         </div>
-        <div class="po-kpi po-kpi-rose">
-          <span>Прострочено</span>
-          <strong>{{ overdueOrders.length }}</strong>
+
+        <!-- Прострочено -->
+        <div class="po-kpi-card" style="background: #FFF1F2; border: 1px solid #FFE4E6; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #E11D48; text-transform: uppercase; letter-spacing: 0.5px;">Прострочено</span>
+            <strong style="font-size: 26px; font-weight: 800; color: #9F1239; display: block; margin-top: 4px;">{{ overdueOrders.length }}</strong>
+            <span style="font-size: 11px; color: #FB7185; margin-top: 2px; display: block;">потребують уваги</span>
+          </div>
+          <div style="background: #FFE4E6; color: #E11D48; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+            <el-icon><Warning /></el-icon>
+          </div>
         </div>
-        <div class="po-kpi po-kpi-amber">
-          <span>Не оплачено</span>
-          <strong>{{ unpaidOrders.length }}</strong>
+
+        <!-- Не оплачено -->
+        <div class="po-kpi-card" style="background: #FFFBEB; border: 1px solid #FEF3C7; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px;">Не оплачено</span>
+            <strong style="font-size: 26px; font-weight: 800; color: #92400E; display: block; margin-top: 4px;">{{ unpaidOrders.length }}</strong>
+            <span style="font-size: 11px; color: #FBBF24; margin-top: 2px; display: block;">не закрито оплатою</span>
+          </div>
+          <div style="background: #FEF3C7; color: #D97706; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+            <el-icon><Wallet /></el-icon>
+          </div>
         </div>
-        <div class="po-kpi po-kpi-green">
-          <span>Загальна сума</span>
-          <strong>{{ formatCurrency(totalAmount) }}</strong>
+
+        <!-- Загальна сума -->
+        <div class="po-kpi-card" style="background: #ECFDF5; border: 1px solid #D1FAE5; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">Загальна сума</span>
+            <strong style="font-size: 26px; font-weight: 800; color: #065F46; display: block; margin-top: 4px;">{{ formatCurrency(totalAmount) }}</strong>
+            <span style="font-size: 11px; color: #34D399; margin-top: 2px; display: block;">сума закупівель</span>
+          </div>
+          <div style="background: #D1FAE5; color: #059669; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+            <el-icon><Money /></el-icon>
+          </div>
         </div>
+
       </div>
 
       <div class="po-filters">
@@ -69,8 +110,25 @@
           placeholder="Очікувана дата"
           class="po-date"
         />
-        <el-checkbox v-model="filters.onlyOverdue">Тільки прострочені</el-checkbox>
-        <el-checkbox v-model="filters.onlyNotReceived">Тільки неотримані</el-checkbox>
+        <div 
+          class="po-filter-chip" 
+          @click="filters.onlyOverdue = !filters.onlyOverdue"
+          style="display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E2E8F0; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.15s;"
+          :style="filters.onlyOverdue ? 'border-color: #F43F5E; background: #FFF1F2; color: #E11D48;' : ''"
+        >
+          <el-icon v-if="filters.onlyOverdue"><Check /></el-icon>
+          <span>Тільки прострочені</span>
+        </div>
+
+        <div 
+          class="po-filter-chip" 
+          @click="filters.onlyNotReceived = !filters.onlyNotReceived"
+          style="display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E2E8F0; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.15s;"
+          :style="filters.onlyNotReceived ? 'border-color: #3B82F6; background: #EFF6FF; color: #1D4ED8;' : ''"
+        >
+          <el-icon v-if="filters.onlyNotReceived"><Check /></el-icon>
+          <span>Тільки неотримані</span>
+        </div>
         <button class="po-refresh-btn" @click="fetchOrders">
           <el-icon><Refresh /></el-icon>
         </button>
@@ -292,7 +350,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Box, Edit, MoreFilled, Plus, Refresh, Search, View } from '@element-plus/icons-vue'
+import { Box, Edit, MoreFilled, Plus, Refresh, Search, View, List, Van, Warning, Wallet, Money } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 
@@ -818,8 +876,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   padding: 8px 10px !important;
   border-bottom: 1px solid #e2e8f0 !important;
   background: #f8fafc !important;
-  color: #64748b;
-  font-size: 10px;
+  color: #334155;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: .04em;
   text-transform: uppercase;
