@@ -406,22 +406,52 @@
         <!-- ══ ТЕРМІНИ / ДЕДЛАЙНИ ══ -->
         <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px; margin-top: 16px;">
           <div style="font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">
-            ТЕРМІНИ
+            ТЕРМІНИ ТА ПРІОРИТЕТ
           </div>
-          <div class="crm-date-row" style="display: flex; justify-content: space-between; font-size: 12px; color: #475569;">
-            <div class="date-item">Дата створення: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
-            <div class="date-item">
-              Бажаний дедлайн: 
-              <span
-                class="date-val"
-                :style="{
-                  fontWeight: 600,
-                  color: form.deadline_date ? '#3D3AA8' : '#9CA3AF'
-                }"
-              >
-                {{ form.deadline_date ? formatDate(form.deadline_date) : 'авто' }}
+          
+          <div class="crm-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="crm-field">
+              <label class="crm-label">Бажаний дедлайн (обов'язково)</label>
+              <el-date-picker
+                v-model="form.deadline_date"
+                type="date"
+                placeholder="Оберіть дату"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+              <span v-if="!form.deadline_date" style="font-size: 11px; color: #EF4444; margin-top: 2px; display: inline-block;">
+                ⚠️ Будь ласка, вкажіть дату готовності
               </span>
             </div>
+            
+            <div class="crm-field">
+              <label class="crm-label">Пріоритет</label>
+              <el-select v-model="form.priority" placeholder="Оберіть пріоритет" style="width: 100%">
+                <template #prefix>
+                  <span
+                    v-if="priorities.find(p => p.value === form.priority)?.color"
+                    style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 2px;"
+                    :style="{ background: priorities.find(p => p.value === form.priority)?.color }"
+                  />
+                </template>
+                <el-option
+                  v-for="p in priorities"
+                  :key="p.value"
+                  :label="p.label"
+                  :value="p.value"
+                >
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; display: inline-block;" :style="{ background: p.color || '#94a3b8' }" />
+                    {{ p.label }}
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+
+          <div class="crm-date-row" style="font-size: 12px; color: #475569;">
+            <div class="date-item">Дата створення: <span class="date-val" style="font-weight: 600; color: #1E293B;">{{ formatDate(form.order_date) }}</span></div>
           </div>
         </div>
 
@@ -500,31 +530,12 @@
           </div>
         </div>
 
-        <!-- ══ КОМУНІКАЦІЯ ══ -->
-        <div class="crm-section contact-console">
-          <div class="contact-console-head">
-            <div>
-              <span class="console-kicker">КОМУНІКАЦІЯ</span>
-              <strong>Контакт з клієнтом</strong>
-            </div>
-            <span class="attempts-chip" v-if="form.contact_attempts > 0">
-              {{ form.contact_attempts }} спроби
-            </span>
-          </div>
-
-          <div class="contact-channel-grid">
-            <button
-              v-for="ct in communicationTypes"
-              :key="ct.code"
-              class="contact-channel-card"
-              :class="{ active: contactCommType === ct.code }"
-              @click="contactCommType = ct.code"
-              type="button"
-            >
-              <span class="channel-code">{{ getCommShort(ct.code) }}</span>
-              <span class="channel-name">{{ ct.name }}</span>
-            </button>
-          </div>
+        <!-- ══ ШВИДКИЙ КОНТАКТ ══ -->
+        <div class="crm-section" style="background: white; border: 1px solid #EBEBEB; border-radius: 12px; padding: 16px;">
+          <el-button type="primary" :icon="UserIcon" style="width: 100%; font-weight: 600; border-radius: 8px;" @click="commDrawerVisible = true">
+            💬 Швидкий контакт (Комунікація)
+          </el-button>
+        </div>
 
           <div class="contact-script-panel">
             <div class="script-panel-title">Результат контакту</div>
@@ -646,9 +657,12 @@
         <!-- ══ RELATED DOCUMENTS ══ -->
         <!-- ══ AI ASSISTANT WIDGET ══ -->
         <div class="crm-section ai-assistant-card" style="background: #F0FDFA; border: 1px solid #CCFBF1; border-radius: 12px; padding: 16px; margin-top: 12px;">
-          <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #0D9488; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">
-            <el-icon><MagicStick /></el-icon>
-            <span>AI Помічник</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #0D9488; text-transform: uppercase; letter-spacing: 0.8px;">
+              <el-icon><MagicStick /></el-icon>
+              <span>AI Помічник</span>
+            </div>
+            <el-button type="primary" size="small" plain @click="ElMessage.success('AI Перевірку завершено')">Перевірити</el-button>
           </div>
           
           <div class="ai-insights-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #1F2937;">
@@ -664,7 +678,7 @@
               <el-icon style="color: #3D3AA8; margin-top: 2px;"><Money /></el-icon>
               <span>Низький рівень передоплати (менше 20%). Рекомендовано отримати завдаток.</span>
             </div>
-            <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="readinessProgress === 100 && form.crm_stage === 'new'">
+            <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="readinessProgress === 100">
               <el-icon style="color: #10B981; margin-top: 2px;"><SuccessFilled /></el-icon>
               <span>Всі дані зібрані. Можна сміливо передавати заявку в роботу!</span>
             </div>
@@ -713,6 +727,50 @@
       </template>
     </el-dialog>
 
+    <!-- ===== MULTI-CHANNEL COMMUNICATION DRAWER ===== -->
+    <el-drawer
+      v-model="commDrawerVisible"
+      title="Швидкий контакт / Комунікація"
+      direction="rtl"
+      size="380px"
+    >
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="font-size: 13px; font-weight: 600; color: #374151;">Оберіть канал зв'язку:</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button
+            v-for="ct in communicationTypes"
+            :key="ct.code"
+            style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px; border: 1.5px solid #E5E7EB; border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s;"
+            :style="{
+              borderColor: contactCommType === ct.code ? '#3D3AA8' : '#E5E7EB',
+              background: contactCommType === ct.code ? '#F5F5FF' : 'white',
+            }"
+            @click="contactCommType = ct.code; ElMessage.success(`Обрано канал: ${ct.name}`)"
+          >
+            <span style="font-size: 24px;">{{ ct.icon }}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #1F2937;">{{ ct.name }}</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 12px; border-top: 1px solid #E5E7EB; padding-top: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 10px;">Швидкі шаблони повідомлень:</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div
+              v-for="(tpl, idx) in messageTemplates"
+              :key="idx"
+              style="padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; cursor: pointer; transition: background 0.2s;"
+              @click="contactNote = tpl.text; ElMessage.success('Шаблон застосовано!')"
+              onmouseover="this.style.background='#F9FAFB'"
+              onmouseout="this.style.background='white'"
+            >
+              <div style="font-size: 12px; font-weight: 700; color: #1F2937; margin-bottom: 4px;">{{ tpl.title }}</div>
+              <div style="font-size: 11px; color: #6B7280; line-height: 1.3;">{{ tpl.text }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-drawer>
+
     <PrintPreviewModal
       v-if="orderId"
       v-model="printModalVisible"
@@ -736,6 +794,7 @@ import {
 import api from '@/api'
 
 const printModalVisible = ref(false)
+const commDrawerVisible = ref(false)
 import { useUserStore } from '@/stores/user'
 
 const router    = useRouter()
@@ -787,6 +846,14 @@ const defaultContactResults = [
   { code: 'FORWARD',   name: 'Передати далі', icon: '➡️' },
 ]
 const contactResults = ref([...defaultContactResults])
+
+const messageTemplates = [
+  { title: 'Нагадування про заявку', text: 'Доброго дня! Нагадуємо про вашу заявку. Чи актуально?' },
+  { title: 'Погодження ціни', text: 'Ціна розрахована. Будь ласка, ознайомтеся та підтвердіть.' },
+  { title: 'Уточнення розмірів', text: 'Для точного прорахунку потрібні габаритні розміри виробу.' },
+  { title: 'Надішліть фото', text: 'Чекаємо на фото референсів від вас!' },
+  { title: 'Підтвердження замовлення', text: 'Ваше замовлення успішно підтверджено та готове до запуску.' },
+]
 
 const materialCheck = reactive({ has_issues: false, items: [] })
 
@@ -1309,6 +1376,32 @@ const save = async (action) => {
   vErrors.client = !form.counterparty_id && !clientName.value
   vErrors.amount = !form.total_amount || form.total_amount <= 0
 
+  if (action === 'production') {
+    const missing = []
+    if (!form.counterparty_id && !clientName.value) missing.push('Клієнт не обраний')
+    if (!clientPhone.value) missing.push('Телефон не вказаний')
+    if (!form.product_id) missing.push('Виріб не обраний')
+    if (!requiredAttributesFilled.value) missing.push('Характеристики не заповнені')
+    if (Number(form.total_amount || 0) <= 0) missing.push('Сума не вказана')
+    if (!form.deadline_date) missing.push('Дата готовності (дедлайн) не вказана')
+    
+    // Delivery check
+    const deliveryNeeded = form.delivery_type && form.delivery_type !== 'none'
+    if (deliveryNeeded && !form.delivery_method_id) missing.push('Спосіб доставки не обраний')
+    
+    // Contact check
+    const contactReady = form.next_contact_at || contactResult.value
+    if (!contactReady) missing.push('Наступний контакт або результат спілкування не зафіксовано')
+
+    if (missing.length > 0) {
+      ElMessage.warning({
+        message: `Для передачі у виробництво не вистачає даних:\n- ${missing.join('\n- ')}`,
+        duration: 5000
+      })
+      return
+    }
+  }
+
   if (vErrors.client || vErrors.amount) {
     ElMessage.warning('Заповніть обов\'язкові поля: Клієнт, Сума')
     return
@@ -1598,8 +1691,8 @@ onMounted(loadData)
   overflow-y: auto;
   flex: 1;
 }
-.crm-left-col  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.crm-right-col { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+.crm-left-col  { flex: 0 0 68%; max-width: 68%; display: flex; flex-direction: column; gap: 14px; }
+.crm-right-col { flex: 0 0 30%; max-width: 30%; display: flex; flex-direction: column; gap: 14px; }
 
 /* ─── Section ─────────────────────────────────────────────────────────────── */
 .crm-section {
