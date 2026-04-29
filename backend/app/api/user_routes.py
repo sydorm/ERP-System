@@ -13,13 +13,34 @@ from app.schemas import (
     UserCreate, UserResponse, UserUpdate, UserInDB
 )
 from app.core.security import get_password_hash
-from app.api.dependencies import get_current_admin_user, get_current_active_user
+from app.core.permissions import permissions_registry_payload, sanitize_permissions
+from app.api.dependencies import PermissionChecker, get_current_active_user
 from app.services.mail_service import send_new_password_email
 from app.services.audit_service import create_audit_log
 import secrets
 import string
 
 router = APIRouter()
+
+USER_ACTIVITY_ACTIONS = {
+    "login",
+    "logout",
+    "open_page",
+    "create",
+    "update",
+    "delete",
+    "status_change",
+    "print",
+    "export",
+    "permission_change",
+}
+
+
+@router.get("/permissions/registry")
+async def read_permissions_registry(
+    current_user: User = Depends(PermissionChecker(["users.view"]))
+):
+    return permissions_registry_payload()
 
 
 @router.get("/users/colleagues", response_model=List[UserResponse])
@@ -35,7 +56,7 @@ async def read_colleagues(
 async def read_users(
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.view"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -48,7 +69,7 @@ async def read_users(
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_in: UserCreate,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.create"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -70,8 +91,8 @@ async def create_user(
         last_name=user_in.last_name,
         phone=user_in.phone,
         avatar_url=user_in.avatar_url,
-        role=user_in.role or "worker",
-        permissions=user_in.permissions or {},
+        role=user_in.role or "manager",
+        permissions=sanitize_permissions(user_in.permissions),
         company_id=current_user.company_id,
         is_active=True,
         is_superuser=False
@@ -84,7 +105,7 @@ async def create_user(
     create_audit_log(
         db, 
         user_id=current_user.id,
-        action="CREATE",
+        action="create",
         entity_type="user",
         entity_id=user.id,
         changes=user_in.dict(exclude={"password"})
@@ -97,7 +118,7 @@ async def create_user(
 async def update_user(
     user_id: UUID,
     user_in: UserUpdate,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.edit"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -123,10 +144,12 @@ async def update_user(
         user.first_name = user_in.first_name
     if user_in.last_name:
         user.last_name = user_in.last_name
+    old_permissions = user.permissions or {}
+
     if user_in.role:
         user.role = user_in.role
     if user_in.permissions is not None:
-        user.permissions = user_in.permissions
+        user.permissions = sanitize_permissions(user_in.permissions)
     if user_in.phone is not None:
         user.phone = user_in.phone
     if user_in.avatar_url is not None:
@@ -139,11 +162,21 @@ async def update_user(
     create_audit_log(
         db, 
         user_id=current_user.id,
-        action="UPDATE",
+        action="update",
         entity_type="user",
         entity_id=user.id,
         changes=user_in.dict(exclude_unset=True)
     )
+
+    if user_in.permissions is not None and old_permissions != user.permissions:
+        create_audit_log(
+            db,
+            user_id=current_user.id,
+            action="permission_change",
+            entity_type="user",
+            entity_id=user.id,
+            changes={"old": old_permissions, "new": user.permissions}
+        )
 
     return user
 
@@ -151,7 +184,7 @@ async def update_user(
 @router.delete("/users/{user_id}", response_model=UserResponse)
 async def delete_user(
     user_id: UUID,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.delete"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -175,6 +208,14 @@ async def delete_user(
     # Let's simple delete for now to keep it clean.
     db.delete(user)
     db.commit()
+    create_audit_log(
+        db,
+        user_id=current_user.id,
+        action="delete",
+        entity_type="user",
+        entity_id=user.id,
+        changes={"email": user.email}
+    )
     return user
 
 
@@ -182,7 +223,7 @@ async def delete_user(
 async def reset_user_password(
     user_id: UUID,
     send_email: bool = False,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.manage"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -209,7 +250,7 @@ async def reset_user_password(
     create_audit_log(
         db, 
         user_id=current_user.id,
-        action="RESET_PASSWORD",
+        action="status_change",
         entity_type="user",
         entity_id=user.id,
         changes={"method": "random_gen", "email_sent": email_sent}
@@ -225,7 +266,7 @@ async def reset_user_password(
 async def block_user(
     user_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(PermissionChecker(["users.manage"])),
 ):
     from datetime import datetime
     user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
@@ -234,4 +275,45 @@ async def block_user(
         
     user.blocked_at = datetime.utcnow()
     db.commit()
+    create_audit_log(
+        db,
+        user_id=current_user.id,
+        action="status_change",
+        entity_type="user",
+        entity_id=user.id,
+        changes={"blocked_at": user.blocked_at.isoformat()}
+    )
     return {"status": "blocked", "blocked_at": user.blocked_at.isoformat()}
+
+
+@router.get("/users/{user_id}/activity")
+async def read_user_activity(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(PermissionChecker(["users.view"]))
+):
+    from sqlalchemy import desc
+    from app.models.audit_log import AuditLog
+
+    user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.entity_type == "user", AuditLog.entity_id == user_id)
+        .order_by(desc(AuditLog.created_at))
+        .limit(100)
+        .all()
+    )
+    return [
+        {
+            "id": log.id,
+            "action": log.action,
+            "changes": log.changes,
+            "created_at": log.created_at,
+            "actor_id": log.user_id,
+        }
+        for log in logs
+        if log.action in USER_ACTIVITY_ACTIONS
+    ]

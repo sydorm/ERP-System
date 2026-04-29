@@ -95,17 +95,17 @@
 
         <!-- Previews removed -->
         <!-- Administration Section -->
-        <el-sub-menu index="admin" v-if="userStore.hasPermission('settings.view')">
+        <el-sub-menu index="admin" v-if="hasAdministrationAccess">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>Адміністрування</span>
           </template>
-          <el-menu-item index="/settings/company">Організація</el-menu-item>
+          <el-menu-item index="/settings/company" v-if="userStore.hasPermission('settings.manage')">Організація</el-menu-item>
 
-          <el-menu-item index="/settings/dictionaries">Довідники</el-menu-item>
-          <el-menu-item index="/settings/print-templates">Шаблони документів</el-menu-item>
-          <el-menu-item index="/settings/business-process-rules">Бізнес-процеси</el-menu-item>
-          <el-menu-item index="/settings/trash-bin">Корзина</el-menu-item>
+          <el-menu-item index="/settings/dictionaries" v-if="userStore.hasPermission('dictionaries.view')">Довідники</el-menu-item>
+          <el-menu-item index="/settings/print-templates" v-if="userStore.hasPermission('print_templates.view')">Шаблони документів</el-menu-item>
+          <el-menu-item index="/settings/business-process-rules" v-if="userStore.hasPermission('business_processes.view')">Бізнес-процеси</el-menu-item>
+          <el-menu-item index="/settings/trash-bin" v-if="userStore.hasPermission('settings.view')">Корзина</el-menu-item>
         </el-sub-menu>
 
         <!-- Settings submenu removed as Users moved to profile dropdown -->
@@ -222,7 +222,7 @@
                   <el-icon><User /></el-icon>
                   Профіль
                 </el-dropdown-item>
-                <el-dropdown-item v-if="userStore.hasPermission('settings.users.view')" command="users">
+                <el-dropdown-item v-if="userStore.hasPermission('users.view')" command="users">
                   <el-icon><UserFilled /></el-icon>
                   Користувачі
                 </el-dropdown-item>
@@ -355,6 +355,14 @@ const handleNotificationAction = (n) => {
 const isCollapse = ref(false)
 const sidebarWidth = computed(() => isCollapse.value ? '64px' : '230px')
 const activeMenu = computed(() => route.path)
+const hasAdministrationAccess = computed(() => [
+  'settings.view',
+  'settings.manage',
+  'dictionaries.view',
+  'print_templates.view',
+  'business_processes.view',
+  'users.view',
+].some(permission => userStore.hasPermission(permission)))
 
 const isDark = useDark()
 const toggleTheme = useToggle(isDark)

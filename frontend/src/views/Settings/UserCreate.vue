@@ -5,11 +5,19 @@
       <p class="kimi-text-sm kimi-text-slate-500">Створення облікового запису та налаштування прав доступу</p>
     </div>
 
+    <el-tabs v-model="activeTab" class="user-card-tabs">
+      <el-tab-pane label="Основне" name="main" />
+      <el-tab-pane label="Доступи" name="permissions" />
+      <el-tab-pane label="Активність" name="activity" />
+      <el-tab-pane label="Безпека" name="security" />
+      <el-tab-pane label="Історія змін" name="history" />
+    </el-tabs>
+
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
       <el-row :gutter="24">
         <!-- Left Block: Form (60%) -->
         <el-col :xs="24" :md="14">
-          <div class="premium-card left-card">
+          <div v-show="activeTab === 'main'" class="premium-card left-card">
             <!-- Avatar -->
             <div class="avatar-upload-section kimi-mb-6">
               <el-form-item label="Аватар">
@@ -60,10 +68,12 @@
             <!-- Role -->
             <el-form-item label="Роль" prop="role">
               <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange">
-                <el-option label="Адміністратор" value="admin" />
-                <el-option label="Менеджер" value="manager" />
-                <el-option label="Виробництво" value="production" />
-                <el-option label="Бухгалтер" value="accountant" />
+                <el-option
+                  v-for="role in ROLE_OPTIONS"
+                  :key="role.value"
+                  :label="role.label"
+                  :value="role.value"
+                />
               </el-select>
             </el-form-item>
 
@@ -81,11 +91,26 @@
               </el-col>
             </el-row>
           </div>
+
+          <div v-show="activeTab === 'activity'" class="premium-card placeholder-card">
+            <h3 class="section-title kimi-mb-4">Активність</h3>
+            <p>Журнал активності з'явиться після створення користувача.</p>
+          </div>
+
+          <div v-show="activeTab === 'security'" class="premium-card placeholder-card">
+            <h3 class="section-title kimi-mb-4">Безпека</h3>
+            <p>Пароль задається під час створення. Скидання пароля доступне в картці користувача.</p>
+          </div>
+
+          <div v-show="activeTab === 'history'" class="premium-card placeholder-card">
+            <h3 class="section-title kimi-mb-4">Історія змін</h3>
+            <p>Історія змін буде доступна після першого збереження.</p>
+          </div>
         </el-col>
 
         <!-- Right Block: Permissions (40%) -->
         <el-col :xs="24" :md="10">
-          <div class="premium-card right-card">
+          <div v-show="activeTab === 'permissions' || activeTab === 'main'" class="premium-card right-card">
             <h3 class="section-title kimi-mb-4">Доступи</h3>
             
             <el-form-item v-if="form.role !== 'admin'">
@@ -135,10 +160,18 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useRouter } from 'vue-router'
+import {
+  ROLE_OPTIONS,
+  buildPermissionGroups,
+  buildPermissionsForRole,
+  setGroupPermissions,
+  syncPermissionGroups,
+} from '@/permissions/registry'
 
 const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
+const activeTab = ref('main')
 
 const form = reactive({
   first_name: '',
@@ -152,107 +185,15 @@ const form = reactive({
   permissions: {}
 })
 
-const permissionGroups = ref([
-  {
-    label: 'CRM',
-    key: 'crm',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'crm.view' },
-      { label: 'Завдання', key: 'crm.tasks.view' }
-    ]
-  },
-  {
-    label: 'Склад',
-    key: 'inventory',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'inventory.view' },
-      { label: 'Номенклатура', key: 'inventory.nomenclature.view' },
-      { label: 'Склади', key: 'inventory.warehouses.view' },
-      { label: 'Залишки', key: 'inventory.stock.view' }
-    ]
-  },
-  {
-    label: 'Продажі',
-    key: 'sales',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'sales.view' },
-      { label: 'Контрагенти', key: 'sales.counterparties.view' },
-      { label: 'Замовлення', key: 'sales.orders.view' },
-      { label: 'Рахунки', key: 'sales.invoices.view' }
-    ]
-  },
-  {
-    label: 'Виробництво',
-    key: 'production',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'production.view' },
-      { label: 'Замовлення', key: 'production.orders.view' }
-    ]
-  },
-  {
-    label: 'Фінанси',
-    key: 'finance',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'finance.view' },
-      { label: 'Каса', key: 'finance.cash.view' },
-      { label: 'Банк', key: 'finance.bank.view' }
-    ]
-  },
-  {
-    label: 'Звіти',
-    key: 'reports',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'reports.view' }
-    ]
-  }
-])
+const permissionGroups = ref(buildPermissionGroups())
 
 const handleGroupAllChange = (group, val) => {
-  group.items.forEach(item => {
-    form.permissions[item.key] = val
-  })
+  setGroupPermissions(form.permissions, group, val)
 }
 
 const handleRoleChange = (newRole) => {
-  const perms = {}
-  if (newRole === 'admin') {
-    permissionGroups.value.forEach(g => {
-      g.items.forEach(i => perms[i.key] = true)
-      g.all = true
-    })
-  } else if (newRole === 'manager') {
-    permissionGroups.value.forEach(g => {
-      if (['crm', 'sales'].includes(g.key)) {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      } else if (g.key === 'inventory') {
-        perms['inventory.view'] = true
-      }
-    })
-  } else if (newRole === 'production') {
-    permissionGroups.value.forEach(g => {
-      if (g.key === 'production') {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      } else if (g.key === 'inventory') {
-        perms['inventory.view'] = true
-      }
-    })
-  } else if (newRole === 'accountant') {
-    permissionGroups.value.forEach(g => {
-      if (['finance', 'reports'].includes(g.key)) {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      }
-    })
-  }
-  form.permissions = perms
+  form.permissions = buildPermissionsForRole(newRole)
+  syncPermissionGroups(permissionGroups.value, form.permissions)
 }
 
 // Initialize default role perms
@@ -399,5 +340,12 @@ const beforeAvatarUpload = (file) => {
   max-height: 500px;
   overflow-y: auto;
   padding-right: 8px;
+}
+.user-card-tabs {
+  margin-bottom: 16px;
+}
+.placeholder-card {
+  color: #64748b;
+  min-height: 240px;
 }
 </style>

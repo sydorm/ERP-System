@@ -139,72 +139,84 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEditing ? 'Редагувати користувача' : 'Новий користувач'"
-      width="500px"
+      width="760px"
       class="kimi-dialog"
     >
+      <el-tabs v-model="dialogTab" class="user-card-tabs">
+        <el-tab-pane label="Основне" name="main" />
+        <el-tab-pane label="Доступи" name="permissions" />
+        <el-tab-pane label="Активність" name="activity" />
+        <el-tab-pane label="Безпека" name="security" />
+        <el-tab-pane label="Історія змін" name="history" />
+      </el-tabs>
+
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="Аватар">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/v1/upload"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
-            <img v-if="form.avatar_url" :src="form.avatar_url" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
+        <div v-show="dialogTab === 'main'">
+          <el-form-item label="Аватар">
+            <el-upload
+              class="avatar-uploader"
+              action="/api/v1/upload"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :before-upload="beforeAvatarUpload"
+            >
+              <img v-if="form.avatar_url" :src="form.avatar_url" class="avatar" />
+              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+            </el-upload>
+          </el-form-item>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Ім'я" prop="first_name">
-              <el-input v-model="form.first_name" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-             <el-form-item label="Прізвище" prop="last_name">
-              <el-input v-model="form.last_name" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Email" prop="email">
-              <el-input v-model="form.email" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Телефон" prop="phone">
-              <el-input v-model="form.phone" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="Ім'я" prop="first_name">
+                <el-input v-model="form.first_name" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Прізвище" prop="last_name">
+                <el-input v-model="form.last_name" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="Email" prop="email">
+                <el-input v-model="form.email" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Телефон" prop="phone">
+                <el-input v-model="form.phone" />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-        <el-form-item label="Роль" prop="role">
-          <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange">
-            <el-option label="Адміністратор" value="admin" />
-            <el-option label="Менеджер" value="manager" />
-            <el-option label="Виробництво" value="production" />
-            <el-option label="Бухгалтер" value="accountant" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="Роль" prop="role">
+            <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange">
+              <el-option
+                v-for="role in ROLE_OPTIONS"
+                :key="role.value"
+                :label="role.label"
+                :value="role.value"
+              />
+            </el-select>
+          </el-form-item>
 
-        <el-row :gutter="20" v-if="!isEditing">
-          <el-col :span="12">
-            <el-form-item label="Пароль" prop="password">
-              <el-input v-model="form.password" type="password" show-password />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Підтвердження" prop="confirmPassword">
-              <el-input v-model="form.confirmPassword" type="password" show-password />
-            </el-form-item>
-          </el-col>
-        </el-row>
+          <el-row :gutter="20" v-if="!isEditing">
+            <el-col :span="12">
+              <el-form-item label="Пароль" prop="password">
+                <el-input v-model="form.password" type="password" show-password />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Підтвердження" prop="confirmPassword">
+                <el-input v-model="form.confirmPassword" type="password" show-password />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
 
-        <el-form-item label="Доступи" v-if="form.role !== 'admin'">
+        <el-form-item v-show="dialogTab === 'permissions'" label="Доступи">
           <div class="permissions-container">
             <div v-for="group in permissionGroups" :key="group.key" class="permission-group">
               <div class="group-header">
@@ -227,6 +239,16 @@
             </div>
           </div>
         </el-form-item>
+
+        <div v-show="dialogTab === 'activity'" class="user-tab-placeholder">
+          Журнал активності доступний через API картки користувача після збереження.
+        </div>
+        <div v-show="dialogTab === 'security'" class="user-tab-placeholder">
+          Скидання пароля виконується окремою дією у списку користувачів.
+        </div>
+        <div v-show="dialogTab === 'history'" class="user-tab-placeholder">
+          Історія змін фіксується в audit log при створенні, редагуванні та зміні прав.
+        </div>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -290,6 +312,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import {
+  ROLE_OPTIONS,
+  buildPermissionGroups,
+  buildPermissionsForRole,
+  getRoleName as getRegistryRoleName,
+  setGroupPermissions,
+  syncPermissionGroups,
+} from '@/permissions/registry'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -302,6 +332,7 @@ const submitting = ref(false)
 const isEditing = ref(false)
 const searchQuery = ref('')
 const formRef = ref()
+const dialogTab = ref('main')
 
 const form = reactive({
   id: null,
@@ -316,107 +347,15 @@ const form = reactive({
   permissions: {}
 })
 
-const permissionGroups = ref([
-  {
-    label: 'CRM',
-    key: 'crm',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'crm.view' },
-      { label: 'Завдання', key: 'crm.tasks.view' }
-    ]
-  },
-  {
-    label: 'Склад',
-    key: 'inventory',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'inventory.view' },
-      { label: 'Номенклатура', key: 'inventory.nomenclature.view' },
-      { label: 'Склади', key: 'inventory.warehouses.view' },
-      { label: 'Залишки', key: 'inventory.stock.view' }
-    ]
-  },
-  {
-    label: 'Продажі',
-    key: 'sales',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'sales.view' },
-      { label: 'Контрагенти', key: 'sales.counterparties.view' },
-      { label: 'Замовлення', key: 'sales.orders.view' },
-      { label: 'Рахунки', key: 'sales.invoices.view' }
-    ]
-  },
-  {
-    label: 'Виробництво',
-    key: 'production',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'production.view' },
-      { label: 'Замовлення', key: 'production.orders.view' }
-    ]
-  },
-  {
-    label: 'Фінанси',
-    key: 'finance',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'finance.view' },
-      { label: 'Каса', key: 'finance.cash.view' },
-      { label: 'Банк', key: 'finance.bank.view' }
-    ]
-  },
-  {
-    label: 'Звіти',
-    key: 'reports',
-    all: false,
-    items: [
-      { label: 'Перегляд', key: 'reports.view' }
-    ]
-  }
-])
+const permissionGroups = ref(buildPermissionGroups())
 
 const handleGroupAllChange = (group, val) => {
-  group.items.forEach(item => {
-    form.permissions[item.key] = val
-  })
+  setGroupPermissions(form.permissions, group, val)
 }
 
 const handleRoleChange = (newRole) => {
-  const perms = {}
-  if (newRole === 'admin') {
-    permissionGroups.value.forEach(g => {
-      g.items.forEach(i => perms[i.key] = true)
-      g.all = true
-    })
-  } else if (newRole === 'manager') {
-    permissionGroups.value.forEach(g => {
-      if (['crm', 'sales'].includes(g.key)) {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      } else if (g.key === 'inventory') {
-        perms['inventory.view'] = true
-      }
-    })
-  } else if (newRole === 'production') {
-    permissionGroups.value.forEach(g => {
-      if (g.key === 'production') {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      } else if (g.key === 'inventory') {
-        perms['inventory.view'] = true
-      }
-    })
-  } else if (newRole === 'accountant') {
-    permissionGroups.value.forEach(g => {
-      if (['finance', 'reports'].includes(g.key)) {
-        g.items.forEach(i => perms[i.key] = true)
-        g.all = true
-      }
-    })
-  }
-  form.permissions = perms
+  form.permissions = buildPermissionsForRole(newRole)
+  syncPermissionGroups(permissionGroups.value, form.permissions)
 }
 
 const passwordForm = reactive({
@@ -476,12 +415,7 @@ const fetchUsers = async () => {
 }
 
 const getRoleName = (role) => {
-  const roles = {
-    'admin': 'Адміністратор',
-    'manager': 'Менеджер',
-    'worker': 'Працівник'
-  }
-  return roles[role] || role
+  return getRegistryRoleName(role)
 }
 
 const openCreateModal = () => {
@@ -498,6 +432,7 @@ const openCreateModal = () => {
   form.permissions = {}
   permissionGroups.value.forEach(g => g.all = false)
   handleRoleChange('manager')
+  dialogTab.value = 'main'
   dialogVisible.value = true
 }
 
@@ -516,6 +451,7 @@ const openEditModal = (row) => {
     group.all = group.items.every(item => form.permissions[item.key])
   })
   
+  dialogTab.value = 'main'
   dialogVisible.value = true
 }
 
@@ -644,7 +580,9 @@ const getRoleBadgeStyle = (role) => {
     'admin': { backgroundColor: '#EFF6FF', color: '#3B82F6' },
     'manager': { backgroundColor: '#F0FDF4', color: '#22C55E' },
     'production': { backgroundColor: '#FFF7ED', color: '#F59E0B' },
-    'accountant': { backgroundColor: '#FDF4FF', color: '#A855F7' }
+    'warehouse': { backgroundColor: '#F0FDFA', color: '#0F766E' },
+    'accountant': { backgroundColor: '#FDF4FF', color: '#A855F7' },
+    'viewer': { backgroundColor: '#F8FAFC', color: '#64748B' }
   }
   return map[role] || { backgroundColor: '#F1F5F9', color: '#64748B' }
 }
@@ -729,6 +667,20 @@ onMounted(fetchUsers)
 /* ===== PERMISSIONS ===== */
 .permissions-container {
   @apply border border-slate-100 rounded-lg p-3 max-h-[300px] overflow-y-auto bg-slate-50/50;
+}
+
+.user-card-tabs {
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+.user-tab-placeholder {
+  min-height: 220px;
+  padding: 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  background: #f8fafc;
 }
 
 .permission-group {

@@ -17,6 +17,7 @@ from app.core.security import (
 )
 from app.api.dependencies import get_current_active_user
 from app.core.config import settings
+from app.services.audit_service import create_audit_log
 
 router = APIRouter()
 
@@ -186,6 +187,14 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
     )
     db.add(login_log)
     db.commit()
+    create_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        user_id=user.id,
+        action="login",
+        changes={"ip_address": request.client.host if request.client else None}
+    )
     
     # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -199,6 +208,23 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/auth/logout")
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    create_audit_log(
+        db,
+        entity_type="user",
+        entity_id=current_user.id,
+        user_id=current_user.id,
+        action="logout",
+        changes={"ip_address": request.client.host if request.client else None}
+    )
+    return {"message": "Logged out"}
 
 
 @router.get("/auth/me", response_model=UserResponse)

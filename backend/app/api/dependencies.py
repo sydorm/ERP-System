@@ -10,6 +10,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.core.security import decode_access_token
+from app.core.permissions import has_permission
 from app.models import User
 from app.schemas import TokenData
 
@@ -120,12 +121,8 @@ class PermissionChecker:
         if current_user.is_superuser or current_user.role == "admin":
             return current_user
         
-        user_permissions = current_user.permissions or {}
-        
         for perm in self.required_permissions:
-            # Check for exact permission or module-level permission
-            module = perm.split('.')[0]
-            if not user_permissions.get(perm) and not user_permissions.get(f"{module}.all"):
+            if not has_permission(current_user, perm):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Missing required permission: {perm}"

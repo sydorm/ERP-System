@@ -63,31 +63,31 @@ const router = createRouter({
                     path: '/settings/dictionaries',
                     name: 'dictionaries',
                     component: () => import('@/views/Settings/Dictionaries.vue'),
-                    meta: { requiresAuth: true, title: 'Довідники' }
+                    meta: { requiresAuth: true, title: 'Довідники', permission: 'dictionaries.view' }
                 },
                 {
                     path: '/settings/company',
                     name: 'company-settings',
                     component: () => import('@/views/Settings/CompanySettings.vue'),
-                    meta: { requiresAuth: true, title: 'Організація', permission: 'admin.all' }
+                    meta: { requiresAuth: true, title: 'Організація', permission: 'settings.manage' }
                 },
                 {
                     path: '/settings/print-templates',
                     name: 'print-templates',
                     component: () => import('@/views/Settings/PrintTemplatesList.vue'),
-                    meta: { requiresAuth: true, title: 'Шаблони документів' }
+                    meta: { requiresAuth: true, title: 'Шаблони документів', permission: 'print_templates.view' }
                 },
                 {
                     path: '/settings/print-templates/new',
                     name: 'print-template-new',
                     component: () => import('@/views/Settings/PrintTemplateEditor.vue'),
-                    meta: { requiresAuth: true, title: 'Новий шаблон' }
+                    meta: { requiresAuth: true, title: 'Новий шаблон', permission: 'print_templates.create' }
                 },
                 {
                     path: '/settings/print-templates/:id',
                     name: 'print-template-edit',
                     component: () => import('@/views/Settings/PrintTemplateEditor.vue'),
-                    meta: { requiresAuth: true, title: 'Редагування шаблону' }
+                    meta: { requiresAuth: true, title: 'Редагування шаблону', permission: 'print_templates.edit' }
                 },
                 // Inventory routes
                 {
@@ -316,20 +316,20 @@ const router = createRouter({
                     path: '/settings/users',
                     name: 'users',
                     component: () => import('@/views/Settings/Users.vue'),
-                    meta: { title: 'Користувачі', permission: 'settings.users.view' }
+                    meta: { title: 'Користувачі', permission: 'users.view' }
                 },
                 {
                     path: '/settings/users/create',
                     name: 'user-create',
                     component: () => import('@/views/Settings/UserCreate.vue'),
-                    meta: { title: 'Новий користувач', permission: 'settings.users.view' }
+                    meta: { title: 'Новий користувач', permission: 'users.create' }
                 },
 
                 {
                     path: '/settings/business-process-rules',
                     name: 'business-process-rules',
                     component: () => import('@/views/Settings/BusinessProcessRules.vue'),
-                    meta: { requiresAuth: true, title: 'Бізнес-процеси' }
+                    meta: { requiresAuth: true, title: 'Бізнес-процеси', permission: 'business_processes.view' }
                 },
                 {
                     path: '/settings/trash-bin',

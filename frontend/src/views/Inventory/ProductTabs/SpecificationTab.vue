@@ -80,72 +80,86 @@
              <el-button type="success" size="small" @click="addItem" plain :icon="Plus">Додати рядок</el-button>
           </div>
           
-          <el-table :key="editingSpec" :data="specForm.items" stripe style="width: 100%" class="component-table">
-             <el-table-column label="Товар / Матеріал" min-width="350">
-                <template #default="scope">
-                   <el-select
-                      v-model="scope.row.component_id"
-                      filterable
-                      remote
-                      reserve-keyword
-                      placeholder="Пошук номенклатури..."
-                      :remote-method="searchProducts"
-                      :loading="searchingProducts"
-                      class="w-full"
-                      @change="(val) => handleComponentSelect(scope.row, val)"
-                   >
-                      <el-option
-                         v-for="p in productSearchResults"
-                         :key="p.id"
-                         :label="p.name"
-                         :value="p.id"
+          <div class="bom-grid-table">
+             <!-- Header Row -->
+             <div class="bom-grid-row header-row">
+                <div class="bom-col-material">Товар / Матеріал</div>
+                <div class="bom-col-qty">Кількість</div>
+                <div class="bom-col-uom">Од.</div>
+                <div class="bom-col-settings"></div>
+                <div class="bom-col-actions">Дії</div>
+             </div>
+             
+             <!-- Body Rows -->
+             <div class="bom-grid-body">
+                <div v-for="(row, index) in specForm.items" :key="index" class="bom-grid-row">
+                   <div class="bom-col-material">
+                      <el-select
+                         v-model="row.component_id"
+                         filterable
+                         remote
+                         reserve-keyword
+                         placeholder="Пошук номенклатури..."
+                         :remote-method="searchProducts"
+                         :loading="searchingProducts"
+                         class="w-full"
+                         @change="(val) => handleComponentSelect(row, val)"
                       >
-                         <div class="flex justify-between w-full">
-                            <span>{{ p.name }}</span>
-                            <span class="text-gray-400 text-xs">{{ p.sku }}</span>
-                         </div>
-                      </el-option>
-                   </el-select>
-                </template>
-             </el-table-column>
-             
-             <el-table-column label="Кількість / Розрахунок" min-width="260">
-                <template #default="scope">
-                    <div class="qty-cell-container">
-                      <div class="qty-input-wrapper">
-                        <el-input-number 
-                          v-model="scope.row.quantity" 
-                          :min="0" :step="1" :precision="3" 
-                          style="width: 100px"
-                          :disabled="scope.row.calc_type && scope.row.calc_type !== 'fixed'"
-                          controls-position="right"
-                          size="small"
-                        />
-                        <span class="uom-badge">{{ scope.row.unit_of_measure }}</span>
-                        <div 
-                          class="calc-indicator" 
-                          :class="scope.row.calc_type && scope.row.calc_type !== 'fixed' ? 'active' : 'inactive'"
-                          @click="openCalcDialog(scope.row)"
-                        >
-                          <el-icon :size="14"><Setting /></el-icon>
-                        </div>
-                      </div>
+                         <el-option
+                            v-for="p in productSearchResults"
+                            :key="p.id"
+                            :label="p.name"
+                            :value="p.id"
+                         >
+                            <div class="flex justify-between w-full">
+                               <span>{{ p.name }}</span>
+                               <span class="text-gray-400 text-xs">{{ p.sku }}</span>
+                            </div>
+                         </el-option>
+                      </el-select>
+                   </div>
+                   
+                   <div class="bom-col-qty">
+                      <el-input-number 
+                         v-model="row.quantity" 
+                         :min="0" :step="1" :precision="3" 
+                         class="w-full"
+                         :disabled="row.calc_type && row.calc_type !== 'fixed'"
+                         controls-position="right"
+                         size="small"
+                      />
                       
-                      <div v-if="scope.row.calc_type && scope.row.calc_type !== 'fixed'" class="text-[10px] text-gray-400 font-medium pl-1">
-                         Розраховано: {{ getBaseQuantity(scope.row).toFixed(3) }}
-                         <span v-if="getTotalWastePercent(scope.row) > 0" class="text-orange-400"> (+{{ getTotalWastePercent(scope.row) }}% відходів)</span>
+                      <div v-if="row.calc_type && row.calc_type !== 'fixed'" class="bom-qty-helper">
+                         Розраховано: {{ getBaseQuantity(row).toFixed(3) }}
+                         <span v-if="getTotalWastePercent(row) > 0" class="text-orange-400 font-bold"> (+{{ getTotalWastePercent(row) }}%)</span>
                       </div>
-                    </div>
-                </template>
-             </el-table-column>
-             
-             <el-table-column label="Дії" width="60" align="center">
-                <template #default="scope">
-                   <el-button link type="danger" :icon="Delete" @click="removeItem(scope.$index)" />
-                </template>
-             </el-table-column>
-          </el-table>
-       </el-card>
+                   </div>
+
+                   <div class="bom-col-uom">
+                      <span class="bom-uom">{{ row.unit_of_measure || 'шт' }}</span>
+                   </div>
+
+                   <div class="bom-col-settings">
+                      <div 
+                         class="calc-indicator-grid" 
+                         :class="row.calc_type && row.calc_type !== 'fixed' ? 'active' : 'inactive'"
+                         @click="openCalcDialog(row)"
+                      >
+                         <el-icon :size="14"><Setting /></el-icon>
+                      </div>
+                   </div>
+
+                   <div class="bom-col-actions">
+                      <el-button link type="danger" :icon="Delete" @click="removeItem(index)" />
+                   </div>
+                </div>
+             </div>
+
+             <div v-if="!specForm.items || specForm.items.length === 0" class="bom-grid-empty">
+                <el-empty description="Жодного матеріалу не додано" :image-size="60" />
+             </div>
+          </div>
+        </el-card>
 
        <!-- PRODUCTION STAGES BLOCK -->
        <el-card shadow="never" class="mt-4 pb-4">
@@ -1105,6 +1119,125 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.bom-grid-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #FFFFFF;
+    margin-top: 15px;
+}
+
+.bom-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 140px 56px 40px 40px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #F1F5F9;
+    min-height: 52px;
+}
+
+.bom-grid-row:last-child {
+    border-bottom: none;
+}
+
+.bom-grid-row.header-row {
+    background: #F8FAFC;
+    border-bottom: 2px solid #E2E8F0;
+    font-weight: 600;
+    color: #475569;
+    font-size: 13px;
+    min-height: auto;
+    padding: 12px 16px;
+}
+
+.bom-grid-body .bom-grid-row {
+    transition: background-color 0.2s ease;
+}
+
+.bom-grid-body .bom-grid-row:hover {
+    background-color: #F8FAFC;
+}
+
+.bom-col-material,
+.bom-col-qty,
+.bom-col-uom,
+.bom-col-settings,
+.bom-col-actions {
+    display: flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.bom-col-qty {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.bom-col-actions {
+    justify-content: center;
+}
+
+.bom-col-settings {
+    justify-content: center;
+}
+
+.bom-uom {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: #F1F5F9;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 0;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+}
+
+.bom-qty-helper {
+    font-size: 10px;
+    color: #94A3B8;
+    font-weight: 500;
+    margin-top: 4px;
+    line-height: 1.2;
+}
+
+.calc-indicator-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #94A3B8;
+    background: #F8FAFC;
+}
+
+.calc-indicator-grid.active {
+    background: #EEF2FF;
+    color: #4F46E5;
+    border-color: #C7D2FE;
+}
+
+.calc-indicator-grid:hover {
+    background: #F1F5F9;
+    color: #4F46E5;
+    border-color: #CBD5E1;
+    transform: scale(1.05);
+}
+
+.bom-grid-empty {
+    padding: 20px 0;
+    background: #FFFFFF;
+}
+
 .qty-cell-container {
     display: flex;
     flex-direction: column;

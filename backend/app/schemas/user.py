@@ -12,7 +12,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
-    role: str = Field("worker", pattern="^(admin|manager|worker|production|accountant)$")
+    role: str = Field("manager", pattern="^(admin|manager|worker|production|warehouse|accountant|viewer)$")
     permissions: dict = Field(default_factory=dict)
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -41,7 +41,7 @@ class UserUpdate(BaseModel):
     """Schema for updating user profile"""
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    role: Optional[str] = Field(None, pattern="^(admin|manager|worker|production|accountant)$")
+    role: Optional[str] = Field(None, pattern="^(admin|manager|worker|production|warehouse|accountant|viewer)$")
     email: Optional[EmailStr] = None
     permissions: Optional[dict] = None
     phone: Optional[str] = None
@@ -69,6 +69,8 @@ class UserResponse(UserBase):
     role: str
     company_id: UUID
     created_at: datetime
+    last_login_at: Optional[datetime] = None
+    blocked_at: Optional[datetime] = None
     temp_password: Optional[str] = None
     
     class Config:
