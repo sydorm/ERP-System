@@ -131,15 +131,13 @@
           <TabsBar class="header-tabs" />
         </div>
 
-        <div class="header-center">
-          <div class="global-search-box">
-            <el-icon class="search-icon"><Search /></el-icon>
-            <input type="text" placeholder="Пошук у системі..." />
-            <div class="search-shortcut">⌘ K</div>
-          </div>
-        </div>
-
         <div class="header-right">
+          <el-tooltip content="Пошук по системі" placement="bottom">
+            <button class="topbar-icon-btn" type="button" @click="openGlobalSearch">
+              <el-icon><Search /></el-icon>
+            </button>
+          </el-tooltip>
+
           <!-- Notifications Popover -->
           <el-popover
             placement="bottom-end"
@@ -219,11 +217,70 @@
       :task="currentCallTask" 
       @success="notificationStore.fetchNotifications()" 
     />
+
+    <el-dialog
+      v-model="globalSearchOpen"
+      width="720px"
+      class="command-palette-dialog"
+      :show-close="false"
+      align-center
+      @closed="resetGlobalSearch"
+    >
+      <div class="command-palette">
+        <div class="command-search-row">
+          <el-icon><Search /></el-icon>
+          <input
+            ref="searchPaletteInput"
+            v-model="globalSearchQuery"
+            placeholder="Пошук по системі..."
+            @keydown.down.prevent="moveSearchSelection(1)"
+            @keydown.up.prevent="moveSearchSelection(-1)"
+            @keydown.enter.prevent="openSearchResult(activeSearchResult)"
+            @keydown.esc.prevent="globalSearchOpen = false"
+          />
+          <kbd>Esc</kbd>
+        </div>
+
+        <div v-if="!globalSearchQuery.trim()" class="quick-search-sections">
+          <button
+            v-for="section in quickSearchSections"
+            :key="section.path"
+            type="button"
+            @click="openSearchResult(section)"
+          >
+            <span class="result-icon">{{ section.icon }}</span>
+            <span>{{ section.title }}</span>
+          </button>
+        </div>
+
+        <div v-else class="search-results-list">
+          <div v-if="filteredSearchResults.length === 0" class="search-empty">
+            Нічого не знайдено
+          </div>
+          <button
+            v-for="(result, index) in filteredSearchResults"
+            :key="`${result.type}-${result.title}-${index}`"
+            type="button"
+            class="search-result-item"
+            :class="{ active: index === activeSearchIndex }"
+            @mouseenter="activeSearchIndex = index"
+            @click="openSearchResult(result)"
+          >
+            <span class="result-icon">{{ result.icon }}</span>
+            <span class="result-main">
+              <strong>{{ result.title }}</strong>
+              <small>{{ result.group }}</small>
+            </span>
+            <span class="result-shortcut">Enter</span>
+          </button>
+        </div>
+      </div>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDark, useToggle } from '@vueuse/core'
@@ -248,6 +305,10 @@ const notificationStore = useNotificationStore()
 const isCollapse = ref(false)
 const sidebarWidth = computed(() => isCollapse.value ? '64px' : '260px')
 const activeMenu = computed(() => route.path)
+const globalSearchOpen = ref(false)
+const globalSearchQuery = ref('')
+const activeSearchIndex = ref(0)
+const searchPaletteInput = ref(null)
 
 const isDark = useDark()
 const toggleTheme = useToggle(isDark)
@@ -258,6 +319,68 @@ const hasAdministrationAccess = computed(() => [
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
+}
+
+const quickSearchSections = [
+  { title: 'Номенклатура', group: 'Розділ', icon: 'NM', path: '/inventory/nomenclature' },
+  { title: 'Замовлення', group: 'Продажі', icon: 'SO', path: '/sales/orders' },
+  { title: 'CRM', group: 'CRM', icon: 'CRM', path: '/crm' },
+  { title: 'Закупівлі', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders' },
+  { title: 'Прибуткові накладні', group: 'Закупівлі', icon: 'PR', path: '/purchases/receipts' },
+  { title: 'Клієнти', group: 'Продажі', icon: 'CL', path: '/sales/counterparties' },
+  { title: 'Постачальники', group: 'Закупівлі', icon: 'SU', path: '/sales/counterparties' },
+]
+
+const searchResults = [
+  { title: 'Профіль 30x30*1,2', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature' },
+  { title: 'ДСП Sonoma 18 мм', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature' },
+  { title: 'PO-00006', group: 'Документи', icon: 'PO', path: '/purchases/orders' },
+  { title: 'PR-00004', group: 'Документи', icon: 'PR', path: '/purchases/receipts' },
+  { title: 'Заявка Jack', group: 'CRM', icon: 'CRM', path: '/crm' },
+  { title: 'Замовлення постачальникам', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders' },
+  { title: 'Контрагенти', group: 'Клієнти і постачальники', icon: 'CP', path: '/sales/counterparties' },
+]
+
+const filteredSearchResults = computed(() => {
+  const query = globalSearchQuery.value.trim().toLowerCase()
+  if (!query) return []
+  return searchResults.filter(item =>
+    item.title.toLowerCase().includes(query) ||
+    item.group.toLowerCase().includes(query)
+  )
+})
+
+const activeSearchResult = computed(() => filteredSearchResults.value[activeSearchIndex.value])
+
+const openGlobalSearch = () => {
+  globalSearchOpen.value = true
+  nextTick(() => searchPaletteInput.value?.focus())
+}
+
+const resetGlobalSearch = () => {
+  globalSearchQuery.value = ''
+  activeSearchIndex.value = 0
+}
+
+const moveSearchSelection = (direction) => {
+  const count = filteredSearchResults.value.length
+  if (!count) return
+  activeSearchIndex.value = (activeSearchIndex.value + direction + count) % count
+}
+
+const openSearchResult = (result) => {
+  if (!result?.path) return
+  globalSearchOpen.value = false
+  router.push(result.path)
+}
+
+const handleGlobalSearchKeydown = (event) => {
+  const isMac = navigator.platform.toLowerCase().includes('mac')
+  const modifierPressed = isMac ? event.metaKey : event.ctrlKey
+  if (modifierPressed && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    openGlobalSearch()
+  }
 }
 
 const handleCommand = (command) => {
@@ -308,6 +431,7 @@ const taxWarningVisible = ref(false)
 const incomePercentage = ref(0)
 
 onMounted(async () => {
+    window.addEventListener('keydown', handleGlobalSearchKeydown)
     notificationStore.startPolling()
     try {
         const res = await api.get('/api/v1/finance/fop-income')
@@ -319,7 +443,12 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleGlobalSearchKeydown)
     notificationStore.stopPolling()
+})
+
+watch(globalSearchQuery, () => {
+  activeSearchIndex.value = 0
 })
 </script>
 
@@ -409,30 +538,178 @@ onBeforeUnmount(() => {
   background: #FFFFFF;
   border-bottom: 1px solid var(--erp-sidebar-border);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   padding: 0 24px;
   height: 64px;
+  gap: 14px;
 }
 
-.header-left { display: flex; align-items: center; gap: 20px; overflow: hidden; }
+.header-left { display: flex; align-items: center; gap: 14px; overflow: hidden; min-width: 0; }
 .header-tabs { flex: 1; min-width: 0; }
 
-.global-search-box {
-  width: 400px;
+.header-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+
+.topbar-icon-btn {
+  width: 38px;
   height: 38px;
-  background: #F1F5F9;
-  border-radius: 10px;
-  display: flex;
+  border: 1px solid #E6ECF3;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #475569;
+  display: inline-flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 10px;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .18s, border-color .18s, color .18s;
 }
 
-.global-search-box input { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; }
-.search-shortcut { font-size: 11px; color: var(--erp-text-muted); border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px 5px; background: #FFF; }
+.topbar-icon-btn:hover {
+  background: #F5F8FC;
+  border-color: #D8E1ED;
+  color: #1463FF;
+}
 
-.header-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.command-palette-dialog :deep(.el-dialog) {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.14);
+}
+
+.command-palette-dialog :deep(.el-dialog__header) {
+  display: none;
+}
+
+.command-palette-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.command-palette {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF3;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.command-search-row {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #E6ECF3;
+}
+
+.command-search-row .el-icon {
+  color: #64748B;
+  font-size: 20px;
+}
+
+.command-search-row input {
+  flex: 1;
+  height: 48px;
+  border: 0;
+  outline: none;
+  color: #0F172A;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.command-search-row input::placeholder {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.command-search-row kbd,
+.result-shortcut {
+  border: 1px solid #D8E1ED;
+  border-radius: 7px;
+  padding: 3px 7px;
+  background: #F8FAFC;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.quick-search-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px;
+}
+
+.quick-search-sections button,
+.search-result-item {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick-search-sections button:hover,
+.search-result-item:hover,
+.search-result-item.active {
+  background: #F5F8FC;
+}
+
+.result-icon {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #EEF2FF;
+  color: #3730A3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.search-results-list {
+  padding: 10px;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.result-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-main strong,
+.result-main small {
+  display: block;
+}
+
+.result-main strong {
+  color: #0F172A;
+  font-size: 14px;
+}
+
+.result-main small {
+  margin-top: 2px;
+  color: #64748B;
+  font-size: 12px;
+}
+
+.search-empty {
+  padding: 34px 16px;
+  color: #64748B;
+  text-align: center;
+  font-size: 14px;
+}
 
 .header-badge :deep(.el-badge__content) {
   top: 10px !important;
