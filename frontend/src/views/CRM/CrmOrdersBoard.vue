@@ -1,7 +1,6 @@
 <template>
   <div class="crm-board-page">
     <div class="crm-sticky-workbar">
-      <CrmBoardHeader :orders-count="orders.length" />
       <CrmSummaryCards
       :orders-count="orders.length"
       :total-pipeline-amount="totalPipelineAmount"

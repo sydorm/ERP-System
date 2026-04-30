@@ -14,14 +14,15 @@
   overflow: hidden;
 }
 
-/* в”Ђв”Ђв”Ђв”Ђв”Ђ Sticky workbar в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-sticky-workbar {
+  position: sticky;
+  top: 0;
   flex-shrink: 0;
-  z-index: 100;
+  z-index: 1000;
   background: rgba(245, 248, 252, 0.98);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--erp-border, #E6ECF3);
-  padding: 4px 24px 6px;
+  padding: 0 24px 6px;
   margin-bottom: 0;
   box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
 }
@@ -32,25 +33,7 @@
   overflow: hidden;
 }
 
-/* в”Ђв”Ђв”Ђв”Ђв”Ђ Header в”Ђв”Ђв”Ђв”Ђв”Ђ */
-.crm-board-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 4px;
-}
-
-.crm-title-row { display: flex; align-items: center; gap: 10px; }
-
-.crm-title {
-  font-size: 23px;
-  font-weight: 800;
-  color: var(--erp-text-heading, #0F172A);
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
+/* Header (Removed) */
 .crm-count-badge {
   font-size: 12px;
   font-weight: 600;
@@ -219,7 +202,8 @@
   display: grid;
   grid-template-columns: 1.25fr repeat(3, 1fr);
   gap: 10px;
-  margin-bottom: 8px;
+  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
 .crm-insight-card {
@@ -238,17 +222,7 @@
   box-shadow: 0 6px 20px rgba(15,23,42,0.09);
 }
 
-.insight-icon-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  flex-shrink: 0;
-  background: var(--erp-primary-light, #EEF4FF);
-  color: var(--erp-primary, #1463FF);
-}
+/* Insight icon (Removed) */
 .crm-insight-card.sla-card .insight-icon-badge {
   background: var(--erp-status-danger-bg, #FEF2F4);
   color: var(--erp-status-danger, #F04452);

@@ -1,7 +1,6 @@
 <template>
   <div class="crm-insights-row">
     <div class="crm-insight-card primary">
-      <div class="insight-icon-badge"><el-icon><TrendCharts /></el-icon></div>
       <div class="insight-content">
         <span class="insight-label">Pipeline</span>
         <div class="insight-value-row">
@@ -16,7 +15,6 @@
       </div>
     </div>
     <div class="crm-insight-card sla-card">
-      <div class="insight-icon-badge"><el-icon><Bell /></el-icon></div>
       <div class="insight-content">
         <span class="insight-label">Гарячі SLA</span>
         <strong>{{ hotSlaCount }}</strong>
@@ -24,7 +22,6 @@
       </div>
     </div>
     <div class="crm-insight-card payment-card">
-      <div class="insight-icon-badge"><el-icon><Money /></el-icon></div>
       <div class="insight-content">
         <span class="insight-label">Оплата</span>
         <strong>{{ paymentProgress }}%</strong>
@@ -32,7 +29,6 @@
       </div>
     </div>
     <div class="crm-insight-card today-card">
-      <div class="insight-icon-badge"><el-icon><Calendar /></el-icon></div>
       <div class="insight-content">
         <span class="insight-label">Сьогодні</span>
         <strong>{{ todayTasksCount }}</strong>
