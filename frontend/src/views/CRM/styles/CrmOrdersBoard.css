@@ -1005,7 +1005,7 @@
   font-size: 0;
   transition: all 0.18s;
 }
-.card-arrow-btn::before { content: "вЂє"; font-size: 18px; line-height: 1; }
+.card-arrow-btn::before { content: "›"; font-size: 18px; line-height: 1; }
 .card-arrow-btn:hover { background: var(--erp-primary, #1463FF); color: #FFF; }
 
 .card-more-btn {

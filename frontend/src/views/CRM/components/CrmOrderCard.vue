@@ -57,7 +57,7 @@
 
     <div class="card-badges">
       <span class="payment-badge" :class="`payment-${order.payment_status}`">
-        в—Џ {{ getPaymentLabel(order.payment_status) }}
+        ● {{ getPaymentLabel(order.payment_status) }}
       </span>
       <span v-if="slaLevel === 'warning'" class="sla-badge sla-warning">⏱ {{ slaHours }} год</span>
       <span v-else-if="slaLevel === 'critical' || slaLevel === 'urgent'" class="sla-badge sla-critical">🔴 {{ slaHours }} год</span>
@@ -90,7 +90,6 @@
 
     <el-tooltip :content="managerName" placement="top">
       <div class="card-manager-row">
-        <span class="card-avatar">{{ managerInitials }}</span>
         <span class="manager-label">Менеджер:</span>
         <span class="manager-name">{{ managerName }}</span>
       </div>
@@ -128,7 +127,7 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <button class="card-arrow-btn" @click.stop="$emit('openEditor', order)">→</button>
+
       </div>
     </div>
   </div>
