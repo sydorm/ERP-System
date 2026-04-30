@@ -36,22 +36,51 @@
     <!-- EDITOR VIEW -->
     <div v-else class="spec-editor">
        <div class="editor-header">
-        <div class="left-actions">
-           <el-button @click="editingSpec = null" class="btn-back">
-             <el-icon><Back /></el-icon> До списку
-           </el-button>
+        <div class="header-actions">
+          <!-- Simulation Mode Toggle -->
+          <div class="simulation-toggle-wrapper">
+             <span class="sim-label">Симулятор параметрів:</span>
+             <el-switch v-model="isSimulationMode" @change="syncSimulationDims" />
+          </div>
+
+          <el-button @click="editingSpec = null" class="btn-back">
+            До списку
+          </el-button>
+          <el-button class="btn-validate" @click="validateBom" :disabled="!specForm.items || specForm.items.length === 0">
+            <el-icon class="mr-1"><Monitor /></el-icon> Перевірити розрахунок
+          </el-button>
+          <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
+            <el-icon><Check /></el-icon> Зберегти специфікацію
+          </el-button>
         </div>
-        <div class="right-actions">
-            <span class="last-validation-label" style="font-size: 12px; color: #64748b; margin-right: 8px;">
-               Остання перевірка: {{ lastValidationDate || 'не виконувалась' }}
-            </span>
-            <el-button class="btn-validate" @click="validateBom" :disabled="!specForm.items || specForm.items.length === 0">
-              <el-icon><Monitor /></el-icon> Перевірити розрахунок
-            </el-button>
-            <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
-              <el-icon><Check /></el-icon> Зберегти специфікацію
-            </el-button>
-         </div>
+      </div>
+
+      <!-- Simulation Parameters Bar -->
+      <div v-if="isSimulationMode" class="simulation-bar">
+        <div class="sim-fields">
+           <div class="sim-field">
+              <label>H (мм):</label>
+              <el-input-number v-model="simulationDims.height_mm" size="small" :controls="false" />
+           </div>
+           <div class="sim-field">
+              <label>W (мм):</label>
+              <el-input-number v-model="simulationDims.width_mm" size="small" :controls="false" />
+           </div>
+           <div class="sim-field">
+              <label>L (мм):</label>
+              <el-input-number v-model="simulationDims.length_mm" size="small" :controls="false" />
+           </div>
+           
+           <!-- Dynamic Characteristic Overrides -->
+           <div v-for="char in usedCharacteristics" :key="char" class="sim-field char-field">
+              <label>{{ char }}:</label>
+              <el-input v-model="simulationDims.custom_attributes[char]" size="small" placeholder="Значення" />
+           </div>
+        </div>
+        <div class="sim-info">
+           <el-icon class="mr-1"><Warning /></el-icon>
+           Змінюйте значення для перевірки калькулятора без збереження картки товару
+        </div>
       </div>
        
       <!-- Validation Result Banner -->
@@ -562,7 +591,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check, Warning } from '@element-plus/icons-vue'
+import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check, Warning, Memo, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     getProductSpecifications,
@@ -644,6 +673,55 @@ const loadProductAttributes = async () => {
     }
 }
 
+const isSimulationMode = ref(false)
+const simulationDims = reactive({
+    height_mm: 0,
+    width_mm: 0,
+    length_mm: 0,
+    weight_kg: 0,
+    custom_attributes: {}
+})
+
+const syncSimulationDims = () => {
+    if (isSimulationMode.value) {
+        simulationDims.height_mm = props.productDimensions.height_mm || 0
+        simulationDims.width_mm = props.productDimensions.width_mm || 0
+        simulationDims.length_mm = props.productDimensions.length_mm || 0
+        simulationDims.weight_kg = props.productDimensions.weight_kg || 0
+        
+        // Sync chars
+        usedCharacteristics.value.forEach(char => {
+            const val = getAttrValue(char)
+            if (val !== null) simulationDims.custom_attributes[char] = val
+        })
+    }
+}
+
+const usedCharacteristics = computed(() => {
+    const chars = new Set()
+    if (specForm.value && specForm.value.items) {
+        specForm.value.items.forEach(item => {
+            if (item.calc_dim_config) {
+                Object.values(item.calc_dim_config).forEach(cfg => {
+                    if (cfg.char_name) chars.add(cfg.char_name)
+                })
+            }
+            // Also check global variant sync
+            if (props.productDimensions.variant_config) {
+                const dims = ['height', 'width', 'length']
+                dims.forEach(d => {
+                    const g = props.productDimensions.variant_config[d]
+                    if (g?.source === 'attribute' && g.attr_id) {
+                        const attr = productAttributes.value.find(a => a.id === g.attr_id)
+                        if (attr) chars.add(attr.name)
+                    }
+                })
+            }
+        })
+    }
+    return Array.from(chars)
+})
+
 const toMeters = (value, unit) => {
     if (unit === 'мм') return value / 1000
     if (unit === 'см') return value / 100
@@ -653,6 +731,12 @@ const toMeters = (value, unit) => {
 
 const getAttrValue = (attrName) => {
     if (!attrName) return null
+    
+    // Priority: Simulation Mode
+    if (isSimulationMode.value && simulationDims.custom_attributes[attrName] !== undefined) {
+        return parseFloat(simulationDims.custom_attributes[attrName]) || 0
+    }
+
     const attrDef = productAttributes.value.find(a => a.name === attrName)
     if (!attrDef) return null
     
@@ -759,23 +843,25 @@ const getDimConfig = (item, key) => {
 const calculateQuantityInternal = (item, includeWaste = true, returnDetails = false) => {
     if (!item || item.calc_type === 'fixed') return item?.quantity || 0
 
+    // Use simulation dimensions if enabled
+    const activeDims = isSimulationMode.value ? simulationDims : props.productDimensions
     const isMeters = item.unit_of_measure === 'м'
+    
     const dimensions = {
-        W: parseFloat(props.productDimensions.width_mm) || 0,
-        H: parseFloat(props.productDimensions.height_mm) || 0,
-        L: parseFloat(props.productDimensions.length_mm) || 0,
-        Kg: parseFloat(props.productDimensions.weight_kg) || 0
+        W: parseFloat(activeDims.width_mm) || 0,
+        H: parseFloat(activeDims.height_mm) || 0,
+        L: parseFloat(activeDims.length_mm) || 0,
+        Kg: parseFloat(activeDims.weight_kg) || 0
     }
+
+    const dimLabels = { height_mm: 'H', width_mm: 'W', length_mm: 'L' }
+    const dimFullKeys = { h: 'height_mm', w: 'width_mm', l: 'length_mm' }
 
     let result = 0
     let details = []
 
     if (item.calc_type === 'interpolation') {
-        const dp = item.calc_data_points
-        if (!dp || Array.isArray(dp)) return item.quantity
-
-        const dimMap = { h: 'height_mm', w: 'width_mm', l: 'length_mm' }
-        const dimLabels = { h: 'H', w: 'W', l: 'L' }
+        const dp = item.calc_data_points || {}
         let total = 0
         let hasAnyPoints = false
 
@@ -1460,28 +1546,76 @@ onMounted(() => {
     border-radius: 8px;
 }
 
-.right-actions {
+.header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.btn-validate {
-    background: #ffffff;
+.simulation-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-right: 12px;
+}
+
+.sim-label {
+    font-size: 12px;
+    font-weight: 600;
     color: #475569;
-    border: 1px solid #D1D5DB;
-}
-.btn-validate:hover {
-    background: #F9FAFB;
-    color: #1F2937;
-    border-color: #9CA3AF;
 }
 
-.btn-save {
-    border-radius: 8px;
+.simulation-bar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.bom-grid-table {
+.sim-fields {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.sim-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sim-field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.sim-field .el-input-number {
+    width: 80px;
+}
+
+.sim-field.char-field .el-input {
+    width: 100px;
+}
+
+.sim-info {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    font-style: italic;
+}
+
+.step-badge {
     display: flex;
     flex-direction: column;
     border: 1px solid #E2E8F0;
