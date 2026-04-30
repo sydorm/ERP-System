@@ -1,5 +1,5 @@
-﻿<template>
-  <div class="crm-top-bar">
+<template>
+  <div class="crm-top-bar saas-glass-card" style="border-radius: 0; margin-bottom: 0; padding: 12px 24px; position: sticky; top: 0; z-index: 1001;">
     <button class="crm-back-btn" @click="$emit('back')">
       <el-icon><ArrowLeft /></el-icon>
     </button>
@@ -24,9 +24,9 @@
       <button class="crm-draft-btn" @click="$emit('save-draft')" :disabled="saving">
         Записати чернетку
       </button>
-      <button class="crm-save-btn" @click="$emit('save-production')" :disabled="saving">
+      <button class="crm-save-btn saas-btn-primary" @click="$emit('save-production')" :disabled="saving">
         <el-icon><Promotion /></el-icon>
-        Зберегти та передати у виробництво
+        Зберегти та передати
       </button>
     </div>
   </div>

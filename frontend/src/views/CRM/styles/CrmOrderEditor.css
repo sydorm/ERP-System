@@ -4,8 +4,56 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   font-family: 'Inter', sans-serif;
+}
+
+/* ─── SaaS Premium Tokens ─── */
+.saas-gradient-header {
+  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
+  color: #fff;
+}
+.saas-glass-card {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08) !important;
+}
+.saas-premium-shadow {
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
+}
+.saas-btn-primary {
+  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+}
+.saas-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.3);
+}
+.saas-btn-success {
+  background: linear-gradient(135deg, #15B97A 0%, #0E905F 100%) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.saas-dialog :deep(.el-dialog) {
+  border-radius: 20px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+.saas-dialog :deep(.el-dialog__header) {
+  padding: 24px 24px 10px !important;
+}
+.saas-dialog :deep(.el-dialog__title) {
+  font-weight: 800 !important;
+  color: #0F172A !important;
+}
+.saas-dialog :deep(.el-dialog__body) {
+  padding: 10px 24px 24px !important;
 }
 
 /* ─── Top Bar ─────────────────────────────────────────────────────────────── */
@@ -105,9 +153,14 @@
 /* ─── Section ─────────────────────────────────────────────────────────────── */
 .crm-section {
   background: #fff;
-  border-radius: 12px;
-  padding: 16px 18px;
-  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+.crm-section:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 .crm-section-head {
   display: flex;

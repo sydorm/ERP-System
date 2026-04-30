@@ -70,16 +70,16 @@
       </div><!-- /left col -->
 
       <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-      <div class="crm-right-col" style="width: 320px; display: flex; flex-direction: column; gap: 12px;">
-
-
+      <div class="crm-right-col" style="width: 340px; display: flex; flex-direction: column; gap: 16px;">
 
         <CrmReadinessChecklist
+          class="saas-glass-card saas-premium-shadow"
           :progress="readinessProgress"
           :items="readinessItems"
         />
 
         <CrmContactPanel
+          class="saas-glass-card"
           :form="form"
           :order-id="orderId"
           :communication-types="communicationTypes"
@@ -99,6 +99,7 @@
         />
 
         <CrmCommunicationHistory
+          class="saas-glass-card"
           :contacts="contacts"
           :get-contact-result-color="getContactResultColor"
           :get-comm-icon="getCommIcon"
@@ -108,17 +109,20 @@
         />
 
         <CrmOrderHistoryNotes
+          class="saas-glass-card"
           :form="form"
           :history="history"
         />
 
         <CrmAiAssistant
+          class="saas-glass-card"
           :form="form"
           :readiness-progress="readinessProgress"
           @check="ElMessage.success('AI Перевірку завершено')"
         />
 
         <CrmRelatedDocuments
+          class="saas-glass-card"
           v-if="orderId"
           ref="relatedDocsRef"
           :order-id="orderId"
