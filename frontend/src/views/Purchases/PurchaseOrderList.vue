@@ -373,7 +373,7 @@
 import { ref, reactive, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
-  Plus, Search, Download, Filter, Setting, MoreFilled, Star, ArrowRight, ArrowDown,
+  Plus, Search, Download, Filter, Close, Setting, MoreFilled, Star, ArrowRight, ArrowDown,
   List, Van, Warning, Wallet, Money, Loading, Refresh, Box, Check, View, Edit, CopyDocument, Delete
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -953,40 +953,146 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   margin: 0 4px;
 }
 
-.toggle-chips { display: flex; gap: 8px; }
-.toggle-chip { 
-  padding: 0 14px; 
-  height: 34px; 
-  border-radius: 17px; 
-  border: 1px solid var(--erp-border); 
-  font-size: 12px; 
-  display: flex; 
-  align-items: center; 
-  cursor: pointer; 
-  transition: all 0.2s; 
-  color: var(--erp-text-secondary); 
-  font-weight: 600; 
-  background: #FFF;
-}
-
-.toggle-chip:hover {
-  background: var(--erp-bg-surface-soft);
-}
-
-.toggle-chip.active { 
-  background: var(--erp-primary-light); 
-  border-color: var(--erp-primary); 
-  color: var(--erp-primary); 
-}
-
-.filter-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.btn-clear { font-size: 13px; font-weight: 700; color: var(--erp-primary); }
-.btn-icon-action {
-  border-color: var(--erp-border);
-  color: var(--erp-text-secondary);
+/* ===== TOOLBAR BUTTONS ===== */
+.toolbar-btn {
   height: 42px;
-  width: 42px;
+  border: 1px solid var(--erp-border);
+  background: var(--erp-bg-page);
+  color: var(--erp-text-secondary);
+  border-radius: var(--erp-radius-btn);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  white-space: nowrap;
+  transition: all 0.18s;
 }
+.toolbar-btn:hover {
+  background: #FFF;
+  border-color: var(--erp-primary);
+  color: var(--erp-primary);
+}
+.toolbar-btn.icon-only {
+  width: 42px;
+  padding: 0;
+  justify-content: center;
+}
+.btn-label { font-size: 13px; }
+
+/* Filters button with active state */
+.filters-btn { }
+.filters-btn.filters-active {
+  background: var(--erp-primary-light);
+  border-color: var(--erp-primary);
+  color: var(--erp-primary);
+}
+.filter-badge :deep(.el-badge__content) {
+  font-size: 10px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 5px;
+  min-width: 16px;
+}
+
+/* ===== FILTERS PANEL (inside popover) ===== */
+.filters-panel { padding: 4px 0; }
+.filters-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--erp-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.fp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.fp-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--erp-text-muted);
+}
+
+.fp-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.fp-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--erp-border);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--erp-text-secondary);
+  background: var(--erp-bg-page);
+  transition: all 0.18s;
+}
+.fp-toggle:hover { border-color: var(--erp-primary); }
+.fp-toggle.active {
+  background: var(--erp-primary-light);
+  border-color: var(--erp-primary);
+  color: var(--erp-primary);
+}
+.fp-toggle-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  transition: background 0.18s;
+}
+.fp-toggle.active .fp-toggle-dot {
+  background: currentColor;
+}
+
+.fp-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--erp-border);
+  margin-top: 4px;
+}
+
+/* ===== ACTIVE FILTER CHIPS ===== */
+.active-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  background: var(--erp-primary-light);
+  color: var(--erp-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--erp-primary);
+  transition: all 0.15s;
+}
+.active-chip:hover {
+  background: var(--erp-primary);
+  color: #FFF;
+}
+.chip-close { font-size: 11px; }
 
 /* ===== TABLE AREA ===== */
 .table-surface { 
