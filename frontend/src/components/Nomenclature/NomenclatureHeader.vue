@@ -1,70 +1,51 @@
 <template>
-  <div class="stats-row-dense">
+  <div class="crm-insights-row">
     <!-- Всього позицій -->
-    <div class="stats-card-dense">
-      <div class="stats-card-dense__icon total">
-        <el-icon><Box /></el-icon>
+    <div class="crm-insight-card metric-pipeline">
+      <div class="insight-content">
+        <span class="metric-label">Всього позицій</span>
+        <div class="insight-value-row">
+          <strong class="metric-value">{{ stats.total_products }}</strong>
+          <div class="insight-sparkline">
+            <svg width="56" height="20" viewBox="0 0 64 28">
+              <path d="M0 22C12 18 24 20 36 13C48 6 56 10 64 6" stroke="rgba(20,99,255,0.4)" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <small>Зареєстровано в системі</small>
       </div>
-      <div class="stats-card-dense__content">
-        <span class="stats-card-dense__label">Всього позицій</span>
-        <span class="stats-card-dense__value">{{ stats.total_products }}</span>
-        <span class="stats-card-dense__subtext">+12 за 30 днів</span>
-      </div>
-      <div class="stats-card-dense__sparkline">
-        <svg width="60" height="20"><path d="M0,10 L10,15 L20,5 L30,18 L40,8 L50,12 L60,2" fill="none" stroke="#635bff" stroke-width="2"/></svg>
+    </div>
+
+    <!-- Низький запас -->
+    <div class="crm-insight-card metric-sla">
+      <div class="insight-content">
+        <span class="metric-label">Низький запас</span>
+        <strong class="metric-value">{{ stats.low_stock }}</strong>
+        <small>потребують дозамовлення</small>
       </div>
     </div>
 
     <!-- В наявності -->
-    <div class="stats-card-dense">
-      <div class="stats-card-dense__icon success">
-        <el-icon><Check /></el-icon>
-      </div>
-      <div class="stats-card-dense__content">
-        <span class="stats-card-dense__label">В наявності</span>
-        <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
-        <span class="stats-card-dense__subtext">+18 за 30 днів</span>
-      </div>
-      <div class="stats-card-dense__sparkline">
-        <svg width="60" height="20"><path d="M0,18 L10,12 L20,15 L30,8 L40,10 L50,5 L60,2" fill="none" stroke="#22c55e" stroke-width="2"/></svg>
+    <div class="crm-insight-card metric-payment">
+      <div class="insight-content">
+        <span class="metric-label">В наявності</span>
+        <strong class="metric-value">{{ stats.in_stock }}</strong>
+        <small>доступно для продажу</small>
       </div>
     </div>
 
-    <!-- Закінчуються -->
-    <div class="stats-card-dense">
-      <div class="stats-card-dense__icon warning">
-        <el-icon><Warning /></el-icon>
-      </div>
-      <div class="stats-card-dense__content">
-        <span class="stats-card-dense__label">Закінчуються</span>
-        <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
-        <span class="stats-card-dense__subtext">+4 за 30 днів</span>
-      </div>
-      <div class="stats-card-dense__sparkline">
-        <svg width="60" height="20"><path d="M0,5 L10,8 L20,2 L30,12 L40,5 L50,15 L60,18" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
-      </div>
-    </div>
-
-    <!-- Немає -->
-    <div class="stats-card-dense">
-      <div class="stats-card-dense__icon danger">
-        <el-icon><CircleClose /></el-icon>
-      </div>
-      <div class="stats-card-dense__content">
-        <span class="stats-card-dense__label">Немає</span>
-        <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
-        <span class="stats-card-dense__subtext">-3 за 30 днів</span>
-      </div>
-      <div class="stats-card-dense__sparkline">
-        <svg width="60" height="20"><path d="M0,2 L10,5 L20,12 L30,8 L40,15 L50,12 L60,18" fill="none" stroke="#ef4444" stroke-width="2"/></svg>
+    <!-- Немає в наявності -->
+    <div class="crm-insight-card metric-today">
+      <div class="insight-content">
+        <span class="metric-label">Дефіцит</span>
+        <strong class="metric-value">{{ stats.out_of_stock }}</strong>
+        <small>критичні відсутності</small>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Box, Check, Warning, CircleClose } from '@element-plus/icons-vue'
-
 defineProps({
   stats: {
     type: Object,
@@ -80,67 +61,73 @@ defineProps({
 </script>
 
 <style scoped>
-.stats-row-dense {
+.crm-insights-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1.25fr repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 12px;
 }
-.stats-card-dense {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 16px 20px;
+
+.crm-insight-card {
+  background: #FFFFFF;
+  border: 0.5px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
   display: flex;
   align-items: center;
-  gap: 14px;
-  box-shadow: 0 12px 32px rgba(15,23,42,0.04);
-  transition: all 0.2s ease;
-  height: 72px;
+  gap: 12px;
+  transition: transform 0.18s, box-shadow 0.18s;
+  height: 80px;
   box-sizing: border-box;
 }
-.stats-card-dense:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 36px rgba(15,23,42,0.08);
-}
-.stats-card-dense__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-.stats-card-dense__icon.total { background: #eff6ff; color: #2563eb; }
-.stats-card-dense__icon.success { background: #dcfce7; color: #16a34a; }
-.stats-card-dense__icon.warning { background: #fef3c7; color: #d97706; }
-.stats-card-dense__icon.danger { background: #fee2e2; color: #ef4444; }
 
-.stats-card-dense__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.crm-insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
-.stats-card-dense__label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.stats-card-dense__value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-}
-.stats-card-dense__subtext {
+
+/* Indicator rails matching CRM */
+.crm-insight-card.metric-pipeline { border-left: 4px solid #1463FF; }
+.crm-insight-card.metric-sla      { border-left: 4px solid #F59E0B; }
+.crm-insight-card.metric-payment  { border-left: 4px solid #15B97A; }
+.crm-insight-card.metric-today    { border-left: 4px solid #EF4444; }
+
+.insight-content { flex: 1; min-width: 0; }
+
+.metric-label {
+  display: block;
   font-size: 10px;
-  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 2px;
 }
-.stats-card-dense__sparkline {
-  margin-left: auto;
-  opacity: 0.6;
+
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  display: block;
+  line-height: 1.1;
+}
+
+.insight-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.insight-sparkline { opacity: 0.6; }
+
+.crm-insight-card small {
+  display: block;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 2px;
 }
 </style>

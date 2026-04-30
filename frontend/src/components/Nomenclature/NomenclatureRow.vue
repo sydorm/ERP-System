@@ -172,10 +172,10 @@ const getAiWarningReason = (row) => {
   border-bottom: none;
 }
 .nom-body-row:hover {
-  background: #fafbff;
+  background: #F8F9FC;
 }
 .nom-body-row.is-selected {
-  background: #f0f4ff;
+  background: #F0F5FF;
 }
 
 .nom-cell {
@@ -193,7 +193,7 @@ const getAiWarningReason = (row) => {
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #635bff;
+  accent-color: #1463FF;
 }
 
 .nom-cell--photo {
@@ -205,15 +205,15 @@ const getAiWarningReason = (row) => {
   height: 40px;
   border-radius: 10px;
   object-fit: cover;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border: 1px solid #E6ECF3;
+  background: #F8F9FC;
   flex-shrink: 0;
 }
 .nom-thumb--icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #94A3B8;
   font-size: 16px;
 }
 
@@ -231,16 +231,17 @@ const getAiWarningReason = (row) => {
   width: 100%;
 }
 .nom-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -258,9 +259,9 @@ const getAiWarningReason = (row) => {
   align-items: center;
   max-width: 100%;
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -276,25 +277,25 @@ const getAiWarningReason = (row) => {
 }
 .nom-stock-qty {
   font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 700;
+  color: #0F172A;
   white-space: nowrap;
 }
 .nom-prog-bar {
-  width: 100px;
-  height: 5px;
-  background: #eef2f7;
-  border-radius: 3px;
+  width: 80px;
+  height: 4px;
+  background: #F1F5F9;
+  border-radius: 2px;
   overflow: hidden;
 }
 .nom-prog-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 2px;
   transition: width 0.4s ease;
 }
-.nom-prog-fill.success { background: #22c55e; }
-.nom-prog-fill.warning { background: #f59e0b; }
-.nom-prog-fill.danger  { background: #f43f5e; }
+.nom-prog-fill.success { background: #15B97A; }
+.nom-prog-fill.warning { background: #F59E0B; }
+.nom-prog-fill.danger  { background: #F04452; }
 
 .nom-cell--status {
   justify-content: flex-start;
@@ -302,16 +303,16 @@ const getAiWarningReason = (row) => {
 .nom-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
   line-height: 1;
 }
-.nom-status-badge.success { background: #dcfce7; color: #16a34a; }
-.nom-status-badge.warning { background: #fef3c7; color: #d97706; }
-.nom-status-badge.danger  { background: #fee2e2; color: #ef4444; }
+.nom-status-badge.success { background: #EDFAF4; color: #0F5C3A; }
+.nom-status-badge.warning { background: #FFFBEB; color: #92400E; }
+.nom-status-badge.danger  { background: #FEF2F4; color: #991B1B; }
 
 .nom-cell--price {
   justify-content: flex-end;

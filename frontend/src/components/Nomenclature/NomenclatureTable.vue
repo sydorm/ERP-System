@@ -112,10 +112,10 @@ const isAllSelected = computed(() => {
 <style scoped>
 .table-section {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.05);
-  margin-top: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-top: 16px;
   overflow: hidden;
 }
 
@@ -140,17 +140,17 @@ const isAllSelected = computed(() => {
 }
 
 .nom-header {
-  background: #f8fafc;
-  border-bottom: 1px solid #eef2f7;
-  height: 48px;
+  background: #F8F9FC;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  height: 42px;
 }
 
 .nom-header .nom-cell {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
   padding: 0 8px;
   white-space: nowrap;
   overflow: hidden;
@@ -172,7 +172,7 @@ const isAllSelected = computed(() => {
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #635bff;
+  accent-color: #1463FF;
 }
 
 .nom-empty {

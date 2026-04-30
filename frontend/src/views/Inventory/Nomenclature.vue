@@ -498,19 +498,28 @@ onActivated(() => {
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --border: #e2e8f0;
-  --primary: #635bff;
+  --primary: #1463FF;
 
-  padding: 16px 24px 24px;
-  background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 28%), var(--page-bg);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: calc(100vh - 64px);
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 .top-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* AI FLOATING BUTTON */
