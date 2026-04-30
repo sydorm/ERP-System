@@ -412,6 +412,8 @@ const filters = reactive({
   onlyNotReceived: false,
 })
 
+const filtersPopoverVisible = ref(false)
+
 const statusOptions = [
   { value: 'draft', label: 'Чернетка' },
   { value: 'ordered', label: 'Замовлено' },
@@ -439,6 +441,30 @@ const overdueOrders = computed(() => orders.value.filter(o => getOverdueDays(o) 
 const unpaidOrders = computed(() => orders.value.filter(o => getPaymentStatus(o) === 'unpaid'))
 const totalAmount = computed(() => orders.value.reduce((sum, o) => sum + Number(o.total_amount || 0), 0))
 const hasActiveFilters = computed(() => Object.values(filters).some(v => v !== '' && v !== false && v !== null))
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filters.status) count++
+  if (filters.supplierId) count++
+  if (filters.payment) count++
+  if (filters.priority) count++
+  if (filters.expectedDate) count++
+  if (filters.onlyOverdue) count++
+  if (filters.onlyNotReceived) count++
+  return count
+})
+
+const activeFilterChips = computed(() => {
+  const chips = []
+  if (filters.status) chips.push({ key: 'status', label: `Статус: ${getStatusLabel(filters.status)}` })
+  if (filters.supplierId) chips.push({ key: 'supplierId', label: `Постачальник: ${getCounterpartyName(filters.supplierId)}` })
+  if (filters.payment) chips.push({ key: 'payment', label: `Оплата: ${paymentOptions.find(p => p.value === filters.payment)?.label}` })
+  if (filters.priority) chips.push({ key: 'priority', label: `Пріоритет: ${priorityOptions.find(p => p.value === filters.priority)?.label}` })
+  if (filters.expectedDate) chips.push({ key: 'expectedDate', label: `Дата: ${formatDate(filters.expectedDate)}` })
+  if (filters.onlyOverdue) chips.push({ key: 'onlyOverdue', label: 'Тільки прострочені' })
+  if (filters.onlyNotReceived) chips.push({ key: 'onlyNotReceived', label: 'Тільки неотримані' })
+  return chips
+})
 
 const kpiCards = computed(() => [
   { label: 'Усього замовлень', value: orders.value.length, icon: 'ShoppingCart', bg: 'var(--erp-primary-light)', color: 'var(--erp-primary)', trend: '+12%', trendClass: 'trend-up', path: 'M0 20C10 25 20 15 30 18C40 21 50 10 64 5' },
@@ -563,6 +589,11 @@ const resetFilters = () => {
     search: '', status: '', supplierId: '', payment: '', priority: '', expectedDate: '',
     onlyOverdue: false, onlyNotReceived: false
   })
+}
+
+const clearFilterChip = (key) => {
+  if (typeof filters[key] === 'boolean') filters[key] = false
+  else filters[key] = ''
 }
 
 const handleSortChange = ({ prop, order }) => {
