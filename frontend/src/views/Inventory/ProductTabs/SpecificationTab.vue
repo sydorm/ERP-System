@@ -865,14 +865,14 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         let total = 0
         let hasAnyPoints = false
 
-        for (const [key, dimKey] of Object.entries(dimMap)) {
+        for (const [key, dimKey] of Object.entries(dimFullKeys)) {
             const pts = (dp[key] || []).filter(p => p.qty != null)
             if (pts.length === 0) continue
             hasAnyPoints = true
             
             const config = getDimConfig(item, key)
-            let dimValRaw = parseFloat(props.productDimensions[dimKey]) || 0
-            let sourceLabel = dimLabels[key]
+            let dimValRaw = parseFloat(activeDims[dimKey]) || 0
+            let sourceLabel = dimLabels[key] || key
             let warning = ''
 
             // AUTOMATION: If not explicitly set in config, check global variant_config
@@ -955,13 +955,13 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
     }
     else if (item.calc_type === 'proportional') {
         const dimKey = item.calc_dimension || 'width_mm'
-        const dimMap = { height_mm: 'h', width_mm: 'w', length_mm: 'l' }
-        const key = dimMap[dimKey]
+        const dimMapLocal = { height_mm: 'h', width_mm: 'w', length_mm: 'l' }
+        const key = dimMapLocal[dimKey]
         const config = getDimConfig(item, key)
-        const dimLabels = { height_mm: 'H', width_mm: 'W', length_mm: 'L' }
+        const dimLabelsLocal = { height_mm: 'H', width_mm: 'W', length_mm: 'L' }
         
-        let dimValRaw = parseFloat(props.productDimensions[dimKey]) || 0
-        let sourceLabel = dimLabels[dimKey]
+        let dimValRaw = parseFloat(activeDims[dimKey]) || 0
+        let sourceLabel = dimLabelsLocal[dimKey]
         let warning = ''
 
         if (config.char_name) {
