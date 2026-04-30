@@ -154,14 +154,14 @@ defineEmits([
 }
 
 .act-btn--primary {
-  background: #1463FF;
+  background: linear-gradient(135deg, #15B97A 0%, #0E905F 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.22);
+  box-shadow: 0 4px 12px rgba(21, 185, 122, 0.22);
 }
 
 .act-btn--primary:hover {
-  background: #0047D1;
-  box-shadow: 0 6px 18px rgba(20, 99, 255, 0.3);
+  background: linear-gradient(135deg, #12A46C 0%, #15B97A 100%);
+  box-shadow: 0 6px 18px rgba(21, 185, 122, 0.3);
   transform: translateY(-1px);
 }
 
