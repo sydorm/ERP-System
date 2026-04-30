@@ -835,11 +835,11 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
             if (warning) stepLabel += ` ${warning}`
 
             if (isMeters) {
-                // normalizedDimVal is in config.unit, countResult is pieces
-                // we need result in meters: countResult * normalizedDimVal_in_meters
+                // In interpolation mode, we assume countResult is ALREADY in meters (or the material's unit)
+                // if the user entered absolute values in the table. 
+                // We show the dimension for reference.
                 const meters = toMeters(dimValRaw, config.char_name ? config.unit : 'мм')
-                dimFinal = countResult * meters
-                stepLabel += ` → ${meters.toFixed(3)}м × ${countResult}шт = ${dimFinal.toFixed(3)}м`
+                stepLabel += ` (при ${meters.toFixed(3)}м) → ${dimFinal.toFixed(3)}м`
             } else {
                 stepLabel += ` → ${countResult.toFixed(3)} ${item.unit_of_measure || 'шт'}`
             }
@@ -1273,11 +1273,17 @@ const openCalcDialog = (item) => {
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
         item.calc_data_points = { h: [], w: [], l: [] }
     }
-    if (item.calc_type === 'characteristic_mapping') {
-        loadAttributesForMapping(props.productId, item.component_id)
-    }
     if (!item.calc_dim_config) {
-        item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'мм', waste: 0 }, w: { char_name: '', default: 0, unit: 'мм', waste: 0 }, l: { char_name: '', default: 0, unit: 'мм', waste: 0 } }
+        item.calc_dim_config = { 
+            h: { char_name: '', default: parseFloat(props.productDimensions.height_mm) || 0, unit: 'мм', waste: 0 }, 
+            w: { char_name: '', default: parseFloat(props.productDimensions.width_mm) || 0, unit: 'мм', waste: 0 }, 
+            l: { char_name: '', default: parseFloat(props.productDimensions.length_mm) || 0, unit: 'мм', waste: 0 } 
+        }
+    } else {
+        // Sync defaults if they are 0 but product has dimensions
+        if (!item.calc_dim_config.h.default && props.productDimensions.height_mm) item.calc_dim_config.h.default = props.productDimensions.height_mm
+        if (!item.calc_dim_config.w.default && props.productDimensions.width_mm) item.calc_dim_config.w.default = props.productDimensions.width_mm
+        if (!item.calc_dim_config.l.default && props.productDimensions.length_mm) item.calc_dim_config.l.default = props.productDimensions.length_mm
     }
     calcDialogOpen.value = true
 }
