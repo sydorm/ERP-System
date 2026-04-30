@@ -641,7 +641,7 @@ onMounted(() => {
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
   border: none;
   font-weight: 700;
   font-size: 12px;
@@ -649,7 +649,7 @@ onMounted(() => {
   border-radius: 8px;
   height: 32px;
   padding: 0 16px;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.25);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -657,9 +657,8 @@ onMounted(() => {
 }
 
 .btn-save:hover {
-  background: linear-gradient(135deg, #4f46e5, #4338ca);
-  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.4);
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(20, 99, 255, 0.4);
 }
 
 /* === EDITOR CONTENT === */
@@ -679,10 +678,10 @@ onMounted(() => {
 /* === TABS STYLING === */
 .product-tabs :deep(.el-tabs__header) {
   margin: 0;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
   padding: 0 24px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   position: sticky;
   top: var(--product-editor-header-height);
   z-index: 90;
@@ -712,7 +711,7 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__active-bar) {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #1463FF, #0047D1);
   height: 3px;
   border-radius: 3px 3px 0 0;
   bottom: 1px;

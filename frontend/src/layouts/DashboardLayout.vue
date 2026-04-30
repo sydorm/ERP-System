@@ -141,37 +141,69 @@
           <!-- Notifications Popover -->
           <el-popover
             placement="bottom-end"
-            :width="350"
+            :width="430"
             trigger="click"
             popper-class="notification-popover"
           >
             <template #reference>
               <el-badge :value="notificationStore.unreadCount" :hidden="notificationStore.unreadCount === 0" class="header-badge">
-                <el-button circle link><el-icon><Bell /></el-icon></el-button>
+                <button class="topbar-icon-btn notification-trigger" :class="{ 'has-notifications': notificationStore.unreadCount > 0 }" type="button">
+                  <el-icon><Bell /></el-icon>
+                </button>
               </el-badge>
             </template>
             
             <div class="notification-panel">
               <div class="notification-header">
-                <h3>🔔 Сповіщення</h3>
+                <div>
+                  <h3>Сповіщення</h3>
+                  <p>CRM, задачі та контрольні події</p>
+                </div>
                 <el-link type="primary" :underline="false" @click="notificationStore.readAll()">Прочитати все</el-link>
               </div>
-              <el-scrollbar max-height="400px">
-                <div v-if="notificationStore.notifications.length === 0" class="empty-notifications">Немає нових сповіщень</div>
+
+              <div v-if="notificationStats.total > 0" class="notification-summary">
+                <span><strong>{{ notificationStats.crm }}</strong> CRM</span>
+                <span><strong>{{ notificationStats.critical }}</strong> критичні</span>
+                <span><strong>{{ notificationStats.stale }}</strong> без дії</span>
+              </div>
+
+              <el-scrollbar max-height="460px" class="notification-scroll">
+                <div v-if="notificationStore.notifications.length === 0" class="empty-notifications">
+                  <div class="empty-bell"><el-icon><Bell /></el-icon></div>
+                  <strong>Нових сповіщень немає</strong>
+                  <span>Коли з'являться CRM-сигнали або задачі, вони будуть тут.</span>
+                </div>
                 <div v-for="(group, dateName) in groupedNotifications" :key="dateName" class="notification-group">
                   <div class="group-header">{{ dateName }}</div>
-                  <div v-for="n in group" :key="n.id" class="notification-item" @click="handleNotificationAction(n)">
-                    <div class="ni-dot" :class="'priority-' + getPriorityClass(n.type)"></div>
-                    <div class="ni-content">
-                      <div class="ni-title">{{ n.title }}</div>
-                      <div class="ni-message">{{ n.message }}</div>
+                  <div
+                    v-for="n in group"
+                    :key="n.id"
+                    class="notification-item"
+                    :class="['priority-' + getPriorityClass(n.type), { 'is-virtual': n.is_virtual }]"
+                    @click="handleNotificationAction(n)"
+                  >
+                    <div class="ni-icon">
+                      <el-icon><WarningFilled /></el-icon>
                     </div>
+                    <div class="ni-content">
+                      <div class="ni-title-row">
+                        <div class="ni-title">{{ n.title }}</div>
+                        <span class="ni-module">{{ getNotificationModule(n) }}</span>
+                      </div>
+                      <div class="ni-message">{{ n.message }}</div>
+                      <div class="ni-meta">
+                        <span>{{ formatNotificationTime(n.created_at) }}</span>
+                        <span v-if="getInactiveLabel(n)">{{ getInactiveLabel(n) }}</span>
+                        <span v-if="n.data?.order_number">{{ n.data.order_number }}</span>
+                      </div>
+                    </div>
+                    <span class="ni-arrow">›</span>
                   </div>
                 </div>
               </el-scrollbar>
             </div>
           </el-popover>
-
           <el-button circle link><el-icon><ChatDotRound /></el-icon></el-button>
           
           <el-dropdown @command="handleCommand">
@@ -404,7 +436,7 @@ const currentCallTask = ref(null)
 const groupedNotifications = computed(() => {
   const groups = {}
   notificationStore.notifications.forEach(n => {
-    const d = new Date(n.created_at).toLocaleDateString()
+    const d = formatNotificationGroup(n.created_at)
     if (!groups[d]) groups[d] = []
     groups[d].push(n)
   })
@@ -412,14 +444,60 @@ const groupedNotifications = computed(() => {
 })
 
 const getPriorityClass = (type) => {
-  if (['CALL', 'DEADLINE_OVERDUE'].includes(type)) return 'red'
-  if (['DEADLINE_SOON', 'STALE_LEAD'].includes(type)) return 'yellow'
+  if (['CALL', 'DEADLINE_OVERDUE', 'SLA_CRITICAL', 'SLA_OVERDUE'].includes(type)) return 'red'
+  if (['DEADLINE_SOON', 'STALE_LEAD', 'CRM_TASK', 'NO_ACTIVITY'].includes(type)) return 'yellow'
   return 'blue'
+}
+
+const notificationStats = computed(() => {
+  const items = notificationStore.notifications
+  return {
+    total: items.length,
+    crm: items.filter(n => getNotificationModule(n) === 'CRM').length,
+    critical: items.filter(n => getPriorityClass(n.type) === 'red').length,
+    stale: items.filter(n => getInactiveLabel(n)).length,
+  }
+})
+
+const getNotificationModule = (n) => {
+  return n.data?.module || n.source?.toUpperCase?.() || (n.data?.order_id ? 'CRM' : 'ERP')
+}
+
+const formatNotificationGroup = (dateValue) => {
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) return 'Без дати'
+
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+
+  if (date.toDateString() === today.toDateString()) return 'Сьогодні'
+  if (date.toDateString() === yesterday.toDateString()) return 'Вчора'
+
+  return date.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const formatNotificationTime = (dateValue) => {
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+}
+
+const getInactiveLabel = (n) => {
+  const date = new Date(n.created_at)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const staleTypes = ['CALL', 'STALE_LEAD', 'CRM_TASK', 'NO_ACTIVITY', 'SLA_CRITICAL', 'SLA_OVERDUE']
+  if (!staleTypes.includes(n.type)) return ''
+
+  const hours = Math.max(1, Math.floor((Date.now() - date.getTime()) / 36e5))
+  return `без дії ${hours} год`
 }
 
 const handleNotificationAction = (n) => {
   if (n.type === 'CALL') {
-    currentCallTask.value = { id: n.data.task_id, order_id: n.data.real_order_id, client_phone: n.data.client_phone }
+    currentCallTask.value = { id: n.data?.task_id, order_id: n.data?.real_order_id, client_phone: n.data?.client_phone }
     callDialogVisible.value = true
   } else if (n.data?.order_id) {
     router.push({ name: 'crm-order-edit', params: { id: n.data.order_id } })
@@ -712,10 +790,18 @@ watch(globalSearchQuery, () => {
 }
 
 .header-badge :deep(.el-badge__content) {
-  top: 10px !important;
-  right: 10px !important;
-  transform: scale(0.8) translate(50%, -50%);
+  top: 7px !important;
+  right: 7px !important;
+  transform: scale(0.78) translate(50%, -50%);
   border: 2px solid #FFF;
+  background: #EF4444;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+}
+
+.notification-trigger.has-notifications {
+  color: #2563EB;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
 }
 
 .user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px 8px; border-radius: 12px; transition: background 0.2s; }
@@ -726,16 +812,208 @@ watch(globalSearchQuery, () => {
 
 .tax-limit-warning-banner { background: #FDECEE; color: #EF4444; padding: 8px 24px; font-size: 13px; display: flex; align-items: center; }
 
-.notification-panel { padding: 12px; }
-.notification-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.notification-item { padding: 8px; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
-.notification-item:hover { background: #F8FAFC; }
-.ni-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
-.priority-red { background: #EF4444; }
-.priority-yellow { background: #F59E0B; }
-.priority-blue { background: #3B82F6; }
-.ni-title { font-weight: 700; font-size: 13px; }
-.ni-message { font-size: 12px; color: var(--erp-text-muted); }
+.notification-panel {
+  padding: 14px;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #EEF2F7;
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.notification-header p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.notification-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.notification-summary span {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #E6ECF3;
+  border-radius: 12px;
+  background: #F8FAFC;
+  color: #64748B;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.notification-summary strong {
+  color: #0F172A;
+  font-size: 14px;
+}
+
+.notification-scroll {
+  margin: 0 -4px;
+}
+
+.notification-group + .notification-group {
+  margin-top: 10px;
+}
+
+.group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 4px 6px;
+  background: #FFF;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.notification-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 14px;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 4px 0;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.notification-item:hover {
+  background: #F8FAFC;
+  border-color: #E6ECF3;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.ni-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.notification-item.priority-red .ni-icon {
+  background: #FEF2F2;
+  color: #EF4444;
+}
+
+.notification-item.priority-yellow .ni-icon {
+  background: #FFF7ED;
+  color: #F59E0B;
+}
+
+.notification-item.priority-blue .ni-icon {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.ni-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ni-title {
+  min-width: 0;
+  font-weight: 800;
+  font-size: 13px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ni-module {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ni-message {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.38;
+  color: #64748B;
+}
+
+.ni-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ni-meta span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #F1F5F9;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.notification-item.priority-red .ni-meta span:nth-child(2),
+.notification-item.priority-yellow .ni-meta span:nth-child(2) {
+  background: #FFF7ED;
+  color: #B45309;
+}
+
+.ni-arrow {
+  color: #CBD5E1;
+  font-size: 20px;
+  line-height: 34px;
+}
+
+.empty-notifications {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 34px 18px;
+  color: #64748B;
+  text-align: center;
+  font-size: 13px;
+}
+
+.empty-notifications strong {
+  color: #0F172A;
+}
+
+.empty-bell {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #F8FAFC;
+  color: #64748B;
+}
 
 .main-content { padding: 0; }
 .view-container {
@@ -744,3 +1022,4 @@ watch(globalSearchQuery, () => {
   min-height: 100%;
 }
 </style>
+

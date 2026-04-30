@@ -12,19 +12,8 @@
     />
 
     <div class="crm-toolbar-row">
-      <CrmAttentionPanel
-        :attention-orders="attentionOrders"
-        :attention-expanded="attentionExpanded"
-        :attention-only="filters.attentionOnly"
-        :get-attention-reasons="getAttentionReasons"
-        @update:attention-expanded="attentionExpanded = $event"
-        @update:attention-only="filters.attentionOnly = $event"
-        @open-order="openEditor"
-      />
-
       <transition name="toolbar-fade">
         <CrmBoardToolbar
-          v-if="!attentionExpanded"
           :users="users"
           :filters="filters"
           :search-query="searchQuery"
@@ -198,7 +187,6 @@ import ClientProfile from '@/views/CRM/ClientProfile.vue'
 import CrmBoardHeader from './components/CrmBoardHeader.vue'
 import CrmBoardToolbar from './components/CrmBoardToolbar.vue'
 import CrmSummaryCards from './components/CrmSummaryCards.vue'
-import CrmAttentionPanel from './components/CrmAttentionPanel.vue'
 import CrmKanbanColumn from './components/CrmKanbanColumn.vue'
 
 const clientProfileVisible = ref(false)
@@ -307,7 +295,6 @@ const todayTasks = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const slaStatus = ref({})
-const attentionExpanded = ref(false)
 
 const currentUser = computed(() => userStore.user || {})
 const currentUserId = computed(() => currentUser.value?.id || null)
@@ -388,24 +375,6 @@ const paymentProgress = computed(() => {
   if (!orders.value.length) return 0
   const paidCount = orders.value.filter(order => order.payment_status === 'paid').length
   return Math.round((paidCount / orders.value.length) * 100)
-})
-
-const attentionOrders = computed(() => {
-  return orders.value
-    .filter(order => {
-      // Only count 'Needs Attention' for active sales stages (New, Payment)
-      // or if there are critical issues like overdue deadlines in other stages
-      const reasons = getAttentionReasons(order)
-      if (reasons.length === 0) return false
-      
-      const stage = order.crm_stage || 'new'
-      if (['new', 'payment'].includes(stage)) return true
-      
-      // For other stages, only count if there's a critical reason (like overdue deadline)
-      return reasons.some(r => r.level === 'critical')
-    })
-    .slice()
-    .sort((a, b) => getAttentionScore(b) - getAttentionScore(a))
 })
 
 const stageShare = (stage) => {

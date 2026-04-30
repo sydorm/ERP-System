@@ -282,7 +282,7 @@
                   {{ modelValue.is_active ? 'Активний' : 'В архіві' }}
                 </span>
               </div>
-              <el-switch v-model="modelValue.is_active" active-color="#10b981" />
+              <el-switch v-model="modelValue.is_active" active-color="#15B97A" />
             </div>
 
             <div class="side-toggle">
@@ -292,7 +292,7 @@
                   {{ modelValue.track_inventory ? 'Ведеться' : 'Не ведеться' }}
                 </span>
               </div>
-              <el-switch v-model="modelValue.track_inventory" active-color="#10b981" />
+              <el-switch v-model="modelValue.track_inventory" active-color="#15B97A" />
             </div>
 
             <el-form-item class="mt-3">
@@ -557,7 +557,7 @@ const handleImageChange = async (event) => {
 
 .ai-action-btn {
   font-size: 12px;
-  color: #6366f1;
+  color: #1463FF;
   font-weight: 600;
   padding: 0;
 }
@@ -610,9 +610,9 @@ const handleImageChange = async (event) => {
 .modern-input :deep(.el-input__wrapper.is-focus),
 .modern-select :deep(.el-select__wrapper.is-focused),
 .modern-textarea :deep(.el-textarea__inner:focus) {
-  border-color: #6366f1 !important;
+  border-color: #1463FF !important;
   background-color: #ffffff !important;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+  box-shadow: 0 0 0 4px rgba(20, 99, 255, 0.1) !important;
 }
 
 /* Physical params list */
@@ -653,9 +653,9 @@ const handleImageChange = async (event) => {
 }
 
 .modern-radios :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: #6366f1 !important;
+  background: #1463FF !important;
   color: #ffffff !important;
-  border-color: #6366f1 !important;
+  border-color: #1463FF !important;
 }
 
 .calc-settings {
@@ -780,7 +780,7 @@ const handleImageChange = async (event) => {
   font-size: 11px;
   font-weight: 500;
 }
-.toggle-desc.active { color: #10b981; }
+.toggle-desc.active { color: #15B97A; }
 .toggle-desc.inactive { color: #94a3b8; }
 
 /* AI Card */
