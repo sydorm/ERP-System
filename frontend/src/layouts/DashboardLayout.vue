@@ -371,17 +371,35 @@ onBeforeUnmount(() => {
 .custom-sidebar-menu :deep(.el-menu-item),
 .custom-sidebar-menu :deep(.el-sub-menu__title) {
   color: var(--erp-sidebar-text) !important;
-  margin: 2px 12px;
+  margin: 4px 12px;
   border-radius: 10px;
-  height: 40px;
+  height: 44px;
+  line-height: 44px;
   font-size: 14px;
   font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.custom-sidebar-menu :deep(.el-icon) {
+  font-size: 20px;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
 }
 
 .custom-sidebar-menu :deep(.el-menu-item.is-active) {
   background-color: var(--erp-sidebar-active-bg) !important;
   color: var(--erp-primary) !important;
   font-weight: 600;
+}
+
+.custom-sidebar-menu :deep(.el-menu-item.is-active .el-icon) {
+  transform: scale(1.1);
+}
+
+.custom-sidebar-menu :deep(.el-menu-item:hover),
+.custom-sidebar-menu :deep(.el-sub-menu__title:hover) {
+  background-color: var(--erp-bg-surface-soft) !important;
+  color: var(--erp-primary) !important;
 }
 
 .sidebar-bottom { border-top: 1px solid var(--erp-sidebar-border); padding: 12px 0; }
@@ -414,11 +432,19 @@ onBeforeUnmount(() => {
 .global-search-box input { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; }
 .search-shortcut { font-size: 11px; color: var(--erp-text-muted); border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px 5px; background: #FFF; }
 
-.header-right { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.header-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 
-.user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.header-badge :deep(.el-badge__content) {
+  top: 10px !important;
+  right: 10px !important;
+  transform: scale(0.8) translate(50%, -50%);
+  border: 2px solid #FFF;
+}
+
+.user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 4px 8px; border-radius: 12px; transition: background 0.2s; }
+.user-profile:hover { background: var(--erp-bg-surface-soft); }
 .user-meta { text-align: right; }
-.user-name { font-size: 13px; font-weight: 700; color: var(--erp-text-heading); }
+.user-name { font-size: 13px; font-weight: 700; color: var(--erp-text-heading); line-height: 1.2; }
 .user-role { font-size: 11px; color: var(--erp-text-muted); }
 
 .tax-limit-warning-banner { background: #FDECEE; color: #EF4444; padding: 8px 24px; font-size: 13px; display: flex; align-items: center; }

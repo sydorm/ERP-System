@@ -1,6 +1,6 @@
 <template>
   <div class="purchases-layout">
-    <div class="tabs-container">
+    <div class="module-nav-wrapper">
       <el-tabs v-model="activeTab" @tab-click="handleTabClick" class="purchases-tabs">
         <el-tab-pane label="Замовлення" name="orders" />
         <el-tab-pane label="Планування" name="planning" />
@@ -48,23 +48,47 @@ onMounted(updateActiveTab)
   height: 100%;
 }
 
-.tabs-container {
-  background: white;
-  padding: 0 20px;
-  border-bottom: 1px solid #e4e7ed;
+.module-nav-wrapper {
+  background: transparent;
+  padding: 0 24px;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
 }
 
 .purchases-tabs :deep(.el-tabs__header) {
   margin-bottom: 0;
+  border-bottom: none;
 }
 
 .purchases-tabs :deep(.el-tabs__nav-wrap::after) {
   display: none;
 }
 
+.purchases-tabs :deep(.el-tabs__item) {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--erp-text-secondary);
+  height: 48px;
+  line-height: 48px;
+  transition: all 0.2s;
+}
+
+.purchases-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--erp-primary);
+  font-weight: 700;
+}
+
+.purchases-tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--erp-primary);
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
 .purchases-content {
   flex: 1;
   overflow-y: auto;
+  background-color: var(--erp-bg-page);
 }
 
 .fade-enter-active,

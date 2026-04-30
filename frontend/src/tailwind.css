@@ -6,46 +6,43 @@
   /* SaaS ERP 2026 Design Tokens */
   --erp-primary: #1463FF;
   --erp-primary-hover: #0F56E8;
-  --erp-primary-light: #F1F6FF;
+  --erp-primary-light: #EAF2FF;
   
-  --erp-bg-page: #F8FAFC;
+  --erp-bg-page: #F5F8FC;
   --erp-bg-card: #FFFFFF;
+  --erp-bg-surface-soft: #F8FAFD;
   
   /* Sidebar (Nexora Style) */
   --erp-sidebar-bg: #F9FBFF;
   --erp-sidebar-border: #E6ECF3;
   --erp-sidebar-active-bg: #F1F6FF;
-  --erp-sidebar-text: #64748B;
+  --erp-sidebar-text: #5F6C7B;
   --erp-sidebar-active-text: #1463FF;
   
-  --erp-text-main: #334155;
-  --erp-text-heading: #0F172A;
-  --erp-text-muted: #94A3B8;
+  /* Typography */
+  --erp-text-heading: #0F1724;
+  --erp-text-primary: #1B2430;
+  --erp-text-secondary: #5F6C7B;
+  --erp-text-muted: #A8B3C2;
   
   /* Status Colors */
-  --erp-status-success: #10B981;
+  --erp-status-success: #15B97A;
+  --erp-status-success-bg: #E9FBF3;
   --erp-status-warning: #F59E0B;
-  --erp-status-danger: #EF4444;
-  --erp-status-info: #3B82F6;
-  --erp-status-neutral: #94A3B8;
+  --erp-status-warning-bg: #FFF4DD;
+  --erp-status-danger: #F04452;
+  --erp-status-danger-bg: #FDECEE;
+  --erp-status-info: #7C4DFF;
+  --erp-status-info-bg: #F1EBFF;
+  --erp-status-neutral: #A8B3C2;
   
   /* Geometry */
   --erp-radius-kpi: 16px;
   --erp-radius-card: 14px;
+  --erp-radius-input: 10px;
   --erp-radius-btn: 10px;
   
   /* Shadows */
-  --erp-shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
-  
-  /* Spacing Scale */
-  --erp-space-1: 4px;
-  --erp-space-2: 8px;
-  --erp-space-3: 12px;
-  --erp-space-4: 16px;
-  --erp-space-5: 20px;
-  --erp-space-6: 24px;
-  --erp-space-8: 32px;
-  
   --erp-shadow-soft: 0 6px 18px rgba(16, 24, 40, 0.04);
   --erp-shadow-hover: 0 12px 24px rgba(16, 24, 40, 0.08);
   --erp-border: #E6ECF3;
