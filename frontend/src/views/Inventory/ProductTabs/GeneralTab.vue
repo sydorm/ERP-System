@@ -275,7 +275,13 @@
                 <el-option v-for="opt in uomOptions" :key="opt.code" :label="opt.name" :value="opt.code" />
               </el-select>
             </el-form-item>
-
+            <div class="side-toggle">
+              <div class="toggle-meta">
+                <span class="toggle-title">Статус</span>
+                <span class="toggle-desc" :class="modelValue.is_active ? 'active' : 'inactive'">
+                  {{ modelValue.is_active ? 'Активний' : 'В архіві' }}
+                </span>
+              </div>
               <el-switch v-model="modelValue.is_active" active-color="#10b981" />
             </div>
 
