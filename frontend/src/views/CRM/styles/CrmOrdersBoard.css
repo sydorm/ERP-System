@@ -7,15 +7,16 @@
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ Page в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-board-page {
   background: var(--erp-bg-page, #F5F8FC);
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  padding: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ Sticky workbar в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-sticky-workbar {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 100;
   background: rgba(245, 248, 252, 0.98);
   backdrop-filter: blur(20px);
@@ -23,6 +24,12 @@
   padding: 10px 24px 8px;
   margin-bottom: 0;
   box-shadow: 0 3px 14px rgba(15, 23, 42, 0.06);
+}
+
+.crm-board-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ Header в”Ђв”Ђв”Ђв”Ђв”Ђ */
@@ -394,8 +401,7 @@
   padding: 10px 24px 18px;
   align-items: stretch;
   scroll-snap-type: x proximity;
-  height: calc(100vh - 184px);
-  min-height: 500px;
+  height: 100%;
   box-sizing: border-box;
 }
 
