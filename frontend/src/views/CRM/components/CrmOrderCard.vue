@@ -63,42 +63,13 @@
       <span v-else-if="slaLevel === 'critical' || slaLevel === 'urgent'" class="sla-badge sla-critical">🔴 {{ slaHours }} год</span>
     </div>
 
-    <template v-if="['new', 'payment'].includes(order.crm_stage)">
-      <div v-if="attentionReason" class="card-next-action" :class="attentionClass">
-        <el-icon><Bell /></el-icon>
-        <span>{{ attentionReason }}</span>
-      </div>
-
-      <div class="next-contact-chip" :class="getNextContactClass(order)">
-        <el-icon><Clock /></el-icon>
-        <span>{{ getNextContactLabel(order) }}</span>
-      </div>
-    </template>
-
-    <div class="card-divider"></div>
-
-    <div class="card-last-contact" v-if="order.last_contact">
-      <el-icon v-if="isReminderToday(order.next_contact_at)" class="contact-channel-icon reminder"><Bell /></el-icon>
-      <el-icon v-else class="contact-channel-icon" :class="order.last_contact.communication_type">
-        <component :is="getChannelIcon(order.last_contact.communication_type)" />
-      </el-icon>
-      <span class="contact-result" :class="order.last_contact.result">
-        {{ getContactResultLabel(order.last_contact.result) }}
-      </span>
-      <span class="contact-time">{{ formatRelativeTime(order.last_contact.contacted_at) }}</span>
-    </div>
-
-    <el-tooltip :content="managerName" placement="top">
-      <div class="card-manager-row">
-        <span class="manager-label">Менеджер:</span>
-        <span class="manager-name">{{ managerName }}</span>
-      </div>
-    </el-tooltip>
-
-    <!-- Actions toggle bar -->
+    <!-- Toggle bar — always visible -->
     <div class="card-actions-bar" @click.stop="actionsOpen = !actionsOpen">
       <el-icon class="actions-chevron" :class="{ 'is-open': actionsOpen }"><ArrowDown /></el-icon>
-      <span class="actions-bar-label">Дії</span>
+      <span class="actions-bar-label">
+        <span v-if="attentionReason && !actionsOpen" class="actions-bar-alert">⚠</span>
+        Деталі та дії
+      </span>
       <div class="actions-channel-preview">
         <span class="ch-dot ch-phone" />
         <span class="ch-dot ch-viber" />
@@ -107,41 +78,76 @@
       </div>
     </div>
 
-    <!-- Expandable icon row -->
+    <!-- Expandable: details + icons -->
     <transition name="actions-slide">
-      <div v-if="actionsOpen" class="card-footer-new" @click.stop>
-        <div class="card-comm-channels">
-          <el-tooltip content="Подзвонити" placement="top">
-            <span class="channel-icon phone" @click.stop="$emit('comm', order, 'phone')"><el-icon><Phone /></el-icon></span>
-          </el-tooltip>
-          <el-tooltip content="Viber / коментар" placement="top">
-            <span class="channel-icon viber" @click.stop="$emit('comm', order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
-          </el-tooltip>
-          <el-tooltip content="Telegram" placement="top">
-            <span class="channel-icon telegram" @click.stop="$emit('comm', order, 'telegram')"><el-icon><Promotion /></el-icon></span>
-          </el-tooltip>
-          <el-tooltip content="Instagram" placement="top">
-            <span class="channel-icon instagram" @click.stop="$emit('comm', order, 'instagram')"><el-icon><Camera /></el-icon></span>
-          </el-tooltip>
+      <div v-if="actionsOpen" class="card-detail-section" @click.stop>
+
+        <template v-if="['new', 'payment'].includes(order.crm_stage)">
+          <div v-if="attentionReason" class="card-next-action" :class="attentionClass">
+            <el-icon><Bell /></el-icon>
+            <span>{{ attentionReason }}</span>
+          </div>
+          <div class="next-contact-chip" :class="getNextContactClass(order)">
+            <el-icon><Clock /></el-icon>
+            <span>{{ getNextContactLabel(order) }}</span>
+          </div>
+        </template>
+
+        <div class="card-last-contact" v-if="order.last_contact">
+          <el-icon v-if="isReminderToday(order.next_contact_at)" class="contact-channel-icon reminder"><Bell /></el-icon>
+          <el-icon v-else class="contact-channel-icon" :class="order.last_contact.communication_type">
+            <component :is="getChannelIcon(order.last_contact.communication_type)" />
+          </el-icon>
+          <span class="contact-result" :class="order.last_contact.result">
+            {{ getContactResultLabel(order.last_contact.result) }}
+          </span>
+          <span class="contact-time">{{ formatRelativeTime(order.last_contact.contacted_at) }}</span>
         </div>
-        <div class="card-meta-right">
-          <el-tooltip content="Підказка по заявці" placement="top">
-            <CrmAiHintPopover :hints="orderHints" />
-          </el-tooltip>
-          <el-dropdown trigger="click" @command="(cmd) => $emit('cardCommand', cmd, order)" @click.stop>
-            <button class="card-more-btn" @click.stop>
-              <el-icon><MoreFilled /></el-icon>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
-                <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
-                <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
-                <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+
+        <el-tooltip :content="managerName" placement="top">
+          <div class="card-manager-row">
+            <span class="manager-label">Менеджер:</span>
+            <span class="manager-name">{{ managerName }}</span>
+          </div>
+        </el-tooltip>
+
+        <div class="card-divider" />
+
+        <div class="card-footer-new">
+          <div class="card-comm-channels">
+            <el-tooltip content="Подзвонити" placement="top">
+              <span class="channel-icon phone" @click.stop="$emit('comm', order, 'phone')"><el-icon><Phone /></el-icon></span>
+            </el-tooltip>
+            <el-tooltip content="Viber / коментар" placement="top">
+              <span class="channel-icon viber" @click.stop="$emit('comm', order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
+            </el-tooltip>
+            <el-tooltip content="Telegram" placement="top">
+              <span class="channel-icon telegram" @click.stop="$emit('comm', order, 'telegram')"><el-icon><Promotion /></el-icon></span>
+            </el-tooltip>
+            <el-tooltip content="Instagram" placement="top">
+              <span class="channel-icon instagram" @click.stop="$emit('comm', order, 'instagram')"><el-icon><Camera /></el-icon></span>
+            </el-tooltip>
+          </div>
+          <div class="card-meta-right">
+            <el-tooltip content="Підказка по заявці" placement="top">
+              <CrmAiHintPopover :hints="orderHints" />
+            </el-tooltip>
+            <el-dropdown trigger="click" @command="(cmd) => $emit('cardCommand', cmd, order)" @click.stop>
+              <button class="card-more-btn" @click.stop>
+                <el-icon><MoreFilled /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
+                  <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
+                  <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
+                  <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
+
       </div>
     </transition>
   </div>
@@ -242,6 +248,19 @@ const actionsOpen = ref(false)
 .ch-dot.ch-viber    { background: #8B5CF6; }
 .ch-dot.ch-telegram { background: #3B82F6; }
 .ch-dot.ch-instagram { background: #EC4899; }
+
+.actions-bar-alert {
+  color: #F59E0B;
+  margin-right: 2px;
+  font-size: 10px;
+}
+
+.card-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
 
 /* ── Slide transition ── */
 .actions-slide-enter-active,
