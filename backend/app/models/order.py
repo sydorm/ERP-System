@@ -74,6 +74,8 @@ class Order(BaseModel):
     # CRM: communication tracking
     contact_attempts = Column(Integer, nullable=False, default=0)
     next_contact_at = Column(DateTime, nullable=True)
+    next_contact_channel = Column(String(50), nullable=True)
+    next_contact_comment = Column(Text, nullable=True)
 
     # CRM: notes & media
     internal_notes = Column(Text, nullable=True)

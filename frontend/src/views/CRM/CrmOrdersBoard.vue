@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="crm-board-page">
     <div class="crm-sticky-workbar">
 
@@ -206,8 +206,10 @@
           <span>{{ getAttentionReasons(order).map(r => r.text).join(' · ') }}</span>
         </button>
       </template>
-    </div>
-    </div>
+    </div><!-- /director-attention-strip -->
+    </div><!-- /crm-sticky-workbar -->
+
+    <div class="crm-board-body">
 
     <!-- ===== KANBAN BOARD ===== -->
     <div class="crm-kanban" v-loading="loading">
@@ -1157,13 +1159,13 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-sticky-workbar {
   position: sticky;
   top: 0;
-  z-index: 50;
-  background: rgba(245, 248, 252, 0.96);
-  backdrop-filter: blur(14px);
+  z-index: 100;
+  background: rgba(245, 248, 252, 0.98);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--erp-border, #E6ECF3);
   padding: 14px 24px 12px;
   margin-bottom: 0;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
 }
 
 /* ───── Header ───── */
@@ -1574,10 +1576,11 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   gap: 8px;
   margin-bottom: 12px;
   position: sticky;
-  top: 0;
-  z-index: 5;
-  padding-bottom: 10px;
-  backdrop-filter: blur(10px);
+  top: -12px; /* Pull up to match column padding */
+  z-index: 10;
+  padding: 12px 0 10px;
+  background: inherit;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .crm-col-title-row {
@@ -1599,9 +1602,11 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 
 .crm-col-title {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   color: var(--erp-text-heading, #0F172A);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .crm-col-count-badge {
@@ -2177,4 +2182,38 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 /* ─── end of styles ─── */
 
+.ai-sparkle-btn {
+  background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
+  color: #0D9488;
+  border: 1px solid #99F6E4;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15);
+}
+.ai-sparkle-btn:hover {
+  background: linear-gradient(135deg, #CCFBF1 0%, #99F6E4 100%);
+  transform: scale(1.05);
+}
+
+.manager-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F1F5F9;
+  padding: 2px 8px 2px 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+.card-avatar {
+  width: 20px;
+  height: 20px;
+  background: #3D3AA8;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+}
 </style>

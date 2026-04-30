@@ -60,6 +60,8 @@ class OrderBase(BaseModel):
     deadline_date: Optional[date] = None
     next_contact_date: Optional[date] = None
     next_contact_at: Optional[datetime] = None
+    next_contact_channel: Optional[str] = Field(None, max_length=50)
+    next_contact_comment: Optional[str] = None
 
     priority: str = Field(default="normal", max_length=20)
     priority_id: Optional[UUID] = None
@@ -108,6 +110,8 @@ class OrderUpdate(BaseModel):
     deadline_date: Optional[date] = None
     next_contact_date: Optional[date] = None
     next_contact_at: Optional[datetime] = None
+    next_contact_channel: Optional[str] = Field(None, max_length=50)
+    next_contact_comment: Optional[str] = None
     priority: Optional[str] = Field(None, max_length=20)
     priority_id: Optional[UUID] = None
     manager_id: Optional[UUID] = None
