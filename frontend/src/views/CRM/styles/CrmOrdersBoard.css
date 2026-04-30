@@ -450,10 +450,8 @@
 .crm-kanban .kanban-column:nth-child(5) { background: #F4FDF8; }
 
 .kanban-column {
-  flex-shrink: 0;
-  flex: 1;
-  min-width: 274px;
-  max-width: 320px;
+  flex: 1 1 0;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
   height: 100%;
