@@ -1,24 +1,20 @@
 <template>
   <div class="purchase-orders-page">
+
+    <!-- ===== PAGE HEADER (only "+ Нове замовлення") ===== -->
     <div class="page-header">
       <div class="header-left">
         <h1 class="page-title">Замовлення постачальникам</h1>
         <p class="page-subtitle">Контроль закупівель матеріалів, оплат і очікуваних поставок</p>
       </div>
       <div class="header-actions">
-        <el-button class="btn-outline" @click="handleExport">
-          <el-icon><Download /></el-icon> Експорт
-        </el-button>
-        <el-button class="btn-secondary" @click="openNeedsDrawer">
-          <el-icon><Box /></el-icon> Створити з потреб
-        </el-button>
         <el-button type="primary" class="btn-primary" @click="handleCreate">
           <el-icon><Plus /></el-icon> Нове замовлення
         </el-button>
       </div>
     </div>
 
-    <!-- KPI Analytics Cards -->
+    <!-- ===== KPI Analytics Cards ===== -->
     <div class="kpi-grid">
       <div v-for="kpi in kpiCards" :key="kpi.label" class="kpi-card">
         <div class="kpi-icon-badge" :style="{ backgroundColor: kpi.bg, color: kpi.color }">
@@ -42,66 +38,134 @@
       </div>
     </div>
 
-    <!-- Filter Panel -->
+    <!-- ===== FILTER TOOLBAR ===== -->
     <div class="filter-toolbar">
       <div class="filter-main-row">
+
+        <!-- Search -->
         <div class="search-field">
           <el-icon><Search /></el-icon>
-          <input 
+          <input
             ref="searchInputRef"
-            type="text" 
-            v-model="filters.search" 
-            placeholder="Пошук за номером, постачальником..." 
+            type="text"
+            v-model="filters.search"
+            placeholder="Пошук за номером, постачальником..."
           />
         </div>
-        
-        <el-select v-model="filters.status" placeholder="Статус" clearable class="filter-select">
-          <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
-        </el-select>
 
-        <el-select v-model="filters.supplierId" placeholder="Постачальник" clearable filterable class="filter-select-wide">
-          <el-option v-for="s in suppliers" :key="s.id" :label="s.name" :value="s.id" />
-        </el-select>
+        <!-- Export -->
+        <el-button class="toolbar-btn" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          <span class="btn-label">Експорт</span>
+        </el-button>
 
-        <el-select v-model="filters.payment" placeholder="Оплата" clearable class="filter-select">
-          <el-option v-for="p in paymentOptions" :key="p.value" :label="p.label" :value="p.value" />
-        </el-select>
-
-        <el-date-picker
-          v-model="filters.expectedDate"
-          type="date"
-          value-format="YYYY-MM-DD"
-          placeholder="Дата доставки"
-          class="filter-date-picker"
-        />
+        <!-- Create from needs -->
+        <el-button class="toolbar-btn" @click="openNeedsDrawer">
+          <el-icon><Box /></el-icon>
+          <span class="btn-label">З потреб</span>
+        </el-button>
 
         <div class="filter-divider"></div>
 
-        <div class="toggle-chips">
-          <div 
-            class="toggle-chip" 
-            :class="{ active: filters.onlyOverdue }"
-            @click="filters.onlyOverdue = !filters.onlyOverdue"
-          >
-            Прострочені
-          </div>
-          <div 
-            class="toggle-chip" 
-            :class="{ active: filters.onlyNotReceived }"
-            @click="filters.onlyNotReceived = !filters.onlyNotReceived"
-          >
-            Неотримані
-          </div>
-        </div>
+        <!-- Filters popover -->
+        <el-popover
+          v-model:visible="filtersPopoverVisible"
+          placement="bottom-start"
+          :width="360"
+          trigger="click"
+          popper-class="filters-popover"
+        >
+          <template #reference>
+            <el-badge :value="activeFiltersCount" :hidden="activeFiltersCount === 0" class="filter-badge">
+              <el-button class="toolbar-btn filters-btn" :class="{ 'filters-active': activeFiltersCount > 0 }">
+                <el-icon><Filter /></el-icon>
+                <span class="btn-label">Фільтри</span>
+              </el-button>
+            </el-badge>
+          </template>
 
-        <div class="filter-actions">
-          <el-button link class="btn-clear" v-if="hasActiveFilters" @click="resetFilters">Очистити</el-button>
-          <el-button circle @click="fetchOrders" class="btn-icon-action">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-          <el-button circle class="btn-icon-action">
-            <el-icon><Setting /></el-icon>
-          </el-button>
+          <!-- Popover content -->
+          <div class="filters-panel">
+            <div class="filters-panel-title">Фільтри</div>
+
+            <div class="fp-row">
+              <label>Статус</label>
+              <el-select v-model="filters.status" placeholder="Будь-який" clearable style="width:100%">
+                <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
+              </el-select>
+            </div>
+
+            <div class="fp-row">
+              <label>Постачальник</label>
+              <el-select v-model="filters.supplierId" placeholder="Будь-який" clearable filterable style="width:100%">
+                <el-option v-for="s in suppliers" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
+            </div>
+
+            <div class="fp-row">
+              <label>Оплата</label>
+              <el-select v-model="filters.payment" placeholder="Будь-яка" clearable style="width:100%">
+                <el-option v-for="p in paymentOptions" :key="p.value" :label="p.label" :value="p.value" />
+              </el-select>
+            </div>
+
+            <div class="fp-row">
+              <label>Пріоритет</label>
+              <el-select v-model="filters.priority" placeholder="Будь-який" clearable style="width:100%">
+                <el-option v-for="p in priorityOptions" :key="p.value" :label="p.label" :value="p.value" />
+              </el-select>
+            </div>
+
+            <div class="fp-row">
+              <label>Дата доставки</label>
+              <el-date-picker
+                v-model="filters.expectedDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="Оберіть дату"
+                style="width:100%"
+              />
+            </div>
+
+            <div class="fp-toggles">
+              <div class="fp-toggle" :class="{ active: filters.onlyOverdue }" @click="filters.onlyOverdue = !filters.onlyOverdue">
+                <span>Тільки прострочені</span>
+                <div class="fp-toggle-dot" />
+              </div>
+              <div class="fp-toggle" :class="{ active: filters.onlyNotReceived }" @click="filters.onlyNotReceived = !filters.onlyNotReceived">
+                <span>Тільки неотримані</span>
+                <div class="fp-toggle-dot" />
+              </div>
+            </div>
+
+            <div class="fp-footer">
+              <el-button size="small" @click="resetFilters">Скинути</el-button>
+              <el-button size="small" type="primary" @click="filtersPopoverVisible = false">Застосувати</el-button>
+            </div>
+          </div>
+        </el-popover>
+
+        <!-- Refresh -->
+        <el-button class="toolbar-btn icon-only" @click="fetchOrders" title="Оновити">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+
+        <!-- Settings -->
+        <el-button class="toolbar-btn icon-only" title="Налаштування колонок">
+          <el-icon><Setting /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- Active filter chips -->
+      <div class="active-chips" v-if="activeFilterChips.length">
+        <div
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          class="active-chip"
+          @click="clearFilterChip(chip.key)"
+        >
+          {{ chip.label }}
+          <el-icon class="chip-close"><Close /></el-icon>
         </div>
       </div>
     </div>
