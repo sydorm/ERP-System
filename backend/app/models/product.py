@@ -45,7 +45,8 @@ class Product(BaseModel):
     # Pricing
     price = Column(Numeric(15, 2), nullable=False, default=Decimal("0.00"))  # Selling price
     currency = Column(String(3), nullable=False, default="UAH")
-    cost = Column(Numeric(15, 2), nullable=True)  # Purchase cost
+    cost = Column(Numeric(15, 2), nullable=True)  # Purchase cost / Собівартість
+    cost_source = Column(String(200), nullable=True)  # e.g. "Оновлено з PR-00004 від 30.04.2026"
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)

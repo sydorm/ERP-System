@@ -149,6 +149,19 @@ async def create_purchase_receipt(
     
     db.flush()
     
+    # 3а. Update product cost prices BEFORE posting (so stock totals exclude current receipt)
+    from app.services.cost_service import update_product_cost_from_receipt
+    update_product_cost_from_receipt(
+        db=db,
+        company_id=current_user.company_id,
+        receipt_id=receipt.id,
+        receipt_number=receipt.receipt_number,
+        receipt_date=receipt.receipt_date,
+        supplier_id=receipt.supplier_id,
+        lines=db.query(PurchaseReceiptLine).filter(PurchaseReceiptLine.receipt_id == receipt.id).all(),
+        created_by_id=current_user.id,
+    )
+
     # 3. SOP: Register Movements (Posting Logic)
     entries = []
     for line_data in receipt_data.lines:

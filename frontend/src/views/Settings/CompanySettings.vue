@@ -332,6 +332,26 @@
           </el-table>
         </el-tab-pane>
 
+        <el-tab-pane label="Облік" name="accounting" lazy>
+          <div style="padding: 16px 0; max-width: 480px;">
+            <div class="form-section-title">Метод розрахунку собівартості</div>
+            <el-form label-position="top">
+              <el-form-item label="Метод собівартості">
+                <el-select v-model="form.cost_method" style="width: 100%" @change="saveCostMethod">
+                  <el-option label="Не оновлювати автоматично" value="none" />
+                  <el-option label="Остання закупівельна ціна" value="last_price" />
+                  <el-option label="Середньозважена собівартість" value="weighted_average" />
+                </el-select>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">
+                  <span v-if="form.cost_method === 'last_price'">Собівартість товару = ціна останнього надходження.</span>
+                  <span v-else-if="form.cost_method === 'weighted_average'">newCost = (залишок × стара_ціна + кількість × нова_ціна) / (залишок + кількість).</span>
+                  <span v-else>Собівартість не змінюється автоматично при проведенні накладних.</span>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
+
       </el-tabs>
     </el-card>
 
@@ -429,6 +449,7 @@ const form = reactive({
   military_tax_rate: '',
   last_tax_update: '',
   fop_income_limit: null,
+  cost_method: 'last_price',
   bank_accounts: []
 })
 
@@ -571,6 +592,16 @@ const saveSettings = async () => {
     ElMessage.error('Помилка при збереженні')
   } finally {
     saving.value = false
+  }
+}
+
+const saveCostMethod = async () => {
+  if (!form.id) return
+  try {
+    await api.patch('/api/v1/companies/default/cost-method', { cost_method: form.cost_method })
+    ElMessage.success('Метод собівартості збережено')
+  } catch {
+    ElMessage.error('Помилка збереження методу собівартості')
   }
 }
 

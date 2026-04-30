@@ -71,6 +71,9 @@ class Company(BaseModel):
     tax_settings = Column(JSON, nullable=True)             # JSON storage for min_wage, PM, rates, etc.
 
     
+    # Cost price method / Метод собівартості
+    cost_method = Column(String(30), nullable=False, server_default='last_price')  # none | last_price | weighted_average
+
     # Branding / Брендування
     logo_url = Column(String(255), nullable=True)          # Logo URL / Логотип
     stamp_url = Column(String(255), nullable=True)         # Stamp URL / Печатка

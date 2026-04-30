@@ -59,6 +59,9 @@ class CompanyBase(BaseModel):
     is_active: bool = True
     is_default: bool = False
     
+    # Cost price method
+    cost_method: Optional[str] = 'last_price'  # none | last_price | weighted_average
+
     # Branding
     logo_url: Optional[str] = None
     stamp_url: Optional[str] = None

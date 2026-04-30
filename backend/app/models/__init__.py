@@ -30,6 +30,7 @@ from .hr import Department, Employee, EmployeeRole, AttendanceRecord, PayrollTra
 from .brigade import Brigade, BrigadeMember
 from .supplier_price import SupplierPrice
 from .print_template import PrintTemplate
+from .product_cost_history import ProductCostHistory
 
 
 __all__ = [
@@ -96,5 +97,6 @@ __all__ = [
     "SupplierPrice",
     "UserLoginLog",
     "PrintTemplate",
+    "ProductCostHistory",
 ]
 

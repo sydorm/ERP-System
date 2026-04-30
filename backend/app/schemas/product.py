@@ -112,6 +112,7 @@ class ProductResponse(ProductBase):
     """Schema for product response"""
     id: UUID
     company_id: UUID
+    cost_source: Optional[str] = None
     variants: List[ProductVariantResponse] = []
     specifications: List[ProductSpecificationResponse] = []
     price_rule: Optional[ProductPriceRuleResponse] = None

@@ -627,3 +627,49 @@ async def delete_product(
     product.is_deleted = True
     db.commit()
     return None
+
+
+@router.get("/products/{product_id}/cost-history")
+async def get_product_cost_history(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Return the cost price change history for a product."""
+    from app.models.product_cost_history import ProductCostHistory
+    from app.models.counterparty import Counterparty
+
+    rows = (
+        db.query(ProductCostHistory)
+        .filter(
+            ProductCostHistory.product_id == product_id,
+            ProductCostHistory.company_id == current_user.company_id,
+        )
+        .order_by(ProductCostHistory.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    result = []
+    for h in rows:
+        supplier_name = None
+        if h.supplier_id:
+            sup = db.query(Counterparty).filter(Counterparty.id == h.supplier_id).first()
+            if sup:
+                supplier_name = sup.name
+        result.append({
+            "id": str(h.id),
+            "created_at": h.created_at.isoformat() if h.created_at else None,
+            "document_type": h.document_type,
+            "document_id": str(h.document_id),
+            "document_number": h.document_number,
+            "supplier_id": str(h.supplier_id) if h.supplier_id else None,
+            "supplier_name": supplier_name,
+            "old_stock": float(h.old_stock) if h.old_stock is not None else 0,
+            "old_cost": float(h.old_cost) if h.old_cost is not None else None,
+            "incoming_qty": float(h.incoming_qty),
+            "incoming_price": float(h.incoming_price),
+            "new_cost": float(h.new_cost),
+            "method": h.method,
+        })
+    return result
