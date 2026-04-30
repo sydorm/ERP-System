@@ -511,7 +511,8 @@
       :client-id="selectedClientId"
     />
 
-  </div>
+    </div><!-- /crm-board-body -->
+  </div><!-- /crm-board-page -->
 </template>
 
 <script setup>
