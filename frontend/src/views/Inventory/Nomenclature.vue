@@ -501,11 +501,13 @@ onActivated(() => {
   --primary: #1463FF;
 
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  min-height: calc(100vh - 64px);
+  margin: -24px;
+  height: calc(100vh - 64px);
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .top-section {
@@ -514,12 +516,12 @@ onActivated(() => {
   gap: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: rgba(248, 250, 252, 0.8);
+  z-index: 1001;
+  background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(12px);
-  padding: 12px 24px;
+  padding: 12px 24px 8px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 /* AI FLOATING BUTTON */

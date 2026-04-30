@@ -111,17 +111,25 @@ const isAllSelected = computed(() => {
 
 <style scoped>
 .table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  margin-top: 16px;
+  margin: 16px 24px 24px;
   overflow: hidden;
 }
 
 .nom-table {
+  flex: 1;
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .nom-row {
@@ -143,6 +151,9 @@ const isAllSelected = computed(() => {
   background: #F8F9FC;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   height: 42px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .nom-header .nom-cell {
