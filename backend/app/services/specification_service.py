@@ -39,6 +39,19 @@ class SpecificationService:
             
             unit = dim_config.get('unit', 'мм')
             char_name = dim_config.get('char_name')
+            
+            # Global Automation for Proportional
+            if not char_name and item.specification and item.specification.product and item.specification.product.variant_config:
+                vcfg = item.specification.product.variant_config
+                dim_map_vcfg = {'height_mm': 'height', 'width_mm': 'width', 'length_mm': 'length'}
+                g = vcfg.get(dim_map_vcfg.get(dim_key))
+                if g and g.get('source') == 'attribute' and g.get('attr_id'):
+                    potential_names = ['Розмір', 'Розмір (мм)', 'Size']
+                    for p_name in potential_names:
+                        if p_name in custom_attrs:
+                            char_name = p_name
+                            break
+
             if char_name and char_name in custom_attrs:
                 dim_val = float(custom_attrs[char_name])
             
@@ -195,12 +208,28 @@ class SpecificationService:
             
             # Resolve dimension value
             dim_val_raw = physical_val
-            if char_name and char_name in custom_attrs:
-                dim_val_raw = float(custom_attrs[char_name])
+            
+            # Global Automation Check
+            active_char_name = char_name
+            if not active_char_name and item.specification and item.specification.product and item.specification.product.variant_config:
+                vcfg = item.specification.product.variant_config
+                dim_map_vcfg = {'h': 'height', 'w': 'width', 'l': 'length'}
+                g = vcfg.get(dim_map_vcfg.get(key))
+                if g and g.get('source') == 'attribute' and g.get('attr_id'):
+                    # Search for 'Розмір' or similar common names if not explicitly mapped
+                    # In this system, we commonly use names in custom_attrs keys
+                    potential_names = ['Розмір', 'Розмір (мм)', 'Size']
+                    for p_name in potential_names:
+                        if p_name in custom_attrs:
+                            active_char_name = p_name
+                            break
+
+            if active_char_name and active_char_name in custom_attrs:
+                dim_val_raw = float(custom_attrs[active_char_name])
             
             # Normalize dim_val to the unit of interpolation points (config.unit)
             normalized_dim_val = dim_val_raw
-            if not char_name:
+            if not active_char_name:
                 # Product dimensions are in mm. Convert to config.unit
                 if unit == 'см': normalized_dim_val = dim_val_raw / 10.0
                 if unit == 'м': normalized_dim_val = dim_val_raw / 1000.0
@@ -231,10 +260,9 @@ class SpecificationService:
             
             dim_final = count_result
             if is_meters:
-                # If meter unit, countResult is pieces, we need count * dimension_in_meters
-                source_unit = unit if char_name else 'мм'
-                meters = SpecificationService._to_meters(dim_val_raw, source_unit)
-                dim_final = count_result * meters
+                # In interpolation mode, we treat count_result as the final absolute value
+                # (Same as we fixed in the frontend)
+                dim_final = count_result
             
             dim_waste = float(dim_config.get('waste') or 0)
             if dim_waste > 0:

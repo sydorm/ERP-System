@@ -202,9 +202,19 @@ const userStore = useUserStore()
 const orderId   = computed(() => route.params.id !== 'new' ? route.params.id : null)
 const currentUser = computed(() => userStore.user || {})
 const currentUserId = computed(() => currentUser.value?.id || null)
+const getUserDisplayName = (u) => {
+  if (!u) return 'Поточний користувач'
+  return (
+    u.name
+    || u.full_name
+    || [u.firstName || u.first_name, u.lastName || u.last_name].filter(Boolean).join(' ')
+    || u.email
+    || u.username
+    || 'Поточний користувач'
+  )
+}
 const currentUserName = computed(() => {
-  const u = currentUser.value
-  return u?.name || [u?.first_name, u?.last_name].filter(Boolean).join(' ') || u?.email || 'Поточний користувач'
+  return getUserDisplayName(currentUser.value)
 })
 const canReassignManager = computed(() => {
   const u = currentUser.value
@@ -246,8 +256,8 @@ const materialCheck = reactive(createMaterialCheckState())
 const newClient = reactive(createNewClientForm())
 
 const managerOptions = computed(() => {
-  const list = [...users.value]
-  if (currentUserId.value && !list.some(u => u.id === currentUserId.value)) {
+  const list = users.value.map(u => ({ ...u, name: getUserDisplayName(u) }))
+  if (currentUserId.value && !list.some(u => String(u.id) === String(currentUserId.value))) {
     list.unshift({ id: currentUserId.value, name: currentUserName.value })
   }
   return list

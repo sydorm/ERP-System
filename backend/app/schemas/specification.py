@@ -8,9 +8,9 @@ from datetime import datetime
 from enum import Enum
 
 class CalculationDimension(str, Enum):
-    HEIGHT = "height_cm"
-    WIDTH = "width_cm"
-    LENGTH = "length_cm"
+    HEIGHT = "height_mm"
+    WIDTH = "width_mm"
+    LENGTH = "length_mm"
     AREA = "area"
     VOLUME = "volume"
     CUSTOM = "custom"
@@ -162,9 +162,9 @@ class ProductSpecificationResponse(ProductSpecificationBase):
         from_attributes = True
 
 class SpecificationCalculationRequest(BaseModel):
-    width_cm: float
-    height_cm: float
-    length_cm: float
+    width_mm: float
+    height_mm: float
+    length_mm: float
     weight_kg: float = 0.0
     custom_attributes: Optional[Dict[str, float]] = Field(default_factory=dict)
 

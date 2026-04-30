@@ -1,11 +1,22 @@
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from decimal import Decimal, InvalidOperation
+from io import BytesIO, StringIO
+import csv
+import re
+import uuid
+import zipfile
+import xml.etree.ElementTree as ET
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form, Body
+from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.db.session import get_db
 from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType
+from app.models.counterparty import Counterparty
 from app.models.variant import ProductVariant, VariantValue
 from app.models.attribute import Attribute, CategoryAttribute
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductAttributeLight
@@ -13,6 +24,546 @@ from app.api.dependencies import get_current_active_user
 from app.services.posting_service import PostingService
 
 router = APIRouter()
+
+IMPORT_MAX_FILE_SIZE = 10 * 1024 * 1024
+IMPORT_MAX_ROWS = 5000
+IMPORT_PREVIEW_ROWS = 20
+IMPORT_SESSIONS: dict = {}
+IMPORT_REPORTS: dict = {}
+
+IMPORT_FIELDS = [
+    {"key": "name", "label": "Назва товару", "required": True},
+    {"key": "sku", "label": "Артикул / SKU", "recommended": True},
+    {"key": "internal_code", "label": "Внутрішній код"},
+    {"key": "barcode", "label": "Штрихкод"},
+    {"key": "category", "label": "Категорія", "recommended": True},
+    {"key": "product_type", "label": "Тип товару", "recommended": True},
+    {"key": "unit_of_measure", "label": "Одиниця виміру", "required": True},
+    {"key": "description", "label": "Опис"},
+    {"key": "status", "label": "Статус"},
+    {"key": "track_inventory", "label": "Облік запасів"},
+    {"key": "length_mm", "label": "Довжина (мм)"},
+    {"key": "width_mm", "label": "Ширина (мм)"},
+    {"key": "height_mm", "label": "Висота (мм)"},
+    {"key": "weight_kg", "label": "Вага (кг)"},
+    {"key": "price", "label": "Ціна продажу"},
+    {"key": "cost", "label": "Собівартість"},
+    {"key": "currency", "label": "Валюта"},
+    {"key": "supplier_name", "label": "Постачальник"},
+    {"key": "supplier_sku", "label": "Артикул постачальника"},
+    {"key": "supplier_url", "label": "Посилання постачальника"},
+    {"key": "supplier_url_type", "label": "Тип посилання"},
+    {"key": "extra_attributes", "label": "Додаткові характеристики"},
+]
+
+FIELD_ALIASES = {
+    "name": ["назва", "назва товару", "товар", "name", "product name", "найменування"],
+    "sku": ["артикул", "sku", "код товару", "артикул sku"],
+    "internal_code": ["внутрішній код", "internal code", "код"],
+    "barcode": ["штрихкод", "barcode", "ean"],
+    "category": ["категорія", "category", "група"],
+    "product_type": ["тип товару", "тип", "type"],
+    "unit_of_measure": ["одиниця", "одиниця виміру", "од. вим.", "uom", "unit"],
+    "description": ["опис", "description", "коментар"],
+    "status": ["статус", "status", "активний"],
+    "track_inventory": ["облік запасів", "облік", "track inventory", "stock tracking"],
+    "length_mm": ["довжина", "довжина мм", "length", "length mm"],
+    "width_mm": ["ширина", "ширина мм", "width", "width mm"],
+    "height_mm": ["висота", "висота мм", "height", "height mm"],
+    "weight_kg": ["вага", "вага кг", "weight", "weight kg"],
+    "price": ["ціна", "ціна продажу", "price", "sale price"],
+    "cost": ["собівартість", "cost", "закупівельна ціна"],
+    "currency": ["валюта", "currency"],
+    "supplier_name": ["постачальник", "supplier", "supplier name"],
+    "supplier_sku": ["артикул постачальника", "supplier sku"],
+    "supplier_url": ["посилання постачальника", "supplier link", "url", "order url"],
+    "supplier_url_type": ["тип посилання", "url type"],
+    "extra_attributes": ["додаткові характеристики", "характеристики", "attributes"],
+}
+
+
+def _norm(value) -> str:
+    return re.sub(r"[\s_\-./]+", " ", str(value or "").strip().lower())
+
+
+def _to_decimal(value, default=None):
+    if value in (None, ""):
+        return default
+    try:
+        return Decimal(str(value).replace(",", ".").replace(" ", ""))
+    except (InvalidOperation, ValueError):
+        return default
+
+
+def _to_bool(value, default=True):
+    if value in (None, ""):
+        return default
+    text = _norm(value)
+    if text in {"так", "true", "1", "yes", "y", "активний", "active"}:
+        return True
+    if text in {"ні", "false", "0", "no", "n", "неактивний", "inactive"}:
+        return False
+    return default
+
+
+def _normalize_uom(value):
+    text = _norm(value)
+    aliases = {
+        "шт": "шт", "штука": "шт", "штук": "шт", "pcs": "шт", "pc": "шт",
+        "м": "м", "метр": "м", "m": "м",
+        "кг": "кг", "kg": "кг",
+        "л": "л", "l": "л",
+        "м2": "м2", "м 2": "м2", "m2": "м2",
+    }
+    return aliases.get(text, str(value or "").strip() or "шт")
+
+
+def _suggest_mapping(headers):
+    mapping = {}
+    normalized_headers = {_norm(h): h for h in headers}
+    for field, aliases in FIELD_ALIASES.items():
+        for alias in aliases:
+            if _norm(alias) in normalized_headers:
+                mapping[field] = normalized_headers[_norm(alias)]
+                break
+    return mapping
+
+
+def _decode_csv(content: bytes):
+    for enc in ("utf-8-sig", "utf-8", "cp1251"):
+        try:
+            text = content.decode(enc)
+            break
+        except UnicodeDecodeError:
+            text = None
+    if text is None:
+        raise HTTPException(status_code=400, detail="Не вдалося прочитати CSV файл")
+    sample = text[:2048]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=";,|\t,")
+    except csv.Error:
+        dialect = csv.excel
+    return [list(row) for row in csv.reader(StringIO(text), dialect)]
+
+
+def _xlsx_col_index(ref: str) -> int:
+    letters = re.sub(r"[^A-Z]", "", ref.upper())
+    index = 0
+    for char in letters:
+        index = index * 26 + (ord(char) - 64)
+    return max(index - 1, 0)
+
+
+def _read_xlsx(content: bytes):
+    ns = {
+        "m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        "rel": "http://schemas.openxmlformats.org/package/2006/relationships",
+    }
+    sheets_data = {}
+    with zipfile.ZipFile(BytesIO(content)) as zf:
+        shared = []
+        if "xl/sharedStrings.xml" in zf.namelist():
+            root = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+            for si in root.findall("m:si", ns):
+                shared.append("".join(t.text or "" for t in si.findall(".//m:t", ns)))
+
+        workbook = ET.fromstring(zf.read("xl/workbook.xml"))
+        rels = ET.fromstring(zf.read("xl/_rels/workbook.xml.rels"))
+        rel_map = {rel.attrib["Id"]: rel.attrib["Target"] for rel in rels.findall("rel:Relationship", ns)}
+        for sheet in workbook.findall("m:sheets/m:sheet", ns):
+            name = sheet.attrib.get("name", "Лист")
+            rid = sheet.attrib.get(f"{{{ns['r']}}}id")
+            target = rel_map.get(rid, "")
+            sheet_path = "xl/" + target.lstrip("/") if not target.startswith("xl/") else target
+            if sheet_path not in zf.namelist():
+                continue
+            root = ET.fromstring(zf.read(sheet_path))
+            rows = []
+            for row in root.findall(".//m:sheetData/m:row", ns):
+                values = []
+                for cell in row.findall("m:c", ns):
+                    idx = _xlsx_col_index(cell.attrib.get("r", "A1"))
+                    while len(values) <= idx:
+                        values.append("")
+                    cell_type = cell.attrib.get("t")
+                    value_node = cell.find("m:v", ns)
+                    inline_node = cell.find("m:is/m:t", ns)
+                    value = ""
+                    if inline_node is not None:
+                        value = inline_node.text or ""
+                    elif value_node is not None:
+                        raw = value_node.text or ""
+                        value = shared[int(raw)] if cell_type == "s" and raw.isdigit() and int(raw) < len(shared) else raw
+                    values[idx] = value
+                rows.append(values)
+            sheets_data[name] = rows
+    return sheets_data
+
+
+def _rows_to_records(rows):
+    rows = [[str(cell or "").strip() for cell in row] for row in rows if any(str(cell or "").strip() for cell in row)]
+    if not rows:
+        return [], []
+    if len(rows) - 1 > IMPORT_MAX_ROWS:
+        raise HTTPException(status_code=400, detail=f"Забагато рядків у файлі. Ліміт: {IMPORT_MAX_ROWS}.")
+    headers = rows[0]
+    records = []
+    for idx, row in enumerate(rows[1:IMPORT_MAX_ROWS + 1], start=2):
+        record = {"_row_number": idx}
+        for col_idx, header in enumerate(headers):
+            if header:
+                record[header] = row[col_idx] if col_idx < len(row) else ""
+        records.append(record)
+    return headers, records
+
+
+def _parse_import_file(content: bytes, filename: str):
+    lower = filename.lower()
+    if lower.endswith(".csv"):
+        return {"CSV": _decode_csv(content)}
+    if lower.endswith(".xlsx"):
+        return _read_xlsx(content)
+    raise HTTPException(status_code=400, detail="Підтримуються тільки .xlsx та .csv файли")
+
+
+def _mapped_value(row: dict, mapping: dict, field: str):
+    column = mapping.get(field)
+    return row.get(column, "") if column else ""
+
+
+def _build_payload(row: dict, mapping: dict, options: dict):
+    normalize_units = options.get("normalize_units", True)
+    uom = _mapped_value(row, mapping, "unit_of_measure")
+    supplier_name = _mapped_value(row, mapping, "supplier_name")
+    supplier_sku = _mapped_value(row, mapping, "supplier_sku")
+    supplier_url = _mapped_value(row, mapping, "supplier_url")
+    supplier_url_type = _mapped_value(row, mapping, "supplier_url_type") or "Сторінка товару"
+    import_meta = {
+        "internal_code": _mapped_value(row, mapping, "internal_code"),
+        "barcode": _mapped_value(row, mapping, "barcode"),
+        "product_type": _mapped_value(row, mapping, "product_type"),
+        "track_inventory": _to_bool(_mapped_value(row, mapping, "track_inventory"), True),
+        "extra_attributes": _mapped_value(row, mapping, "extra_attributes"),
+    }
+    supplier_links = []
+    if supplier_name or supplier_sku or supplier_url:
+        supplier_links.append({
+            "supplier_name": supplier_name,
+            "supplier_sku": supplier_sku,
+            "order_url": supplier_url,
+            "url_type": supplier_url_type,
+            "is_active": True,
+            "is_default_supplier": True,
+            "note": "Створено імпортом номенклатури",
+        })
+    return {
+        "name": _mapped_value(row, mapping, "name").strip(),
+        "sku": _mapped_value(row, mapping, "sku").strip() or None,
+        "description": _mapped_value(row, mapping, "description") or None,
+        "category": _mapped_value(row, mapping, "category") or None,
+        "unit_of_measure": _normalize_uom(uom) if normalize_units else (uom or "шт"),
+        "price": _to_decimal(_mapped_value(row, mapping, "price"), Decimal("0.00")),
+        "cost": _to_decimal(_mapped_value(row, mapping, "cost")),
+        "currency": (_mapped_value(row, mapping, "currency") or "UAH").upper()[:3],
+        "is_active": _to_bool(_mapped_value(row, mapping, "status"), True),
+        "length_mm": _to_decimal(_mapped_value(row, mapping, "length_mm")),
+        "width_mm": _to_decimal(_mapped_value(row, mapping, "width_mm")),
+        "height_mm": _to_decimal(_mapped_value(row, mapping, "height_mm")),
+        "weight_kg": _to_decimal(_mapped_value(row, mapping, "weight_kg")),
+        "variant_config": {"import_meta": import_meta},
+        "supplier_links": supplier_links or None,
+    }
+
+
+def _find_existing_product(db: Session, company_id, payload: dict, duplicate_keys: List[str]):
+    products = db.query(Product).filter(Product.company_id == company_id, Product.is_deleted == False).all()
+    for product in products:
+        meta = (product.variant_config or {}).get("import_meta", {}) if isinstance(product.variant_config, dict) else {}
+        checks = {
+            "sku": payload.get("sku") and product.sku == payload.get("sku"),
+            "name": payload.get("name") and _norm(product.name) == _norm(payload.get("name")),
+            "internal_code": meta.get("internal_code") and meta.get("internal_code") == payload["variant_config"]["import_meta"].get("internal_code"),
+            "barcode": meta.get("barcode") and meta.get("barcode") == payload["variant_config"]["import_meta"].get("barcode"),
+        }
+        if any(checks.get(key) for key in duplicate_keys):
+            return product
+    return None
+
+
+def _validate_session(import_id: str, mapping: dict, options: dict, duplicate_keys: List[str], db: Session, current_user: User):
+    session = IMPORT_SESSIONS.get(import_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Сесію імпорту не знайдено. Завантажте файл ще раз.")
+    rows = session["records"]
+    result_rows = []
+    summary = {"create": 0, "update": 0, "skip": 0, "warnings": 0, "errors": 0}
+    for row in rows:
+        payload = _build_payload(row, mapping, options)
+        errors = []
+        warnings = []
+        if not payload["name"]:
+            errors.append("Не вказано назву товару")
+        if not payload["unit_of_measure"]:
+            errors.append("Не вказано одиницю виміру")
+        if not payload.get("sku"):
+            warnings.append("Бажано вказати артикул")
+        if not payload.get("category"):
+            warnings.append("Бажано вказати категорію")
+        if payload.get("category") and not options.get("create_missing_categories", False):
+            warnings.append("Категорії автоматично не створюються: буде використано значення з файлу")
+        supplier_name = payload["supplier_links"][0]["supplier_name"] if payload.get("supplier_links") else ""
+        if supplier_name and not options.get("create_missing_suppliers", False):
+            existing_supplier = db.query(Counterparty).filter(
+                Counterparty.company_id == current_user.company_id,
+                Counterparty.is_supplier == True,
+                Counterparty.name.ilike(supplier_name)
+            ).first()
+            if not existing_supplier:
+                warnings.append("Постачальника не знайдено. Посилання збережеться текстом без створення постачальника.")
+
+        existing = None if errors else _find_existing_product(db, current_user.company_id, payload, duplicate_keys)
+        action = "error" if errors else ("update" if existing else "create")
+        if action == "create":
+            summary["create"] += 1
+        elif action == "update":
+            summary["update"] += 1
+        else:
+            summary["skip"] += 1
+            summary["errors"] += len(errors)
+        summary["warnings"] += len(warnings)
+        result_rows.append({
+            "row_number": row["_row_number"],
+            "name": payload.get("name"),
+            "sku": payload.get("sku"),
+            "action": action,
+            "existing_product_id": str(existing.id) if existing else None,
+            "errors": errors,
+            "warnings": warnings,
+            "payload": payload,
+        })
+    session["validation"] = {"summary": summary, "rows": result_rows, "mapping": mapping, "options": options, "duplicate_keys": duplicate_keys}
+    return session["validation"]
+
+
+@router.post("/nomenclature/import/preview")
+async def preview_nomenclature_import(
+    file: UploadFile = File(...),
+    sheet: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    content = await file.read()
+    if len(content) > IMPORT_MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Файл завеликий. Максимальний розмір: 10 MB.")
+    if not file.filename.lower().endswith((".xlsx", ".csv")):
+        raise HTTPException(status_code=400, detail="Підтримуються тільки Excel .xlsx або CSV файли.")
+
+    sheets = _parse_import_file(content, file.filename)
+    sheet_names = list(sheets.keys())
+    selected_sheet = sheet if sheet in sheets else sheet_names[0]
+    headers, records = _rows_to_records(sheets[selected_sheet])
+    if len(records) > IMPORT_MAX_ROWS:
+        raise HTTPException(status_code=400, detail=f"Забагато рядків. Ліміт: {IMPORT_MAX_ROWS}.")
+
+    import_id = str(uuid.uuid4())
+    IMPORT_SESSIONS[import_id] = {
+        "company_id": str(current_user.company_id),
+        "filename": file.filename,
+        "sheets": sheets,
+        "selected_sheet": selected_sheet,
+        "headers": headers,
+        "records": records,
+        "created_at": datetime.utcnow().isoformat(),
+        "validation": None,
+    }
+
+    return {
+        "import_id": import_id,
+        "filename": file.filename,
+        "sheets": sheet_names,
+        "selected_sheet": selected_sheet,
+        "headers": headers,
+        "rows": records[:IMPORT_PREVIEW_ROWS],
+        "row_count": len(records),
+        "fields": IMPORT_FIELDS,
+        "suggested_mapping": _suggest_mapping(headers),
+        "limits": {"max_rows": IMPORT_MAX_ROWS, "max_file_size_mb": 10},
+    }
+
+
+@router.post("/nomenclature/import/validate")
+async def validate_nomenclature_import(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    import_id = body.get("import_id")
+    mapping = body.get("mapping") or {}
+    options = body.get("options") or {}
+    duplicate_keys = body.get("duplicate_keys") or ["sku", "name", "internal_code", "barcode"]
+    if not import_id:
+        raise HTTPException(status_code=400, detail="Не передано import_id")
+    if not mapping.get("name") or not mapping.get("unit_of_measure"):
+        raise HTTPException(status_code=400, detail="Зіставте обов'язкові поля: Назва товару та Одиниця виміру.")
+    validation = _validate_session(import_id, mapping, options, duplicate_keys, db, current_user)
+    return validation
+
+
+@router.post("/nomenclature/import/execute")
+async def execute_nomenclature_import(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    import_id = body.get("import_id")
+    mode = body.get("mode") or "create_update"
+    session = IMPORT_SESSIONS.get(import_id)
+    if not session or not session.get("validation"):
+        raise HTTPException(status_code=400, detail="Перед імпортом потрібно виконати preview та validation.")
+
+    validation = session["validation"]
+    result = {"created": 0, "updated": 0, "skipped": 0, "errors": 0}
+    report_rows = []
+    create_missing_suppliers = validation["options"].get("create_missing_suppliers", False)
+
+    for item in validation["rows"]:
+      try:
+        if item["errors"]:
+            result["skipped"] += 1
+            result["errors"] += len(item["errors"])
+            report_rows.append({**item, "result": "skipped"})
+            continue
+        payload = item["payload"]
+        existing = _find_existing_product(db, current_user.company_id, payload, validation["duplicate_keys"])
+        if existing and mode == "create_only":
+            result["skipped"] += 1
+            report_rows.append({**item, "result": "skipped_existing"})
+            continue
+        if not existing and mode == "update_only":
+            result["skipped"] += 1
+            report_rows.append({**item, "result": "skipped_new"})
+            continue
+
+        supplier_link = payload.get("supplier_links", [None])[0] if payload.get("supplier_links") else None
+        if supplier_link and supplier_link.get("supplier_name"):
+            supplier = db.query(Counterparty).filter(
+                Counterparty.company_id == current_user.company_id,
+                Counterparty.is_supplier == True,
+                Counterparty.name.ilike(supplier_link["supplier_name"])
+            ).first()
+            if not supplier and create_missing_suppliers:
+                supplier = Counterparty(
+                    company_id=current_user.company_id,
+                    name=supplier_link["supplier_name"],
+                    is_customer=False,
+                    is_supplier=True,
+                    is_active=True,
+                )
+                db.add(supplier)
+                db.flush()
+            if supplier:
+                supplier_link["supplier_id"] = str(supplier.id)
+
+        if existing:
+            for field, value in payload.items():
+                if field == "supplier_links" and value:
+                    current_links = existing.supplier_links or []
+                    existing.supplier_links = current_links + [link for link in value if link.get("order_url") or link.get("supplier_sku") or link.get("supplier_name")]
+                elif field == "variant_config" and value:
+                    current_config = existing.variant_config if isinstance(existing.variant_config, dict) else {}
+                    current_config["import_meta"] = value.get("import_meta", {})
+                    existing.variant_config = current_config
+                elif value is not None:
+                    setattr(existing, field, value)
+            result["updated"] += 1
+            report_rows.append({**item, "result": "updated"})
+        else:
+            product = Product(**payload, company_id=current_user.company_id)
+            db.add(product)
+            result["created"] += 1
+            report_rows.append({**item, "result": "created"})
+      except Exception as exc:
+        result["skipped"] += 1
+        result["errors"] += 1
+        report_rows.append({**item, "result": "error", "errors": item.get("errors", []) + [str(exc)]})
+
+    db.commit()
+    report_id = str(uuid.uuid4())
+    IMPORT_REPORTS[report_id] = {"created_at": datetime.utcnow().isoformat(), "result": result, "rows": report_rows}
+    return {"report_id": report_id, **result}
+
+
+def _build_template_xlsx():
+    headers = [field["label"] for field in IMPORT_FIELDS]
+    example = [
+        "Профіль 20x20x1,2", "PRF-20-12", "INT-001", "4820000000001", "MATERIAL", "Матеріал", "м",
+        "Металевий профіль для виробництва", "Активний", "Так", "3000", "20", "20", "1.2", "120", "95",
+        "UAH", "Альтабез", "ALT-20", "https://supplier.example/product/20", "Сторінка товару", "Колір=чорний; Товщина=1.2",
+    ]
+
+    def sheet_xml():
+        rows = []
+        for r_idx, row in enumerate([headers, example], start=1):
+            cells = []
+            for c_idx, value in enumerate(row, start=1):
+                col = ""
+                n = c_idx
+                while n:
+                    n, rem = divmod(n - 1, 26)
+                    col = chr(65 + rem) + col
+                cells.append(f'<c r="{col}{r_idx}" t="inlineStr"><is><t>{str(value)}</t></is></c>')
+            rows.append(f'<row r="{r_idx}">{"".join(cells)}</row>')
+        return f'<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>{"".join(rows)}</sheetData></worksheet>'
+
+    bio = BytesIO()
+    with zipfile.ZipFile(bio, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')
+        zf.writestr("_rels/.rels", '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')
+        zf.writestr("xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Номенклатура" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        zf.writestr("xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+        zf.writestr("xl/worksheets/sheet1.xml", sheet_xml())
+    bio.seek(0)
+    return bio
+
+
+@router.get("/nomenclature/import/template")
+async def download_nomenclature_import_template(
+    current_user: User = Depends(get_current_active_user),
+):
+    bio = _build_template_xlsx()
+    return StreamingResponse(
+        bio,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="nomenclature_import_template.xlsx"'},
+    )
+
+
+@router.get("/nomenclature/import/report/{report_id}")
+async def download_nomenclature_import_report(
+    report_id: str,
+    current_user: User = Depends(get_current_active_user),
+):
+    report = IMPORT_REPORTS.get(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Звіт імпорту не знайдено")
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Рядок", "Назва", "Артикул", "Результат", "Помилки", "Попередження"])
+    for row in report["rows"]:
+        writer.writerow([
+            row.get("row_number"),
+            row.get("name"),
+            row.get("sku"),
+            row.get("result"),
+            "; ".join(row.get("errors") or []),
+            "; ".join(row.get("warnings") or []),
+        ])
+    return Response(
+        content=output.getvalue().encode("utf-8-sig"),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="nomenclature_import_report_{report_id}.csv"'},
+    )
 
 @router.get("/products/statistics")
 async def get_products_statistics(

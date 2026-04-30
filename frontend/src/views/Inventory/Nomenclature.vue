@@ -14,7 +14,7 @@
         :category-options="categoryOptions"
         @search="handleSearch"
         @create="goToCreate"
-        @import="ElMessage.info('Імпорт Excel/CSV')"
+        @import="importWizardVisible = true"
         @export="handleExport"
       />
     </div>
@@ -95,6 +95,11 @@
       @run-ai-fill="runAiFormFill"
     />
 
+    <NomenclatureImportWizard
+      v-model:visible="importWizardVisible"
+      @completed="handleImportCompleted"
+    />
+
     <!-- FLOATING AI BUTTON -->
     <el-popover
       v-model:visible="aiPopoverVisible"
@@ -158,6 +163,7 @@ import NomenclatureHeader from '@/components/Nomenclature/NomenclatureHeader.vue
 import NomenclatureToolbar from '@/components/Nomenclature/NomenclatureToolbar.vue'
 import NomenclatureTable from '@/components/Nomenclature/NomenclatureTable.vue'
 import NomenclatureDrawer from '@/components/Nomenclature/NomenclatureDrawer.vue'
+import NomenclatureImportWizard from '@/components/Nomenclature/NomenclatureImportWizard.vue'
 
 const dictStore = useDictionaryStore()
 const router = useRouter()
@@ -171,6 +177,7 @@ const selectedProduct = ref(null)
 const warehouseStock = ref([])
 const productMovements = ref([])
 const selectedRows = ref([])
+const importWizardVisible = ref(false)
 
 // AI Assistant Logic
 const aiDrawerVisible = ref(false)
@@ -337,6 +344,10 @@ const handleDelete = (row) => {
 
 const handleExport = () => {
   ElMessage.info('Експорт Excel/CSV')
+}
+
+const handleImportCompleted = () => {
+  fetchStatistics().then(() => fetchProducts())
 }
 
 const handleViewStock = (row) => {
