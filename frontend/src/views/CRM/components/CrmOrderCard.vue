@@ -95,47 +95,61 @@
       </div>
     </el-tooltip>
 
-    <div class="card-footer-new">
-      <div class="card-comm-channels">
-        <el-tooltip content="Подзвонити" placement="top">
-          <span class="channel-icon phone" @click.stop="$emit('comm', order, 'phone')"><el-icon><Phone /></el-icon></span>
-        </el-tooltip>
-        <el-tooltip content="Viber / коментар" placement="top">
-          <span class="channel-icon viber" @click.stop="$emit('comm', order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
-        </el-tooltip>
-        <el-tooltip content="Telegram" placement="top">
-          <span class="channel-icon telegram" @click.stop="$emit('comm', order, 'telegram')"><el-icon><Promotion /></el-icon></span>
-        </el-tooltip>
-        <el-tooltip content="Instagram" placement="top">
-          <span class="channel-icon instagram" @click.stop="$emit('comm', order, 'instagram')"><el-icon><Camera /></el-icon></span>
-        </el-tooltip>
-      </div>
-      <div class="card-meta-right">
-        <el-tooltip content="Підказка по заявці" placement="top">
-          <CrmAiHintPopover :hints="orderHints" />
-        </el-tooltip>
-        <el-dropdown trigger="click" @command="(cmd) => $emit('cardCommand', cmd, order)" @click.stop>
-          <button class="card-more-btn" @click.stop>
-            <el-icon><MoreFilled /></el-icon>
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
-              <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
-              <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
-              <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
+    <!-- Actions toggle bar -->
+    <div class="card-actions-bar" @click.stop="actionsOpen = !actionsOpen">
+      <el-icon class="actions-chevron" :class="{ 'is-open': actionsOpen }"><ArrowDown /></el-icon>
+      <span class="actions-bar-label">Дії</span>
+      <div class="actions-channel-preview">
+        <span class="ch-dot ch-phone" />
+        <span class="ch-dot ch-viber" />
+        <span class="ch-dot ch-telegram" />
+        <span class="ch-dot ch-instagram" />
       </div>
     </div>
+
+    <!-- Expandable icon row -->
+    <transition name="actions-slide">
+      <div v-if="actionsOpen" class="card-footer-new" @click.stop>
+        <div class="card-comm-channels">
+          <el-tooltip content="Подзвонити" placement="top">
+            <span class="channel-icon phone" @click.stop="$emit('comm', order, 'phone')"><el-icon><Phone /></el-icon></span>
+          </el-tooltip>
+          <el-tooltip content="Viber / коментар" placement="top">
+            <span class="channel-icon viber" @click.stop="$emit('comm', order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
+          </el-tooltip>
+          <el-tooltip content="Telegram" placement="top">
+            <span class="channel-icon telegram" @click.stop="$emit('comm', order, 'telegram')"><el-icon><Promotion /></el-icon></span>
+          </el-tooltip>
+          <el-tooltip content="Instagram" placement="top">
+            <span class="channel-icon instagram" @click.stop="$emit('comm', order, 'instagram')"><el-icon><Camera /></el-icon></span>
+          </el-tooltip>
+        </div>
+        <div class="card-meta-right">
+          <el-tooltip content="Підказка по заявці" placement="top">
+            <CrmAiHintPopover :hints="orderHints" />
+          </el-tooltip>
+          <el-dropdown trigger="click" @command="(cmd) => $emit('cardCommand', cmd, order)" @click.stop>
+            <button class="card-more-btn" @click.stop>
+              <el-icon><MoreFilled /></el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
+                <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
+                <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
+                <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Bell, Clock, MoreFilled, Phone, ChatDotRound, Promotion, Camera } from '@element-plus/icons-vue'
+import { ref, computed } from 'vue'
+import { Bell, Clock, MoreFilled, Phone, ChatDotRound, Promotion, Camera, ArrowDown } from '@element-plus/icons-vue'
 import CrmAiHintPopover from './CrmAiHintPopover.vue'
 
 const props = defineProps({
@@ -179,4 +193,65 @@ defineEmits([
 ])
 
 const animationDelay = computed(() => `${props.index * 50}ms`)
+const actionsOpen = ref(false)
 </script>
+
+<style scoped>
+/* ── Actions toggle bar ── */
+.card-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 5px 0 1px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 6px;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+.card-actions-bar:hover { opacity: 0.7; }
+
+.actions-chevron {
+  font-size: 10px;
+  color: #9CA3AF;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.actions-chevron.is-open { transform: rotate(180deg); }
+
+.actions-bar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9CA3AF;
+  flex: 1;
+}
+
+/* Colored channel dots shown in collapsed state */
+.actions-channel-preview {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.ch-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ch-dot.ch-phone    { background: #22C55E; }
+.ch-dot.ch-viber    { background: #8B5CF6; }
+.ch-dot.ch-telegram { background: #3B82F6; }
+.ch-dot.ch-instagram { background: #EC4899; }
+
+/* ── Slide transition ── */
+.actions-slide-enter-active,
+.actions-slide-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  overflow: hidden;
+}
+.actions-slide-enter-from,
+.actions-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>
