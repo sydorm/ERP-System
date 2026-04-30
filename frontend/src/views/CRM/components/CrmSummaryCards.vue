@@ -14,21 +14,21 @@
         <small>{{ ordersCount }} активних замовлень</small>
       </div>
     </div>
-    <div class="crm-insight-card sla-card">
+    <div class="crm-insight-card warning">
       <div class="insight-content">
         <span class="insight-label">Гарячі SLA</span>
         <strong>{{ hotSlaCount }}</strong>
         <small>потребують уваги</small>
       </div>
     </div>
-    <div class="crm-insight-card payment-card">
+    <div class="crm-insight-card info">
       <div class="insight-content">
         <span class="insight-label">Оплата</span>
         <strong>{{ paymentProgress }}%</strong>
         <small>сплачених замовлень</small>
       </div>
     </div>
-    <div class="crm-insight-card today-card">
+    <div class="crm-insight-card danger">
       <div class="insight-content">
         <span class="insight-label">Сьогодні</span>
         <strong>{{ todayTasksCount }}</strong>
