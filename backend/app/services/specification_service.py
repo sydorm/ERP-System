@@ -13,9 +13,10 @@ class SpecificationService:
         Calculates the quantity of a component based on smart rules.
         parent_dimensions should contain: 'width_cm', 'height_cm', 'length_cm', 'weight_kg', 'custom_attributes'
         """
-        if not item.is_calculated or item.calc_type == CalculationType.FIXED:
+        if not item.calc_type or item.calc_type == CalculationType.FIXED:
             return Decimal(str(item.quantity or 0))
 
+        is_meters = item.unit_of_measure == 'м'
         w = float(parent_dimensions.get('width_cm') or 0)
         h = float(parent_dimensions.get('height_cm') or 0)
         l = float(parent_dimensions.get('length_cm') or 0)
@@ -25,20 +26,48 @@ class SpecificationService:
         result = 0.0
 
         if item.calc_type == CalculationType.INTERPOLATION:
-            result = SpecificationService._calculate_interpolation(item, w, h, l)
+            result = SpecificationService._calculate_interpolation(item, w, h, l, custom_attrs)
+        elif item.calc_type == CalculationType.PROPORTIONAL:
+            dim_key = item.calc_dimension or 'width_cm'
+            dim_val = float(parent_dimensions.get(dim_key) or 0)
+            
+            # Check for characteristic override
+            config = item.calc_dim_config or {}
+            dim_map = {'height_cm': 'h', 'width_cm': 'w', 'length_cm': 'l'}
+            key = dim_map.get(dim_key, 'w')
+            dim_config = config.get(key, {})
+            
+            unit = dim_config.get('unit', 'см')
+            char_name = dim_config.get('char_name')
+            if char_name and char_name in custom_attrs:
+                dim_val = float(custom_attrs[char_name])
+            
+            coeff = float(item.calc_formula or 0)
+            if is_meters:
+                meters = SpecificationService._to_meters(dim_val, unit)
+                result = coeff * meters
+            else:
+                result = dim_val * coeff
+                
+            # Apply global waste for proportional
+            waste_factor = float(item.calc_waste_factor or 0)
+            result *= (1.0 + waste_factor)
+            
         elif item.calc_type == CalculationType.AREA:
             # W * H / 10000 (cm2 to m2)
             result = (w * h) / 10000.0
+            waste_factor = float(item.calc_waste_factor or 0)
+            result *= (1.0 + waste_factor)
         elif item.calc_type == CalculationType.VOLUME:
             # W * H * L / 1000000 (cm3 to m3)
             result = (w * h * l) / 1000000.0
+            waste_factor = float(item.calc_waste_factor or 0)
+            result *= (1.0 + waste_factor)
         elif item.calc_type == CalculationType.FORMULA:
             result = SpecificationService._evaluate_formula(item.calc_formula, w, h, l, kg, custom_attrs)
+            waste_factor = float(item.calc_waste_factor or 0)
+            result *= (1.0 + waste_factor)
         
-        # Apply waste factor
-        waste_factor = float(item.calc_waste_factor or 0)
-        result *= (1.0 + waste_factor)
-
         return Decimal(str(round(result, 4)))
 
     @staticmethod
@@ -130,17 +159,26 @@ class SpecificationService:
         return None
 
     @staticmethod
-    def _calculate_interpolation(item: SpecificationItem, w: float, h: float, l: float) -> float:
+    def _to_meters(value: float, unit: str) -> float:
+        if unit == 'мм': return value / 1000.0
+        if unit == 'см': return value / 100.0
+        if unit == 'м': return value
+        return value / 100.0
+
+    @staticmethod
+    def _calculate_interpolation(item: SpecificationItem, w: float, h: float, l: float, custom_attrs: Dict[str, Any]) -> float:
         dp = item.calc_data_points
         if not dp or not isinstance(dp, dict):
             return float(item.quantity or 0)
 
+        is_meters = item.unit_of_measure == 'м'
         total = 0.0
         has_any_points = False
         
-        dim_map = {'w': w, 'h': h, 'l': l}
+        dim_map = {'h': h, 'w': w, 'l': l}
+        config = item.calc_dim_config or {}
         
-        for key, val in dim_map.items():
+        for key, physical_val in dim_map.items():
             pts = dp.get(key)
             if not pts or not isinstance(pts, list):
                 continue
@@ -155,7 +193,20 @@ class SpecificationService:
                 continue
             
             has_any_points = True
+            dim_config = config.get(key, {})
+            unit = dim_config.get('unit', 'см')
+            char_name = dim_config.get('char_name')
             
+            # Resolve dimension value
+            dim_val_raw = physical_val
+            if char_name and char_name in custom_attrs:
+                dim_val_raw = float(custom_attrs[char_name])
+            
+            # Convert to CM for interpolation matching (internal pts.x are in CM)
+            # Factor for setDimValue: mm->10, m->0.01
+            factor = 10.0 if unit == 'мм' else (0.01 if unit == 'м' else 1.0)
+            dim_val_for_interp = physical_val if not char_name else dim_val_raw / factor
+
             def interp(p1, p2, x):
                 x1, y1 = float(p1['x']), float(p1['qty'])
                 x2, y2 = float(p2['x']), float(p2['qty'])
@@ -165,42 +216,48 @@ class SpecificationService:
                 return y1 + slope * (x - x1)
 
             if len(valid_pts) == 1:
-                dim_result = float(valid_pts[0]['qty'])
-            elif val <= float(valid_pts[0]['x']):
-                dim_result = interp(valid_pts[0], valid_pts[1], val)
-            elif val >= float(valid_pts[-1]['x']):
-                dim_result = interp(valid_pts[-2], valid_pts[-1], val)
+                count_result = float(valid_pts[0]['qty'])
+            elif dim_val_for_interp <= float(valid_pts[0]['x']):
+                count_result = interp(valid_pts[0], valid_pts[1], dim_val_for_interp)
+            elif dim_val_for_interp >= float(valid_pts[-1]['x']):
+                count_result = interp(valid_pts[-2], valid_pts[-1], dim_val_for_interp)
             else:
-                dim_result = 0
+                count_result = 0
                 for i in range(len(valid_pts) - 1):
-                    if val >= float(valid_pts[i]['x']) and val <= float(valid_pts[i+1]['x']):
-                        dim_result = interp(valid_pts[i], valid_pts[i+1], val)
+                    if dim_val_for_interp >= float(valid_pts[i]['x']) and dim_val_for_interp <= float(valid_pts[i+1]['x']):
+                        count_result = interp(valid_pts[i], valid_pts[i+1], dim_val_for_interp)
                         break
             
-            total += max(0.0, dim_result)
+            dim_final = count_result
+            if is_meters:
+                meters = SpecificationService._to_meters(dim_val_raw, unit)
+                dim_final = count_result * meters
+            
+            # Apply per-dimension waste
+            dim_waste = float(dim_config.get('waste') or 0)
+            if dim_waste > 0:
+                dim_final *= (1.0 + dim_waste / 100.0)
+                
+            total += max(0.0, dim_final)
 
         return total if has_any_points else float(item.quantity or 0)
 
     @staticmethod
-    def _evaluate_formula(formula: str, w: float, h: float, l: float, kg: float, custom_attrs: Dict[str, float] = None) -> float:
+    def _evaluate_formula(formula: str, w: float, h: float, l: float, kg: float, custom_attrs: Dict[str, Any] = None) -> float:
         if not formula:
             return 0.0
         
         custom_attrs = custom_attrs or {}
         
         # 1. Replace custom attributes like {AttributeName} with their values
-        # We find matches and attempt to lookup the key in custom_attrs.
-        # If not found, defaults to 0.0
         def replace_custom_attr(match):
             attr_name = match.group(1)
-            # Find attribute case-insensitively, or exact match depending on input
-            # By default, match exactly
-            return str(custom_attrs.get(attr_name, 0.0))
+            val = custom_attrs.get(attr_name, 0.0)
+            return str(val)
             
-        safe_formula = re.sub(r'\{([^}]+)\}', replace_custom_attr, formula)
+        processed_formula = re.sub(r'\{([^}]+)\}', replace_custom_attr, formula)
         
-        # 2. Simple/Safe evaluation for basic math formulas
-        safe_formula = safe_formula.upper()
+        # 2. Evaluation
         subs = {
             'W': w,
             'H': h,
@@ -208,15 +265,15 @@ class SpecificationService:
             'KG': kg
         }
         
-        # Replace base variables
+        # Case insensitive replacement for base variables
         for var, val in subs.items():
-            safe_formula = re.sub(rf'\b{var}\b', str(val), safe_formula)
+            processed_formula = re.sub(rf'\b{var}\b', str(val), processed_formula, flags=re.IGNORECASE)
             
-        # Limit characters to numbers, operators, and parentheses
-        if not re.match(r'^[0-9.+\-*/%() ]*$', safe_formula):
-            return 0.0
+        # Clean up formula for safe eval (only basic math)
+        # We allow numbers, operators, dots, spaces
+        cleaned = re.sub(r'[^0-9.+\-*/%() ]', '', processed_formula)
             
         try:
-            return float(eval(safe_formula))
+            return float(eval(cleaned))
         except:
             return 0.0

@@ -181,7 +181,19 @@
                       
                       <div class="bom-qty-helper">
                          <template v-if="row.calc_type && row.calc_type !== 'fixed'">
-                            Розраховано: {{ getBaseQuantity(row).toFixed(3) }}
+                            <el-tooltip placement="top" effect="dark">
+                               <template #content>
+                                  <div class="p-1">
+                                     <div class="font-bold border-b border-gray-600 mb-1 pb-1">Розшифровка розрахунку:</div>
+                                     <div v-for="(line, idx) in calculateQuantityDetails(row)" :key="idx" class="text-xs py-0.5">
+                                        • {{ line }}
+                                     </div>
+                                  </div>
+                               </template>
+                               <span class="cursor-help border-b border-dotted border-gray-400">
+                                  Розраховано: {{ getBaseQuantity(row).toFixed(3) }}
+                               </span>
+                            </el-tooltip>
                             <span v-if="getTotalWastePercent(row) > 0" class="text-orange-400 font-bold"> (+{{ getTotalWastePercent(row) }}%)</span>
                          </template>
                       </div>
@@ -651,13 +663,33 @@ const updateTestDim = (field, val) => {
 }
 
 const getDimValue = (valInCm, unit) => {
-    const factor = unit === 'мм' ? 10 : 1
+    const factor = unit === 'мм' ? 10 : (unit === 'м' ? 0.01 : 1)
     return (valInCm || 0) * factor
 }
 
 const setDimValue = (valInUnit, unit) => {
-    const factor = unit === 'мм' ? 10 : 1
+    const factor = unit === 'мм' ? 10 : (unit === 'м' ? 0.01 : 1)
     return valInUnit / factor
+}
+
+const toMeters = (value, unit) => {
+    if (unit === 'мм') return value / 1000
+    if (unit === 'см') return value / 100
+    if (unit === 'м') return value
+    return value / 100 // default cm
+}
+
+const getAttrValue = (attrName) => {
+    if (!attrName) return null
+    const attrDef = productAttributes.value.find(a => a.name === attrName)
+    if (!attrDef) return null
+    
+    // Check in product_attributes
+    const attrVal = (props.productDimensions.product_attributes || []).find(a => a.attribute_id === attrDef.id)
+    if (attrVal) {
+        return parseFloat(attrVal.text_value) || 0
+    }
+    return null
 }
 
 const editingSpec = ref(null)
@@ -752,9 +784,10 @@ const getDimConfig = (item, key) => {
     return item.calc_dim_config[key]
 }
 
-const calculateQuantityInternal = (item, includeWaste = true) => {
+const calculateQuantityInternal = (item, includeWaste = true, returnDetails = false) => {
     if (!item || item.calc_type === 'fixed') return item?.quantity || 0
 
+    const isMeters = item.unit_of_measure === 'м'
     const dimensions = {
         W: parseFloat(props.productDimensions.width_cm) || 0,
         H: parseFloat(props.productDimensions.height_cm) || 0,
@@ -763,12 +796,14 @@ const calculateQuantityInternal = (item, includeWaste = true) => {
     }
 
     let result = 0
+    let details = []
 
     if (item.calc_type === 'interpolation') {
         const dp = item.calc_data_points
         if (!dp || Array.isArray(dp)) return item.quantity
 
         const dimMap = { h: 'height_cm', w: 'width_cm', l: 'length_cm' }
+        const dimLabels = { h: 'H', w: 'W', l: 'L' }
         let total = 0
         let hasAnyPoints = false
 
@@ -776,78 +811,176 @@ const calculateQuantityInternal = (item, includeWaste = true) => {
             const pts = (dp[key] || []).filter(p => p.qty != null)
             if (pts.length === 0) continue
             hasAnyPoints = true
-            const dimVal = parseFloat(props.productDimensions[dimKey]) || 0
+            
+            const config = getDimConfig(item, key)
+            let dimValRaw = parseFloat(props.productDimensions[dimKey]) || 0
+            let sourceLabel = dimLabels[key]
+            let warning = ''
+
+            if (config.char_name) {
+                const customVal = getAttrValue(config.char_name)
+                if (customVal !== null) {
+                    dimValRaw = customVal
+                    sourceLabel = config.char_name
+                } else {
+                    warning = `[!] Характеристика "${config.char_name}" не знайдена`
+                }
+            }
+
+            // Internal logic uses CM, so if source was characteristic, we assume it's in config.unit
+            // but the points 'x' are stored in CM (converted by setDimValue)
+            // Wait, if source is characteristic, we need to convert it to CM for interpolation
+            let dimValForInterp = config.char_name ? setDimValue(dimValRaw, config.unit) : parseFloat(props.productDimensions[dimKey]) || 0
+            
             const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
-            let dimResult = 0
+            let countResult = 0
             const interp = (p1, p2, val) => {
                 const slope = (p2.x !== p1.x) ? (p2.qty - p1.qty) / (p2.x - p1.x) : 0
                 return p1.qty + slope * (val - p1.x)
             }
-            if (sorted.length === 1) { dimResult = sorted[0].qty }
-            else if (dimVal <= sorted[0].x) { dimResult = interp(sorted[0], sorted[1], dimVal) }
-            else if (dimVal >= sorted[sorted.length - 1].x) { dimResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimVal) }
+            if (sorted.length === 1) { countResult = sorted[0].qty }
+            else if (dimValForInterp <= sorted[0].x) { countResult = interp(sorted[0], sorted[1], dimValForInterp) }
+            else if (dimValForInterp >= sorted[sorted.length - 1].x) { countResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimValForInterp) }
             else {
                 for (let i = 0; i < sorted.length - 1; i++) {
-                    if (dimVal >= sorted[i].x && dimVal <= sorted[i + 1].x) {
-                        dimResult = interp(sorted[i], sorted[i + 1], dimVal)
+                    if (dimValForInterp >= sorted[i].x && dimValForInterp <= sorted[i + 1].x) {
+                        countResult = interp(sorted[i], sorted[i + 1], dimValForInterp)
                         break
                     }
                 }
             }
             
+            let dimFinal = countResult
+            let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.unit}`
+            if (warning) stepLabel += ` ${warning}`
+
+            if (isMeters) {
+                const meters = toMeters(dimValRaw, config.unit)
+                dimFinal = countResult * meters
+                stepLabel += ` → ${meters.toFixed(3)}м × ${countResult}шт = ${dimFinal.toFixed(3)}м`
+            } else {
+                stepLabel += ` → ${countResult.toFixed(3)} ${item.unit_of_measure || 'шт'}`
+            }
+
             // Apply waste for this dimension
-            if (includeWaste && item.calc_dim_config?.[key]?.waste) {
-                dimResult *= (1 + parseFloat(item.calc_dim_config[key].waste) / 100)
+            if (includeWaste && config.waste) {
+                const wasteFactor = (1 + parseFloat(config.waste) / 100)
+                dimFinal *= wasteFactor
+                stepLabel += ` (+${config.waste}% відх. = ${dimFinal.toFixed(3)})`
             }
             
-            total += Math.max(0, dimResult)
+            details.push(stepLabel)
+            total += Math.max(0, dimFinal)
         }
         if (!hasAnyPoints) return item.quantity
         result = total
     }
     else if (item.calc_type === 'proportional') {
-        const dimVal = parseFloat(props.productDimensions[item.calc_dimension || 'width_cm']) || 0
-        const coeff = parseFloat(item.calc_formula) || 0
-        result = dimVal * coeff
-        if (includeWaste && item.calc_waste_factor) {
-            result *= (1 + parseFloat(item.calc_waste_factor))
+        const dimKey = item.calc_dimension || 'width_cm'
+        const dimMap = { height_cm: 'h', width_cm: 'w', length_cm: 'l' }
+        const key = dimMap[dimKey]
+        const config = getDimConfig(item, key)
+        const dimLabels = { height_cm: 'H', width_cm: 'W', length_cm: 'L' }
+        
+        let dimValRaw = parseFloat(props.productDimensions[dimKey]) || 0
+        let sourceLabel = dimLabels[dimKey]
+        let warning = ''
+
+        if (config.char_name) {
+            const customVal = getAttrValue(config.char_name)
+            if (customVal !== null) {
+                dimValRaw = customVal
+                sourceLabel = config.char_name
+            } else {
+                warning = `[!] Характеристика "${config.char_name}" не знайдена`
+            }
         }
+
+        const coeff = parseFloat(item.calc_formula) || 0
+        let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.unit}`
+        if (warning) stepLabel += ` ${warning}`
+
+        if (isMeters) {
+            const meters = toMeters(dimValRaw, config.unit)
+            result = coeff * meters
+            stepLabel += ` → ${meters.toFixed(3)}м × ${coeff} = ${result.toFixed(3)}м`
+        } else {
+            result = dimValRaw * coeff
+            stepLabel += ` → ${dimValRaw} × ${coeff} = ${result.toFixed(3)}`
+        }
+
+        if (includeWaste && item.calc_waste_factor) {
+            const waste = parseFloat(item.calc_waste_factor) * 100
+            result *= (1 + parseFloat(item.calc_waste_factor))
+            stepLabel += ` (+${waste.toFixed(1)}% відх. = ${result.toFixed(3)})`
+        }
+        details.push(stepLabel)
     }
     else if (item.calc_type === 'area') {
         result = dimensions.W * dimensions.H / 10000 
+        details.push(`Площа: (${dimensions.W}см × ${dimensions.H}см) / 10000 = ${result.toFixed(4)} м²`)
         if (includeWaste && item.calc_waste_factor) {
+            const waste = parseFloat(item.calc_waste_factor) * 100
             result *= (1 + parseFloat(item.calc_waste_factor))
+            details.push(`+ Відходи ${waste.toFixed(1)}% = ${result.toFixed(4)}`)
         }
     }
     else if (item.calc_type === 'volume') {
         result = dimensions.W * dimensions.H * dimensions.L / 1000000 
+        details.push(`Об'єм: (${dimensions.W}см × ${dimensions.H}см × ${dimensions.L}см) / 1000000 = ${result.toFixed(4)} м³`)
         if (includeWaste && item.calc_waste_factor) {
+            const waste = parseFloat(item.calc_waste_factor) * 100
             result *= (1 + parseFloat(item.calc_waste_factor))
+            details.push(`+ Відходи ${waste.toFixed(1)}% = ${result.toFixed(4)}`)
         }
     }
     else if (item.calc_type === 'formula') {
         try {
             const { W, H, L, Kg } = dimensions
-            result = eval(item.calc_formula || '0')
+            // Inject attributes into eval context
+            const regex = /{([^}]+)}/g
+            let formula = item.calc_formula || '0'
+            let match;
+            while ((match = regex.exec(item.calc_formula)) !== null) {
+                const attrName = match[1]
+                if (!['W', 'H', 'L', 'Kg'].includes(attrName)) {
+                    const val = getAttrValue(attrName)
+                    formula = formula.replace(`{${attrName}}`, val !== null ? val : 0)
+                }
+            }
+            formula = formula.replace(/{W}/g, W).replace(/{H}/g, H).replace(/{L}/g, L).replace(/{Kg}/g, Kg)
+            
+            result = eval(formula)
+            details.push(`Формула: ${item.calc_formula} → ${formula} = ${result.toFixed(4)}`)
+
             if (includeWaste && item.calc_waste_factor) {
+                const waste = parseFloat(item.calc_waste_factor) * 100
                 result *= (1 + parseFloat(item.calc_waste_factor))
+                details.push(`+ Відходи ${waste.toFixed(1)}% = ${result.toFixed(4)}`)
             }
         } catch (e) {
-            return 'Помилка'
+            return returnDetails ? { result: 'Помилка', details: ['Помилка у формулі'] } : 'Помилка'
         }
     }
 
+    if (returnDetails) return { result, details }
     return result
 }
 
 const calculateQuantity = (item) => {
-    const result = calculateQuantityInternal(item, true)
-    return typeof result === 'number' ? result.toFixed(4) : result
+    const res = calculateQuantityInternal(item, true)
+    return typeof res === 'number' ? res.toFixed(4) : res
 }
 
 const getBaseQuantity = (item) => {
     if (!item || item.calc_type === 'fixed') return item?.quantity || 0
     return calculateQuantityInternal(item, false)
+}
+
+const calculateQuantityDetails = (item) => {
+    if (!item || item.calc_type === 'fixed') return ['Фіксована кількість']
+    const { details } = calculateQuantityInternal(item, true, true)
+    return details || []
 }
 
 const getTotalWastePercent = (item) => {
