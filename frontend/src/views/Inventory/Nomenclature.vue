@@ -1,318 +1,49 @@
 <template>
   <div class="orders-page" :class="{ 'dense-mode': isCompactMode }">
     <div class="top-section">
+      <!-- KPI STAT CARDS -->
+      <NomenclatureHeader :stats="stats" />
 
-      <!-- ===== KPI STAT CARDS ===== -->
-      <div class="stats-row-dense">
-        <!-- Всього позицій -->
-        <div class="stats-card-dense">
-          <div class="stats-card-dense__icon total">
-            <el-icon><Box /></el-icon>
-          </div>
-          <div class="stats-card-dense__content">
-            <span class="stats-card-dense__label">Всього позицій</span>
-            <span class="stats-card-dense__value">{{ stats.total_products }}</span>
-            <span class="stats-card-dense__subtext">+12 за 30 днів</span>
-          </div>
-          <div class="stats-card-dense__sparkline">
-            <svg width="60" height="20"><path d="M0,10 L10,15 L20,5 L30,18 L40,8 L50,12 L60,2" fill="none" stroke="#635bff" stroke-width="2"/></svg>
-          </div>
-        </div>
-
-        <!-- В наявності -->
-        <div class="stats-card-dense">
-          <div class="stats-card-dense__icon success">
-            <el-icon><Check /></el-icon>
-          </div>
-          <div class="stats-card-dense__content">
-            <span class="stats-card-dense__label">В наявності</span>
-            <span class="stats-card-dense__value">{{ stats.in_stock }}</span>
-            <span class="stats-card-dense__subtext">+18 за 30 днів</span>
-          </div>
-          <div class="stats-card-dense__sparkline">
-            <svg width="60" height="20"><path d="M0,18 L10,12 L20,15 L30,8 L40,10 L50,5 L60,2" fill="none" stroke="#22c55e" stroke-width="2"/></svg>
-          </div>
-        </div>
-
-        <!-- Закінчуються -->
-        <div class="stats-card-dense">
-          <div class="stats-card-dense__icon warning">
-            <el-icon><Warning /></el-icon>
-          </div>
-          <div class="stats-card-dense__content">
-            <span class="stats-card-dense__label">Закінчуються</span>
-            <span class="stats-card-dense__value">{{ stats.low_stock }}</span>
-            <span class="stats-card-dense__subtext">+4 за 30 днів</span>
-          </div>
-          <div class="stats-card-dense__sparkline">
-            <svg width="60" height="20"><path d="M0,5 L10,8 L20,2 L30,12 L40,5 L50,15 L60,18" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
-          </div>
-        </div>
-
-        <!-- Немає -->
-        <div class="stats-card-dense">
-          <div class="stats-card-dense__icon danger">
-            <el-icon><CircleClose /></el-icon>
-          </div>
-          <div class="stats-card-dense__content">
-            <span class="stats-card-dense__label">Немає</span>
-            <span class="stats-card-dense__value">{{ stats.out_of_stock }}</span>
-            <span class="stats-card-dense__subtext">-3 за 30 днів</span>
-          </div>
-          <div class="stats-card-dense__sparkline">
-            <svg width="60" height="20"><path d="M0,2 L10,5 L20,12 L30,8 L40,15 L50,12 L60,18" fill="none" stroke="#ef4444" stroke-width="2"/></svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== ACTION BUTTONS ROW (under KPI) ===== -->
-      <div class="action-row">
-        <div class="action-row__left">
-          <!-- Quick Filter Tabs -->
-          <div class="quick-tabs-premium">
-            <div
-              class="quick-tab-item"
-              :class="{ active: activeTab === 'all' }"
-              @click="activeTab = 'all'; filterCategory = ''"
-            >Усі</div>
-            <div
-              class="quick-tab-item"
-              :class="{ active: activeTab === 'materials' }"
-              @click="activeTab = 'materials'; filterCategory = 'MATERIAL'"
-            >Матеріали</div>
-            <div
-              class="quick-tab-item"
-              :class="{ active: activeTab === 'products' }"
-              @click="activeTab = 'products'; filterCategory = 'PRODUCT'"
-            >Готові вироби</div>
-          </div>
-        </div>
-        <div class="action-row__right">
-          <button class="act-btn act-btn--secondary" @click="ElMessage.info('Імпорт Excel/CSV')">
-            📥 Імпорт
-          </button>
-          <button class="act-btn act-btn--secondary" @click="ElMessage.info('Експорт Excel/CSV')">
-            📤 Експорт
-          </button>
-          <button class="act-btn act-btn--primary" @click="goToCreate">
-            <el-icon><Plus /></el-icon> Створити товар
-          </button>
-        </div>
-      </div>
-
-      <!-- ===== FILTERS TOOLBAR ===== -->
-      <div class="toolbar-dense">
-        <div class="toolbar-dense__left">
-          <div class="search-dense-wrapper">
-            <el-icon class="search-dense-icon"><Search /></el-icon>
-            <input
-              v-model="searchQuery"
-              placeholder="Пошук за назвою, артикулом або SKU..."
-              class="search-dense-input"
-              @input="handleSearch"
-            />
-          </div>
-
-          <el-select
-            v-model="filterCategory"
-            placeholder="Всі категорії"
-            clearable
-            @change="handleCategorySelect"
-            class="filter-dense-select pill-select"
-            style="width: 160px;"
-          >
-            <el-option
-              v-for="cat in categoryOptions"
-              :key="cat.code"
-              :label="cat.name"
-              :value="cat.code"
-            />
-          </el-select>
-
-          <el-select
-            v-model="filterType"
-            placeholder="Всі типи"
-            clearable
-            @change="handleFilterChange"
-            class="filter-dense-select pill-select"
-            style="width: 140px;"
-          >
-            <el-option label="Усі типи" value="" />
-            <el-option label="Готовий виріб" value="product" />
-            <el-option label="Матеріал" value="material" />
-            <el-option label="Комплектуюча" value="component" />
-          </el-select>
-
-          <el-select
-            v-model="filterStock"
-            placeholder="Наявність"
-            clearable
-            @change="handleFilterChange"
-            class="filter-dense-select pill-select"
-            style="width: 130px;"
-          >
-            <el-option label="Всі" value="" />
-            <el-option label="В наявності" value="in_stock" />
-            <el-option label="Закінчуються" value="low_stock" />
-            <el-option label="Немає" value="out_of_stock" />
-          </el-select>
-        </div>
-      </div>
+      <!-- TOOLBAR (Search, Filters, Actions) -->
+      <NomenclatureToolbar
+        v-model:searchQuery="searchQuery"
+        v-model:filterCategory="filterCategory"
+        v-model:filterType="filterType"
+        v-model:filterStock="filterStock"
+        v-model:activeTab="activeTab"
+        :category-options="categoryOptions"
+        @search="handleSearch"
+        @create="goToCreate"
+        @import="ElMessage.info('Імпорт Excel/CSV')"
+        @export="handleExport"
+      />
     </div>
 
-    <!-- ===== TABLE SECTION ===== -->
-    <div class="table-section" v-loading="loading">
+    <!-- TABLE SECTION -->
+    <NomenclatureTable
+      :products="products"
+      :loading="loading"
+      v-model:selectedRows="selectedRows"
+      v-model:currentPage="currentPage"
+      v-model:limit="limit"
+      :total="total"
+      :get-uom-name="getUomName"
+      :get-category-name="getCategoryName"
+      :get-category-badge-style="getCategoryBadgeStyle"
+      :get-stock-badge-class="getStockBadgeClass"
+      :get-stock-badge-text="getStockBadgeText"
+      :format-currency="formatCurrency"
+      @row-click="handleRowClick"
+      @toggle-selection="toggleRowSelection"
+      @toggle-all="toggleAllSelection"
+      @edit="handleEdit"
+      @duplicate="handleDuplicate"
+      @view-stock="handleViewStock"
+      @view-movement="handleViewMovement"
+      @delete="handleDelete"
+    />
 
-      <!-- Grid Table -->
-      <div class="nom-table">
-
-        <!-- HEADER ROW -->
-        <div class="nom-row nom-header">
-          <div class="nom-cell nom-cell--check">
-            <input type="checkbox" @change="e => selectedRows = e.target.checked ? [...products] : []" />
-          </div>
-          <div class="nom-cell nom-cell--photo"></div>
-          <div class="nom-cell nom-cell--name">Назва / Артикул</div>
-          <div class="nom-cell nom-cell--category">Категорія</div>
-          <div class="nom-cell nom-cell--stock">Залишок</div>
-          <div class="nom-cell nom-cell--status">Статус</div>
-          <div class="nom-cell nom-cell--price">Ціна</div>
-          <div class="nom-cell nom-cell--actions"></div>
-        </div>
-
-        <!-- BODY ROWS -->
-        <div
-          v-for="row in products"
-          :key="row.id"
-          class="nom-row nom-body-row"
-          @click="handleRowClick(row)"
-        >
-          <!-- Checkbox -->
-          <div class="nom-cell nom-cell--check" @click.stop>
-            <input
-              type="checkbox"
-              :checked="selectedRows.some(r => r.id === row.id)"
-              @change="e => { if (e.target.checked) selectedRows.push(row); else selectedRows = selectedRows.filter(r => r.id !== row.id) }"
-            />
-          </div>
-
-          <!-- Photo -->
-          <div class="nom-cell nom-cell--photo" @click.stop>
-            <el-image
-              v-if="row.image_url"
-              :src="row.image_url"
-              class="nom-thumb"
-              fit="cover"
-            />
-            <div v-else class="nom-thumb nom-thumb--icon">
-              <el-icon v-if="row.category === 'MATERIAL'"><Grid /></el-icon>
-              <el-icon v-else><Box /></el-icon>
-            </div>
-          </div>
-
-          <!-- Name / SKU -->
-          <div class="nom-cell nom-cell--name">
-            <div class="nom-name">{{ row.name }}</div>
-            <div class="nom-sku">{{ row.sku }}<span class="nom-dot"> · </span>{{ getUomName(row.unit_of_measure) }}</div>
-          </div>
-
-          <!-- Category -->
-          <div class="nom-cell nom-cell--category">
-            <span 
-              class="nom-cat-badge" 
-              :title="getCategoryName(row.category)"
-              :style="getCategoryBadgeStyle(row.category)"
-            >
-              {{ getCategoryName(row.category) || '—' }}
-            </span>
-          </div>
-
-          <!-- Stock -->
-          <div class="nom-cell nom-cell--stock">
-            <div class="nom-stock-qty">{{ row.stock_balance }} {{ getUomName(row.unit_of_measure) }}</div>
-            <div class="nom-prog-bar">
-              <div
-                class="nom-prog-fill"
-                :class="getStockBadgeClass(row.stock_balance, row.min_stock)"
-                :style="{ width: row.stock_balance <= 0 ? '6%' : Math.min(100, (row.stock_balance / (row.min_stock || 10)) * 100) + '%' }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Status -->
-          <div class="nom-cell nom-cell--status">
-            <span class="nom-status-badge" :class="getStockBadgeClass(row.stock_balance, row.min_stock)">
-              {{ getStockBadgeText(row.stock_balance, row.min_stock) }}
-            </span>
-          </div>
-
-          <!-- Price -->
-          <div class="nom-cell nom-cell--price">
-            <span class="nom-price" :class="{ 'nom-price--empty': !row.price }">
-              {{ formatCurrency(row.price, row.currency) }}
-            </span>
-          </div>
-
-          <!-- Actions -->
-          <div class="nom-cell nom-cell--actions" @click.stop>
-            <button class="nom-action-btn" @click.stop="handleEdit(row)" title="Редагувати">
-              <el-icon><Edit /></el-icon>
-            </button>
-            <el-dropdown trigger="click" @click.stop>
-              <button class="nom-action-btn" title="Більше">
-                <el-icon><More /></el-icon>
-              </button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleRowClick(row)">
-                    <el-icon><View /></el-icon>&nbsp;Перегляд
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="handleEdit(row)">
-                    <el-icon><Edit /></el-icon>&nbsp;Редагувати
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="ElMessage.info('Дублювання: ' + row.name)">
-                    <el-icon><Fold /></el-icon>&nbsp;Дублювати
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="handleViewStock(row)">
-                    <el-icon><Box /></el-icon>&nbsp;Змінити залишок
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="handleViewMovement(row)">
-                    <el-icon><Coordinate /></el-icon>&nbsp;Рух товару
-                  </el-dropdown-item>
-                  <el-dropdown-item divided class="nom-delete-item" @click="ElMessage.warning('Видалення: ' + row.name)">
-                    <el-icon><CircleClose /></el-icon>&nbsp;Видалити
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-if="!loading && products.length === 0" class="nom-empty">
-          <div class="nom-empty-icon">📦</div>
-          <div class="nom-empty-text">Номенклатуру не знайдено</div>
-          <div class="nom-empty-sub">Спробуйте змінити фільтри або створіть нову позицію</div>
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      <div class="pagination-dense">
-        <el-select v-model="limit" size="small" style="width: 70px;" @change="handleSizeChange">
-          <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
-        </el-select>
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="limit"
-          :total="total"
-          background
-          layout="prev, pager, next"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </div>
-
-    <!-- ===== AI ASSISTANT DRAWER ===== -->
+    <!-- AI ASSISTANT DRAWER -->
     <el-drawer
       v-model="aiDrawerVisible"
       title="AI Помічник Номенклатури"
@@ -347,119 +78,24 @@
       </div>
     </el-drawer>
 
+    <!-- SIDE DRAWERS (INFO & FORM) -->
+    <NomenclatureDrawer
+      v-model:visible="drawerVisible"
+      v-model:formVisible="formDrawerVisible"
+      v-model:formModel="formModel"
+      :product="selectedProduct"
+      :warehouse-stock="warehouseStock"
+      :product-movements="productMovements"
+      :is-edit-mode="isEditMode"
+      :save-loading="saveLoading"
+      :category-options="categoryOptions"
+      :uom-options="uomOptions"
+      :get-uom-name="getUomName"
+      @save="saveProduct"
+      @run-ai-fill="runAiFormFill"
+    />
 
-
-    <!-- ===== SIDE DRAWER ===== -->
-    <el-drawer
-      v-model="drawerVisible"
-      title="Інформація про товар"
-      size="480px"
-      direction="rtl"
-      :destroy-on-close="true"
-    >
-      <div v-if="selectedProduct" class="drawer-content-dense">
-        <div class="drawer-header-block">
-          <h3>{{ selectedProduct.name }}</h3>
-          <p class="drawer-sku">{{ selectedProduct.sku }} <span class="sku-divider">·</span> {{ getUomName(selectedProduct.unit_of_measure) }}</p>
-        </div>
-
-        <el-divider />
-
-        <div class="drawer-section">
-          <h4>Запаси по складах</h4>
-          <el-table :data="warehouseStock" style="width: 100%" size="small">
-            <el-table-column prop="name" label="Склад" />
-            <el-table-column prop="balance" label="Залишок" align="right">
-              <template #default="{ row }">{{ row.balance }} {{ getUomName(selectedProduct.unit_of_measure) }}</template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <el-divider />
-
-        <div class="drawer-section">
-          <h4>Останні рухи</h4>
-          <el-table :data="productMovements" style="width: 100%" size="small">
-            <el-table-column prop="date" label="Дата" width="100" />
-            <el-table-column prop="type" label="Операція" width="100" />
-            <el-table-column prop="qty" label="К-сть" align="right" width="70" />
-            <el-table-column prop="note" label="Коментар" />
-          </el-table>
-        </div>
-      </div>
-    </el-drawer>
-    <!-- ===== PRODUCT FORM DRAWER (CREATE & EDIT) ===== -->
-    <el-drawer
-      v-model="formDrawerVisible"
-      :title="isEditMode ? 'Редагувати позицію' : 'Створити нову позицію'"
-      size="520px"
-      direction="rtl"
-    >
-      <div class="form-drawer-content">
-        <el-form :model="formModel" label-position="top" size="default">
-          
-          <el-form-item label="Назва номенклатури" required>
-            <el-input v-model="formModel.name" placeholder="Напр: Профіль 20x20x1.2" />
-            <el-button 
-              type="primary" 
-              link 
-              style="margin-top: 6px;"
-              @click="runAiFormFill"
-            >
-              🤖 Автозаповнення через AI
-            </el-button>
-          </el-form-item>
-
-          <el-form-item label="Артикул (SKU)" required>
-            <el-input v-model="formModel.sku" placeholder="Напр: PRF-20X20" />
-          </el-form-item>
-
-          <el-form-item label="Категорія" required>
-            <el-select v-model="formModel.category" style="width: 100%">
-              <el-option
-                v-for="cat in categoryOptions"
-                :key="cat.code"
-                :label="cat.name"
-                :value="cat.code"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="Одиниця виміру" required>
-            <el-select v-model="formModel.unit_of_measure" style="width: 100%">
-              <el-option
-                v-for="uom in uomOptions"
-                :key="uom.code"
-                :label="uom.name"
-                :value="uom.code"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="Ціна (грн)">
-            <el-input-number v-model="formModel.price" :min="0" style="width: 100%" />
-          </el-form-item>
-
-          <el-form-item label="Початковий залишок">
-            <el-input-number v-model="formModel.stock_balance" :min="0" style="width: 100%" />
-          </el-form-item>
-
-          <el-form-item label="Мінімальний залишок">
-            <el-input-number v-model="formModel.min_stock" :min="0" style="width: 100%" />
-          </el-form-item>
-
-        </el-form>
-
-        <div class="form-drawer-actions" style="margin-top: 24px; display: flex; gap: 12px;">
-          <el-button @click="formDrawerVisible = false">Скасувати</el-button>
-          <el-button type="primary" @click="saveProduct" :loading="saveLoading">
-            {{ isEditMode ? 'Зберегти' : 'Створити' }}
-          </el-button>
-        </div>
-      </div>
-    </el-drawer>
-
-    <!-- ===== FLOATING AI BUTTON ===== -->
+    <!-- FLOATING AI BUTTON -->
     <el-popover
       v-model:visible="aiPopoverVisible"
       placement="top-end"
@@ -507,87 +143,40 @@
         </div>
       </div>
     </el-popover>
-
   </div>
 </template>
 
-
-
-
-
-
 <script setup>
-import { ref, computed, onMounted, onActivated } from 'vue'
+import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  Plus, Search, Edit, Picture,
-  Box, Coordinate, Warning, CircleClose, Grid, Fold, View, More
-} from '@element-plus/icons-vue'
-
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
 
-const dictStore = useDictionaryStore()
+// Components
+import NomenclatureHeader from '@/components/Nomenclature/NomenclatureHeader.vue'
+import NomenclatureToolbar from '@/components/Nomenclature/NomenclatureToolbar.vue'
+import NomenclatureTable from '@/components/Nomenclature/NomenclatureTable.vue'
+import NomenclatureDrawer from '@/components/Nomenclature/NomenclatureDrawer.vue'
 
+const dictStore = useDictionaryStore()
 const router = useRouter()
 
 // Compact mode state
 const isCompactMode = ref(localStorage.getItem('nomenclature_dense_mode') === 'true')
-const toggleCompactMode = (val) => {
-  isCompactMode.value = val
-  localStorage.setItem('nomenclature_dense_mode', val)
-}
 
 // UI States
 const drawerVisible = ref(false)
 const selectedProduct = ref(null)
 const warehouseStock = ref([])
 const productMovements = ref([])
-
-// Multi-select items state
 const selectedRows = ref([])
-const handleSelectionChange = (val) => {
-  selectedRows.value = val
-}
-
-const visibleColumns = ref({
-  brand: false,
-  weight: false,
-  dimensions: false,
-  supplier: false
-})
 
 // AI Assistant Logic
 const aiDrawerVisible = ref(false)
 const aiPopoverVisible = ref(false)
 const aiCommand = ref('')
 const aiAnalysisResult = ref('')
-
-const runAiAssistant = () => {
-  if (!aiCommand.value) return
-  
-  if (aiCommand.value.toLowerCase().includes('дефіцит') || aiCommand.value.toLowerCase().includes('мало')) {
-    aiAnalysisResult.value = '🤖 AI Аналітика: Знайдено 3 позиції з критичним залишком. Рекомендовано створити замовлення постачальнику для: "Банкетка Loren 80" та "Профіль 20x20".'
-  } else if (aiCommand.value.toLowerCase().includes('дублікати')) {
-    aiAnalysisResult.value = '🤖 AI Аналітика: Схожих дублікатів у вашій базі наразі не виявлено. Всі позиції унікальні.'
-  } else {
-    aiAnalysisResult.value = `🤖 AI Результат: За вашим запитом "${aiCommand.value}" оброблено дані. Рекомендовано звернути увагу на категорію "Метал".`
-  }
-}
-
-const runAiAssistantPop = () => {
-  runAiAssistant()
-}
-
-const aiQuickAction = (cmd) => {
-  aiCommand.value = cmd
-  runAiAssistant()
-}
-
-const handleRowClick = (row) => {
-  router.push(`/inventory/nomenclature/${row.id}`)
-}
 
 // Data State
 const loading = ref(false)
@@ -601,12 +190,19 @@ const searchQuery = ref('')
 const filterCategory = ref('')
 const filterStock = ref('')
 const filterType = ref('')
-const filterStockDetails = ref('')
 const activeTab = ref('all')
 
 const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY'))
 const uomOptions = computed(() => dictStore.getCategory('UOM'))
 
+// Watchers for immediate filtering
+watch([filterCategory, filterType, filterStock, activeTab], () => {
+  handleFilterChange()
+})
+
+watch(searchQuery, () => {
+  handleSearch()
+})
 
 const fetchDictionaries = async () => {
   try {
@@ -637,7 +233,7 @@ const fetchProducts = async () => {
     const response = await api.get('/api/v1/products', { params })
     let results = response.data
     
-    // Apply front-end filtering for UI Types & Stock Details
+    // Front-end filtering
     if (filterType.value) {
       results = results.filter(p => {
         if (filterType.value === 'product') return p.category === 'PRODUCT'
@@ -656,7 +252,6 @@ const fetchProducts = async () => {
       }
     }
     products.value = results
-
 
     if (!searchQuery.value && !filterCategory.value && !filterStock.value) {
       total.value = stats.value.total_products
@@ -680,21 +275,7 @@ const handleSearch = () => {
   }, 400)
 }
 
-const handleCategorySelect = (code) => {
-  filterCategory.value = code
-  skip.value = 0
-  currentPage.value = 1
-  fetchProducts()
-}
-
 const handleFilterChange = () => {
-  skip.value = 0
-  currentPage.value = 1
-  fetchProducts()
-}
-
-const handleSizeChange = (size) => {
-  limit.value = size
   skip.value = 0
   currentPage.value = 1
   fetchProducts()
@@ -706,7 +287,20 @@ const handlePageChange = (page) => {
   fetchProducts()
 }
 
-// Product Form Drawer state
+const toggleRowSelection = (row) => {
+  const index = selectedRows.value.findIndex(r => r.id === row.id)
+  if (index > -1) {
+    selectedRows.value.splice(index, 1)
+  } else {
+    selectedRows.value.push(row)
+  }
+}
+
+const toggleAllSelection = (isSelected) => {
+  selectedRows.value = isSelected ? [...products.value] : []
+}
+
+// Product Form Logic
 const formDrawerVisible = ref(false)
 const isEditMode = ref(false)
 const saveLoading = ref(false)
@@ -721,12 +315,36 @@ const formModel = ref({
   min_stock: 0
 })
 
+const handleRowClick = (row) => {
+  router.push(`/inventory/nomenclature/${row.id}`)
+}
+
 const handleEdit = (row) => {
   router.push(`/inventory/nomenclature/${row.id}`)
 }
 
+const handleDuplicate = (row) => {
+  ElMessage.info('Дублювання: ' + row.name)
+}
+
 const goToCreate = () => {
   router.push('/inventory/nomenclature/new')
+}
+
+const handleDelete = (row) => {
+  ElMessage.warning('Видалення: ' + row.name)
+}
+
+const handleExport = () => {
+  ElMessage.info('Експорт Excel/CSV')
+}
+
+const handleViewStock = (row) => {
+  ElMessage.info(`Залишки для ${row.name}`)
+}
+
+const handleViewMovement = (row) => {
+  ElMessage.info(`Рух товару для ${row.name}`)
 }
 
 const saveProduct = async () => {
@@ -734,7 +352,6 @@ const saveProduct = async () => {
     ElMessage.warning('Будь ласка, заповніть обов\'язкові поля')
     return
   }
-  
   saveLoading.value = true
   try {
     if (isEditMode.value) {
@@ -759,7 +376,6 @@ const runAiFormFill = () => {
     ElMessage.info('Введіть назву товару для AI-аналізу')
     return
   }
-  
   const nameLower = formModel.value.name.toLowerCase()
   if (nameLower.includes('профіль') || nameLower.includes('метал')) {
     formModel.value.category = 'MATERIAL'
@@ -777,48 +393,38 @@ const runAiFormFill = () => {
   ElMessage.success('AI підібрав оптимальні характеристики!')
 }
 
-
-const handleViewStock = (row) => {
-  ElMessage.info(`Залишки для ${row.name}`)
+const runAiAssistant = () => {
+  if (!aiCommand.value) return
+  if (aiCommand.value.toLowerCase().includes('дефіцит') || aiCommand.value.toLowerCase().includes('мало')) {
+    aiAnalysisResult.value = '🤖 AI Аналітика: Знайдено 3 позиції з критичним залишком. Рекомендовано створити замовлення постачальнику для: "Банкетка Loren 80" та "Профіль 20x20".'
+  } else if (aiCommand.value.toLowerCase().includes('дублікати')) {
+    aiAnalysisResult.value = '🤖 AI Аналітика: Схожих дублікатів у вашій базі наразі не виявлено. Всі позиції унікальні.'
+  } else {
+    aiAnalysisResult.value = `🤖 AI Результат: За вашим запитом "${aiCommand.value}" оброблено дані. Рекомендовано звернути увагу на категорію "Метал".`
+  }
 }
 
-const handleViewMovement = (row) => {
-  ElMessage.info(`Рух товару для ${row.name}`)
+const runAiAssistantPop = () => runAiAssistant()
+const aiQuickAction = (cmd) => {
+  aiCommand.value = cmd
+  runAiAssistant()
 }
-
 
 // Helpers
 const colorMap = {
-  blue: '#3b82f6',
-  green: '#10b981',
-  orange: '#f59e0b',
-  red: '#ef4444',
-  purple: '#8b5cf6',
-  teal: '#14b8a6',
-  gray: '#64748b',
-  indigo: '#4f46e5',
-  pink: '#ec4899',
-  rose: '#f43f5e',
-  cyan: '#06b6d4',
-  amber: '#fcd34d'
+  blue: '#3b82f6', green: '#10b981', orange: '#f59e0b', red: '#ef4444',
+  purple: '#8b5cf6', teal: '#14b8a6', gray: '#64748b', indigo: '#4f46e5',
+  pink: '#ec4899', rose: '#f43f5e', cyan: '#06b6d4', amber: '#fcd34d'
 }
 
 const hexToRgba = (hex, opacity) => {
   if (!hex) return 'rgba(0,0,0,0)'
   let cleanHex = hex.replace('#', '').trim()
   if (cleanHex.length === 3) {
-    cleanHex = cleanHex.charAt(0) + cleanHex.charAt(0) +
-               cleanHex.charAt(1) + cleanHex.charAt(1) +
-               cleanHex.charAt(2) + cleanHex.charAt(2)
+    cleanHex = cleanHex.split('').map(c => c + c).join('')
   }
-  if (cleanHex.length === 8) {
-    cleanHex = cleanHex.substring(0, 6)
-  }
-  if (cleanHex.length !== 6) {
-    // If it's a CSS named color or rgb, we can't easily manipulate opacity here.
-    // Return the color itself.
-    return hex
-  }
+  if (cleanHex.length === 8) cleanHex = cleanHex.substring(0, 6)
+  if (cleanHex.length !== 6) return hex
   const r = parseInt(cleanHex.substring(0, 2), 16)
   const g = parseInt(cleanHex.substring(2, 4), 16)
   const b = parseInt(cleanHex.substring(4, 6), 16)
@@ -828,47 +434,27 @@ const hexToRgba = (hex, opacity) => {
 const darkenColor = (hex, percent) => {
   if (!hex) return '#000'
   let cleanHex = hex.replace('#', '').trim()
-  if (cleanHex.length === 3) {
-    cleanHex = cleanHex.charAt(0) + cleanHex.charAt(0) +
-               cleanHex.charAt(1) + cleanHex.charAt(1) +
-               cleanHex.charAt(2) + cleanHex.charAt(2)
-  }
-  if (cleanHex.length === 8) {
-    cleanHex = cleanHex.substring(0, 6)
-  }
+  if (cleanHex.length === 3) cleanHex = cleanHex.split('').map(c => c + c).join('')
+  if (cleanHex.length === 8) cleanHex = cleanHex.substring(0, 6)
   if (cleanHex.length !== 6) return hex
   let r = parseInt(cleanHex.substring(0, 2), 16)
   let g = parseInt(cleanHex.substring(2, 4), 16)
   let b = parseInt(cleanHex.substring(4, 6), 16)
-
   r = Math.max(0, Math.floor(r * (1 - percent / 100)))
   g = Math.max(0, Math.floor(g * (1 - percent / 100)))
   b = Math.max(0, Math.floor(b * (1 - percent / 100)))
-
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
 }
 
 const getCategoryBadgeStyle = (code) => {
-  const fallbackStyle = {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    color: '#475569'
-  }
-  
-  if (!code) return fallbackStyle
-  
+  const fallback = { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', color: '#475569' }
+  if (!code) return fallback
   const categories = dictStore.getCategory('PRODUCT_CATEGORY')
   const category = categories.find(cat => cat.code === code)
-  
-  if (!category || !category.color) return fallbackStyle
-  
+  if (!category || !category.color) return fallback
   let baseColor = category.color
-  if (colorMap[baseColor.toLowerCase()]) {
-    baseColor = colorMap[baseColor.toLowerCase()]
-  } else if (!baseColor.startsWith('#')) {
-    baseColor = '#4f46e5'
-  }
-  
+  if (colorMap[baseColor.toLowerCase()]) baseColor = colorMap[baseColor.toLowerCase()]
+  else if (!baseColor.startsWith('#')) baseColor = '#4f46e5'
   return {
     backgroundColor: hexToRgba(baseColor, 0.10),
     borderColor: hexToRgba(baseColor, 0.25),
@@ -876,50 +462,18 @@ const getCategoryBadgeStyle = (code) => {
   }
 }
 
-const getCategoryName = (code) => {
-  return dictStore.getName('PRODUCT_CATEGORY', code)
-}
-
-const getUomName = (code) => {
-  return dictStore.getShortName('UOM', code)
-}
-
+const getCategoryName = (code) => dictStore.getName('PRODUCT_CATEGORY', code)
+const getUomName = (code) => dictStore.getShortName('UOM', code)
 const getStockBadgeClass = (qty, min = 5) => {
   if (qty <= 0) return 'danger'
   if (qty < min) return 'warning'
   return 'success'
 }
-
 const getStockBadgeText = (qty, min = 5) => {
   if (qty <= 0) return 'Немає'
   if (qty < min) return 'Закінчується'
   return 'В нормі'
 }
-
-
-const getStockClass = (qty) => {
-  if (qty <= 0) return 'stock-none'
-  if (qty <= 5) return 'stock-low'
-  return 'stock-ok'
-}
-
-
-const getStockColorClass = (qty) => {
-  if (qty <= 0) return 'text-rose-600'
-  if (qty <= 5) return 'text-amber-600'
-  return 'text-emerald-600'
-}
-
-const getStockProgressStatus = (qty) => {
-  if (qty <= 0) return 'exception'
-  if (qty <= 5) return 'warning'
-  return 'success'
-}
-
-const getStockPercentage = (qty) => {
-  return Math.min(100, Math.round((qty / 100) * 100))
-}
-
 const formatCurrency = (amount, currency = 'UAH') => {
   if (amount == null) return '—'
   const c = currency || 'UAH'
@@ -943,86 +497,23 @@ onActivated(() => {
   --card-bg: #ffffff;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
-  --text-muted: #94a3b8;
   --border: #e2e8f0;
-
   --primary: #635bff;
-  --success-bg: #dcfce7;
-  --success-text: #16a34a;
-  --warning-bg: #fef3c7;
-  --warning-text: #d97706;
-  --danger-bg: #fee2e2;
-  --danger-text: #ef4444;
 
   padding: 16px 24px 24px;
   background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 28%), var(--page-bg);
   min-height: calc(100vh - 64px);
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
-  position: relative; /* for floating button */
 }
 
-/* ===== STAT CARDS ===== */
-.stats-row-dense {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.top-section {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 12px;
 }
 
-/* ===== ACTION ROW (under KPI) ===== */
-.action-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0px;
-}
-.action-row__left {
-  display: flex;
-  align-items: center;
-}
-.action-row__right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Compact action buttons */
-.act-btn {
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.18s ease;
-  white-space: nowrap;
-  border: none;
-}
-.act-btn--secondary {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-}
-.act-btn--secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #1e293b;
-}
-.act-btn--primary {
-  background: linear-gradient(135deg, #635bff, #7c3aed);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(99,91,255,0.32);
-}
-.act-btn--primary:hover {
-  box-shadow: 0 6px 20px rgba(99,91,255,0.42);
-  transform: translateY(-1px);
-}
-
-/* ===== FLOATING AI BUTTON ===== */
+/* AI FLOATING BUTTON */
 .ai-float-btn {
   position: fixed;
   bottom: 28px;
@@ -1038,11 +529,9 @@ onActivated(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
   box-shadow: 0 8px 24px rgba(99,91,255,0.45);
   transition: all 0.2s ease;
   font-size: 20px;
-  line-height: 1;
 }
 .ai-float-btn:hover {
   box-shadow: 0 12px 30px rgba(99,91,255,0.55);
@@ -1052,762 +541,47 @@ onActivated(() => {
   font-size: 10px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: 0.04em;
-  line-height: 1;
 }
 
-/* ===== AI POPOVER CONTENT ===== */
-.ai-pop-content {
-  padding: 4px 0;
-}
+/* AI POPOVER */
 .ai-pop-header {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   margin-bottom: 12px;
-  padding-bottom: 10px;
   border-bottom: 1px solid #eef2f7;
-}
-.ai-pop-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-}
-.ai-pop-sub {
-  font-size: 12px;
-  color: #94a3b8;
-}
-.ai-pop-input-row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.ai-pop-input {
-  flex: 1;
-  height: 36px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0 12px;
-  font-size: 13px;
-  color: #0f172a;
-  outline: none;
-  background: #f8fafc;
-}
-.ai-pop-input:focus {
-  border-color: #635bff;
-  background: #ffffff;
-}
-.ai-pop-send {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #635bff;
-  border: none;
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-.ai-pop-send:hover { background: #4f46e5; }
-.ai-pop-result {
-  font-size: 13px;
-  line-height: 1.55;
-  color: #334155;
-  background: #f0f4ff;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
-.ai-pop-quick {
-  margin-top: 4px;
-}
-.ai-pop-quick-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-}
-.ai-pop-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.ai-pill {
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 12px;
-  font-weight: 500;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-.ai-pill:hover {
-  background: #eef2ff;
-  border-color: #c7d2fe;
-  color: #4f46e5;
-}
-.stats-card-dense {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 12px 32px rgba(15,23,42,0.04);
-  transition: all 0.2s ease;
-  height: 72px;
-  box-sizing: border-box;
-}
-.stats-card-dense:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 36px rgba(15,23,42,0.08);
-}
-.stats-card-dense__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-.stats-card-dense__icon.total { background: #eff6ff; color: #2563eb; }
-.stats-card-dense__icon.success { background: var(--success-bg); color: var(--success-text); }
-.stats-card-dense__icon.warning { background: var(--warning-bg); color: var(--warning-text); }
-.stats-card-dense__icon.danger { background: var(--danger-bg); color: var(--danger-text); }
-
-.stats-card-dense__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.stats-card-dense__label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.stats-card-dense__value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-/* ===== TOOLBAR ===== */
-.toolbar-dense {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 10px 28px rgba(15,23,42,0.03);
-  margin-top: 12px;
-  gap: 16px;
-}
-.toolbar-dense__left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-.search-dense-wrapper {
-  position: relative;
-  width: 300px;
-}
-.search-dense-icon {
-  position: absolute;
-  left: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-}
-.search-dense-input {
-  width: 100%;
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  padding: 0 12px 0 35px;
-  font-size: 13px;
-  background: #ffffff;
-  transition: all 0.2s ease;
-  color: #0f172a;
-}
-.search-dense-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
-}
-.pill-select :deep(.el-select__wrapper) {
-  height: 38px !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--border) !important;
-  background: #ffffff !important;
-  box-shadow: none !important;
-  font-size: 13px !important;
-}
-.column-toggle-btn {
-  height: 42px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #ffffff;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-.column-toggle-btn:hover {
-  background: #f8fafc;
-  border-color: var(--primary);
-}
-.primary-dense-button {
-  height: 42px;
-  padding: 0 20px;
-  background: linear-gradient(135deg, var(--primary), #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 12px 28px rgba(99, 91, 255, 0.28);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-.primary-dense-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 34px rgba(99, 91, 255, 0.34);
-}
-
-/* ===== TABLE SECTION ===== */
-.table-section {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.05);
-  margin-top: 20px;
-  overflow: hidden;
-}
-
-/* ===== CSS GRID TABLE (nom-table) ===== */
-/*
-  The SAME grid-template-columns is applied to both .nom-header and .nom-body-row
-  so header and body are always perfectly aligned.
-*/
-.nom-table {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.nom-row {
-  display: grid;
-  grid-template-columns:
-    44px    /* checkbox */
-    64px    /* photo */
-    minmax(240px, 2.2fr) /* name */
-    180px   /* category */
-    170px   /* stock */
-    150px   /* status */
-    120px   /* price */
-    96px;   /* actions */
-  align-items: center;
-  min-width: 900px;
-}
-
-/* HEADER */
-.nom-header {
-  background: #f8fafc;
-  border-bottom: 1px solid #eef2f7;
-  height: 48px;
-}
-
-.nom-header .nom-cell {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-  padding: 0 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* BODY ROWS */
-.nom-body-row {
-  height: 72px;
-  border-bottom: 1px solid #eef2f7;
-  cursor: pointer;
-  transition: background 0.14s ease;
-}
-.nom-body-row:last-child {
-  border-bottom: none;
-}
-.nom-body-row:hover {
-  background: #fafbff;
-}
-
-/* CELLS — shared */
-.nom-cell {
-  padding: 0 8px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-
-/* --- Checkbox cell --- */
-.nom-cell--check {
-  justify-content: center;
-  padding: 0;
-}
-.nom-cell--check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #635bff;
-}
-
-/* --- Photo cell --- */
-.nom-cell--photo {
-  justify-content: center;
-  padding: 0;
-}
-.nom-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  flex-shrink: 0;
-}
-.nom-thumb--icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  font-size: 16px;
-}
-
-/* --- Name cell --- */
-.nom-cell--name {
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 3px;
-  padding-right: 12px;
-}
-.nom-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-.nom-sku {
-  font-size: 12px;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-.nom-dot {
-  margin: 0 2px;
-}
-
-/* --- Category cell --- */
-.nom-cell--category {
-  padding-right: 12px;
-}
-.nom-cat-badge {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1;
-  border: 1px solid transparent;
-}
-
-/* --- Stock cell --- */
-.nom-cell--stock {
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 5px;
-}
-.nom-stock-qty {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-}
-.nom-prog-bar {
-  width: 100px;
-  height: 5px;
-  background: #eef2f7;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.nom-prog-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-.nom-prog-fill.success { background: #22c55e; }
-.nom-prog-fill.warning { background: #f59e0b; }
-.nom-prog-fill.danger  { background: #f43f5e; }
-
-/* --- Status cell --- */
-.nom-cell--status {
-  justify-content: flex-start;
-}
-.nom-status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  line-height: 1;
-}
-.nom-status-badge.success { background: #dcfce7; color: #16a34a; }
-.nom-status-badge.warning { background: #fef3c7; color: #d97706; }
-.nom-status-badge.danger  { background: #fee2e2; color: #ef4444; }
-
-/* --- Price cell --- */
-.nom-cell--price {
-  justify-content: flex-end;
-  padding-right: 16px;
-}
-.nom-price {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-}
-.nom-price--empty {
-  color: #94a3b8;
-}
-
-/* --- Actions cell --- */
-.nom-cell--actions {
-  justify-content: flex-end;
-  gap: 4px;
-  padding-right: 12px;
-  padding-left: 0;
-}
-.nom-action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: #64748b;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-.nom-action-btn:hover {
-  background: #eef2ff;
-  border-color: #c7d2fe;
-  color: #4f46e5;
-}
-
-/* Delete item in dropdown */
-.nom-delete-item {
-  color: #ef4444 !important;
-}
-
-/* Empty state */
-.nom-empty {
-  padding: 60px 24px;
-  text-align: center;
-}
-.nom-empty-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-}
-.nom-empty-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-}
-.nom-empty-sub {
-  font-size: 14px;
-  color: #94a3b8;
-  margin-top: 4px;
-}
-
-.pagination-dense {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-top: 1px solid #eef2f7;
-}
-
-/* ===== COMPACT MODE ===== */
-.dense-mode {
-  padding: 16px;
-}
-.dense-mode .stats-card-dense {
-  height: 56px;
-  padding: 10px 14px;
-}
-.dense-mode .stats-card-dense__value {
-  font-size: 20px;
-}
-.dense-mode .toolbar-dense {
-  padding: 10px 12px;
-  margin-top: 12px;
-}
-.dense-mode .table-section {
-  margin-top: 12px;
-}
-.dense-mode .nom-body-row {
-  height: 56px;
-}
-.dense-mode .nom-thumb {
-  width: 32px;
-  height: 32px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.6);
-}
-
-.header-flex-premium {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.page-subtitle-premium {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 4px 0 0 0;
-}
-.header-actions-premium {
-  display: flex;
-  gap: 12px;
-}
-.secondary-premium-btn {
-  height: 42px;
-  padding: 0 16px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.secondary-premium-btn:hover {
-  background: #f8fafc;
-  border-color: var(--primary);
-}
-
-.stats-card-dense__subtext {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-.stats-card-dense__sparkline {
-  margin-left: auto;
-}
-
-.ai-banner-premium {
-  background: linear-gradient(135deg, rgba(99, 91, 255, 0.08), rgba(139, 92, 246, 0.08));
-  border: 1px solid rgba(99, 91, 255, 0.2);
-  border-radius: 16px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-  box-sizing: border-box;
-}
-.ai-banner-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.ai-banner-icon {
-  font-size: 20px;
-}
-.ai-banner-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #4f46e5;
-  margin: 0;
-}
-.ai-banner-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 2px 0 0 0;
-}
-.ai-banner-btn {
-  padding: 6px 14px;
-  background: #4f46e5;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.ai-banner-btn:hover {
-  background: #4338ca;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-}
-
-.quick-tabs-premium {
-  display: flex;
-  gap: 24px;
-  border-bottom: 1px solid var(--border);
-  padding: 0 10px 8px 10px;
-  margin-top: 16px;
-}
-.quick-tab-item {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  position: relative;
-  transition: color 0.2s ease;
   padding-bottom: 8px;
 }
-.quick-tab-item:hover {
-  color: var(--primary);
+.ai-pop-title { font-weight: 700; color: #0f172a; }
+.ai-pop-sub { font-size: 12px; color: #94a3b8; }
+.ai-pop-input-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.ai-pop-input {
+  flex: 1; height: 36px; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 0 12px; font-size: 13px;
 }
-.quick-tab-item.active {
-  color: var(--primary);
+.ai-pop-send {
+  width: 36px; height: 36px; border-radius: 10px; background: #635bff;
+  color: white; border: none; cursor: pointer;
 }
-.quick-tab-item.active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -9px;
-  height: 2px;
-  background: var(--primary);
-  border-radius: 2px;
+.ai-pop-result {
+  font-size: 13px; background: #f0f4ff; border-radius: 10px;
+  padding: 10px; margin-bottom: 10px;
+}
+.ai-pop-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-pill {
+  padding: 4px 8px; border-radius: 6px; background: #f8fafc;
+  border: 1px solid #e2e8f0; font-size: 12px; cursor: pointer;
 }
 
-.stock-progress-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.stock-number-dense {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.stock-progress-bar {
-  width: 100%;
-  height: 6px;
-  background: #eef2f7;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.stock-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-.stock-progress-fill.success { background-color: var(--success-text); }
-.stock-progress-fill.warning { background-color: var(--warning-text); }
-.stock-progress-fill.danger { background-color: #f43f5e; }
-
-.ai-assistant-content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.ai-assistant-result-zone {
-  background: #f8fafc;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-}
+/* AI ASSISTANT CONTENT */
+.ai-assistant-content { padding: 0 20px; }
 .ai-result-box {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-primary);
-}
-.ai-assistant-prompts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ai-prompt-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 16px; margin: 16px 0; font-size: 14px;
 }
 .ai-prompt-pill {
-  padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 8px 12px; background: #f1f5f9; border-radius: 8px;
+  margin-bottom: 8px; cursor: pointer; font-size: 13px;
 }
-.ai-prompt-pill:hover {
-  background: rgba(99, 91, 255, 0.05);
-  border-color: var(--primary);
-}
+
+.dense-mode { padding: 16px; }
 </style>
-
-
-
-
-
-
