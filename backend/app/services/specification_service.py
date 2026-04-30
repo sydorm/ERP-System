@@ -11,15 +11,15 @@ class SpecificationService:
     ) -> Decimal:
         """
         Calculates the quantity of a component based on smart rules.
-        parent_dimensions should contain: 'width_cm', 'height_cm', 'length_cm', 'weight_kg', 'custom_attributes'
+        parent_dimensions should contain: 'width_mm', 'height_mm', 'length_mm', 'weight_kg', 'custom_attributes'
         """
         if not item.calc_type or item.calc_type == CalculationType.FIXED:
             return Decimal(str(item.quantity or 0))
 
         is_meters = item.unit_of_measure == 'м'
-        w = float(parent_dimensions.get('width_cm') or 0)
-        h = float(parent_dimensions.get('height_cm') or 0)
-        l = float(parent_dimensions.get('length_cm') or 0)
+        w = float(parent_dimensions.get('width_mm') or 0)
+        h = float(parent_dimensions.get('height_mm') or 0)
+        l = float(parent_dimensions.get('length_mm') or 0)
         kg = float(parent_dimensions.get('weight_kg') or 0)
         custom_attrs = parent_dimensions.get('custom_attributes') or {}
 
@@ -28,23 +28,25 @@ class SpecificationService:
         if item.calc_type == CalculationType.INTERPOLATION:
             result = SpecificationService._calculate_interpolation(item, w, h, l, custom_attrs)
         elif item.calc_type == CalculationType.PROPORTIONAL:
-            dim_key = item.calc_dimension or 'width_cm'
+            dim_key = item.calc_dimension or 'width_mm'
             dim_val = float(parent_dimensions.get(dim_key) or 0)
             
             # Check for characteristic override
             config = item.calc_dim_config or {}
-            dim_map = {'height_cm': 'h', 'width_cm': 'w', 'length_cm': 'l'}
+            dim_map = {'height_mm': 'h', 'width_mm': 'w', 'length_mm': 'l'}
             key = dim_map.get(dim_key, 'w')
             dim_config = config.get(key, {})
             
-            unit = dim_config.get('unit', 'см')
+            unit = dim_config.get('unit', 'мм')
             char_name = dim_config.get('char_name')
             if char_name and char_name in custom_attrs:
                 dim_val = float(custom_attrs[char_name])
             
             coeff = float(item.calc_formula or 0)
             if is_meters:
-                meters = SpecificationService._to_meters(dim_val, unit)
+                # If source is characteristic, use char unit. Else use mm.
+                source_unit = unit if char_name else 'мм'
+                meters = SpecificationService._to_meters(dim_val, source_unit)
                 result = coeff * meters
             else:
                 result = dim_val * coeff
@@ -54,13 +56,13 @@ class SpecificationService:
             result *= (1.0 + waste_factor)
             
         elif item.calc_type == CalculationType.AREA:
-            # W * H / 10000 (cm2 to m2)
-            result = (w * h) / 10000.0
+            # W * H / 1,000,000 (mm2 to m2)
+            result = (w * h) / 1000000.0
             waste_factor = float(item.calc_waste_factor or 0)
             result *= (1.0 + waste_factor)
         elif item.calc_type == CalculationType.VOLUME:
-            # W * H * L / 1000000 (cm3 to m3)
-            result = (w * h * l) / 1000000.0
+            # W * H * L / 1,000,000,000 (mm3 to m3)
+            result = (w * h * l) / 1000000000.0
             waste_factor = float(item.calc_waste_factor or 0)
             result *= (1.0 + waste_factor)
         elif item.calc_type == CalculationType.FORMULA:
@@ -122,14 +124,11 @@ class SpecificationService:
         variants = db.query(ProductVariant).filter(ProductVariant.product_id == product.id).all()
         
         # 2. Iterate and check attributes
-        # We look for a variant that has a DIMENSIONS attribute with matching w/h
         for v in variants:
             for val in v.values:
-                # If it's a DIMENSIONS type, it likely has text_value="600x320"
                 attr = db.query(Attribute).filter(Attribute.id == val.attribute_id).first()
                 if attr and attr.type == 'DIMENSIONS':
                     if not val.text_value: continue
-                    # Normalize separators: x, × (unicode), * and remove spaces
                     norm_val = val.text_value.replace('×', 'x').replace('*', 'x').replace(' ', '')
                     parts = norm_val.split('x')
                     if len(parts) < 2: continue
@@ -140,14 +139,12 @@ class SpecificationService:
                     except (ValueError, IndexError):
                         continue
                     
-                    # Match target_length and target_width (order-independent)
                     if target_width:
                         match_1 = (abs(v_w - target_length) < 0.1 and abs(v_h - target_width) < 0.1)
                         match_2 = (abs(v_h - target_length) < 0.1 and abs(v_w - target_width) < 0.1)
                         if match_1 or match_2:
                             return v
                     else:
-                        # Only length matters?
                         if abs(v_w - target_length) < 0.1 or abs(v_h - target_length) < 0.1:
                             return v
                             
@@ -163,7 +160,7 @@ class SpecificationService:
         if unit == 'мм': return value / 1000.0
         if unit == 'см': return value / 100.0
         if unit == 'м': return value
-        return value / 100.0
+        return value / 1000.0 # Standard is mm now
 
     @staticmethod
     def _calculate_interpolation(item: SpecificationItem, w: float, h: float, l: float, custom_attrs: Dict[str, Any]) -> float:
@@ -183,7 +180,6 @@ class SpecificationService:
             if not pts or not isinstance(pts, list):
                 continue
             
-            # Filter and sort points by x
             valid_pts = sorted(
                 [p for p in pts if p.get('x') is not None and p.get('qty') is not None],
                 key=lambda p: float(p['x'])
@@ -194,7 +190,7 @@ class SpecificationService:
             
             has_any_points = True
             dim_config = config.get(key, {})
-            unit = dim_config.get('unit', 'см')
+            unit = dim_config.get('unit', 'мм')
             char_name = dim_config.get('char_name')
             
             # Resolve dimension value
@@ -202,10 +198,15 @@ class SpecificationService:
             if char_name and char_name in custom_attrs:
                 dim_val_raw = float(custom_attrs[char_name])
             
-            # Convert to CM for interpolation matching (internal pts.x are in CM)
-            # Factor for setDimValue: mm->10, m->0.01
-            factor = 10.0 if unit == 'мм' else (0.01 if unit == 'м' else 1.0)
-            dim_val_for_interp = physical_val if not char_name else dim_val_raw / factor
+            # Normalize dim_val to the unit of interpolation points (config.unit)
+            normalized_dim_val = dim_val_raw
+            if not char_name:
+                # Product dimensions are in mm. Convert to config.unit
+                if unit == 'см': normalized_dim_val = dim_val_raw / 10.0
+                if unit == 'м': normalized_dim_val = dim_val_raw / 1000.0
+            else:
+                # Characteristics are assumed to be in the unit specified in config.unit
+                normalized_dim_val = dim_val_raw
 
             def interp(p1, p2, x):
                 x1, y1 = float(p1['x']), float(p1['qty'])
@@ -217,23 +218,24 @@ class SpecificationService:
 
             if len(valid_pts) == 1:
                 count_result = float(valid_pts[0]['qty'])
-            elif dim_val_for_interp <= float(valid_pts[0]['x']):
-                count_result = interp(valid_pts[0], valid_pts[1], dim_val_for_interp)
-            elif dim_val_for_interp >= float(valid_pts[-1]['x']):
-                count_result = interp(valid_pts[-2], valid_pts[-1], dim_val_for_interp)
+            elif normalized_dim_val <= float(valid_pts[0]['x']):
+                count_result = interp(valid_pts[0], valid_pts[1], normalized_dim_val)
+            elif normalized_dim_val >= float(valid_pts[-1]['x']):
+                count_result = interp(valid_pts[-2], valid_pts[-1], normalized_dim_val)
             else:
                 count_result = 0
                 for i in range(len(valid_pts) - 1):
-                    if dim_val_for_interp >= float(valid_pts[i]['x']) and dim_val_for_interp <= float(valid_pts[i+1]['x']):
-                        count_result = interp(valid_pts[i], valid_pts[i+1], dim_val_for_interp)
+                    if normalized_dim_val >= float(valid_pts[i]['x']) and normalized_dim_val <= float(valid_pts[i+1]['x']):
+                        count_result = interp(valid_pts[i], valid_pts[i+1], normalized_dim_val)
                         break
             
             dim_final = count_result
             if is_meters:
-                meters = SpecificationService._to_meters(dim_val_raw, unit)
+                # If meter unit, countResult is pieces, we need count * dimension_in_meters
+                source_unit = unit if char_name else 'мм'
+                meters = SpecificationService._to_meters(dim_val_raw, source_unit)
                 dim_final = count_result * meters
             
-            # Apply per-dimension waste
             dim_waste = float(dim_config.get('waste') or 0)
             if dim_waste > 0:
                 dim_final *= (1.0 + dim_waste / 100.0)
@@ -249,7 +251,6 @@ class SpecificationService:
         
         custom_attrs = custom_attrs or {}
         
-        # 1. Replace custom attributes like {AttributeName} with their values
         def replace_custom_attr(match):
             attr_name = match.group(1)
             val = custom_attrs.get(attr_name, 0.0)
@@ -257,7 +258,6 @@ class SpecificationService:
             
         processed_formula = re.sub(r'\{([^}]+)\}', replace_custom_attr, formula)
         
-        # 2. Evaluation
         subs = {
             'W': w,
             'H': h,
@@ -265,12 +265,9 @@ class SpecificationService:
             'KG': kg
         }
         
-        # Case insensitive replacement for base variables
         for var, val in subs.items():
             processed_formula = re.sub(rf'\b{var}\b', str(val), processed_formula, flags=re.IGNORECASE)
             
-        # Clean up formula for safe eval (only basic math)
-        # We allow numbers, operators, dots, spaces
         cleaned = re.sub(r'[^0-9.+\-*/%() ]', '', processed_formula)
             
         try:

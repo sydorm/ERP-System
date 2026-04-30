@@ -46,16 +46,16 @@ class Product(BaseModel):
     price = Column(Numeric(15, 2), nullable=False, default=Decimal("0.00"))  # Selling price
     currency = Column(String(3), nullable=False, default="UAH")
     cost = Column(Numeric(15, 2), nullable=True)  # Purchase cost / Собівартість
-    cost_source = Column(String(200), nullable=True)  # e.g. "Оновлено з PR-00004 від 30.04.2026"
+    cost_source = Column(String(200), nullable=True)
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False, server_default='false')
     
     # Dimensions and Weight
-    length_cm = Column(Numeric(10, 2), nullable=True)
-    width_cm = Column(Numeric(10, 2), nullable=True)
-    height_cm = Column(Numeric(10, 2), nullable=True)
+    length_mm = Column(Numeric(10, 2), nullable=True)
+    width_mm = Column(Numeric(10, 2), nullable=True)
+    height_mm = Column(Numeric(10, 2), nullable=True)
     weight_kg = Column(Numeric(10, 2), nullable=True)
     
     # Stock Management
@@ -78,6 +78,7 @@ class Product(BaseModel):
     
     # Configuration for variants (dimensions/weight rules)
     variant_config = Column(JSON, nullable=True)
+    supplier_links = Column(JSON, nullable=True)
 
     # Foreign Keys
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)

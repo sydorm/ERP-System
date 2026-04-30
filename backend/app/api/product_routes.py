@@ -74,7 +74,6 @@ async def get_product_stock(
                     if opt:
                         text_parts.append(opt.value)
             variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
-
     return [
         {
             "warehouse": r.warehouse,
@@ -403,8 +402,6 @@ async def update_product(
     db.refresh(product)
     return product
 
-    return product
-
 @router.get("/products/{product_id}/attributes", response_model=List[ProductAttributeLight])
 async def get_product_attributes(
     product_id: UUID,
@@ -481,9 +478,9 @@ async def calculate_product_cost(
         return {"cost": 0.0, "materials_cost": 0.0, "stages_cost": 0.0, "detail": "Не знайдено активної специфікації"}
 
     parent_dims = {
-        'width_cm': float(product.width_cm or 0),
-        'height_cm': float(product.height_cm or 0),
-        'length_cm': float(product.length_cm or 0),
+        'width_mm': float(product.width_mm or 0),
+        'height_mm': float(product.height_mm or 0),
+        'length_mm': float(product.length_mm or 0),
         'weight_kg': float(product.weight_kg or 0),
         'custom_attributes': {} # We don't have variants values readily available here for simple cost check, but could be added
     }

@@ -192,7 +192,7 @@ const props = defineProps({
     priceRule: Object,
     productAttributes: { type: Array, default: () => [] },
     variantConfig: { type: Object, default: () => ({}) },
-    baseDimensions: { type: Object, default: () => ({ length_cm: 0, width_cm: 0, height_cm: 0, weight_kg: 0 }) }
+    baseDimensions: { type: Object, default: () => ({ length_mm: 0, width_mm: 0, height_mm: 0, weight_kg: 0 }) }
 })
 
 const emit = defineEmits(['update:variants', 'update:priceRule'])
@@ -426,9 +426,9 @@ const addManualVariant = () => {
     variants.value.push({
         sku: `${props.productCode || 'P'}-CUSTOM`,
         price_override: null,
-        length_cm: props.baseDimensions?.length_cm || 0,
-        width_cm: props.baseDimensions?.width_cm || 0,
-        height_cm: props.baseDimensions?.height_cm || 0,
+        length_mm: props.baseDimensions?.length_mm || 0,
+        width_mm: props.baseDimensions?.width_mm || 0,
+        height_mm: props.baseDimensions?.height_mm || 0,
         weight_kg: props.baseDimensions?.weight_kg || 0,
         values: [],
         image_url: null,
@@ -438,9 +438,9 @@ const addManualVariant = () => {
 
 const calculatePhysicalParams = (combo) => {
     const params = {
-        length_cm: props.baseDimensions?.length_cm || 0,
-        width_cm: props.baseDimensions?.width_cm || 0,
-        height_cm: props.baseDimensions?.height_cm || 0,
+        length_mm: props.baseDimensions?.length_mm || 0,
+        width_mm: props.baseDimensions?.width_mm || 0,
+        height_mm: props.baseDimensions?.height_mm || 0,
         weight_kg: props.baseDimensions?.weight_kg || 0
     }
 
@@ -458,7 +458,7 @@ const calculatePhysicalParams = (combo) => {
         if (!cfg) return
         if (cfg.source === 'attribute' && cfg.attr_id) {
             const val = getAttrVal(cfg.attr_id)
-            if (val !== null) params[`${key}_cm`] = val
+            if (val !== null) params[`${key}_mm`] = val
         }
     })
 
@@ -467,11 +467,11 @@ const calculatePhysicalParams = (combo) => {
     if (wCfg && wCfg.source === 'calc') {
         const baseWeight = parseFloat(wCfg.base_kg) || 0
         const stepKg = parseFloat(wCfg.step_kg) || 0
-        const stepCm = parseFloat(wCfg.step_cm) || 10
-        const dimVal = params[`${wCfg.dim_key}_cm`] || 0
+        const stepMm = parseFloat(wCfg.step_mm) || 100
+        const dimVal = params[`${wCfg.dim_key}_mm`] || 0
         
-        if (stepCm > 0) {
-            params.weight_kg = baseWeight + (dimVal / stepCm) * stepKg
+        if (stepMm > 0) {
+            params.weight_kg = baseWeight + (dimVal / stepMm) * stepKg
         }
     }
 

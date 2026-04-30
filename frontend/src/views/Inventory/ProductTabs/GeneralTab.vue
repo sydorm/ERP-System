@@ -104,13 +104,22 @@
           <div class="form-section">
             <div class="section-header">
               <h3>Фізичні параметри</h3>
-              <p class="section-desc">Габаритні розміри та вагові характеристики</p>
+              <p class="section-desc">Габаритні розміри (мм) та вагові характеристики (кг)</p>
             </div>
             
             <div class="physical-params-list">
+              <!-- Dimensions Tooltip -->
+              <el-alert
+                title="Усі габаритні розміри виробу вказуються в міліметрах. Наприклад: 600 мм = 60 см = 0.6 м."
+                type="info"
+                show-icon
+                :closable="false"
+                class="mb-4"
+              />
+
               <!-- Length -->
               <div class="param-block">
-                <span class="param-block-label">Довжина (см)</span>
+                <span class="param-block-label">Довжина (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('length').source" size="small" class="modern-radios">
                     <el-radio-button label="fixed">Фіксовано</el-radio-button>
@@ -118,8 +127,8 @@
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('length').source === 'fixed'" 
-                    v-model="modelValue.length_cm" 
-                    :precision="1" 
+                    v-model="modelValue.length_mm" 
+                    :precision="0" 
                     class="modern-number-input"
                   />
                   <el-select 
@@ -130,12 +139,15 @@
                   >
                     <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
                   </el-select>
+                  <span v-if="modelValue.length_mm > 0 && modelValue.length_mm < 100" class="field-warning-text">
+                    <el-icon><Warning /></el-icon> Можливо в см?
+                  </span>
                 </div>
               </div>
 
               <!-- Width -->
               <div class="param-block">
-                <span class="param-block-label">Ширина (см)</span>
+                <span class="param-block-label">Ширина (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('width').source" size="small" class="modern-radios">
                     <el-radio-button label="fixed">Фіксовано</el-radio-button>
@@ -143,8 +155,8 @@
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('width').source === 'fixed'" 
-                    v-model="modelValue.width_cm" 
-                    :precision="1" 
+                    v-model="modelValue.width_mm" 
+                    :precision="0" 
                     class="modern-number-input"
                   />
                   <el-select 
@@ -155,12 +167,15 @@
                   >
                     <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
                   </el-select>
+                  <span v-if="modelValue.width_mm > 0 && modelValue.width_mm < 100" class="field-warning-text">
+                    <el-icon><Warning /></el-icon> Можливо в см?
+                  </span>
                 </div>
               </div>
 
               <!-- Height -->
               <div class="param-block">
-                <span class="param-block-label">Висота (см)</span>
+                <span class="param-block-label">Висота (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('height').source" size="small" class="modern-radios">
                     <el-radio-button label="fixed">Фіксовано</el-radio-button>
@@ -168,8 +183,8 @@
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('height').source === 'fixed'" 
-                    v-model="modelValue.height_cm" 
-                    :precision="1" 
+                    v-model="modelValue.height_mm" 
+                    :precision="0" 
                     class="modern-number-input"
                   />
                   <el-select 
@@ -180,6 +195,9 @@
                   >
                     <el-option v-for="attr in categoryAttributes" :key="attr.id" :label="attr.name" :value="attr.id" />
                   </el-select>
+                  <span v-if="modelValue.height_mm > 0 && modelValue.height_mm < 100" class="field-warning-text">
+                    <el-icon><Warning /></el-icon> Можливо в см?
+                  </span>
                 </div>
               </div>
 
@@ -206,8 +224,8 @@
                      <span>+</span>
                      <el-input-number v-model="getVariantConfig('weight').step_kg" :precision="1" class="modern-number-input small-input" :controls="false" />
                      <span>на кожні</span>
-                     <el-input-number v-model="getVariantConfig('weight').step_cm" :precision="0" class="modern-number-input small-input" :controls="false" />
-                     <span>см</span>
+                     <el-input-number v-model="getVariantConfig('weight').step_mm" :precision="0" class="modern-number-input small-input" :controls="false" />
+                     <span>мм</span>
                      <el-select v-model="getVariantConfig('weight').dim_key" class="modern-select small-select">
                        <el-option label="Довжина" value="length" />
                        <el-option label="Ширина" value="width" />
@@ -351,7 +369,7 @@ const props = defineProps({
 const getVariantConfig = (key) => {
   if (!props.modelValue.variant_config) props.modelValue.variant_config = {}
   if (!props.modelValue.variant_config[key]) {
-    props.modelValue.variant_config[key] = { source: 'fixed', attr_id: null, base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+    props.modelValue.variant_config[key] = { source: 'fixed', attr_id: null, base_kg: 0, step_kg: 0, step_mm: 100, dim_key: 'length' }
   }
   return props.modelValue.variant_config[key]
 }
@@ -372,7 +390,7 @@ const aiScore = computed(() => {
   if (props.modelValue.name) score += 20
   if (props.modelValue.description) score += 20
   if (props.modelValue.image_url) score += 20
-  if (props.modelValue.length_cm && props.modelValue.width_cm && props.modelValue.height_cm) score += 20
+  if (props.modelValue.length_mm && props.modelValue.width_mm && props.modelValue.height_mm) score += 20
   if (props.modelValue.sku && props.modelValue.category) score += 20
   return score
 })
@@ -382,7 +400,7 @@ const aiIssues = computed(() => {
     { text: 'Назва та категорія заповнені', status: !!props.modelValue.name && !!props.modelValue.category },
     { text: 'Фото виробу додано', status: !!props.modelValue.image_url },
     { text: 'Опис товару створено', status: !!props.modelValue.description },
-    { text: 'Фізичні розміри вказано', status: !!(props.modelValue.length_cm && props.modelValue.width_cm && props.modelValue.height_cm) },
+    { text: 'Фізичні розміри вказано', status: !!(props.modelValue.length_mm && props.modelValue.width_mm && props.modelValue.height_mm) },
     { text: 'Перевірено на дублікати', status: true }
   ]
 })
@@ -561,6 +579,15 @@ const handleImageChange = async (event) => {
   font-size: 11px;
   color: #94a3b8;
   margin-top: 4px;
+}
+
+.field-warning-text {
+  font-size: 11px;
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
 }
 
 .modern-input :deep(.el-input__wrapper),
@@ -803,8 +830,9 @@ const handleImageChange = async (event) => {
 
 .ai-progress-fill {
   height: 100%;
-  background: #4f46e5;
-  transition: width 0.4s ease;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .ai-checklist {
@@ -813,43 +841,44 @@ const handleImageChange = async (event) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .ai-checklist li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 12px;
   color: #64748b;
+  transition: all 0.3s ease;
 }
 
 .ai-checklist li.solved {
-  color: #1e293b;
+  color: #10b981;
 }
 
 .ai-checklist li.solved .status-icon {
   color: #10b981;
 }
 
-.ai-checklist li .status-icon {
-  color: #ef4444;
-  font-size: 14px;
+.status-icon {
+  font-size: 16px;
+  color: #cbd5e1;
 }
 
 .ai-run-btn {
-  background: #4f46e5;
-  border: none;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  background: #ffffff;
+  border: 1px solid #ddd6fe;
+  color: #4f46e5;
+  font-weight: 600;
+  border-radius: 10px;
+  height: 36px;
+  transition: all 0.2s ease;
 }
 
 .ai-run-btn:hover {
-  background: #4338ca;
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
 }
-
-.flex-col { flex-direction: column; }
-.w-full { width: 100%; }
-.mt-3 { margin-top: 12px; }
-.mr-1 { margin-right: 4px; }
 </style>
-

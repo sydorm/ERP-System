@@ -543,14 +543,14 @@ async def send_order_to_production(
         # Auto-expand BOM into materials
         if spec:
             parent_dims = {
-                'width_cm': 0, 'height_cm': 0, 'length_cm': 0, 'weight_kg': 0,
+                'width_mm': 0, 'height_mm': 0, 'length_mm': 0, 'weight_kg': 0,
                 'custom_attributes': order.attributes_values or {}
             }
             # Try to get dims from line's variant if available
             if line.variant:
-                parent_dims['width_cm'] = float(line.variant.width_cm or 0)
-                parent_dims['height_cm'] = float(line.variant.height_cm or 0)
-                parent_dims['length_cm'] = float(line.variant.length_cm or 0)
+                parent_dims['width_mm'] = float(line.variant.width_mm or 0)
+                parent_dims['height_mm'] = float(line.variant.height_mm or 0)
+                parent_dims['length_mm'] = float(line.variant.length_mm or 0)
                 parent_dims['weight_kg'] = float(line.variant.weight_kg or 0)
 
             from app.services.specification_service import SpecificationService

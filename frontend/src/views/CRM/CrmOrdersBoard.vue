@@ -356,6 +356,17 @@
             </div>
 
             <!-- Іконки + аватар -->
+            <el-tooltip :content="getManagerName(getOrderManagerId(order))" placement="top">
+              <div class="card-manager-row">
+                <div class="card-avatar">
+                  <img v-if="getManagerAvatar(getOrderManagerId(order))" :src="getManagerAvatar(getOrderManagerId(order))" alt="avatar" />
+                  <span v-else>{{ getManagerInitials(getOrderManagerId(order)) }}</span>
+                </div>
+                <span class="manager-label">Менеджер:</span>
+                <span class="manager-name">{{ getManagerName(getOrderManagerId(order)) }}</span>
+              </div>
+            </el-tooltip>
+
             <div class="card-footer-new">
               <div class="card-comm-channels">
                 <el-tooltip content="Подзвонити" placement="top">
@@ -392,12 +403,6 @@
                       <div v-else class="hint-good">Все добре. Критичних проблем немає.</div>
                     </div>
                   </el-popover>
-                </el-tooltip>
-                <el-tooltip :content="getManagerName(getOrderManagerId(order))" placement="top">
-                  <div class="manager-chip">
-                    <span class="card-avatar">{{ getManagerInitials(getOrderManagerId(order)) }}</span>
-                    <span class="manager-name">{{ getManagerName(getOrderManagerId(order)) }}</span>
-                  </div>
                 </el-tooltip>
                 <el-dropdown trigger="click" @command="(cmd) => handleCardCommand(cmd, order)" @click.stop>
                   <button class="card-more-btn" @click.stop>
@@ -719,7 +724,18 @@ const paymentProgress = computed(() => {
 
 const attentionOrders = computed(() => {
   return orders.value
-    .filter(order => getAttentionScore(order) > 0)
+    .filter(order => {
+      // Only count 'Needs Attention' for active sales stages (New, Payment)
+      // or if there are critical issues like overdue deadlines in other stages
+      const reasons = getAttentionReasons(order)
+      if (reasons.length === 0) return false
+      
+      const stage = order.crm_stage || 'new'
+      if (['new', 'payment'].includes(stage)) return true
+      
+      // For other stages, only count if there's a critical reason (like overdue deadline)
+      return reasons.some(r => r.level === 'critical')
+    })
     .slice()
     .sort((a, b) => getAttentionScore(b) - getAttentionScore(a))
 })
@@ -773,18 +789,235 @@ const getAttentionReasons = (order) => {
   const nextContact = getNextContactDate(order)
   const deadline = getOrderDeadline(order)
   const slaLevel = getSlaLevel(order.id)
+  const stage = order.crm_stage || 'new'
 
-  if (!nextContact) reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
-  else if (new Date(nextContact) < new Date()) reasons.push({ text: 'Контакт прострочено', level: 'critical' })
+  // 1. Contact-related warnings (ONLY for 'new' and 'payment')
+  if (['new', 'payment'].includes(stage)) {
+    if (!nextContact) {
+      reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
+    } else if (new Date(nextContact) < new Date()) {
+      reasons.push({ text: 'Контакт прострочено', level: 'critical' })
+    }
 
-  if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0) reasons.push({ text: 'Немає передоплати', level: 'warning' })
-  if (!deadline) reasons.push({ text: 'Немає дедлайну', level: 'warning' })
-  else if (new Date(deadline) < new Date()) reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
+    // SLA-based contact warnings
+    if (['critical', 'urgent'].includes(slaLevel)) {
+      reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
+    } else if (slaLevel === 'warning') {
+      reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
+    }
+  }
 
-  if (['critical', 'urgent'].includes(slaLevel)) reasons.push({ text: `Заявка довго на етапі: ${getSlaHours(order.id)} год`, level: 'critical' })
-  else if (slaLevel === 'warning') reasons.push({ text: `Наближається SLA: ${getSlaHours(order.id)} год`, level: 'warning' })
+  // 2. Deadline & Payment warnings (All stages except 'done')
+  if (stage !== 'done') {
+    if (!deadline) {
+      reasons.push({ text: 'Немає дедлайну', level: 'warning' })
+    } else if (new Date(deadline) < new Date()) {
+      reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
+    }
 
-  if (needsPaymentControl(order)) reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
+    if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
+      reasons.push({ text: 'Немає передоплати', level: 'warning' })
+    }
+
+    if (needsPaymentControl(order)) {
+      reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
+    }
+  }
+
+  return reasons
+}
+
+const getOrderHints = (order) => getAttentionReasons(order)
+
+const getAttentionScore = (order) => {
+  return getAttentionReasons(order).reduce((score, reason) => score + (reason.level === 'critical' ? 40 : 18), 0)
+}
+
+const getAttentionReason = (order) => {
+  return getAttentionReasons(order)[0]?.text || ''
+}
+
+const getAttentionClass = (order) => {
+  const first = getAttentionReasons(order)[0]
+  if (first?.level === 'critical') return 'attention-critical'
+  if (first?.level === 'warning') return 'attention-warning'
+  return 'attention-info'
+}
+
+const handleExport = async (type) => {
+  if (type === 'pdf') return
+  
+  try {
+    const response = await api.get('/api/v1/orders/export', {
+      responseType: 'blob'
+    })
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    const date = new Date().toISOString().slice(0, 10)
+    link.setAttribute('download', `orders_export_${date}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (e) {
+    ElMessage.error('Помилка при експорті')
+    console.error(e)
+  }
+}
+
+const stages = [
+  { key: 'new', label: 'Нові', color: '#3D3AA8' },
+  { key: 'payment', label: 'Оплата', color: '#F97316' },
+  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
+  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
+  { key: 'done', label: 'Виконано', color: '#22C55E' }
+]
+
+const fetchStage = async (stage, reset = false) => {
+  if (reset) stageSkip.value[stage] = 0
+  try {
+    const res = await api.get(
+      `/api/v1/orders?crm_stage=${stage}&limit=20&skip=${stageSkip.value[stage]}`
+    )
+    
+    const ordersWithContacts = await Promise.all(
+      res.data.map(async (order) => {
+        try {
+          const contactsRes = await api.get(`/api/v1/crm/orders/${order.id}/contacts`)
+          if (contactsRes.data && contactsRes.data.length > 0) {
+            order.last_contact = contactsRes.data[0]
+          } else {
+            order.last_contact = null
+          }
+        } catch (err) {
+          order.last_contact = null
+        }
+        return order
+      })
+    )
+
+    if (reset) {
+      orders.value = orders.value
+        .filter(o => o.crm_stage !== stage)
+        .concat(ordersWithContacts)
+    } else {
+      const newIds = new Set(ordersWithContacts.map(o => o.id))
+      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(ordersWithContacts)
+    }
+    stageHasMore.value[stage] = res.data.length === 20
+  } catch (e) {
+    ElMessage.error(`Помилка завантаження стадії ${stage}`)
+  }
+}
+
+const fetchAll = async () => {
+  loading.value = true
+  try {
+    if (!userStore.user) await userStore.fetchUser().catch(() => {})
+    if (!filters.value.managerScope) filters.value.managerScope = defaultManagerScope.value
+
+    const [cpRes, usersRes, tasksRes, leadSourceRes] = await Promise.all([
+      api.get('/api/v1/counterparties?limit=500'),
+      api.get('/users/colleagues'),
+      api.get('/api/v1/crm/tasks/today'),
+      api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] }))
+    ])
+    counterparties.value = cpRes.data
+    users.value = usersRes.data
+    todayTasks.value = tasksRes.data
+    leadSources.value = leadSourceRes.data || []
+
+    // Fetch all stages + SLA status in parallel
+    await Promise.all([
+      ...stages.map(s => fetchStage(s.key, true)),
+      fetchSlaStatus()
+    ])
+  } catch (e) {
+    ElMessage.error('Помилка завантаження даних')
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMore = async (stage) => {
+  stageSkip.value[stage] += 20
+  await fetchStage(stage, false)
+}
+
+// Bulk Actions Logic
+const toggleSelection = (id) => {
+  const index = selectedOrderIds.value.indexOf(id)
+  if (index === -1) {
+    selectedOrderIds.value.push(id)
+  } else {
+    selectedOrderIds.value.splice(index, 1)
+  }
+}
+
+const clearSelection = () => {
+  selectedOrderIds.value = []
+}
+
+const handleBulkUpdate = async (data) => {
+  try {
+    const idsString = selectedOrderIds.value.join('&ids=')
+    await api.patch(`/api/v1/orders/bulk-update?ids=${idsString}`, data)
+    ElMessage.success(`Оновлено ${selectedOrderIds.value.length} замовлень`)
+    clearSelection()
+    await fetchAll()
+  } catch (e) {
+    ElMessage.error('Помилка групового оновлення')
+  }
+}
+
+const handleBulkManager = (managerId) => handleBulkUpdate({ manager_id: managerId })
+const handleBulkStage = (stage) => handleBulkUpdate({ crm_stage: stage })
+const handleBulkCancel = () => {
+  ElMessageBox.confirm('Ви впевнені, що хочете скасувати вибрані замовлення?', 'Увага', {
+    confirmButtonText: 'Так, скасувати',
+    cancelButtonText: 'Ні',
+    type: 'warning'
+  }).then(() => {
+    handleBulkUpdate({ status: 'cancelled' })
+  })
+}
+
+const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
+const getManagerName = (id) => {
+  if (!id) return 'Без менеджера'
+  // 1. Contact-related warnings (ONLY for 'new' and 'payment')
+  if (['new', 'payment'].includes(stage)) {
+    if (!nextContact) {
+      reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
+    } else if (new Date(nextContact) < new Date()) {
+      reasons.push({ text: 'Контакт прострочено', level: 'critical' })
+    }
+
+    // SLA-based contact warnings
+    if (['critical', 'urgent'].includes(slaLevel)) {
+      reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
+    } else if (slaLevel === 'warning') {
+      reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
+    }
+  }
+
+  // 2. Deadline & Payment warnings (All stages except 'done')
+  if (stage !== 'done') {
+    if (!deadline) {
+      reasons.push({ text: 'Немає дедлайну', level: 'warning' })
+    } else if (new Date(deadline) < new Date()) {
+      reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
+    }
+
+    if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
+      reasons.push({ text: 'Немає передоплати', level: 'warning' })
+    }
+
+    if (needsPaymentControl(order)) {
+      reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
+    }
+  }
 
   return reasons
 }
@@ -962,6 +1195,10 @@ const getManagerInitials = (id) => {
     .slice(0, 2)
     .map(part => part.charAt(0).toUpperCase())
     .join('')
+}
+const getManagerAvatar = (id) => {
+  const u = users.value.find(u => String(u.id) === String(id))
+  return u?.avatar_url || u?.avatar || null
 }
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' })
@@ -2002,15 +2239,23 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 
 .card-avatar {
-  width: 28px; height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
   background: var(--erp-primary, #1463FF);
-  color: #FFF;
-  font-size: 11px;
-  font-weight: 700;
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .manager-name {
@@ -2203,6 +2448,92 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   transform: scale(1.05);
 }
 
+.order-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-radius: 16px;
+  padding: 14px 12px 14px 18px;
+  overflow: visible;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+.card-row-1,
+.card-row-financial,
+.card-badges,
+.card-footer-new {
+  margin-bottom: 0;
+}
+
+.order-card-title {
+  margin: 0;
+}
+
+.card-next-action,
+.next-contact-chip,
+.card-last-contact {
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  box-sizing: border-box;
+  line-height: 1.3;
+}
+
+.card-next-action span,
+.next-contact-chip span,
+.card-last-contact span {
+  min-width: 0;
+  white-space: normal;
+}
+
+.card-divider {
+  margin: 2px 0;
+}
+
+.card-manager-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #E6ECF3;
+  border-radius: 12px;
+  background: #F8FAFC;
+  box-sizing: border-box;
+}
+
+.manager-label {
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card-footer-new {
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.card-comm-channels,
+.card-meta-right {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-meta-right {
+  margin-left: auto;
+}
+
+.channel-icon,
+.card-hint-btn,
+.card-more-btn,
+.card-arrow-btn {
+  flex: 0 0 28px;
+}
+
 .manager-chip {
   display: flex;
   align-items: center;
@@ -2213,17 +2544,5 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   font-size: 11px;
   font-weight: 600;
   color: #475569;
-}
-.card-avatar {
-  width: 20px;
-  height: 20px;
-  background: #3D3AA8;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 800;
 }
 </style>

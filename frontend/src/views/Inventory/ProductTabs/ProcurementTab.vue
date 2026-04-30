@@ -111,11 +111,90 @@
         </template>
       </el-alert>
     </div>
+
+    <div class="supplier-links-panel mt-8">
+      <div class="supplier-links-head">
+        <div>
+          <div class="section-title compact">
+            <el-icon><Link /></el-icon>
+            <h3>Постачальники товару / Посилання для закупівлі</h3>
+          </div>
+          <p class="section-desc">Додайте швидкі посилання на сторінку товару, кабінет або форму замовлення постачальника.</p>
+        </div>
+        <el-button type="primary" plain :icon="Plus" @click="addSupplierLink">Додати постачальника</el-button>
+      </div>
+
+      <div v-if="supplierLinks.length" class="supplier-link-list">
+        <div
+          v-for="(link, index) in supplierLinks"
+          :key="`${link.supplier_id || 'supplier'}-${index}`"
+          class="supplier-link-card"
+          :class="{ inactive: !link.is_active, default: link.is_default_supplier }"
+        >
+          <div class="supplier-link-grid">
+            <div class="config-item">
+              <div class="label-box"><span class="label">Постачальник</span></div>
+              <el-select
+                v-model="link.supplier_id"
+                filterable
+                clearable
+                placeholder="Оберіть постачальника"
+                class="w-full"
+                @change="syncSupplierName(link)"
+              >
+                <el-option
+                  v-for="s in suppliers"
+                  :key="s.id"
+                  :label="s.name"
+                  :value="s.id"
+                />
+              </el-select>
+            </div>
+            <div class="config-item">
+              <div class="label-box"><span class="label">Артикул постачальника</span></div>
+              <el-input v-model="link.supplier_sku" placeholder="SKU / код у постачальника" />
+            </div>
+            <div class="config-item">
+              <div class="label-box"><span class="label">Тип посилання</span></div>
+              <el-select v-model="link.url_type" class="w-full">
+                <el-option v-for="type in urlTypes" :key="type" :label="type" :value="type" />
+              </el-select>
+            </div>
+            <div class="config-item supplier-url-field">
+              <div class="label-box"><span class="label">URL для замовлення</span></div>
+              <el-input v-model="link.order_url" placeholder="https://..." />
+            </div>
+            <div class="config-item full-width">
+              <div class="label-box"><span class="label">Нотатка</span></div>
+              <el-input v-model="link.note" type="textarea" :rows="2" placeholder="Умови, мінімальна партія, контакт, нюанси замовлення..." />
+            </div>
+          </div>
+
+          <div class="supplier-link-actions">
+            <el-switch v-model="link.is_active" active-text="Активно" />
+            <el-switch
+              :model-value="Boolean(link.is_default_supplier)"
+              active-text="Основний"
+              @change="setDefaultSupplier(index, $event)"
+            />
+            <el-button v-if="link.order_url" :icon="TopRight" @click="openSupplierUrl(link)">Відкрити</el-button>
+            <el-button type="danger" plain :icon="Delete" @click="removeSupplierLink(index)">Видалити</el-button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="supplier-links-empty">
+        <el-empty description="Посилання для закупівлі ще не додані">
+          <el-button type="primary" plain :icon="Plus" @click="addSupplierLink">Додати постачальника</el-button>
+        </el-empty>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { Warning, Van, InfoFilled } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { Warning, Van, InfoFilled, Link, Plus, Delete, TopRight } from '@element-plus/icons-vue'
 
 const props = defineProps({
   modelValue: {
@@ -129,6 +208,60 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const urlTypes = [
+  'Сторінка товару',
+  'Кабінет замовлення',
+  'Кабінет розкрою',
+  'Форма замовлення',
+  'Прайс / каталог',
+  'Інше'
+]
+
+const supplierLinks = computed(() => props.modelValue.supplier_links || [])
+
+const ensureSupplierLinks = () => {
+  if (!Array.isArray(props.modelValue.supplier_links)) props.modelValue.supplier_links = []
+}
+
+const addSupplierLink = () => {
+  ensureSupplierLinks()
+  props.modelValue.supplier_links.push({
+    supplier_id: null,
+    supplier_name: '',
+    supplier_sku: '',
+    order_url: '',
+    url_type: 'Сторінка товару',
+    note: '',
+    is_active: true,
+    is_default_supplier: props.modelValue.supplier_links.length === 0
+  })
+}
+
+const removeSupplierLink = (index) => {
+  props.modelValue.supplier_links.splice(index, 1)
+}
+
+const syncSupplierName = (link) => {
+  const supplier = props.suppliers.find(s => s.id === link.supplier_id)
+  link.supplier_name = supplier?.name || ''
+}
+
+const setDefaultSupplier = (index, value) => {
+  ensureSupplierLinks()
+  props.modelValue.supplier_links.forEach((link, i) => {
+    link.is_default_supplier = Boolean(value) && i === index
+  })
+  if (value) {
+    const link = props.modelValue.supplier_links[index]
+    props.modelValue.default_supplier_id = link?.supplier_id || props.modelValue.default_supplier_id
+  }
+}
+
+const openSupplierUrl = (link) => {
+  if (!link?.order_url) return
+  window.open(link.order_url, '_blank', 'noopener,noreferrer')
+}
 </script>
 
 <style scoped>
@@ -217,6 +350,80 @@ const emit = defineEmits(['update:modelValue'])
 .w-full { width: 100%; }
 .mt-8 { margin-top: 2rem; }
 .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+
+.section-title.compact { margin-bottom: 4px; }
+
+.supplier-links-panel {
+  background: #ffffff;
+  border: 1px solid #E6ECF3;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
+}
+
+.supplier-links-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.supplier-link-list {
+  display: grid;
+  gap: 12px;
+}
+
+.supplier-link-card {
+  border: 1px solid #E6ECF3;
+  border-radius: 14px;
+  padding: 16px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.supplier-link-card.default {
+  border-color: #A5B4FC;
+  box-shadow: inset 3px 0 0 #6366F1, 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.supplier-link-card.inactive {
+  opacity: .65;
+}
+
+.supplier-link-grid {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr .8fr 1.4fr;
+  gap: 14px;
+}
+
+.supplier-url-field { min-width: 0; }
+
+.supplier-link-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #EEF2F7;
+}
+
+.supplier-links-empty {
+  border: 1px dashed #CBD5E1;
+  border-radius: 14px;
+  background: #F8FAFC;
+}
+
+@media (max-width: 1200px) {
+  .supplier-link-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .supplier-links-head,
+  .supplier-link-actions { flex-direction: column; align-items: stretch; }
+  .supplier-link-grid { grid-template-columns: 1fr; }
+}
 
 :deep(.el-input-number.is-controls-right .el-input__wrapper) {
   padding-left: 12px;

@@ -1020,7 +1020,11 @@ const readinessItems = computed(() => [
   { key: 'attrs', label: 'Характеристики заповнені', done: requiredAttributesFilled.value },
   { key: 'amount', label: 'Сума вказана', done: Number(form.total_amount || 0) > 0 },
   { key: 'deadline', label: 'Дата готовності вказана', done: Boolean(form.deadline_date) },
-  { key: 'contact', label: 'Наступний контакт запланований', done: Boolean(form.next_contact_at) },
+  { 
+    key: 'contact', 
+    label: 'Наступний контакт запланований', 
+    done: !['new', 'payment'].includes(form.crm_stage) || Boolean(form.next_contact_at) 
+  },
   { key: 'payment', label: 'Спосіб оплати заданий', done: Boolean(form.bank_account_id) },
 ])
 

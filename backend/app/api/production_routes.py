@@ -132,9 +132,9 @@ def create_production_order(
                                     pass
 
                     parent_dims = {
-                        'width_cm': float(product.width_cm or 0),
-                        'height_cm': float(product.height_cm or 0),
-                        'length_cm': float(product.length_cm or 0),
+                        'width_mm': float(product.width_mm or 0),
+                        'height_mm': float(product.height_mm or 0),
+                        'length_mm': float(product.length_mm or 0),
                         'weight_kg': float(product.weight_kg or 0),
                         'custom_attributes': custom_attrs
                     }

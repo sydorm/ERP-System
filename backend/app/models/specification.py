@@ -5,9 +5,9 @@ from sqlalchemy.orm import relationship
 from .base import BaseModel
 
 class CalculationDimension(str, enum.Enum):
-    HEIGHT = "height_cm"
-    WIDTH = "width_cm"
-    LENGTH = "length_cm"
+    HEIGHT = "height_mm"
+    WIDTH = "width_mm"
+    LENGTH = "length_mm"
     AREA = "area"
     VOLUME = "volume"
     CUSTOM = "custom"
@@ -15,6 +15,7 @@ class CalculationDimension(str, enum.Enum):
 class CalculationType(str, enum.Enum):
     FIXED = "fixed"
     INTERPOLATION = "interpolation"
+    PROPORTIONAL = "proportional"
     AREA = "area"
     VOLUME = "volume"
     FORMULA = "formula"

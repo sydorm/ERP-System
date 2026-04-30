@@ -27,6 +27,18 @@
             >
               <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
             </el-select>
+            <div v-if="mode === 'purchase' && getSupplierSku(scope.row)" class="supplier-line-meta">
+              Артикул постачальника: {{ getSupplierSku(scope.row) }}
+            </div>
+            <button
+              v-if="mode === 'purchase' && getSupplierOrderLink(scope.row)"
+              class="supplier-order-link"
+              type="button"
+              @click.stop="openSupplierOrderLink(scope.row)"
+            >
+              <el-icon><TopRight /></el-icon>
+              {{ getSupplierOrderActionLabel(scope.row) }}
+            </button>
           </template>
         </el-table-column>
 
@@ -127,16 +139,27 @@
         </el-table-column>
 
         <!-- Дії -->
-        <el-table-column label="" width="40" align="center" fixed="right" v-if="!readOnly">
+        <el-table-column label="" width="46" align="center" fixed="right" v-if="!readOnly">
           <template #default="scope">
-            <el-button 
-              type="danger" 
-              :icon="Delete" 
-              link 
-              size="small" 
-              @click="$emit('remove-line', scope.$index)" 
-              style="padding:0;height:auto;" 
-            />
+            <el-dropdown trigger="click" @command="cmd => handleLineCommand(cmd, scope.row, scope.$index)">
+              <el-button :icon="MoreFilled" link size="small" class="row-menu-btn" @click.stop />
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="open-product" :disabled="!scope.row.product_id">
+                    Відкрити картку товару
+                  </el-dropdown-item>
+                  <el-dropdown-item command="open-supplier" :disabled="!getSupplierOrderLink(scope.row)">
+                    {{ getSupplierOrderActionLabel(scope.row) }}
+                  </el-dropdown-item>
+                  <el-dropdown-item command="copy-supplier-sku" :disabled="!getSupplierSku(scope.row)">
+                    Скопіювати артикул постачальника
+                  </el-dropdown-item>
+                  <el-dropdown-item command="remove" divided>
+                    Видалити рядок
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -155,13 +178,16 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { Delete } from '@element-plus/icons-vue'
+import { MoreFilled, TopRight } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import VariantSelectorDialog from '@/views/Sales/VariantSelectorDialog.vue'
 
 const props = defineProps({
   items: { type: Array, required: true },
   products: { type: Array, default: () => [] },
   warehouses: { type: Array, default: () => [] },
+  supplierId: { type: String, default: '' },
   warehouseId: { type: String, default: '' },
   specsCache: { type: Object, default: () => ({}) },
   showCharacteristics: { type: Boolean, default: true },
@@ -173,6 +199,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['change', 'add-line', 'remove-line', 'update:warehouseId', 'product-change'])
+const router = useRouter()
 
 const localWarehouseId = ref(props.warehouseId)
 watch(() => props.warehouseId, (val) => { localWarehouseId.value = val })
@@ -196,6 +223,62 @@ const handleProductChange = (productId, line) => {
     // Emit product change for parent to handle things like fetching specs
     emit('product-change', { productId, line })
     emit('change', line)
+  }
+}
+
+const getProductByLine = (line) => props.products.find(p => p.id === line.product_id) || null
+
+const getSupplierLinkByLine = (line) => {
+  const product = getProductByLine(line)
+  const links = Array.isArray(product?.supplier_links) ? product.supplier_links : []
+  return links.find(link =>
+    link?.is_active !== false
+    && link?.order_url
+    && link?.supplier_id === props.supplierId
+  ) || null
+}
+
+const getSupplierOrderLink = (line) => getSupplierLinkByLine(line)?.order_url || ''
+const getSupplierSku = (line) => getSupplierLinkByLine(line)?.supplier_sku || ''
+const getSupplierOrderActionLabel = (line) => {
+  const type = getSupplierLinkByLine(line)?.url_type || ''
+  return ['Кабінет замовлення', 'Кабінет розкрою'].includes(type)
+    ? 'Відкрити кабінет постачальника'
+    : 'Оформити на сайті постачальника'
+}
+
+const openSupplierOrderLink = (line) => {
+  const url = getSupplierOrderLink(line)
+  if (!url) return
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+const copySupplierSku = async (line) => {
+  const sku = getSupplierSku(line)
+  if (!sku) return
+  try {
+    await navigator.clipboard.writeText(sku)
+    ElMessage.success('Артикул постачальника скопійовано')
+  } catch {
+    ElMessage.info(sku)
+  }
+}
+
+const handleLineCommand = (command, line, index) => {
+  if (command === 'open-product' && line.product_id) {
+    router.push(`/inventory/nomenclature/${line.product_id}`)
+    return
+  }
+  if (command === 'open-supplier') {
+    openSupplierOrderLink(line)
+    return
+  }
+  if (command === 'copy-supplier-sku') {
+    copySupplierSku(line)
+    return
+  }
+  if (command === 'remove') {
+    emit('remove-line', index)
   }
 }
 
@@ -397,6 +480,37 @@ const getVariantLabelByLine = (line) => {
 
 .placeholder.disabled {
   font-size: 11px;
+}
+
+.supplier-line-meta {
+  margin: -2px 8px 5px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.supplier-order-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 8px 7px;
+  padding: 3px 8px;
+  border: 1px solid #BFDBFE;
+  border-radius: 999px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.supplier-order-link:hover {
+  background: #DBEAFE;
+}
+
+.row-menu-btn {
+  padding: 0 !important;
+  height: 24px !important;
 }
 
 .num :deep(.el-input__inner) {

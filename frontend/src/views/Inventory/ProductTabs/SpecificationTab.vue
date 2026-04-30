@@ -275,18 +275,21 @@
         <el-form label-position="top">
           <el-row :gutter="20">
             <el-col :span="6">
-              <el-form-item :label="`Висота (H), ${previewUnit}`">
-                <el-input-number v-model="testDimsDisplay.height" class="w-full" @change="(v) => updateTestDim('height_cm', v)" />
+              <el-form-item :label="`Висота (H), мм`" :class="{ 'warning-border': testDims.height_mm < 100 }">
+                <el-input-number v-model="testDims.height_mm" class="w-full" :precision="0" />
+                <div v-if="testDims.height_mm > 0 && testDims.height_mm < 100" class="text-[10px] text-orange-500 font-bold">Можливо см?</div>
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item :label="`Ширина (W), ${previewUnit}`">
-                <el-input-number v-model="testDimsDisplay.width" class="w-full" @change="(v) => updateTestDim('width_cm', v)" />
+              <el-form-item :label="`Ширина (W), мм`" :class="{ 'warning-border': testDims.width_mm < 100 }">
+                <el-input-number v-model="testDims.width_mm" class="w-full" :precision="0" />
+                <div v-if="testDims.width_mm > 0 && testDims.width_mm < 100" class="text-[10px] text-orange-500 font-bold">Можливо см?</div>
               </el-form-item>
             </el-col>
             <el-col :span="6">
-              <el-form-item :label="`Глибина (L), ${previewUnit}`">
-                <el-input-number v-model="testDimsDisplay.length" class="w-full" @change="(v) => updateTestDim('length_cm', v)" />
+              <el-form-item :label="`Довжина (L), мм`" :class="{ 'warning-border': testDims.length_mm < 100 }">
+                <el-input-number v-model="testDims.length_mm" class="w-full" :precision="0" />
+                <div v-if="testDims.length_mm > 0 && testDims.length_mm < 100" class="text-[10px] text-orange-500 font-bold">Можливо см?</div>
               </el-form-item>
             </el-col>
             <el-col :span="6">
@@ -295,12 +298,6 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <div class="flex justify-center mb-4">
-             <el-radio-group v-model="previewUnit" size="small">
-                <el-radio-button label="мм" />
-                <el-radio-button label="см" />
-             </el-radio-group>
-          </div>
 
           <div v-if="testAttributes.length > 0" class="mt-2 mb-4 p-3 bg-gray-50 rounded border border-gray-200">
             <h5 class="m-0 mb-3 text-gray-700">Атрибути з формул:</h5>
@@ -373,7 +370,7 @@
     <el-dialog v-model="calcDialogOpen" :width="null" style="width: 95vw; max-width: 1700px;" class="smart-calc-dialog" top="5vh">
       <template #header>
         <div class="flex items-center gap-2">
-            <span class="text-lg font-bold">Налаштування розумного розрахунку [v1.3-WIDE]</span>
+            <span class="text-lg font-bold">Налаштування розумного розрахунку [v1.4-MM]</span>
             <el-tag type="success" size="small" effect="dark" class="ml-2">Оновлено</el-tag>
         </div>
       </template>
@@ -391,6 +388,7 @@
               </el-select>
             </el-form-item>
             
+
 
 
             <div v-if="activeCalcItem.calc_type === 'interpolation'" class="mt-4">
@@ -411,6 +409,7 @@
                             <el-radio-group v-model="getDimConfig(activeCalcItem, dim.key).unit" size="small" class="unit-toggle">
                                 <el-radio-button label="мм" />
                                 <el-radio-button label="см" />
+                                <el-radio-button label="м" />
                             </el-radio-group>
                             <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" :icon="Plus" circle />
                         </div>
@@ -421,8 +420,7 @@
                             <el-table-column :label="dim.label + ' (' + getDimConfig(activeCalcItem, dim.key).unit + ')'">
                                 <template #default="scope">
                                     <el-input-number 
-                                      :model-value="getDimValue(scope.row.x, getDimConfig(activeCalcItem, dim.key).unit)" 
-                                      @update:model-value="(val) => scope.row.x = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit)"
+                                      v-model="scope.row.x"
                                       size="small" 
                                       style="width:100%" 
                                     />
@@ -446,8 +444,7 @@
                             <div class="config-item">
                                 <label>Стандарт ({{ getDimConfig(activeCalcItem, dim.key).unit }})</label>
                                 <el-input-number 
-                                    :model-value="getDimValue(getDimConfig(activeCalcItem, dim.key).default, getDimConfig(activeCalcItem, dim.key).unit)"
-                                    @update:model-value="(val) => { getDimConfig(activeCalcItem, dim.key).default = setDimValue(val, getDimConfig(activeCalcItem, dim.key).unit) }"
+                                    v-model="getDimConfig(activeCalcItem, dim.key).default"
                                     :precision="0" :min="0" size="small" placeholder="0" 
                                 />
                             </div>
@@ -482,9 +479,9 @@
 
             <el-form-item label="Вимір для розрахунку" v-if="activeCalcItem.calc_type === 'proportional'" class="mt-4">
               <el-select v-model="activeCalcItem.calc_dimension" class="w-full">
-                <el-option label="Висота (H)" value="height_cm" />
-                <el-option label="Ширина (W)" value="width_cm" />
-                <el-option label="Довжина (L)" value="length_cm" />
+                <el-option label="Висота (H)" value="height_mm" />
+                <el-option label="Ширина (W)" value="width_mm" />
+                <el-option label="Довжина (L)" value="length_mm" />
               </el-select>
             </el-form-item>
 
@@ -494,7 +491,7 @@
             </el-form-item>
 
             <el-form-item label="Своя математична формула" v-if="activeCalcItem.calc_type === 'formula'" class="mt-4">
-              <el-input v-model="activeCalcItem.calc_formula" type="textarea" :rows="3" placeholder="напр. {W} * {H} / 100" />
+              <el-input v-model="activeCalcItem.calc_formula" type="textarea" :rows="3" placeholder="напр. {W} * {H} / 1000000" />
               <div class="mt-2 flex flex-wrap gap-2">
                 <el-button v-for="v in ['{W}', '{H}', '{L}', '{Kg}']" :key="v" size="small" @click="addVarToFormula(v)">{{ v }}</el-button>
                 <el-dropdown trigger="click" @command="addAttrToFormula" v-if="productAttributes.length > 0">
@@ -551,6 +548,7 @@
             </div>
             
 
+
         </el-form>
       </div>
       <template #footer>
@@ -564,7 +562,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check } from '@element-plus/icons-vue'
+import { Clock, Plus, Delete, ArrowLeft, Setting, Monitor, Back, Check, Warning } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     getProductSpecifications,
@@ -646,37 +644,11 @@ const loadProductAttributes = async () => {
     }
 }
 
-// Preview units and display helpers
-const previewUnit = ref('см')
-const testDimsDisplay = computed(() => {
-    const factor = previewUnit.value === 'мм' ? 10 : 1
-    return {
-        height: (testDims.value.height_cm || 0) * factor,
-        width: (testDims.value.width_cm || 0) * factor,
-        length: (testDims.value.length_cm || 0) * factor
-    }
-})
-
-const updateTestDim = (field, val) => {
-    const factor = previewUnit.value === 'мм' ? 10 : 1
-    testDims.value[field] = val / factor
-}
-
-const getDimValue = (valInCm, unit) => {
-    const factor = unit === 'мм' ? 10 : (unit === 'м' ? 0.01 : 1)
-    return (valInCm || 0) * factor
-}
-
-const setDimValue = (valInUnit, unit) => {
-    const factor = unit === 'мм' ? 10 : (unit === 'м' ? 0.01 : 1)
-    return valInUnit / factor
-}
-
 const toMeters = (value, unit) => {
     if (unit === 'мм') return value / 1000
     if (unit === 'см') return value / 100
     if (unit === 'м') return value
-    return value / 100 // default cm
+    return value / 1000 // default mm
 }
 
 const getAttrValue = (attrName) => {
@@ -773,13 +745,13 @@ const getPoints = (item, key) => {
 const getDimConfig = (item, key) => {
     if (!item.calc_dim_config) {
         item.calc_dim_config = { 
-            h: { char_name: '', default: 0, unit: 'см', waste: 0 }, 
-            w: { char_name: '', default: 0, unit: 'см', waste: 0 }, 
-            l: { char_name: '', default: 0, unit: 'см', waste: 0 } 
+            h: { char_name: '', default: 0, unit: 'мм', waste: 0 }, 
+            w: { char_name: '', default: 0, unit: 'мм', waste: 0 }, 
+            l: { char_name: '', default: 0, unit: 'мм', waste: 0 } 
         }
     }
-    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'см', waste: 0 }
-    if (!item.calc_dim_config[key].unit) item.calc_dim_config[key].unit = 'см'
+    if (!item.calc_dim_config[key]) item.calc_dim_config[key] = { char_name: '', default: 0, unit: 'мм', waste: 0 }
+    if (!item.calc_dim_config[key].unit) item.calc_dim_config[key].unit = 'мм'
     if (item.calc_dim_config[key].waste === undefined) item.calc_dim_config[key].waste = 0
     return item.calc_dim_config[key]
 }
@@ -789,9 +761,9 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
 
     const isMeters = item.unit_of_measure === 'м'
     const dimensions = {
-        W: parseFloat(props.productDimensions.width_cm) || 0,
-        H: parseFloat(props.productDimensions.height_cm) || 0,
-        L: parseFloat(props.productDimensions.length_cm) || 0,
+        W: parseFloat(props.productDimensions.width_mm) || 0,
+        H: parseFloat(props.productDimensions.height_mm) || 0,
+        L: parseFloat(props.productDimensions.length_mm) || 0,
         Kg: parseFloat(props.productDimensions.weight_kg) || 0
     }
 
@@ -802,7 +774,7 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         const dp = item.calc_data_points
         if (!dp || Array.isArray(dp)) return item.quantity
 
-        const dimMap = { h: 'height_cm', w: 'width_cm', l: 'length_cm' }
+        const dimMap = { h: 'height_mm', w: 'width_mm', l: 'length_mm' }
         const dimLabels = { h: 'H', w: 'W', l: 'L' }
         let total = 0
         let hasAnyPoints = false
@@ -827,11 +799,19 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
                 }
             }
 
-            // Internal logic uses CM, so if source was characteristic, we assume it's in config.unit
-            // but the points 'x' are stored in CM (converted by setDimValue)
-            // Wait, if source is characteristic, we need to convert it to CM for interpolation
-            let dimValForInterp = config.char_name ? setDimValue(dimValRaw, config.unit) : parseFloat(props.productDimensions[dimKey]) || 0
-            
+            // Points 'x' are stored in the unit specified in config.unit
+            // We compare dimValRaw (which is in mm or characteristic unit) with pts 'x'
+            // We need to normalize both to the same unit (config.unit)
+            let normalizedDimVal = dimValRaw
+            if (!config.char_name) {
+                // Product dimensions are in mm, so convert to config.unit
+                if (config.unit === 'см') normalizedDimVal = dimValRaw / 10
+                if (config.unit === 'м') normalizedDimVal = dimValRaw / 1000
+            } else {
+                // Characteristics are assumed to be in the unit specified in config.unit
+                normalizedDimVal = dimValRaw
+            }
+
             const sorted = [...pts].sort((a, b) => (a.x || 0) - (b.x || 0))
             let countResult = 0
             const interp = (p1, p2, val) => {
@@ -839,23 +819,25 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
                 return p1.qty + slope * (val - p1.x)
             }
             if (sorted.length === 1) { countResult = sorted[0].qty }
-            else if (dimValForInterp <= sorted[0].x) { countResult = interp(sorted[0], sorted[1], dimValForInterp) }
-            else if (dimValForInterp >= sorted[sorted.length - 1].x) { countResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], dimValForInterp) }
+            else if (normalizedDimVal <= sorted[0].x) { countResult = interp(sorted[0], sorted[1], normalizedDimVal) }
+            else if (normalizedDimVal >= sorted[sorted.length - 1].x) { countResult = interp(sorted[sorted.length - 2], sorted[sorted.length - 1], normalizedDimVal) }
             else {
                 for (let i = 0; i < sorted.length - 1; i++) {
-                    if (dimValForInterp >= sorted[i].x && dimValForInterp <= sorted[i + 1].x) {
-                        countResult = interp(sorted[i], sorted[i + 1], dimValForInterp)
+                    if (normalizedDimVal >= sorted[i].x && normalizedDimVal <= sorted[i + 1].x) {
+                        countResult = interp(sorted[i], sorted[i + 1], normalizedDimVal)
                         break
                     }
                 }
             }
             
             let dimFinal = countResult
-            let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.unit}`
+            let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.char_name ? config.unit : 'мм'}`
             if (warning) stepLabel += ` ${warning}`
 
             if (isMeters) {
-                const meters = toMeters(dimValRaw, config.unit)
+                // normalizedDimVal is in config.unit, countResult is pieces
+                // we need result in meters: countResult * normalizedDimVal_in_meters
+                const meters = toMeters(dimValRaw, config.char_name ? config.unit : 'мм')
                 dimFinal = countResult * meters
                 stepLabel += ` → ${meters.toFixed(3)}м × ${countResult}шт = ${dimFinal.toFixed(3)}м`
             } else {
@@ -876,11 +858,11 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         result = total
     }
     else if (item.calc_type === 'proportional') {
-        const dimKey = item.calc_dimension || 'width_cm'
-        const dimMap = { height_cm: 'h', width_cm: 'w', length_cm: 'l' }
+        const dimKey = item.calc_dimension || 'width_mm'
+        const dimMap = { height_mm: 'h', width_mm: 'w', length_mm: 'l' }
         const key = dimMap[dimKey]
         const config = getDimConfig(item, key)
-        const dimLabels = { height_cm: 'H', width_cm: 'W', length_cm: 'L' }
+        const dimLabels = { height_mm: 'H', width_mm: 'W', length_mm: 'L' }
         
         let dimValRaw = parseFloat(props.productDimensions[dimKey]) || 0
         let sourceLabel = dimLabels[dimKey]
@@ -897,11 +879,11 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         }
 
         const coeff = parseFloat(item.calc_formula) || 0
-        let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.unit}`
+        let stepLabel = `${sourceLabel}: ${dimValRaw} ${config.char_name ? config.unit : 'мм'}`
         if (warning) stepLabel += ` ${warning}`
 
         if (isMeters) {
-            const meters = toMeters(dimValRaw, config.unit)
+            const meters = toMeters(dimValRaw, config.char_name ? config.unit : 'мм')
             result = coeff * meters
             stepLabel += ` → ${meters.toFixed(3)}м × ${coeff} = ${result.toFixed(3)}м`
         } else {
@@ -917,8 +899,8 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         details.push(stepLabel)
     }
     else if (item.calc_type === 'area') {
-        result = dimensions.W * dimensions.H / 10000 
-        details.push(`Площа: (${dimensions.W}см × ${dimensions.H}см) / 10000 = ${result.toFixed(4)} м²`)
+        result = (dimensions.W * dimensions.H) / 1000000 
+        details.push(`Площа: (${dimensions.W}мм × ${dimensions.H}мм) / 1000000 = ${result.toFixed(4)} м²`)
         if (includeWaste && item.calc_waste_factor) {
             const waste = parseFloat(item.calc_waste_factor) * 100
             result *= (1 + parseFloat(item.calc_waste_factor))
@@ -926,8 +908,8 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         }
     }
     else if (item.calc_type === 'volume') {
-        result = dimensions.W * dimensions.H * dimensions.L / 1000000 
-        details.push(`Об'єм: (${dimensions.W}см × ${dimensions.H}см × ${dimensions.L}см) / 1000000 = ${result.toFixed(4)} м³`)
+        result = (dimensions.W * dimensions.H * dimensions.L) / 1000000000 
+        details.push(`Об'єм: (${dimensions.W}мм × ${dimensions.H}мм × ${dimensions.L}мм) / 1000000000 = ${result.toFixed(4)} м³`)
         if (includeWaste && item.calc_waste_factor) {
             const waste = parseFloat(item.calc_waste_factor) * 100
             result *= (1 + parseFloat(item.calc_waste_factor))
@@ -937,7 +919,6 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
     else if (item.calc_type === 'formula') {
         try {
             const { W, H, L, Kg } = dimensions
-            // Inject attributes into eval context
             const regex = /{([^}]+)}/g
             let formula = item.calc_formula || '0'
             let match;
@@ -992,7 +973,6 @@ const getTotalWastePercent = (item) => {
     return percent > 0 ? parseFloat(percent.toFixed(1)) : 0
 }
 
-// calcStepInfo: per-dimension step values based on first 2 points of each series
 const calcStepInfo = computed(() => {
     if (!activeCalcItem.value || activeCalcItem.value.calc_type !== 'interpolation') return null
     const dp = activeCalcItem.value.calc_data_points
@@ -1013,14 +993,11 @@ const calcStepInfo = computed(() => {
     return hasAny ? info : null
 })
 
-// Load all specifications for this product
 const loadSpecifications = async () => {
     if (!props.productId) return
     loading.value = true
     try {
         const resData = await getProductSpecifications(props.productId)
-        
-        // Data sanitization
         resData.forEach(spec => {
             if (spec.items) {
                 spec.items.forEach(item => {
@@ -1042,7 +1019,6 @@ const loadSpecifications = async () => {
                 })
             }
         })
-        
         specifications.value = resData
     } catch (e) {
         ElMessage.error('Помилка завантаження специфікацій')
@@ -1051,7 +1027,6 @@ const loadSpecifications = async () => {
     }
 }
 
-// Open create form
 const createNewSpec = () => {
     specForm.value = {
         name: 'Нова специфікація',
@@ -1064,15 +1039,10 @@ const createNewSpec = () => {
     editingSpec.value = 'new'
 }
 
-// Open edit form
 const editSpec = (row) => {
     const cleanedRow = JSON.parse(JSON.stringify(row))
     if (cleanedRow.items) {
         cleanedRow.items = cleanedRow.items
-            .filter(item => {
-                const name = item.component?.name || ''
-                return !name.includes('ДСП Сонома 18 мм')
-            })
             .map(item => ({
                 ...item,
                 line_type: 'material',
@@ -1161,10 +1131,6 @@ const validateBom = async () => {
             const calcQty = calculateQuantityInternal(row, true)
             if (calcQty === 'Помилка' || calcQty == null || calcQty <= 0) {
                 errors.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): помилка розрахунку калькулятора або значення <= 0.` })
-            } else {
-                if (row.quantity != null && Math.abs(row.quantity - calcQty) > 0.01) {
-                    warnings.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): ручна кількість (${row.quantity}) відрізняється від розрахованої (${calcQty.toFixed(3)}).` })
-                }
             }
         }
 
@@ -1182,7 +1148,7 @@ const validateBom = async () => {
             }
         }
 
-        const stockAvailable = parseFloat(material?.stock_quantity != null ? material.stock_quantity : (material?.stock_available != null ? material.stock_available : 1000))
+        const stockAvailable = parseFloat(material?.stock_quantity != null ? material.stock_quantity : (material?.stock_available != null ? material.stock_available : 0))
         const actualQtyForStock = row.calc_type !== 'fixed' ? calculateQuantityInternal(row, true) : row.quantity
         
         if (typeof actualQtyForStock === 'number' && stockAvailable < actualQtyForStock) {
@@ -1221,35 +1187,17 @@ const validateBom = async () => {
     }
 }
 
-// Save logic
 const saveSpecification = async () => {
     if (!specForm.value.name) {
         ElMessage.warning('Вкажіть назву специфікації')
         return
     }
 
-    // Run validation
     await validateBom()
 
     if (!validationResult.value.isValid) {
         ElMessageBox.alert('Не вдалося зберегти: специфікація містить помилки. Будь ласка, виправте їх.', 'Помилка валідації', { type: 'error' })
         return
-    }
-
-    if (validationResult.value.warnings.length > 0) {
-        try {
-            await ElMessageBox.confirm(
-                'Специфікація має попередження. Ви впевнені, що хочете зберегти?',
-                'Попередження',
-                {
-                    confirmButtonText: 'Так, зберегти',
-                    cancelButtonText: 'Ні, перевірити',
-                    type: 'warning'
-                }
-            )
-        } catch (cancel) {
-            return
-        }
     }
 
     const validItems = specForm.value.items.filter(i => i.component_id && (i.quantity > 0 || (i.calc_type && i.calc_type !== 'fixed')))
@@ -1272,7 +1220,6 @@ const saveSpecification = async () => {
     }
 }
 
-// Delete logic
 const deleteSpec = async (id) => {
     try {
         await ElMessageBox.confirm('Видалити цю специфікацію?', 'Увага', { type: 'warning' })
@@ -1295,7 +1242,7 @@ const addItem = () => {
         line_type: 'material',
         calc_type: 'fixed',
         calc_data_points: { h: [], w: [], l: [] },
-        calc_dim_config: { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } },
+        calc_dim_config: { h: { char_name: '', default: 0, unit: 'мм', waste: 0 }, w: { char_name: '', default: 0, unit: 'мм', waste: 0 }, l: { char_name: '', default: 0, unit: 'мм', waste: 0 } },
         calc_formula: '',
         calc_waste_factor: 0
     })
@@ -1320,29 +1267,17 @@ const removeStage = (index) => {
     specForm.value.stages.forEach((s, idx) => s.sort_order = idx)
 }
 
-// Calculator Logic
 const openCalcDialog = (item) => {
     activeCalcItem.value = item
     if (!item.calc_type) item.calc_type = 'fixed'
     if (!item.calc_data_points || Array.isArray(item.calc_data_points)) {
-        const oldData = Array.isArray(item.calc_data_points) ? item.calc_data_points : []
-        const newDp = { h: [], w: [], l: [] }
-        oldData.forEach(pt => {
-            if (pt.h != null) newDp.h.push({ x: pt.size_cm || pt.x || 0, qty: pt.h || pt.qty || 0 })
-            if (pt.w != null) newDp.w.push({ x: pt.size_cm || pt.x || 0, qty: pt.w || pt.qty || 0 })
-            if (pt.l != null) newDp.l.push({ x: pt.size_cm || pt.x || 0, qty: pt.l || pt.qty || 0 })
-        })
-        item.calc_data_points = newDp
-    } else {
-        if (!item.calc_data_points.h) item.calc_data_points.h = []
-        if (!item.calc_data_points.w) item.calc_data_points.w = []
-        if (!item.calc_data_points.l) item.calc_data_points.l = []
+        item.calc_data_points = { h: [], w: [], l: [] }
     }
     if (item.calc_type === 'characteristic_mapping') {
         loadAttributesForMapping(props.productId, item.component_id)
     }
     if (!item.calc_dim_config) {
-        item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'см', waste: 0 }, w: { char_name: '', default: 0, unit: 'см', waste: 0 }, l: { char_name: '', default: 0, unit: 'см', waste: 0 } }
+        item.calc_dim_config = { h: { char_name: '', default: 0, unit: 'мм', waste: 0 }, w: { char_name: '', default: 0, unit: 'мм', waste: 0 }, l: { char_name: '', default: 0, unit: 'мм', waste: 0 } }
     }
     calcDialogOpen.value = true
 }
@@ -1401,9 +1336,9 @@ const previewVisible = ref(false)
 const previewLoading = ref(false)
 const previewResults = ref([])
 const testDims = reactive({
-    height_cm: props.productDimensions?.height_cm || 0,
-    width_cm: props.productDimensions?.width_cm || 0,
-    length_cm: props.productDimensions?.length_cm || 0,
+    height_mm: props.productDimensions?.height_mm || 0,
+    width_mm: props.productDimensions?.width_mm || 0,
+    length_mm: props.productDimensions?.length_mm || 0,
     weight_kg: props.productDimensions?.weight_kg || 0,
     custom_attributes: {}
 })
@@ -1451,6 +1386,42 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.specification-tab-container {
+    padding: 0;
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.tab-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.btn-back {
+    border-radius: 8px;
+}
+
+.right-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .btn-validate {
     background: #ffffff;
     color: #475569;
@@ -1461,13 +1432,9 @@ onMounted(() => {
     color: #1F2937;
     border-color: #9CA3AF;
 }
-.bom-grid-row.row-error {
-    background-color: #FEF2F2 !important;
-    border-left: 3px solid #EF4444 !important;
-}
-.bom-grid-row.row-warning {
-    background-color: #FFFBEB !important;
-    border-left: 3px solid #F59E0B !important;
+
+.btn-save {
+    border-radius: 8px;
 }
 
 .bom-grid-table {
@@ -1489,10 +1456,6 @@ onMounted(() => {
     border-bottom: 1px solid #F1F5F9;
 }
 
-.bom-grid-row:last-child {
-    border-bottom: none;
-}
-
 .bom-grid-row.header-row {
     background: #F8FAFC;
     border-bottom: 2px solid #E2E8F0;
@@ -1503,35 +1466,9 @@ onMounted(() => {
     padding: 12px 16px;
 }
 
-.bom-grid-body .bom-grid-row {
-    transition: background-color 0.2s ease;
-}
-
-.bom-grid-body .bom-grid-row:hover {
-    background-color: #F8FAFC;
-}
-
-.bom-col-material,
-.bom-col-qty,
-.bom-col-uom,
-.bom-col-settings,
-.bom-col-actions {
-    display: flex;
-    align-items: flex-start;
-}
-
 .bom-col-qty {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-}
-
-.bom-col-actions {
-    justify-content: center;
-}
-
-.bom-col-settings {
-    justify-content: center;
 }
 
 .bom-uom {
@@ -1553,7 +1490,6 @@ onMounted(() => {
     font-weight: 500;
     margin-top: 4px;
     line-height: 1.2;
-    min-height: 14px;
 }
 
 .calc-indicator-grid {
@@ -1567,7 +1503,6 @@ onMounted(() => {
     cursor: pointer;
     transition: all 0.2s ease;
     color: #94A3B8;
-    background: #F8FAFC;
 }
 
 .calc-indicator-grid.active {
@@ -1576,90 +1511,113 @@ onMounted(() => {
     border-color: #C7D2FE;
 }
 
-.calc-indicator-grid:hover {
-    background: #F1F5F9;
-    color: #4F46E5;
-    border-color: #CBD5E1;
-    transform: scale(1.05);
+.dim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
 }
 
-.bom-grid-empty {
-    padding: 20px 0;
-    background: #FFFFFF;
-}
-
-.qty-cell-container {
+.dim-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
-.qty-input-wrapper {
+
+.dim-header-box {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 12px 12px 0 0;
+}
+
+.dim-title-group {
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.uom-badge {
-    font-size: 10px;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    background: #f1f5f9;
-    padding: 2px 6px;
+
+.dim-icon {
+    background: #4f46e5;
+    color: #ffffff;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
-    white-space: nowrap;
-}
-.calc-indicator {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 10px;
+    font-weight: 700;
 }
-.calc-indicator.active { background: #eff6ff; color: #3b82f6; }
-.calc-indicator.inactive { background: #f8fafc; color: #94a3b8; }
-.calc-indicator:hover { transform: scale(1.1); }
-.specification-tab-container { padding: 10px 24px 24px 24px; }
-.tab-header { display: flex; justify-content: space-between; align-items: center; }
-.editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.editor-header .left-actions, .editor-header .right-actions { display: flex; align-items: center; gap: 12px; }
-.tab-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
-.flex { display: flex; }
-.gap-4 { gap: 1rem; }
-.justify-between { justify-content: space-between; }
-.items-center { align-items: center; }
-.mb-4 { margin-bottom: 1rem; }
-.m-0 { margin: 0; }
-.mt-4 { margin-top: 1rem; }
-.pb-4 { padding-bottom: 1rem; }
-.w-full { width: 100%; }
-.text-gray-400 { color: #9ca3af; }
-.text-xs { font-size: 0.75rem; }
-.component-table { border-top: 1px solid #ebeef5; }
-.dim-section { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s ease; }
-.dim-section:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
-.dim-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 8px; padding-bottom: 12px; }
-.dim-header-box { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-.dim-title-group { display: flex; align-items: center; gap: 10px; }
-.dim-icon { width: 24px; height: 24px; background: #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #475569; }
-.dim-title { font-size: 14px; font-weight: 700; color: #334155; }
-.dim-h .dim-icon { background: #dbeafe; color: #1d4ed8; }
-.dim-h .dim-header-box { background: #f0f7ff; }
-.dim-w .dim-icon { background: #e0e7ff; color: #4338ca; }
-.dim-w .dim-header-box { background: #f5f7ff; }
-.dim-l .dim-icon { background: #d1fae5; color: #047857; }
-.dim-l .dim-header-box { background: #f0fdf4; }
-.table-container { padding: 10px; flex: 1; }
-.dim-footer { padding: 12px; background: #f8fafc; border-top: 1px solid #f1f5f9; }
-.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
-.config-item.wide { grid-column: 1 / -1; }
-.config-item { display: flex; flex-direction: column; gap: 4px; }
-.config-item label { font-size: 11px; font-weight: 500; color: #64748b; }
-.step-badge { display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
-.step-label { color: #94a3b8; }
-.step-value { font-weight: 800; color: #0f172a; }
-.step-unit { color: #64748b; font-size: 11px; }
-.detail-mapping-box { background: #f5f7ff; }
+
+.dim-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #1e293b;
+}
+
+.dim-footer {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    border-radius: 0 0 12px 12px;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.config-item.wide {
+    grid-column: span 2;
+}
+
+.config-item label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.step-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fdf4;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+}
+
+.step-label {
+    font-size: 10px;
+    color: #166534;
+}
+
+.step-value {
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+}
+
+.step-unit {
+    font-size: 9px;
+    color: #15803d;
+}
+
+.warning-border :deep(.el-input__wrapper) {
+    box-shadow: 0 0 0 1px #f59e0b inset !important;
+}
 </style>

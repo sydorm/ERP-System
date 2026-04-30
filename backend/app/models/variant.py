@@ -22,9 +22,9 @@ class ProductVariant(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
     
     # Physical Parameters
-    length_cm = Column(Numeric(10, 2), nullable=True)
-    width_cm = Column(Numeric(10, 2), nullable=True)
-    height_cm = Column(Numeric(10, 2), nullable=True)
+    length_mm = Column(Numeric(10, 2), nullable=True)
+    width_mm = Column(Numeric(10, 2), nullable=True)
+    height_mm = Column(Numeric(10, 2), nullable=True)
     weight_kg = Column(Numeric(10, 2), nullable=True)
     
     # Relationships

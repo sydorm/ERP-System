@@ -94,6 +94,7 @@
                 :items="form.lines"
                 :products="products"
                 :warehouses="warehouses"
+                :supplier-id="form.supplier_id"
                 v-model:warehouse-id="form.warehouse_id"
                 mode="purchase"
                 :show-specification="false"

@@ -506,18 +506,18 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
   if (!item.is_calculated) return item.quantity
 
   const dims = {
-    W: parseFloat(baseDimensions?.width_cm) || 0,
-    H: parseFloat(baseDimensions?.height_cm) || 0,
-    L: parseFloat(baseDimensions?.length_cm) || 0,
+    W: parseFloat(baseDimensions?.width_mm) || 0,
+    H: parseFloat(baseDimensions?.height_mm) || 0,
+    L: parseFloat(baseDimensions?.length_mm) || 0,
     Kg: parseFloat(baseDimensions?.weight_kg) || 0
   }
 
   if (variantValues && variantValues.length > 0) {
     variantValues.forEach(v => {
       const mapping = v.attribute?.mapped_dimension
-      if (mapping === 'width_cm') dims.W = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.W
-      if (mapping === 'height_cm') dims.H = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.H
-      if (mapping === 'length_cm') dims.L = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.L
+      if (mapping === 'width_mm') dims.W = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.W
+      if (mapping === 'height_mm') dims.H = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.H
+      if (mapping === 'length_mm') dims.L = parseFloat(v.text_value) || parseFloat(v.option?.value) || dims.L
     })
   }
 
@@ -555,20 +555,21 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
     if (dp && !Array.isArray(dp) && dp.h !== undefined) {
       // Already new per-dim format
       normalized = dp
-    } else if (Array.isArray(dp) && dp.length > 0 && dp[0].size_cm !== undefined) {
+    } else if (Array.isArray(dp) && dp.length > 0 && (dp[0].size_cm !== undefined || dp[0].size_mm !== undefined)) {
       // Old flat array [{size_cm, h, w, l}] → convert
       normalized = { h: [], w: [], l: [] }
       for (const pt of dp) {
-        if (pt.h != null) normalized.h.push({ x: pt.size_cm || 0, qty: pt.h })
-        if (pt.w != null) normalized.w.push({ x: pt.size_cm || 0, qty: pt.w })
-        if (pt.l != null) normalized.l.push({ x: pt.size_cm || 0, qty: pt.l })
+        const xVal = pt.size_mm || pt.size_cm || 0
+        if (pt.h != null) normalized.h.push({ x: xVal, qty: pt.h })
+        if (pt.w != null) normalized.w.push({ x: xVal, qty: pt.w })
+        if (pt.l != null) normalized.l.push({ x: xVal, qty: pt.l })
       }
-    } else if (dp && !Array.isArray(dp) && (dp.height_cm || dp.width_cm || dp.length_cm)) {
+    } else if (dp && !Array.isArray(dp) && (dp.height_mm || dp.width_mm || dp.length_mm || dp.height_cm || dp.width_cm || dp.length_cm)) {
       // Very old {height_cm:[{input,output}]...} format
       normalized = {
-        h: (dp.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
-        w: (dp.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
-        l: (dp.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        h: (dp.height_mm || dp.height_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        w: (dp.width_mm || dp.width_cm  || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
+        l: (dp.length_mm || dp.length_cm || []).map(p => ({ x: p.input || 0, qty: p.output || 0 })),
       }
     }
 
@@ -602,15 +603,21 @@ const calculateQuantity = (item, baseDimensions, variantValues) => {
     result = hasAny ? total : item.quantity
   }
   else if (item.calc_type === 'proportional') {
-    const dimVal = dims[item.calc_dimension === 'width_cm' ? 'W' : (item.calc_dimension === 'height_cm' ? 'H' : 'L')] || 0
+    const dimVal = dims[item.calc_dimension === 'width_mm' ? 'W' : (item.calc_dimension === 'height_mm' ? 'H' : 'L')] || 0
     const coeff = parseFloat(item.calc_formula) || 0
-    result = dimVal * coeff
+    
+    if (item.unit_of_measure === 'м') {
+        // Assume dimVal is mm, convert to meters
+        result = (dimVal / 1000.0) * coeff
+    } else {
+        result = dimVal * coeff
+    }
   }
   else if (item.calc_type === 'area') {
-    result = dims.W * dims.H / 10000
+    result = dims.W * dims.H / 1000000.0
   }
   else if (item.calc_type === 'volume') {
-    result = dims.W * dims.H * dims.L / 1000000
+    result = dims.W * dims.H * dims.L / 1000000000.0
   }
   else if (item.calc_type === 'formula') {
     try {
@@ -1062,11 +1069,6 @@ const saveOrder = async (action = 'save') => {
     return
   }
   
-  // Logic for buttons
-  // - "save" (Записати): always saves. If new, stays draft. 
-  // - "post" (Провести): changes status to 'processing' if it is 'draft', saves.
-  // - "post_close" (Провести та закрити): same as 'post', but goes back to list.
-  
   if (action === 'post' || action === 'post_close') {
       if (form.status === 'draft') {
           const firstActive = orderStatuses.value.find(s => s.code !== 'draft')
@@ -1453,4 +1455,3 @@ watch(() => route.params.id, (newId, oldId) => {
   }
 }
 </style>
-

@@ -91,7 +91,7 @@
               :price-rule="form.price_rule"
               :product-attributes="form.product_attributes"
               :variant-config="form.variant_config"
-              :base-dimensions="{ length_cm: form.length_cm, width_cm: form.width_cm, height_cm: form.height_cm, weight_kg: form.weight_kg }"
+              :base-dimensions="{ length_mm: form.length_mm, width_mm: form.width_mm, height_mm: form.height_mm, weight_kg: form.weight_kg }"
               @update:variants="(val) => form.variants = val"
               @update:priceRule="(val) => form.price_rule = val"
             />
@@ -191,14 +191,16 @@ const resetForm = () => {
         barcode: '',
         internal_code: '',
         weight_kg: 0,
-        length_cm: 0,
-        width_cm: 0,
+        length_mm: 0,
+        width_mm: 0,
+        height_mm: 0,
         tags: [],
         notes: '',
         variants: [],
         min_stock: 0.0,
         optimal_stock: 0.0,
         default_supplier_id: null,
+        supplier_links: [],
         delivery_days: 0,
         production_time_hours: null,
         complexity_code: null,
@@ -218,7 +220,7 @@ const resetForm = () => {
             length: { source: 'fixed', attr_id: null },
             width: { source: 'fixed', attr_id: null },
             height: { source: 'fixed', attr_id: null },
-            weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+            weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_mm: 100, dim_key: 'length' }
         }
     })
     productCharacteristics.value = []
@@ -243,8 +245,9 @@ const form = reactive({
     barcode: '',
     internal_code: '',
     weight_kg: 0,
-    length_cm: 0,
-    width_cm: 0,
+    length_mm: 0,
+    width_mm: 0,
+    height_mm: 0,
     tags: [],
     notes: '',
     variants: [],
@@ -253,6 +256,7 @@ const form = reactive({
     min_stock: 0.0,
     optimal_stock: 0.0,
     default_supplier_id: null,
+    supplier_links: [],
     delivery_days: 0,
 
     // Manufacturing Parameters
@@ -276,7 +280,7 @@ const form = reactive({
         length: { source: 'fixed', attr_id: null },
         width: { source: 'fixed', attr_id: null },
         height: { source: 'fixed', attr_id: null },
-        weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_cm: 10, dim_key: 'length' }
+        weight: { source: 'fixed', base_kg: 0, step_kg: 0, step_mm: 100, dim_key: 'length' }
     }
 })
 
@@ -344,14 +348,15 @@ const loadProduct = async (id) => {
     try {
         const res = await api.get(`/api/v1/products/${id}`)
         Object.assign(form, res.data)
+        if (!Array.isArray(form.supplier_links)) form.supplier_links = []
         
         // Ensure numeric fields are numbers for el-input-number
         form.price = parseFloat(form.price) || 0
         form.cost = form.cost ? parseFloat(form.cost) : 0
         form.weight_kg = parseFloat(form.weight_kg) || 0
-        form.length_cm = parseFloat(form.length_cm) || 0
-        form.width_cm = parseFloat(form.width_cm) || 0
-        form.height_cm = parseFloat(form.height_cm) || 0
+        form.length_mm = parseFloat(form.length_mm) || 0
+        form.width_mm = parseFloat(form.width_mm) || 0
+        form.height_mm = parseFloat(form.height_mm) || 0
         form.min_stock = parseFloat(form.min_stock) || 0
         form.optimal_stock = parseFloat(form.optimal_stock) || 0
         if (form.price_rule) {
@@ -476,6 +481,7 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
+  --product-editor-header-height: 74px;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
@@ -489,12 +495,13 @@ onMounted(() => {
   align-items: center;
   background: #ffffff;
   padding: 12px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  min-height: var(--product-editor-header-height);
+  border-bottom: 1px solid #E6ECF3;
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px -2px rgba(148, 163, 184, 0.08);
+  z-index: 90;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
 }
 
 .header-left {
@@ -658,7 +665,21 @@ onMounted(() => {
   margin: 0;
   background: #ffffff;
   padding: 12px 24px 0 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #E6ECF3;
+  position: sticky;
+  top: var(--product-editor-header-height);
+  z-index: 80;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+}
+
+.product-tabs :deep(.el-tabs__nav-scroll) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.product-tabs :deep(.el-tabs__nav) {
+  white-space: nowrap;
 }
 
 .product-tabs :deep(.el-tabs__nav-wrap::after) {

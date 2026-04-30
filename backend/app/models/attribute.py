@@ -27,7 +27,7 @@ class Attribute(BaseModel):
     
     # Configure-To-Order Settings
     allow_manual_input = Column(Boolean, default=False, nullable=False)
-    mapped_dimension = Column(String(50), nullable=True) # "length_cm", "width_cm", "height_cm"
+    mapped_dimension = Column(String(50), nullable=True) # "length_mm", "width_mm", "height_mm"
     dimension_format = Column(String(50), nullable=True, default="{width}×{height}")
     
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)

@@ -36,11 +36,12 @@ class ProductBase(BaseModel):
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: bool = True
     variant_config: Optional[dict] = None
+    supplier_links: Optional[List[Dict[str, Any]]] = None
     
     # Dimensions and Weight
-    length_cm: Optional[Decimal] = None
-    width_cm: Optional[Decimal] = None
-    height_cm: Optional[Decimal] = None
+    length_mm: Optional[Decimal] = None
+    width_mm: Optional[Decimal] = None
+    height_mm: Optional[Decimal] = None
     weight_kg: Optional[Decimal] = None
     
     # Procurement & Stock Management
@@ -80,10 +81,11 @@ class ProductUpdate(BaseModel):
     cost: Optional[Decimal] = Field(None, ge=0)
     is_active: Optional[bool] = None
     variant_config: Optional[dict] = None
+    supplier_links: Optional[List[Dict[str, Any]]] = None
     
-    length_cm: Optional[Decimal] = None
-    width_cm: Optional[Decimal] = None
-    height_cm: Optional[Decimal] = None
+    length_mm: Optional[Decimal] = None
+    width_mm: Optional[Decimal] = None
+    height_mm: Optional[Decimal] = None
     weight_kg: Optional[Decimal] = None
     
     # Procurement & Stock Management

@@ -175,9 +175,9 @@
           <el-form-item label="Впливає на габарит (BOM)" prop="mapped_dimension" class="mb-0">
             <el-select v-model="attrForm.mapped_dimension" placeholder="Не впливає" clearable class="w-full">
               <el-option label="Немає (Просто текст)" value="" />
-              <el-option label="Довжина (L)" value="length_cm" />
-              <el-option label="Ширина (W)" value="width_cm" />
-              <el-option label="Висота (H)" value="height_cm" />
+              <el-option label="Довжина (L)" value="length_mm" />
+              <el-option label="Ширина (W)" value="width_mm" />
+              <el-option label="Висота (H)" value="height_mm" />
             </el-select>
             <div class="text-xs text-slate-500 mt-1">
               Значення цієї характеристики автоматично підставиться у Розумний Калькулятор замість базового габариту товару.
@@ -331,17 +331,10 @@ const fetchAttributes = async () => {
   loading.value = true
   try {
     const res = await api.get('/api/v1/attributes')
-    // Option loading strategy: expand fetches options or we just rely on lazy load. 
-    // Backend doesn't return options in root list.
-    // Wait, let's load options for all SELECT/COLOR types since it's an admin view.
     const attrs = res.data || []
-    
-    // For SELECT and COLOR, we ideally fetch options. 
-    // The backend `GET /attributes/` normally returns `options` relationship if eager loaded.
-    // Let's assume options are included. If not, we fetch on expand.
     attributes.value = attrs.map(a => ({
        ...a,
-       options: a.options || [] // Backend actually doesn't eager load options by default unless specified. 
+       options: a.options || []
     }))
   } catch (e) {
     ElMessage.error('Не вдалося завантажити характеристики')
@@ -438,7 +431,6 @@ const submitOptForm = async () => {
         optForm.h = null
         optForm.color_code = '#4f46e5'
         
-        // Refresh options list in background
         await refreshOptionsFor(activeAttrForOpt.value.id)
       } catch (e) {
         ElMessage.error('Помилка додавання значення')
@@ -472,13 +464,6 @@ const handleDeleteOption = async (option, attribute) => {
   }
 }
 
-// Because the current backend `GET /attributes/` doesn't eager load `options`, 
-// we will fetch them individually or refresh via category attrs endpoint as a workaround if needed.
-// Actually, I can use the same logic CharacteristicsTab uses, or simply reload.
-// For a safe UI, I'll fetch `/api/v1/attributes/category/ALL` or something. 
-// Wait, we can't fetch options directly through a standard endpoint right now without category link.
-// Let's rely on the frontend reloading the full list if backend was updated to return options, 
-// OR we just use the `GET /api/v1/attributes/` if it DOES return options (fastapi response_model might include it).
 const refreshOptionsFor = async (attrId) => {
     const res = await api.get('/api/v1/attributes')
     const fresh = res.data.find(a => a.id === attrId)
