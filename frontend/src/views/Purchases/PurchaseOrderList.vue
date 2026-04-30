@@ -747,9 +747,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 .purchase-orders-page { 
   display: flex; 
   flex-direction: column; 
-  gap: 24px; 
+  gap: 16px; 
   height: 100%; 
-  padding: 0 0 24px;
+  padding: 0 0 16px;
 }
 
 /* ===== COMPACT PAGE HEADER ===== */
@@ -757,7 +757,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  padding: 8px 24px 0;
+  padding: 12px 24px 0;
 }
 
 .page-title { 
@@ -766,12 +766,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   color: var(--erp-text-heading); 
   margin: 0; 
   letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .page-subtitle { 
   font-size: 13px; 
   color: var(--erp-text-muted); 
-  margin: 2px 0 0; 
+  margin: 0; 
 }
 
 .btn-primary-toolbar { 
@@ -800,12 +801,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 .kpi-card { 
   background: #FFF; 
   border-radius: var(--erp-radius-kpi); 
-  padding: 16px 18px; 
+  padding: 14px 18px; 
   box-shadow: var(--erp-shadow-soft); 
   display: flex; 
   align-items: center; 
   gap: 14px; 
-  height: 104px;
+  height: 100px;
   border: 1px solid var(--erp-border);
   transition: transform 0.2s, shadow 0.2s;
 }
@@ -868,7 +869,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   background: #FFF; 
   margin: 0 24px;
   border-radius: var(--erp-radius-card); 
-  padding: 12px 16px; 
+  padding: 10px 14px; 
   box-shadow: var(--erp-shadow-soft);
   border: 1px solid var(--erp-border);
 }
@@ -1074,7 +1075,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 /* ===== TABLE AREA ===== */
 .table-surface { 
   background: #FFF; 
-  margin: 0 24px;
+  margin: 12px 24px 0;
   border-radius: var(--erp-radius-card); 
   padding: 4px; 
   box-shadow: var(--erp-shadow-soft); 
