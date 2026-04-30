@@ -577,7 +577,17 @@ const fetchCounterparty = async () => {
   loading.value = true
   try {
     const res = await api.get(`/api/v1/counterparties/${route.params.id}`)
-    Object.assign(form, res.data)
+    const data = res.data
+    
+    // Cast numeric fields to Number to avoid ElInputNumber validation errors (when backend returns strings)
+    const numericFields = ['delivery_days', 'min_order_amount', 'discount_percent']
+    numericFields.forEach(field => {
+      if (data[field] !== undefined && data[field] !== null) {
+        data[field] = Number(data[field])
+      }
+    })
+    
+    Object.assign(form, data)
     if (!form.tags) form.tags = []
     fetchSalesHistory()
     fetchPurchaseHistory()

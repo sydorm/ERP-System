@@ -984,49 +984,6 @@ const handleBulkCancel = () => {
 }
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
-const getManagerName = (id) => {
-  if (!id) return 'Без менеджера'
-  // 1. Contact-related warnings (ONLY for 'new' and 'payment')
-  if (['new', 'payment'].includes(stage)) {
-    if (!nextContact) {
-      reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
-    } else if (new Date(nextContact) < new Date()) {
-      reasons.push({ text: 'Контакт прострочено', level: 'critical' })
-    }
-
-    // SLA-based contact warnings
-    if (['critical', 'urgent'].includes(slaLevel)) {
-      reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
-    } else if (slaLevel === 'warning') {
-      reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
-    }
-  }
-
-  // 2. Deadline & Payment warnings (All stages except 'done')
-  if (stage !== 'done') {
-    if (!deadline) {
-      reasons.push({ text: 'Немає дедлайну', level: 'warning' })
-    } else if (new Date(deadline) < new Date()) {
-      reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
-    }
-
-    if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
-      reasons.push({ text: 'Немає передоплати', level: 'warning' })
-    }
-
-    if (needsPaymentControl(order)) {
-      reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
-    }
-  }
-
-  return reasons
-}
-
-const getOrderHints = (order) => getAttentionReasons(order)
-
-const getAttentionScore = (order) => {
-  return getAttentionReasons(order).reduce((score, reason) => score + (reason.level === 'critical' ? 40 : 18), 0)
-}
 
 const getAttentionReason = (order) => {
   return getAttentionReasons(order)[0]?.text || ''
