@@ -435,5 +435,9 @@ onBeforeUnmount(() => {
 .ni-message { font-size: 12px; color: var(--erp-text-muted); }
 
 .main-content { padding: 0; }
-.view-container { padding: 24px; }
+.view-container {
+  padding: 24px;
+  position: relative;
+  min-height: 100%;
+}
 </style>

@@ -605,14 +605,18 @@ const getRoleBadgeClass = (role) => {
   }
   return map[role] || 'kimi-status-slate'
 }
-
-onMounted(fetchUsers)
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
 /* ===== PAGE ===== */
 .users-page {
-  @apply absolute inset-0 bg-slate-50 flex flex-col overflow-hidden;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f1f5f9;
 }
 
 /* ===== FIXED TOP AREA ===== */

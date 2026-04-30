@@ -476,13 +476,10 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
-  z-index: 100;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 /* === STICKY HEADER === */
