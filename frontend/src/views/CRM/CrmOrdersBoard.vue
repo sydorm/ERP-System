@@ -1,27 +1,8 @@
 <template>
   <div class="crm-board-page">
     <div class="crm-sticky-workbar">
-
-    <CrmBoardHeader :orders-count="orders.length">
-      <CrmBoardToolbar
-        :users="users"
-        :filters="filters"
-        :search-query="searchQuery"
-        :sort-option="sortOption"
-        :active-controls-count="activeControlsCount"
-        :is-any-filter-active="isAnyFilterActive"
-        @update:search-query="searchQuery = $event"
-        @update:sort-option="sortOption = $event"
-        @analytics="router.push('/crm/analytics')"
-        @reset-all="resetAll"
-        @reset-filters="resetFilters"
-        @apply-filters="applyFilters"
-        @export="handleExport"
-        @new-order="openNewOrder"
-      />
-    </CrmBoardHeader>
-
-    <CrmSummaryCards
+      <CrmBoardHeader :orders-count="orders.length" />
+      <CrmSummaryCards
       :orders-count="orders.length"
       :total-pipeline-amount="totalPipelineAmount"
       :hot-sla-count="hotSlaCount"
@@ -31,15 +12,37 @@
       :format-currency="formatCurrency"
     />
 
-    <CrmAttentionPanel
-      :attention-orders="attentionOrders"
-      :attention-expanded="attentionExpanded"
-      :attention-only="filters.attentionOnly"
-      :get-attention-reasons="getAttentionReasons"
-      @update:attention-expanded="attentionExpanded = $event"
-      @update:attention-only="filters.attentionOnly = $event"
-      @open-order="openEditor"
-    />
+    <div class="crm-toolbar-row">
+      <CrmAttentionPanel
+        :attention-orders="attentionOrders"
+        :attention-expanded="attentionExpanded"
+        :attention-only="filters.attentionOnly"
+        :get-attention-reasons="getAttentionReasons"
+        @update:attention-expanded="attentionExpanded = $event"
+        @update:attention-only="filters.attentionOnly = $event"
+        @open-order="openEditor"
+      />
+
+      <transition name="toolbar-fade">
+        <CrmBoardToolbar
+          v-if="!attentionExpanded"
+          :users="users"
+          :filters="filters"
+          :search-query="searchQuery"
+          :sort-option="sortOption"
+          :active-controls-count="activeControlsCount"
+          :is-any-filter-active="isAnyFilterActive"
+          @update:search-query="searchQuery = $event"
+          @update:sort-option="sortOption = $event"
+          @analytics="router.push('/crm/analytics')"
+          @reset-all="resetAll"
+          @reset-filters="resetFilters"
+          @apply-filters="applyFilters"
+          @export="handleExport"
+          @new-order="openNewOrder"
+        />
+      </transition>
+    </div>
     </div><!-- /crm-sticky-workbar -->
 
     <div class="crm-board-body">

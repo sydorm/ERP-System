@@ -7,7 +7,6 @@
       </div>
       <p class="crm-subtitle">Керування меблевим виробництвом</p>
     </div>
-    <slot />
   </div>
 </template>
 

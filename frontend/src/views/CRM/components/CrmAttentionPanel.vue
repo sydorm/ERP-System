@@ -17,9 +17,9 @@
     >
       {{ attentionOnly ? 'Показані тільки ці' : 'Показати на дошці' }}
     </button>
-    <template v-if="attentionExpanded">
+    <transition-group name="pill-fade">
       <button
-        v-for="order in attentionOrders.slice(0, 6)"
+        v-for="order in (attentionExpanded ? attentionOrders.slice(0, 8) : [])"
         :key="order.id"
         class="attention-order-pill"
         @click="$emit('openOrder', order)"
@@ -27,7 +27,7 @@
         <b>#{{ order.order_number }}</b>
         <span>{{ getAttentionReasons(order).map(r => r.text).join(' · ') }}</span>
       </button>
-    </template>
+    </transition-group>
   </div>
 </template>
 

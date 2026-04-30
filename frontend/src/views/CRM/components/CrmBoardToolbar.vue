@@ -199,8 +199,8 @@ const controlsOpen = ref(false)
 }
 .crm-search :deep(.el-input__wrapper):hover,
 .crm-search :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 3px rgba(20,99,255,0.12);
-  border-color: var(--erp-primary, #1463FF);
+  box-shadow: 0 0 0 3px rgba(21, 185, 122, 0.12);
+  border-color: var(--erp-status-success, #15B97A);
 }
 
 /* ── Parameters button ─────────────────────────────────────── */
@@ -210,7 +210,7 @@ const controlsOpen = ref(false)
   gap: 6px;
   height: 38px;
   padding: 0 14px;
-  border: 1px solid var(--erp-border, #E6ECF3);
+  border: 1px solid rgba(21, 185, 122, 0.25);
   border-radius: 10px;
   background: #fff;
   color: var(--erp-text-main, #1a2233);
@@ -219,17 +219,17 @@ const controlsOpen = ref(false)
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(20,99,255,0.05);
+  box-shadow: 0 1px 4px rgba(21, 185, 122, 0.08);
 }
 .crm-ctrl-btn:hover {
-  border-color: var(--erp-primary, #1463FF);
-  box-shadow: 0 0 0 3px rgba(20,99,255,0.1);
-  color: var(--erp-primary, #1463FF);
+  border-color: var(--erp-status-success, #15B97A);
+  box-shadow: 0 0 0 3px rgba(21, 185, 122, 0.1);
+  color: var(--erp-status-success, #15B97A);
 }
 .crm-ctrl-btn.active {
-  border-color: var(--erp-primary, #1463FF);
-  background: rgba(20,99,255,0.05);
-  color: var(--erp-primary, #1463FF);
+  border-color: var(--erp-status-success, #15B97A);
+  background: rgba(21, 185, 122, 0.05);
+  color: var(--erp-status-success, #15B97A);
 }
 
 .ctrl-badge {
@@ -240,7 +240,7 @@ const controlsOpen = ref(false)
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--erp-primary, #1463FF);
+  background: var(--erp-status-success, #15B97A);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -264,23 +264,23 @@ const controlsOpen = ref(false)
   padding: 0 18px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(135deg, #1463FF 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #15B97A 0%, #34D399 100%);
   color: #fff;
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(20,99,255,0.30);
+  box-shadow: 0 4px 14px rgba(21, 185, 122, 0.30);
   transition: all 0.18s;
 }
 .crm-new-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(20,99,255,0.40);
-  background: linear-gradient(135deg, #0f56f0 0%, #2563eb 100%);
+  box-shadow: 0 6px 20px rgba(21, 185, 122, 0.40);
+  background: linear-gradient(135deg, #12A46C 0%, #15B97A 100%);
 }
 .crm-new-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(20,99,255,0.25);
+  box-shadow: 0 2px 8px rgba(21, 185, 122, 0.25);
 }
 </style>
 
