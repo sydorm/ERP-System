@@ -7,11 +7,14 @@
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ Page в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-board-page {
   background: var(--erp-bg-page, #F5F8FC);
-  height: calc(100vh - 60px);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .crm-sticky-workbar {
