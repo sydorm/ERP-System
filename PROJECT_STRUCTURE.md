@@ -132,22 +132,45 @@ Refactor note:
 
 ### `frontend/src/views/CRM/CrmOrderEditor.vue`
 Responsibility:
-Форма створення/редагування CRM заявки.
+Page-level контейнер форми створення/редагування CRM заявки. Після рефакторингу відповідає за route params, load/save orchestration, API calls, high-level state і передачу props/emits у блоки.
 
 Contains:
-- Client block.
-- Product/order details.
-- Stage workflow.
-- Payment summary.
-- Production handoff action.
-- Communication panel.
-- Next contact planning.
-- Responsible manager field.
-- History/notes/sidebar panels.
+- Composition layout CRM editor.
+- Save draft / send to production orchestration.
+- Existing API integration for order, contacts, materials, dictionaries and counterparties.
+- Automation modal and print preview modal wiring.
 
-Related files:
-- `frontend/src/views/CRM/CrmOrdersBoard.vue`
-- `frontend/src/components/crm/CallResultDialog.vue`
+Related UI files:
+- `frontend/src/views/CRM/components/CrmOrderHeader.vue`
+- `frontend/src/views/CRM/components/CrmOrderStageStepper.vue`
+- `frontend/src/views/CRM/components/CrmClientBlock.vue`
+- `frontend/src/views/CRM/components/CrmManagerBlock.vue`
+- `frontend/src/views/CRM/components/CrmProductBlock.vue`
+- `frontend/src/views/CRM/components/CrmReferencePhotosBlock.vue`
+- `frontend/src/views/CRM/components/CrmFinanceBlock.vue`
+- `frontend/src/views/CRM/components/CrmMaterialsCheckBlock.vue`
+- `frontend/src/views/CRM/components/CrmDeadlinesBlock.vue`
+- `frontend/src/views/CRM/components/CrmReadinessChecklist.vue`
+- `frontend/src/views/CRM/components/CrmContactPanel.vue`
+- `frontend/src/views/CRM/components/CrmCommunicationHistory.vue`
+- `frontend/src/views/CRM/components/CrmOrderHistoryNotes.vue`
+- `frontend/src/views/CRM/components/CrmAiAssistant.vue`
+- `frontend/src/views/CRM/components/CrmRelatedDocuments.vue`
+- `frontend/src/views/CRM/components/CrmNewClientDialog.vue`
+- `frontend/src/views/CRM/components/CrmCommunicationDrawer.vue`
+
+Related styles:
+- `frontend/src/views/CRM/styles/CrmOrderEditor.css`
+- `frontend/src/views/CRM/styles/CrmOrdersBoard.css`
+
+Related composables:
+- `frontend/src/views/CRM/composables/useCrmOrderForm.ts`
+- `frontend/src/views/CRM/composables/useCrmOrderValidation.ts`
+- `frontend/src/views/CRM/composables/useCrmContactLogic.ts`
+- `frontend/src/views/CRM/composables/useCrmReadiness.ts`
+- `frontend/src/views/CRM/composables/useCrmOrderDocuments.ts`
+
+Related backend/API files:
 - `backend/app/api/order_routes.py`
 - `backend/app/models/order.py`
 - `backend/app/schemas/order.py`
@@ -155,17 +178,18 @@ Related files:
 - `backend/app/api/product_routes.py`
 
 Use this file when:
-- Додаються/змінюються поля CRM заявки.
-- Змінюється логіка збереження заявки.
-- Змінюється sidebar комунікацій або next contact.
+- Змінюється порядок блоків CRM editor на сторінці.
+- Змінюється load/save orchestration або route-level behavior.
+- Потрібно підключити новий блок через props/emits.
+
+Use extracted files when:
+- Змінюється UI клієнта, виробу, фінансів, дедлайнів, готовності, комунікацій або AI-підказок.
+- Змінюється стартовий стан форми, validation, contact presets або readiness checklist.
 
 Do not use this file for:
 - Зміни Kanban card layout.
 - Зміни глобального topbar/sidebar.
 - Зміни BOM логіки товару.
-
-Refactor note:
-Найризиковіший frontend файл. Розбити на `CrmClientBlock`, `CrmProductBlock`, `CrmFinanceSummary`, `CrmContactPanel`, `CrmStageStepper`, `CrmOrderHistory`.
 
 ### `frontend/src/views/CRM/CrmAnalytics.vue`
 Responsibility:
@@ -808,8 +832,8 @@ UI перегляду audit/activity log.
 
 | File | Lines | Risk | Suggested split |
 |---|---:|---|---|
-| `frontend/src/views/CRM/CrmOrderEditor.vue` | 2494 | High | `CrmOrderHeader`, `CrmClientBlock`, `CrmProductBlock`, `CrmFinanceSummary`, `CrmContactPanel`, `CrmStageStepper`, `useCrmOrderForm`, `useCrmContacts` |
-| `frontend/src/views/CRM/CrmOrdersBoard.vue` | 2291 | High | `CrmBoardHeader`, `CrmKpiStrip`, `CrmAttentionStrip`, `CrmKanbanColumn`, `CrmOrderCard`, `useCrmFilters`, `useCrmKanban`, `useCrmAttention` |
+| `frontend/src/views/CRM/CrmOrderEditor.vue` | 843 | Medium | UI/style blocks extracted; next split candidates: load/save orchestration and material-check composable |
+| `frontend/src/views/CRM/CrmOrdersBoard.vue` | 778 | Medium | UI/style blocks extracted; next split candidates: board data loading, filters, attention rules and drag/drop orchestration |
 
 ## Files over 1000 lines
 
@@ -916,4 +940,3 @@ UI перегляду audit/activity log.
 - `backend/app/api/product_routes.py`
   - Split product core CRUD from variants/files/procurement endpoints.
 - Keep heavy calculation logic in `backend/app/services/*`, not in routes.
-
