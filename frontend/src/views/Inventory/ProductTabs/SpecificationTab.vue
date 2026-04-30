@@ -37,17 +37,11 @@
     <div v-else class="spec-editor">
        <div class="editor-header">
         <div class="header-actions">
-          <!-- Simulation Mode Toggle -->
-          <div class="simulation-toggle-wrapper">
-             <span class="sim-label">Симулятор параметрів:</span>
-             <el-switch v-model="isSimulationMode" @change="syncSimulationDims" />
-          </div>
-
           <el-button @click="editingSpec = null" class="btn-back">
             До списку
           </el-button>
-          <el-button class="btn-validate" @click="validateBom" :disabled="!specForm.items || specForm.items.length === 0">
-            <el-icon class="mr-1"><Monitor /></el-icon> Перевірити розрахунок
+          <el-button class="btn-validate" @click="openValidationDialog" :disabled="!specForm.items || specForm.items.length === 0">
+            <el-icon class="mr-1"><Memo /></el-icon> Перевірити розрахунок
           </el-button>
           <el-button type="primary" :loading="saving" @click="saveSpecification" class="btn-save">
             <el-icon><Check /></el-icon> Зберегти специфікацію
@@ -55,33 +49,58 @@
         </div>
       </div>
 
-      <!-- Simulation Parameters Bar -->
-      <div v-if="isSimulationMode" class="simulation-bar">
-        <div class="sim-fields">
-           <div class="sim-field">
-              <label>H (мм):</label>
-              <el-input-number v-model="simulationDims.height_mm" size="small" :controls="false" />
-           </div>
-           <div class="sim-field">
-              <label>W (мм):</label>
-              <el-input-number v-model="simulationDims.width_mm" size="small" :controls="false" />
-           </div>
-           <div class="sim-field">
-              <label>L (мм):</label>
-              <el-input-number v-model="simulationDims.length_mm" size="small" :controls="false" />
-           </div>
-           
-           <!-- Dynamic Characteristic Overrides -->
-           <div v-for="char in usedCharacteristics" :key="char" class="sim-field char-field">
-              <label>{{ char }}:</label>
-              <el-input v-model="simulationDims.custom_attributes[char]" size="small" placeholder="Значення" />
-           </div>
+      <!-- Validation Parameters Dialog (Calculation Simulator) -->
+      <el-dialog
+        v-model="validationParamsDialogOpen"
+        title="Параметри для перевірки розрахунку"
+        width="500px"
+        append-to-body
+        class="premium-dialog"
+      >
+        <div class="dialog-description mb-4">
+           Вкажіть значення параметрів, щоб перевірити, як система розрахує кількість матеріалів для цього варіанту виробу.
         </div>
-        <div class="sim-info">
-           <el-icon class="mr-1"><Warning /></el-icon>
-           Змінюйте значення для перевірки калькулятора без збереження картки товару
-        </div>
-      </div>
+
+        <el-form label-position="top">
+           <div class="grid grid-cols-2 gap-4">
+              <el-form-item label="Висота (H), мм">
+                 <el-input-number v-model="simulationDims.height_mm" :controls="false" class="w-full" />
+              </el-form-item>
+              <el-form-item label="Ширина (W), мм">
+                 <el-input-number v-model="simulationDims.width_mm" :controls="false" class="w-full" />
+              </el-form-item>
+              <el-form-item label="Довжина (L), мм">
+                 <el-input-number v-model="simulationDims.length_mm" :controls="false" class="w-full" />
+              </el-form-item>
+              <el-form-item label="Вага (Kg), кг">
+                 <el-input-number v-model="simulationDims.weight_kg" :controls="false" class="w-full" />
+              </el-form-item>
+           </div>
+
+           <!-- Dynamic Characteristics Selection -->
+           <div v-for="charName in usedCharacteristics" :key="charName" class="mt-2">
+              <el-form-item :label="charName">
+                 <el-select v-model="simulationDims.custom_attributes[charName]" placeholder="Оберіть значення" class="w-full" filterable allow-create>
+                    <el-option 
+                       v-for="opt in getCharOptions(charName)" 
+                       :key="opt" 
+                       :label="opt" 
+                       :value="opt" 
+                    />
+                 </el-select>
+              </el-form-item>
+           </div>
+        </el-form>
+
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="validationParamsDialogOpen = false">Скасувати</el-button>
+            <el-button type="primary" @click="runValidationFromDialog" class="btn-run-calc">
+               Запустити розрахунок
+            </el-button>
+          </div>
+        </template>
+      </el-dialog>
        
       <!-- Validation Result Banner -->
       <div v-if="validationResult.summary.rowsCount > 0 || validationResult.errors.length > 0" class="bom-validation-banner mt-4">
@@ -674,6 +693,7 @@ const loadProductAttributes = async () => {
 }
 
 const isSimulationMode = ref(false)
+const validationParamsDialogOpen = ref(false)
 const simulationDims = reactive({
     height_mm: 0,
     width_mm: 0,
@@ -682,19 +702,33 @@ const simulationDims = reactive({
     custom_attributes: {}
 })
 
-const syncSimulationDims = () => {
-    if (isSimulationMode.value) {
-        simulationDims.height_mm = props.productDimensions.height_mm || 0
-        simulationDims.width_mm = props.productDimensions.width_mm || 0
-        simulationDims.length_mm = props.productDimensions.length_mm || 0
-        simulationDims.weight_kg = props.productDimensions.weight_kg || 0
-        
-        // Sync chars
-        usedCharacteristics.value.forEach(char => {
-            const val = getAttrValue(char)
-            if (val !== null) simulationDims.custom_attributes[char] = val
-        })
-    }
+const openValidationDialog = () => {
+    isSimulationMode.value = true
+    simulationDims.height_mm = props.productDimensions.height_mm || 0
+    simulationDims.width_mm = props.productDimensions.width_mm || 0
+    simulationDims.length_mm = props.productDimensions.length_mm || 0
+    simulationDims.weight_kg = props.productDimensions.weight_kg || 0
+    
+    // Sync characteristics
+    usedCharacteristics.value.forEach(char => {
+        const val = getAttrValue(char)
+        if (val !== null) {
+            simulationDims.custom_attributes[char] = val
+        }
+    })
+    
+    validationParamsDialogOpen.value = true
+}
+
+const runValidationFromDialog = () => {
+    validationParamsDialogOpen.value = false
+    validateBom()
+}
+
+const getCharOptions = (charName) => {
+    const attr = productAttributes.value.find(a => a.name === charName)
+    if (!attr || !attr.options) return []
+    return attr.options.map(o => o.value)
 }
 
 const usedCharacteristics = computed(() => {
