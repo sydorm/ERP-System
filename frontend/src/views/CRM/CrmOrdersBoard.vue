@@ -813,7 +813,7 @@ const completeTask = async (task) => {
   try {
     await api.put(`/api/v1/crm/tasks/${task.id}/complete`)
     fetchAll()
-  } catch { ElMessage.error('РџРѕРјРёР»РєР°') }
+  } catch { ElMessage.error('Помилка') }
 }
 
 const openReschedule = (task) => {
@@ -834,9 +834,9 @@ const confirmReschedule = async () => {
   try {
     await api.put(`/api/v1/crm/tasks/${selectedTask.value.id}/reschedule`, { scheduled_at: rescheduleTime.value })
     rescheduleVisible.value = false
-    ElMessage.success('Р—Р°РІРґР°РЅРЅСЏ РїРµСЂРµРЅРµСЃРµРЅРѕ')
+    ElMessage.success('Завдання перенесено')
     fetchAll()
-  } catch { ElMessage.error('РџРѕРјРёР»РєР°') }
+  } catch { ElMessage.error('Помилка') }
 }
 
 const dragOrderId = ref(null)
@@ -849,7 +849,7 @@ const onDrop = async (stage) => {
     order.crm_stage = stage
     try {
       await api.patch(`/api/v1/orders/${oid}/stage?stage=${stage}`)
-    } catch { ElMessage.error('РџРѕРјРёР»РєР° РѕРЅРѕРІР»РµРЅРЅСЏ СЃС‚Р°С‚СѓСЃСѓ') }
+    } catch { ElMessage.error('Помилка оновлення статусу') }
   }
   dragOverStage.value = null
 }
