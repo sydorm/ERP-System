@@ -52,6 +52,33 @@ def on_startup():
         # Data Migration for CRM Stages
         db.execute(text("UPDATE orders SET crm_stage = 'processing' WHERE crm_stage = 'confirmed'"))
 
+        # Cost tracking columns (migration 038)
+        db.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_source VARCHAR(200)"))
+        db.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS cost_method VARCHAR(30) NOT NULL DEFAULT 'last_price'"))
+
+        # Business process tables (migration 037) — columns guard
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS product_cost_history (
+                id UUID PRIMARY KEY,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+                document_type VARCHAR(50) NOT NULL,
+                document_id UUID NOT NULL,
+                document_number VARCHAR(100) NOT NULL,
+                supplier_id UUID REFERENCES counterparties(id) ON DELETE SET NULL,
+                old_stock NUMERIC(15,4) NOT NULL DEFAULT 0,
+                old_cost NUMERIC(15,2),
+                incoming_qty NUMERIC(15,4) NOT NULL,
+                incoming_price NUMERIC(15,2) NOT NULL,
+                new_cost NUMERIC(15,2) NOT NULL,
+                method VARCHAR(30) NOT NULL,
+                changed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+                company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE
+            )
+        """))
+
         db.commit()
         print("✅ Database schema check: OK")
     except Exception as e:
