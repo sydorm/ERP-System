@@ -789,13 +789,23 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
             let sourceLabel = dimLabels[key]
             let warning = ''
 
-            if (config.char_name) {
-                const customVal = getAttrValue(config.char_name)
+            // AUTOMATION: If not explicitly set in config, check global variant_config
+            let activeCharName = config.char_name
+            if (!activeCharName && props.productDimensions.variant_config) {
+                const globalCfg = props.productDimensions.variant_config[dimKey === 'height_mm' ? 'height' : (dimKey === 'width_mm' ? 'width' : 'length')]
+                if (globalCfg?.source === 'attribute' && globalCfg.attr_id) {
+                    const attr = productAttributes.value.find(a => a.id === globalCfg.attr_id)
+                    if (attr) activeCharName = attr.name
+                }
+            }
+
+            if (activeCharName) {
+                const customVal = getAttrValue(activeCharName)
                 if (customVal !== null) {
                     dimValRaw = customVal
-                    sourceLabel = config.char_name
+                    sourceLabel = activeCharName
                 } else {
-                    warning = `[!] Характеристика "${config.char_name}" не знайдена`
+                    warning = `[!] Характеристика "${activeCharName}" не знайдена`
                 }
             }
 
@@ -1132,6 +1142,20 @@ const validateBom = async () => {
             if (calcQty === 'Помилка' || calcQty == null || calcQty <= 0) {
                 errors.push({ rowIndex: rowIdx, field: 'quantity', message: `Рядок ${rowIdx} (${materialName}): помилка розрахунку калькулятора або значення <= 0.` })
             }
+
+            // CHECK FOR MISSING POINTS
+            if (row.calc_type === 'interpolation') {
+                const dp = row.calc_data_points || {}
+                const dimMap = { h: 'Висота', w: 'Ширина', l: 'Довжина' }
+                for (const k of ['h', 'w', 'l']) {
+                    const pts = (dp[k] || []).filter(p => p.qty != null)
+                    // If this dimension is globally or locally linked but has no points
+                    const isLinked = row.calc_dim_config?.[k]?.char_name || (props.productDimensions?.variant_config?.[k === 'h' ? 'height' : (k === 'w' ? 'width' : 'length')]?.source === 'attribute')
+                    if (isLinked && pts.length === 0) {
+                        warnings.push({ rowIndex: rowIdx, field: 'points', message: `Рядок ${rowIdx}: додайте точки розрахунку для виміру "${dimMap[k]}", бо він пов'язаний з характеристикою.` })
+                    }
+                }
+            }
         }
 
         if (!row.unit_of_measure) {
@@ -1285,6 +1309,20 @@ const openCalcDialog = (item) => {
         if (!item.calc_dim_config.w.default && props.productDimensions.width_mm) item.calc_dim_config.w.default = props.productDimensions.width_mm
         if (!item.calc_dim_config.l.default && props.productDimensions.length_mm) item.calc_dim_config.l.default = props.productDimensions.length_mm
     }
+
+    // NEW: Auto-sync characteristic names from global variant_config
+    if (props.productDimensions.variant_config) {
+        const vCfg = props.productDimensions.variant_config
+        const dims = { h: 'height', w: 'width', l: 'length' }
+        for (const [key, globalKey] of Object.entries(dims)) {
+            const g = vCfg[globalKey]
+            if (g?.source === 'attribute' && g.attr_id && !item.calc_dim_config[key].char_name) {
+                const attr = productAttributes.value.find(a => a.id === g.attr_id)
+                if (attr) item.calc_dim_config[key].char_name = attr.name
+            }
+        }
+    }
+
     calcDialogOpen.value = true
 }
 
