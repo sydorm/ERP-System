@@ -5,7 +5,6 @@
         <h1 class="crm-title">Дошка замовлень</h1>
         <span class="crm-count-badge">{{ ordersCount }} замовлень</span>
       </div>
-      <p class="crm-subtitle">Керування меблевим виробництвом</p>
     </div>
   </div>
 </template>
