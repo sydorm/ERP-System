@@ -1,140 +1,152 @@
 <template>
   <div class="page-container">
-    <!-- === STICKY HEADER === -->
-    <div class="sticky-header">
-      <div class="header-left">
-        <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" title="Назад" />
-        <div class="header-titles">
-          <div class="header-top-row">
-            <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
-            <span class="product-sku" v-if="form.sku && isEditMode">#{{ form.sku }}</span>
-            <div class="header-badges" v-if="isEditMode">
-              <span class="status-badge" :class="form.is_active ? 'active' : 'inactive'">
-                {{ form.is_active ? 'Активний' : 'В архіві' }}
-              </span>
-              <span class="category-badge" v-if="form.category">
-                {{ getCategoryName(form.category) }}
-              </span>
+    <div class="sticky-top-section">
+      <!-- === HEADER ROW === -->
+      <div class="sticky-header">
+        <div class="header-left">
+          <el-button :icon="ArrowLeft" circle @click="goBack" class="back-btn" title="Назад" />
+          <div class="header-titles">
+            <div class="header-top-row">
+              <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+              <span class="product-sku" v-if="form.sku && isEditMode">#{{ form.sku }}</span>
+              <div class="header-badges" v-if="isEditMode">
+                <span class="status-badge" :class="form.is_active ? 'active' : 'inactive'">
+                  {{ form.is_active ? 'Активний' : 'В архіві' }}
+                </span>
+                <span class="category-badge" v-if="form.category">
+                  {{ getCategoryName(form.category) }}
+                </span>
+              </div>
+            </div>
+            <div class="header-bottom-row">
+              <span class="product-title">{{ form.name || 'Назва не вказана' }}</span>
             </div>
           </div>
-          <div class="header-bottom-row">
-            <span class="product-title">{{ form.name || 'Назва не вказана' }}</span>
-          </div>
+        </div>
+        <div class="header-actions">
+          <el-button @click="goBack" class="btn-cancel">
+            Закрити
+          </el-button>
+          <el-button v-if="isEditMode" type="danger" plain @click="confirmDelete" class="btn-delete">
+            Видалити
+          </el-button>
+          <el-button type="primary" :loading="submitting" @click="saveProduct" class="btn-save">
+            <el-icon><Check /></el-icon> Зберегти
+          </el-button>
         </div>
       </div>
-      <div class="header-actions">
-        <el-button @click="goBack" class="btn-cancel">
-          Закрити
-        </el-button>
-        <el-button v-if="isEditMode" type="danger" plain @click="confirmDelete" class="btn-delete">
-          Видалити
-        </el-button>
-        <el-button type="primary" :loading="submitting" @click="saveProduct" class="btn-save">
-          <el-icon><Check /></el-icon> Зберегти
-        </el-button>
+
+      <!-- === TABS NAVIGATION ROW === -->
+      <div class="tabs-nav-row">
+        <div 
+          v-for="tab in tabItems" 
+          :key="tab.name"
+          class="custom-tab-item"
+          :class="{ active: activeTab === tab.name }"
+          @click="activeTab = tab.name"
+        >
+          {{ tab.label }}
+        </div>
       </div>
     </div>
 
-    <!-- === CONTENT CARD === -->
+    <!-- === CONTENT AREA === -->
     <div class="editor-content" v-loading="loading">
       <div class="content-card">
-        <el-tabs v-model="activeTab" class="product-tabs">
-          <el-tab-pane label="Загальна інформація" name="general">
-            <GeneralTab
-              v-model="form"
-              :category-options="categoryOptions"
-              :uom-options="uomOptions"
-              :category-attributes="categoryAttributes"
-            />
-          </el-tab-pane>
+        <!-- We use v-if/v-show to switch content based on activeTab -->
+        <div v-if="activeTab === 'general'">
+          <GeneralTab
+            v-model="form"
+            :category-options="categoryOptions"
+            :uom-options="uomOptions"
+            :category-attributes="categoryAttributes"
+          />
+        </div>
 
-          <el-tab-pane label="Характеристики" name="characteristics">
-            <CharacteristicsTab
-              v-model="productCharacteristics"
-              :product-id="form.id"
-              :category-code="form.category"
-              :product-attributes="form.product_attributes"
-              @update:productAttributes="(val) => form.product_attributes = val"
-            />
-          </el-tab-pane>
+        <div v-if="activeTab === 'characteristics'">
+          <CharacteristicsTab
+            v-model="productCharacteristics"
+            :product-id="form.id"
+            :category-code="form.category"
+            :product-attributes="form.product_attributes"
+            @update:productAttributes="(val) => form.product_attributes = val"
+          />
+        </div>
 
-          <el-tab-pane label="Ціни та Комерція" name="pricing">
-            <PricingTab
-              v-model="form"
-              :currency-options="currencyOptions"
-              :has-specification="hasSpecification"
-            />
-          </el-tab-pane>
+        <div v-if="activeTab === 'pricing'">
+          <PricingTab
+            v-model="form"
+            :currency-options="currencyOptions"
+            :has-specification="hasSpecification"
+          />
+        </div>
 
-          <el-tab-pane label="Специфікації (BOM)" name="specification">
-            <template v-if="form.id">
-              <SpecificationTab :product-id="form.id" :product-dimensions="form" />
-            </template>
-            <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
-          </el-tab-pane>
+        <div v-if="activeTab === 'specification'">
+          <template v-if="form.id">
+            <SpecificationTab :product-id="form.id" :product-dimensions="form" />
+          </template>
+          <el-empty v-else description="Спершу збережіть товар, щоб додавати специфікації" />
+        </div>
 
+        <div v-if="activeTab === 'inventory'">
+          <InventoryTab :stock-levels="stockLevels" />
+        </div>
 
+        <div v-if="activeTab === 'files'">
+          <FilesTab />
+        </div>
 
-          <el-tab-pane label="Складський запас" name="inventory">
-            <InventoryTab :stock-levels="stockLevels" />
-          </el-tab-pane>
+        <div v-if="activeTab === 'variants'">
+          <ProductVariantsManager
+            :category-attributes="categoryAttributes"
+            :product-code="form.sku"
+            :initial-variants="form.variants"
+            :price-rule="form.price_rule"
+            :product-attributes="form.product_attributes"
+            :variant-config="form.variant_config"
+            :base-dimensions="{ length_mm: form.length_mm, width_mm: form.width_mm, height_mm: form.height_mm, weight_kg: form.weight_kg }"
+            @update:variants="(val) => form.variants = val"
+            @update:priceRule="(val) => form.price_rule = val"
+          />
+        </div>
 
-          <el-tab-pane label="Файли" name="files">
-            <FilesTab />
-          </el-tab-pane>
+        <div v-if="activeTab === 'procurement'">
+          <ProcurementTab
+            v-model="form"
+            :suppliers="suppliers"
+          />
+        </div>
 
-          <el-tab-pane label="Варіанти" name="variants">
-            <ProductVariantsManager
-              :category-attributes="categoryAttributes"
-              :product-code="form.sku"
-              :initial-variants="form.variants"
-              :price-rule="form.price_rule"
-              :product-attributes="form.product_attributes"
-              :variant-config="form.variant_config"
-              :base-dimensions="{ length_mm: form.length_mm, width_mm: form.width_mm, height_mm: form.height_mm, weight_kg: form.weight_kg }"
-              @update:variants="(val) => form.variants = val"
-              @update:priceRule="(val) => form.price_rule = val"
-            />
-          </el-tab-pane>
+        <div v-if="activeTab === 'alternatives'">
+          <div class="empty-tab">
+            <el-empty description="Розділ Альтернативи буде доступний в наступній версії" />
+          </div>
+        </div>
 
-          <el-tab-pane label="Закупівлі та Постачальники" name="procurement">
-            <ProcurementTab
-              v-model="form"
-              :suppliers="suppliers"
-            />
-          </el-tab-pane>
+        <div v-if="activeTab === 'manufacturing'">
+          <ManufacturingTab
+            v-model="form"
+          />
+        </div>
 
-          <el-tab-pane label="Альтернативи" name="alternatives">
-            <div class="empty-tab">
-              <el-empty description="Розділ Альтернативи буде доступний в наступній версії" />
-            </div>
-          </el-tab-pane>
+        <div v-if="activeTab === 'packaging'">
+          <div class="empty-tab">
+            <el-empty description="Параметри пакування будуть доступні в наступній версії" />
+          </div>
+        </div>
 
-          <el-tab-pane label="Виробництво" name="manufacturing">
-            <ManufacturingTab
-              v-model="form"
-            />
-          </el-tab-pane>
-
-          <el-tab-pane label="Пакування" name="packaging">
-            <div class="empty-tab">
-              <el-empty description="Параметри пакування будуть доступні в наступній версії" />
-            </div>
-          </el-tab-pane>
-
-          <el-tab-pane label="Нотатки" name="notes">
-            <div class="notes-tab">
-              <el-form-item label="Внутрішні нотатки">
-                <el-input
-                  v-model="form.notes"
-                  type="textarea"
-                  :rows="8"
-                  placeholder="Додайте внутрішні нотатки для цього товару..."
-                />
-              </el-form-item>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+        <div v-if="activeTab === 'notes'">
+          <div class="notes-tab">
+            <el-form-item label="Внутрішні нотатки">
+              <el-input
+                v-model="form.notes"
+                type="textarea"
+                :rows="8"
+                placeholder="Додайте внутрішні нотатки для цього товару..."
+              />
+            </el-form-item>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -167,6 +179,22 @@ import ManufacturingTab from './ProductTabs/ManufacturingTab.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+// Tab definitions for custom navigation
+const tabItems = [
+  { label: 'Загальна інформація', name: 'general' },
+  { label: 'Характеристики', name: 'characteristics' },
+  { label: 'Ціни та Комерція', name: 'pricing' },
+  { label: 'Специфікації (BOM)', name: 'specification' },
+  { label: 'Складський запас', name: 'inventory' },
+  { label: 'Файли', name: 'files' },
+  { label: 'Варіанти', name: 'variants' },
+  { label: 'Закупівлі та Постачальники', name: 'procurement' },
+  { label: 'Альтернативи', name: 'alternatives' },
+  { label: 'Виробництво', name: 'manufacturing' },
+  { label: 'Пакування', name: 'packaging' },
+  { label: 'Нотатки', name: 'notes' }
+]
 
 // State
 const activeTab = ref('general')
@@ -481,42 +509,44 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  --product-editor-header-height: 56px;
-  --product-editor-tabs-height: 48px;
+  --product-editor-header-height: 52px;
+  --product-editor-tabs-height: 40px;
   display: flex;
   flex-direction: column;
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
   min-height: 100vh;
 }
 
-/* === STICKY HEADER === */
+/* === STICKY WRAPPER === */
+.sticky-top-section {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
 .sticky-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 0 24px;
   height: var(--product-editor-header-height);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
   flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .header-titles {
   display: flex;
   flex-direction: column;
-  gap: 0; /* Tightened */
+  gap: 0;
 }
 
 .header-top-row {
@@ -529,14 +559,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: -2px; /* Pull SKU closer to title */
+  margin-top: -3px;
 }
 
 .back-btn {
   border: 1px solid rgba(226, 232, 240, 0.8);
   color: #64748b;
   background: #ffffff;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 28px;
   height: 28px;
   padding: 0;
@@ -546,17 +576,17 @@ onMounted(() => {
 }
 
 .back-btn:hover {
-  background-color: #f8fafc;
-  color: #6366f1;
-  border-color: #6366f1;
+  background-color: #f1f5f9;
+  color: #1463FF;
+  border-color: #1463FF;
   transform: translateX(-2px);
 }
 
 .header-titles h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  color: #1e293b;
+  color: #0F172A;
   letter-spacing: -0.01em;
 }
 
@@ -594,19 +624,19 @@ onMounted(() => {
 }
 
 .product-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #94A3B8;
 }
 
 .product-sku {
-  font-size: 13px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: #1463FF;
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 6px;
+  font-weight: 800;
+  background: rgba(20, 99, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .header-actions {
@@ -619,24 +649,24 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   color: #64748b;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   border-radius: 8px;
-  height: 32px;
+  height: 30px;
   padding: 0 12px;
   transition: all 0.2s ease;
   background: #fff;
 }
 .btn-cancel:hover {
   background: #f8fafc;
-  color: #334155;
+  color: #0F172A;
   border-color: #cbd5e1;
 }
 
 .btn-delete {
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   border-radius: 8px;
-  height: 32px;
+  height: 30px;
   padding: 0 12px;
 }
 
@@ -644,13 +674,13 @@ onMounted(() => {
   background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
   border: none;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   color: #ffffff;
   border-radius: 8px;
-  height: 32px;
-  padding: 0 16px;
+  height: 30px;
+  padding: 0 14px;
   box-shadow: 0 4px 12px rgba(20, 99, 255, 0.25);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -664,7 +694,6 @@ onMounted(() => {
 /* === EDITOR CONTENT === */
 .editor-content {
   flex: 1;
-  overflow-y: auto;
   padding: 0;
   background-color: #f1f5f9;
 }
@@ -676,58 +705,58 @@ onMounted(() => {
 }
 
 /* === TABS STYLING === */
-.product-tabs :deep(.el-tabs__header) {
-  margin: 0;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(12px);
+.tabs-nav-row {
+  display: flex;
+  align-items: center;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  position: sticky;
-  top: var(--product-editor-header-height);
-  z-index: 90;
+  height: var(--product-editor-tabs-height);
+  gap: 4px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(226, 232, 240, 0.4);
 }
 
-.product-tabs :deep(.el-tabs__nav-wrap::after) {
+.tabs-nav-row::-webkit-scrollbar {
   display: none;
 }
 
-.product-tabs :deep(.el-tabs__item) {
-  font-size: 12px;
+.custom-tab-item {
+  font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
-  height: var(--product-editor-tabs-height);
-  line-height: var(--product-editor-tabs-height);
-  padding: 0 12px !important;
-  transition: all 0.2s ease;
+  color: #94A3B8;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
   text-transform: none;
 }
 
-.product-tabs :deep(.el-tabs__item:hover) {
-  color: #6366f1;
+.custom-tab-item:hover {
+  color: #1463FF;
 }
 
-.product-tabs :deep(.el-tabs__item.is-active) {
-  color: #6366f1;
+.custom-tab-item.active {
+  color: #1463FF;
 }
 
-.product-tabs :deep(.el-tabs__active-bar) {
+.custom-tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 2px;
   background: linear-gradient(90deg, #1463FF, #0047D1);
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  bottom: 1px;
+  border-radius: 2px 2px 0 0;
 }
 
-.product-tabs :deep(.el-tabs__content) {
-  padding: 24px;
+.editor-content {
+  padding: 20px;
   background: #f1f5f9;
   min-height: calc(100vh - var(--product-editor-header-height) - var(--product-editor-tabs-height));
-  position: relative;
-  z-index: 1;
-}
-
-/* Ensure content doesn't overlap with sticky tabs */
-.product-tabs :deep(.el-tab-pane) {
-  padding-top: 4px; 
 }
 
 .empty-tab {
