@@ -24,9 +24,15 @@
             <el-icon><Box /></el-icon>
             <span>Склад</span>
           </template>
-          <el-menu-item index="/inventory/nomenclature" v-if="userStore.hasPermission('inventory.nomenclature.view')">Номенклатура</el-menu-item>
-          <el-menu-item index="/inventory/warehouses" v-if="userStore.hasPermission('inventory.warehouses.view')">Склади</el-menu-item>
-          <el-menu-item index="/inventory/stock" v-if="userStore.hasPermission('inventory.stock.view')">Залишки</el-menu-item>
+          <el-menu-item index="/inventory/nomenclature" v-if="userStore.hasPermission('inventory.nomenclature.view')">
+            <span class="dot-indicator"></span>Номенклатура
+          </el-menu-item>
+          <el-menu-item index="/inventory/warehouses" v-if="userStore.hasPermission('inventory.warehouses.view')">
+            <span class="dot-indicator"></span>Склади
+          </el-menu-item>
+          <el-menu-item index="/inventory/stock" v-if="userStore.hasPermission('inventory.stock.view')">
+            <span class="dot-indicator"></span>Залишки
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="crm">
@@ -34,8 +40,12 @@
             <el-icon><Tickets /></el-icon>
             <span>CRM</span>
           </template>
-          <el-menu-item index="/crm">Замовлення</el-menu-item>
-          <el-menu-item index="/crm/analytics">Аналітика</el-menu-item>
+          <el-menu-item index="/crm">
+            <span class="dot-indicator"></span>Замовлення
+          </el-menu-item>
+          <el-menu-item index="/crm/analytics">
+            <span class="dot-indicator"></span>Аналітика
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="sales" v-if="userStore.hasPermission('sales.view')">
@@ -43,9 +53,15 @@
             <el-icon><ShoppingCart /></el-icon>
             <span>Продажі</span>
           </template>
-          <el-menu-item index="/sales/counterparties" v-if="userStore.hasPermission('sales.counterparties.view')">Контрагенти</el-menu-item>
-          <el-menu-item index="/sales/orders" v-if="userStore.hasPermission('sales.orders.view')">Замовлення</el-menu-item>
-          <el-menu-item index="/sales/invoices" v-if="userStore.hasPermission('sales.invoices.view')">Рахунки</el-menu-item>
+          <el-menu-item index="/sales/counterparties" v-if="userStore.hasPermission('sales.counterparties.view')">
+            <span class="dot-indicator"></span>Контрагенти
+          </el-menu-item>
+          <el-menu-item index="/sales/orders" v-if="userStore.hasPermission('sales.orders.view')">
+            <span class="dot-indicator"></span>Замовлення
+          </el-menu-item>
+          <el-menu-item index="/sales/invoices" v-if="userStore.hasPermission('sales.invoices.view')">
+            <span class="dot-indicator"></span>Рахунки
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="purchases" v-if="userStore.hasPermission('purchases.view')">
@@ -53,9 +69,15 @@
             <el-icon><Briefcase /></el-icon>
             <span>Закупівлі</span>
           </template>
-          <el-menu-item index="/purchases/orders" v-if="userStore.hasPermission('purchases.orders.view')">Замовлення</el-menu-item>
-          <el-menu-item index="/purchases/planning">Планування</el-menu-item>
-          <el-menu-item index="/purchases/receipts" v-if="userStore.hasPermission('purchases.receipts.view')">Прибуткові накладні</el-menu-item>
+          <el-menu-item index="/purchases/orders" v-if="userStore.hasPermission('purchases.orders.view')">
+            <span class="dot-indicator"></span>Замовлення
+          </el-menu-item>
+          <el-menu-item index="/purchases/planning">
+            <span class="dot-indicator"></span>Планування
+          </el-menu-item>
+          <el-menu-item index="/purchases/receipts" v-if="userStore.hasPermission('purchases.receipts.view')">
+            <span class="dot-indicator"></span>Прибуткові накладні
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="production">
@@ -63,7 +85,9 @@
             <el-icon><Tools /></el-icon>
             <span>Виробництво</span>
           </template>
-          <el-menu-item index="/production/orders">Завдання</el-menu-item>
+          <el-menu-item index="/production/orders">
+            <span class="dot-indicator"></span>Завдання
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="finance" v-if="userStore.hasPermission('finance.view')">
@@ -71,9 +95,15 @@
             <el-icon><Wallet /></el-icon>
             <span>Фінанси</span>
           </template>
-          <el-menu-item index="/finance/cash" v-if="userStore.hasPermission('finance.cash.view')">Каса</el-menu-item>
-          <el-menu-item index="/finance/bank" v-if="userStore.hasPermission('finance.bank.view')">Банк</el-menu-item>
-          <el-menu-item index="/finance/payments" v-if="userStore.hasPermission('finance.payments.view')">Платежі</el-menu-item>
+          <el-menu-item index="/finance/cash" v-if="userStore.hasPermission('finance.cash.view')">
+            <span class="dot-indicator"></span>Каса
+          </el-menu-item>
+          <el-menu-item index="/finance/bank" v-if="userStore.hasPermission('finance.bank.view')">
+            <span class="dot-indicator"></span>Банк
+          </el-menu-item>
+          <el-menu-item index="/finance/payments" v-if="userStore.hasPermission('finance.payments.view')">
+            <span class="dot-indicator"></span>Платежі
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="personnel">
@@ -81,11 +111,21 @@
             <el-icon><User /></el-icon>
             <span>Персонал</span>
           </template>
-          <el-menu-item index="/personnel/employees">Співробітники</el-menu-item>
-          <el-menu-item index="/personnel/departments">Підрозділи</el-menu-item>
-          <el-menu-item index="/personnel/payroll">Нарахування ЗП</el-menu-item>
-          <el-menu-item index="/personnel/attendance">Табель</el-menu-item>
-          <el-menu-item index="/personnel/hr-reports">Звіти по ЗП</el-menu-item>
+          <el-menu-item index="/personnel/employees">
+            <span class="dot-indicator"></span>Співробітники
+          </el-menu-item>
+          <el-menu-item index="/personnel/departments">
+            <span class="dot-indicator"></span>Підрозділи
+          </el-menu-item>
+          <el-menu-item index="/personnel/payroll">
+            <span class="dot-indicator"></span>Нарахування ЗП
+          </el-menu-item>
+          <el-menu-item index="/personnel/attendance">
+            <span class="dot-indicator"></span>Табель
+          </el-menu-item>
+          <el-menu-item index="/personnel/hr-reports">
+            <span class="dot-indicator"></span>Звіти по ЗП
+          </el-menu-item>
         </el-sub-menu>
 
         <el-menu-item index="/reports" v-if="userStore.hasPermission('reports.view')">
@@ -93,22 +133,27 @@
           <template #title>Звіти</template>
         </el-menu-item>
 
-        <!-- Previews removed -->
-        <!-- Administration Section -->
         <el-sub-menu index="admin" v-if="hasAdministrationAccess">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>Адміністрування</span>
           </template>
-          <el-menu-item index="/settings/company" v-if="userStore.hasPermission('settings.manage')">Організація</el-menu-item>
-
-          <el-menu-item index="/settings/dictionaries" v-if="userStore.hasPermission('dictionaries.view')">Довідники</el-menu-item>
-          <el-menu-item index="/settings/print-templates" v-if="userStore.hasPermission('print_templates.view')">Шаблони документів</el-menu-item>
-          <el-menu-item index="/settings/business-process-rules" v-if="userStore.hasPermission('business_processes.view')">Бізнес-процеси</el-menu-item>
-          <el-menu-item index="/settings/trash-bin" v-if="userStore.hasPermission('settings.view')">Корзина</el-menu-item>
+          <el-menu-item index="/settings/company" v-if="userStore.hasPermission('settings.manage')">
+            <span class="dot-indicator"></span>Організація
+          </el-menu-item>
+          <el-menu-item index="/settings/dictionaries" v-if="userStore.hasPermission('dictionaries.view')">
+            <span class="dot-indicator"></span>Довідники
+          </el-menu-item>
+          <el-menu-item index="/settings/print-templates" v-if="userStore.hasPermission('print_templates.view')">
+            <span class="dot-indicator"></span>Шаблони документів
+          </el-menu-item>
+          <el-menu-item index="/settings/business-process-rules" v-if="userStore.hasPermission('business_processes.view')">
+            <span class="dot-indicator"></span>Бізнес-процеси
+          </el-menu-item>
+          <el-menu-item index="/settings/trash-bin" v-if="userStore.hasPermission('settings.view')">
+            <span class="dot-indicator"></span>Корзина
+          </el-menu-item>
         </el-sub-menu>
-
-        <!-- Settings submenu removed as Users moved to profile dropdown -->
         </el-menu>
       </el-scrollbar>
     </el-aside>
@@ -122,7 +167,16 @@
             :icon="isCollapse ? Expand : Fold"
             @click="toggleSidebar"
             circle
+            class="sidebar-toggle"
           />
+          <div class="global-search-container">
+            <el-input
+              placeholder="Пошук у системі..."
+              :prefix-icon="Search"
+              clearable
+              class="erp-global-search"
+            />
+          </div>
           <TabsBar class="header-tabs" />
         </div>
 
@@ -206,7 +260,7 @@
 
           <el-dropdown @command="handleCommand">
             <div class="user-avatar">
-              <el-avatar :size="40">
+              <el-avatar :size="32">
                 <el-icon><User /></el-icon>
               </el-avatar>
             </div>
@@ -298,7 +352,8 @@ import {
   WarningFilled,
   Right,
   Check,
-  ArrowRight
+  ArrowRight,
+  Search
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -353,7 +408,7 @@ const handleNotificationAction = (n) => {
 }
 
 const isCollapse = ref(false)
-const sidebarWidth = computed(() => isCollapse.value ? '64px' : '230px')
+const sidebarWidth = computed(() => isCollapse.value ? '64px' : '250px')
 const activeMenu = computed(() => route.path)
 const hasAdministrationAccess = computed(() => [
   'settings.view',
@@ -366,11 +421,6 @@ const hasAdministrationAccess = computed(() => [
 
 const isDark = useDark()
 const toggleTheme = useToggle(isDark)
-
-const currentRouteTitle = computed(() => {
-  const match = route.matched.slice().reverse().find(r => r.meta && r.meta.title)
-  return match ? match.meta.title : 'Головна'
-})
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
@@ -454,13 +504,13 @@ const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
 }
 
 .sidebar {
-  background: linear-gradient(180deg, var(--erp-sidebar-start) 0%, var(--erp-sidebar-middle) 50%, var(--erp-sidebar-end) 100%);
-  border-right: none;
-  box-shadow: 4px 0 24px rgba(7, 22, 43, 0.1);
-  transition: width 0.3s, background-color 0.3s;
+  background: var(--erp-sidebar-bg);
+  border-right: 1px solid var(--erp-sidebar-border);
+  transition: width 0.3s;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  z-index: 200;
 }
 
 .sidebar-scrollbar {
@@ -468,23 +518,15 @@ const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
   overflow: hidden;
 }
 
-html.dark .sidebar {
-  --sidebar-bg: #0f172a; /* Deep navy for dark mode */
-}
-
 .logo {
-  height: 64px;
+  height: 72px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 0 24px;
   background-color: transparent;
-  color: var(--el-text-color-primary);
-  border-bottom: 1px solid var(--el-border-color-light);
+  color: var(--erp-text-heading);
+  border-bottom: 1px solid var(--erp-sidebar-border);
   transition: all 0.3s;
-}
-
-html.dark .logo {
-  color: #ffffff;
 }
 
 .logo h2 {
@@ -495,22 +537,14 @@ html.dark .logo {
   white-space: nowrap;
 }
 
-.el-menu {
-  border: none;
-  background-color: transparent;
-}
-
 .custom-sidebar-menu {
-  --sidebar-hover-bg: rgba(0, 0, 0, 0.04);
-}
-
-html.dark .custom-sidebar-menu {
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+  border: none;
+  background: transparent;
 }
 
 .custom-sidebar-menu :deep(.el-menu-item),
 .custom-sidebar-menu :deep(.el-sub-menu__title) {
-  color: #8FA6C7 !important;
+  color: var(--erp-sidebar-text) !important;
   margin: 4px 12px;
   border-radius: var(--erp-radius-btn);
   height: 44px;
@@ -520,150 +554,50 @@ html.dark .custom-sidebar-menu {
   font-size: 14px;
   font-weight: 500;
   position: relative;
-  box-sizing: border-box;
-}
-
-/* Обрізаємо довгий текст трьома крапками, якщо сайдбар вузький */
-.custom-sidebar-menu :deep(.el-menu-item span),
-.custom-sidebar-menu :deep(.el-sub-menu__title span) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
-  margin-left: 8px;
-}
-
-/* Fix submenu arrow (chevron) alignment */
-.custom-sidebar-menu :deep(.el-sub-menu__icon-arrow) {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  margin-top: -7px; /* Center perfectly vertically */
-  font-size: 14px;
-}
-
-/* Disable all collapse/expand animations per user request to avoid layout shifts */
-.custom-sidebar-menu :deep(.el-menu--inline) {
-  background-color: transparent !important;
-  position: relative;
-  transition: none !important;
-}
-
-.custom-sidebar-menu :deep(.el-collapse-transition) {
-  transition: none !important;
-  display: block !important;
-}
-
-.custom-sidebar-menu :deep(.el-sub-menu__title) {
-  transition: none !important;
-}
-
-/* Tree-line left border */
-.custom-sidebar-menu :deep(.el-menu--inline::before) {
-  content: '';
-  position: absolute;
-  left: 31px; /* Align deeply with the parent icon / text padding */
-  top: 0;
-  bottom: 12px;
-  width: 1px;
-  background-color: var(--el-border-color-lighter);
-  z-index: 1;
-}
-
-html.dark .custom-sidebar-menu :deep(.el-menu--inline::before) {
-  background-color: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
 }
 
 .custom-sidebar-menu :deep(.el-menu-item:hover),
 .custom-sidebar-menu :deep(.el-sub-menu__title:hover) {
-  background-color: var(--sidebar-hover-bg) !important;
-  color: var(--el-text-color-primary);
+  background-color: #F8FAFC !important;
+  color: var(--erp-text-heading) !important;
 }
 
-/* Match active color for the chevron/sub-menu title when active in light mode */
-.custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-  color: #4f46e5 !important;
+.custom-sidebar-menu :deep(.el-menu-item.is-active) {
+  background-color: var(--erp-sidebar-active-bg) !important;
+  color: var(--erp-sidebar-active-text) !important;
   font-weight: 600;
-}
-
-html.dark .custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-  color: #a78bfa !important;
-}
-
-/* Global overrides for element-plus teleported popup menus */
-:global(.el-menu--popup) {
-  background-color: var(--sidebar-bg, #ffffff) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-  padding: 6px !important;
-  min-width: 180px;
-}
-
-:global(html.dark .el-menu--popup) {
-  background-color: #0f172a !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-}
-
-:global(.el-menu--popup .el-menu-item) {
-  margin: 2px 4px !important;
-  border-radius: 6px !important;
-  height: 40px !important;
-  line-height: 40px !important;
-  color: var(--el-text-color-regular) !important;
-}
-
-:global(.el-menu--popup .el-menu-item:hover) {
-  background-color: var(--el-fill-color-light) !important;
-  color: var(--el-text-color-primary) !important;
-}
-
-:global(html.dark .el-menu--popup .el-menu-item:hover) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Custom modern active state for sidebar (Light Mode) */
-.custom-sidebar-menu :deep(.el-menu-item.is-active),
-:global(.el-menu--popup .el-menu-item.is-active) {
-  background-color: var(--erp-primary) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.3) !important;
-  font-weight: 600;
-
-
-
-  position: relative;
-
 }
 
 .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
   width: 4px;
-  background-color: #6366f1;
+  background-color: var(--erp-sidebar-active-text);
   border-radius: 0 4px 4px 0;
 }
 
-/* Dark Mode overrides for active state */
-html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active),
-:global(html.dark .el-menu--popup .el-menu-item.is-active) {
-  background-color: rgba(99, 102, 241, 0.15) !important;
-  color: #a78bfa !important;
-  box-shadow: inset -3px 0 0 0 #8b5cf6 !important;
-  border-right: none !important;
+.dot-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #CBD5E1;
+  margin-right: 12px;
+  display: inline-block;
+  transition: background-color 0.2s;
 }
 
-html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
-  background-color: #8b5cf6;
+.el-menu-item.is-active .dot-indicator {
+  background-color: var(--erp-sidebar-active-text);
+  box-shadow: 0 0 8px var(--erp-sidebar-active-text);
 }
 
 .top-header {
-  background-color: var(--erp-bg-card);
-  border-bottom: 1px solid var(--erp-border);
-
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--erp-sidebar-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -675,285 +609,66 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
   flex: 1;
   min-width: 0;
 }
 
-.top-page-title {
-  margin: 0;
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #0F172A;
+.sidebar-toggle {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: var(--erp-text-muted);
+}
+
+.global-search-container {
+  margin-left: 20px;
+  width: 320px;
+}
+
+.erp-global-search :deep(.el-input__wrapper) {
+  background-color: #F8FAFC;
+  box-shadow: none !important;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+
+.erp-global-search :deep(.el-input__inner) {
+  height: 38px;
+  font-size: 14px;
 }
 
 .header-tabs {
   flex: 1;
   min-width: 0;
-}
-
-.header-tabs :deep(.tabs-container) {
-  height: 64px;
-  padding: 0;
-  border-bottom: 0;
-  background: transparent;
-}
-
-.header-tabs :deep(.el-tabs__item) {
-  height: 64px;
-  line-height: 64px;
-}
-
-.header-tabs :deep(.el-tabs__nav-prev),
-.header-tabs :deep(.el-tabs__nav-next) {
-  line-height: 64px;
+  margin-left: 24px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .header-right :deep(.el-button) {
-  width: 28px !important;
-  height: 28px !important;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
   border-color: #E2E8F0;
-}
-
-.header-right :deep(.el-button:hover) {
-  background-color: #F1F5F9 !important;
+  color: var(--erp-text-muted);
 }
 
 .user-avatar {
   cursor: pointer;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-}
-
-.user-avatar:hover {
-  background-color: #F1F5F9;
-}
-
-.user-avatar :deep(.el-avatar) {
-  width: 28px !important;
-  height: 28px !important;
-}
-
-.user-info {
-  padding: 8px 0;
-}
-
-.user-name {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin-bottom: 4px;
-}
-
-.user-email {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.main-content {
-  background-color: var(--el-bg-color-page);
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.theme-toggle-btn {
-  font-size: 16px;
-  border-color: var(--el-border-color-light);
-}
-
-/* Notifications Styles */
-.notification-badge :deep(.el-badge__content) {
-  top: 5px;
-  right: 5px;
-}
-
-.bell-ringing {
-  animation: ring 2s infinite;
-  color: #ef4444 !important;
-  border-color: #ef4444 !important;
-}
-
-@keyframes ring {
-  0% { transform: rotate(0); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-15deg); }
-  30% { transform: rotate(10deg); }
-  40% { transform: rotate(-10deg); }
-  50% { transform: rotate(0); }
-  100% { transform: rotate(0); }
-}
-
-:global(.notification-popover) {
-  padding: 0 !important;
-  border-radius: 12px !important;
-  overflow: hidden;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-}
-
-.notification-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.notification-header {
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.notification-groups {
-  padding: 0;
-}
-
-.group-header {
-  padding: 8px 16px;
-  background: var(--el-fill-color-lighter);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--el-text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.notification-item {
-  display: flex;
-  padding: 14px 16px;
-  gap: 12px;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  transition: all 0.2s;
-  cursor: default;
-  position: relative;
-}
-
-.notification-item:hover {
-  background: var(--el-fill-color-light);
-}
-
-.notification-item.is-urgent {
-  background: rgba(239, 68, 68, 0.03);
-}
-
-.ni-dot {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  border-radius: 50%;
-  margin-top: 6px;
-}
-
-.priority-red { background-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
-.priority-yellow { background-color: #f59e0b; }
-.priority-green { background-color: #10b981; }
-.priority-white { background-color: #9ca3af; }
-
-.ni-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.ni-title {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 3px;
-  line-height: 1.4;
-  color: var(--el-text-color-primary);
-}
-
-.ni-time {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.ni-message {
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-  margin-bottom: 3px;
-  line-height: 1.4;
-}
-
-.ni-phone {
-  font-size: 11px;
-  color: #4f46e5;
-  font-weight: 600;
-}
-
-.ni-actions {
-  display: flex;
-  align-items: center;
   margin-left: 8px;
 }
 
-.action-btn {
-  opacity: 0.6;
-  border: none;
-  background: transparent;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  opacity: 1;
-  background: var(--el-fill-color);
-  transform: translateX(2px);
-}
-
-.empty-icon {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 8px;
-  opacity: 0.5;
+.main-content {
+  background-color: var(--erp-bg-page);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .view-container {
-  padding: 20px;
   flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+  padding: 24px;
 }
-
-.tax-limit-warning-banner {
-    background-color: #ef4444;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-}
-
-.tax-limit-warning-banner strong {
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(0); }
-}
-
-.mr-2 { margin-right: 8px; }
 </style>
-

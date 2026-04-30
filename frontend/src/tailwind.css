@@ -11,10 +11,12 @@
   --erp-bg-page: #F5F8FC;
   --erp-bg-card: #FFFFFF;
   
-  /* Sidebar Gradients */
-  --erp-sidebar-start: #07162B;
-  --erp-sidebar-middle: #0C2345;
-  --erp-sidebar-end: #0A1D38;
+  /* Sidebar (Light Version) */
+  --erp-sidebar-bg: #FFFFFF;
+  --erp-sidebar-border: #E6ECF3;
+  --erp-sidebar-active-bg: #F1F6FF;
+  --erp-sidebar-text: #5F6C7B;
+  --erp-sidebar-active-text: #1463FF;
   
   --erp-text-main: #1B2430;
   --erp-text-heading: #0F1724;
