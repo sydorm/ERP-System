@@ -1,52 +1,30 @@
-<template>
   <div class="toolbar-section">
-    <!-- ===== ACTION BUTTONS ROW (under KPI) ===== -->
+    <!-- ===== CONSOLIDATED ACTION & FILTER ROW ===== -->
     <div class="action-row">
       <div class="action-row__left">
-        <!-- Quick Filter Tabs -->
-        <div class="quick-tabs-premium">
-          <div
-            class="quick-tab-item"
-            :class="{ active: activeTab === 'all' }"
-            @click="$emit('update:activeTab', 'all')"
-          >Усі</div>
-          <div
-            class="quick-tab-item"
-            :class="{ active: activeTab === 'materials' }"
-            @click="$emit('update:activeTab', 'materials')"
-          >Матеріали</div>
-          <div
-            class="quick-tab-item"
-            :class="{ active: activeTab === 'products' }"
-            @click="$emit('update:activeTab', 'products')"
-          >Готові вироби</div>
-        </div>
-      </div>
-      <div class="action-row__right">
-        <button class="act-btn act-btn--secondary" @click="$emit('import')">
-          📥 Імпорт
-        </button>
-        <button class="act-btn act-btn--secondary" @click="$emit('export')">
-          📤 Експорт
-        </button>
-        <button class="act-btn act-btn--primary" @click="$emit('create')">
-          <el-icon><Plus /></el-icon> Створити товар
-        </button>
-      </div>
-    </div>
-
-    <!-- ===== FILTERS TOOLBAR ===== -->
-    <div class="toolbar-dense">
-      <div class="toolbar-dense__left">
         <div class="search-dense-wrapper">
           <el-icon class="search-dense-icon"><Search /></el-icon>
           <input
             :value="searchQuery"
-            placeholder="Пошук за назвою, артикулом або SKU..."
+            placeholder="Пошук за назвою, артикулом..."
             class="search-dense-input"
             @input="$emit('update:searchQuery', $event.target.value)"
           />
         </div>
+
+        <el-select
+          :model-value="filterType"
+          placeholder="Всі типи"
+          clearable
+          @change="$emit('update:filterType', $event)"
+          class="filter-dense-select pill-select"
+          style="width: 140px;"
+        >
+          <el-option label="Усі типи" value="" />
+          <el-option label="Готовий виріб" value="product" />
+          <el-option label="Матеріал" value="material" />
+          <el-option label="Комплектуюча" value="component" />
+        </el-select>
 
         <el-select
           :model-value="filterCategory"
@@ -65,20 +43,6 @@
         </el-select>
 
         <el-select
-          :model-value="filterType"
-          placeholder="Всі типи"
-          clearable
-          @change="$emit('update:filterType', $event)"
-          class="filter-dense-select pill-select"
-          style="width: 140px;"
-        >
-          <el-option label="Усі типи" value="" />
-          <el-option label="Готовий виріб" value="product" />
-          <el-option label="Матеріал" value="material" />
-          <el-option label="Комплектуюча" value="component" />
-        </el-select>
-
-        <el-select
           :model-value="filterStock"
           placeholder="Наявність"
           clearable
@@ -91,6 +55,18 @@
           <el-option label="Закінчуються" value="low_stock" />
           <el-option label="Немає" value="out_of_stock" />
         </el-select>
+      </div>
+
+      <div class="action-row__right">
+        <button class="act-btn act-btn--secondary" @click="$emit('import')">
+          📥 Імпорт
+        </button>
+        <button class="act-btn act-btn--secondary" @click="$emit('export')">
+          📤 Експорт
+        </button>
+        <button class="act-btn act-btn--primary" @click="$emit('create')">
+          <el-icon><Plus /></el-icon> Створити товар
+        </button>
       </div>
     </div>
   </div>
@@ -127,40 +103,26 @@ defineEmits([
 .toolbar-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
+
 .action-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
+
+.action-row__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
 .action-row__right {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.quick-tabs-premium {
-  display: flex;
-  background: rgba(241, 245, 249, 0.6);
-  padding: 4px;
-  border-radius: 12px;
-  gap: 4px;
-}
-.quick-tab-item {
-  padding: 6px 14px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.quick-tab-item:hover { color: #0f172a; }
-.quick-tab-item.active {
-  background: #ffffff;
-  color: #1463FF;
-  box-shadow: 0 2px 8px rgba(20, 99, 255, 0.12);
 }
 
 .act-btn {
@@ -177,48 +139,36 @@ defineEmits([
   white-space: nowrap;
   border: none;
 }
+
 .act-btn--secondary {
   background: #ffffff;
   border: 1px solid #E6ECF3;
   color: #5A6A80;
 }
+
 .act-btn--secondary:hover {
   background: #f8fafc;
   border-color: #1463FF;
   color: #1463FF;
 }
+
 .act-btn--primary {
   background: #1463FF;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(20, 99, 255, 0.22);
 }
+
 .act-btn--primary:hover {
   background: #0047D1;
   box-shadow: 0 6px 18px rgba(20, 99, 255, 0.3);
   transform: translateY(-1px);
 }
 
-.toolbar-dense {
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 12px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-  gap: 16px;
-}
-.toolbar-dense__left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
 .search-dense-wrapper {
   position: relative;
-  width: 300px;
+  width: 260px;
 }
+
 .search-dense-icon {
   position: absolute;
   left: 11px;
@@ -229,26 +179,29 @@ defineEmits([
   width: 16px;
   height: 16px;
 }
+
 .search-dense-input {
   width: 100%;
   height: 38px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  border: 1px solid #E6ECF3;
   padding: 0 12px 0 35px;
   font-size: 13px;
   background: #ffffff;
   transition: all 0.2s ease;
   color: #0f172a;
 }
+
 .search-dense-input:focus {
   outline: none;
   border-color: #1463FF;
   box-shadow: 0 0 0 3px rgba(20, 99, 255, 0.1);
 }
+
 .pill-select :deep(.el-select__wrapper) {
   height: 38px !important;
-  border-radius: 12px !important;
-  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  border: 1px solid #E6ECF3 !important;
   background: #ffffff !important;
   box-shadow: none !important;
   font-size: 13px !important;
