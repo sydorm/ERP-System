@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="crm-board-page">
     <div class="crm-sticky-workbar">
 
@@ -1761,71 +1761,56 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 
 .card-arrow-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #F5F3FF;
-  color: #3D3AA8;
-  border: 1px solid #E0E0FF;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--erp-primary-light, #EEF4FF);
+  color: var(--erp-primary, #1463FF);
+  border: 1px solid rgba(20, 99, 255, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  transition: all 0.2s;
+  font-size: 0;
+  transition: all 0.18s;
 }
-.card-arrow-btn:hover {
-  background: #3D3AA8;
-  color: white;
-}
+.card-arrow-btn::before { content: "›"; font-size: 18px; line-height: 1; }
+.card-arrow-btn:hover { background: var(--erp-primary, #1463FF); color: #FFF; }
 
-.add-order-button {
-  margin: 6px; padding: 8px 0; border: 1px dashed #cbd5e1; border-radius: 8px; background: transparent; 
-  color: #94a3b8; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-}
-.add-order-button:hover { background: #fff; border-color: #3D3AA8; color: #3D3AA8; }
-
-/* Filter Popover Styles */
-.filter-popover-content { padding: 4px; }
-.filter-section { margin-bottom: 12px; }
-.filter-section label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-.filter-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 4px; }
-
-/* Task Panel Overlay (simplified) */
-.crm-tasks-panel { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
-
-.load-more-btn {
-  text-align: center;
-  padding: 10px;
-  margin-top: 4px;
-  cursor: pointer;
-  color: #3D3AA8;
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(61, 58, 168, 0.05);
+.card-more-btn {
+  width: 28px; height: 28px;
   border-radius: 8px;
-  transition: all 0.2s;
+  border: 1px solid var(--erp-border, #E6ECF3);
+  color: var(--erp-text-secondary, #5A6A80);
+  background: #FFF;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.18s;
 }
-.load-more-btn:hover {
-  background: rgba(61, 58, 168, 0.1);
-  color: #2a287a;
+.card-more-btn:hover {
+  border-color: var(--erp-primary, #1463FF);
+  color: var(--erp-primary, #1463FF);
+  background: var(--erp-primary-light, #EEF4FF);
 }
 
-/* SELECTION BAR */
+/* Clickable client */
+.clickable-client { cursor: pointer; color: var(--erp-primary, #1463FF); font-weight: 600; }
+.clickable-client:hover { text-decoration: underline; }
+
+/* ───── Selection bar ───── */
 .selection-bar {
   position: fixed;
-  bottom: 30px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: #3D3AA8;
-  color: white;
+  background: #1B2430;
+  color: #FFF;
   padding: 12px 24px;
-  border-radius: 50px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
-  gap: 32px;
-  box-shadow: 0 10px 30px rgba(61, 58, 168, 0.4);
+  gap: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
   z-index: 2000;
 }
 .selection-info {
@@ -1847,861 +1832,48 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   gap: 12px;
 }
 .selection-actions .el-button--primary.is-plain {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+  color: #FFF;
 }
 .selection-actions .el-button--primary.is-plain:hover {
-  background: white;
-  color: #3D3AA8;
+  background: #FFF;
+  color: #1B2430;
 }
 
-/* ─── Column colors by stage position ─── */
-.crm-kanban .kanban-column:nth-child(1) { background: #EFF6FF; border-top-color: #3B82F6; }
-.crm-kanban .kanban-column:nth-child(2) { background: #FFF7ED; border-top-color: #F59E0B; }
-.crm-kanban .kanban-column:nth-child(3) { background: #F0FDF4; border-top-color: #22C55E; }
-.crm-kanban .kanban-column:nth-child(4) { background: #FDF4FF; border-top-color: #A855F7; }
-.crm-kanban .kanban-column:nth-child(5) { background: #F0FDF4; border-top-color: #16A34A; }
-
-/* ─── Hide extra card icons (keep phone + viber/comment) ─── */
-.channel-icon.telegram { display: none; }
-.channel-icon.instagram { display: none; }
-/* Hide avatar (?) and arrow (→) button */
-.card-meta-right { display: none; }
-
-/* ─── SLA badges ─── */
-.sla-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-.sla-warning {
-  background: #FEF9C3;
-  color: #92400E;
-  border: 1px solid #FDE68A;
-}
-.sla-critical {
-  background: #FEE2E2;
-  color: #991B1B;
-  border: 1px solid #FECACA;
-}
-
-/* ─── Header cleanup ─── */
-.crm-subtitle { display: none; }
-
-.clickable-client {
-  cursor: pointer;
-  color: #3D3AA8;
-  font-weight: 600;
-}
-.clickable-client:hover {
-  text-decoration: underline;
-}
-
-/* ─── CRM visual refresh ─── */
-.crm-board-page {
-  padding: 24px 28px 18px;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(59, 130, 246, 0.12), transparent 26rem),
-    radial-gradient(circle at 92% 8%, rgba(20, 184, 166, 0.12), transparent 24rem),
-    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
-}
-
-.crm-board-header {
-  align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.crm-header-left {
-  min-width: 260px;
-}
-
-.crm-title-row {
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.crm-title {
-  color: #0f172a;
-  font-size: 28px;
-  line-height: 1.1;
-  letter-spacing: 0;
-}
-
-.crm-count-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  color: #475569;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(203, 213, 225, 0.86);
-}
-
-.crm-subtitle {
-  display: block;
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.crm-header-right {
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.crm-view-switch {
-  padding: 3px;
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  background: rgba(226, 232, 240, 0.78);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-
-.view-btn {
-  min-height: 30px;
-  padding: 6px 12px;
-}
-
-.crm-search-input {
-  width: 260px;
-}
-
-:deep(.el-input__wrapper) {
-  border-radius: 10px;
-  box-shadow: 0 0 0 1px rgba(203, 213, 225, 0.9);
-}
-
-.crm-filter-btn,
-.tool-item {
-  min-height: 36px;
-  border-color: rgba(203, 213, 225, 0.9);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-}
-
-.crm-new-btn-indigo {
-  min-height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #2f46d9, #4f46e5);
-  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.24);
-}
-
-.crm-insights-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.crm-insight-card {
-  position: relative;
-  overflow: hidden;
-  min-height: 96px;
-  padding: 16px;
-  border: 1px solid rgba(203, 213, 225, 0.76);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.07);
-}
-
-.crm-insight-card::after {
-  content: "";
-  position: absolute;
-  right: -28px;
-  bottom: -36px;
-  width: 94px;
-  height: 94px;
-  border-radius: 50%;
-  background: rgba(20, 184, 166, 0.12);
-}
-
-.crm-insight-card.primary {
-  color: #fff;
-  border-color: rgba(79, 70, 229, 0.2);
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(37, 99, 235, 0.9)),
-    #1e293b;
-}
-
-.crm-insight-card.primary::after {
-  background: rgba(125, 211, 252, 0.18);
-}
-
-.insight-label {
-  display: block;
-  margin-bottom: 8px;
-  color: inherit;
-  opacity: 0.72;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.crm-insight-card strong {
-  display: block;
-  color: inherit;
-  font-size: 26px;
-  line-height: 1;
-}
-
-.crm-insight-card small {
-  display: block;
-  margin-top: 8px;
-  color: inherit;
-  opacity: 0.68;
-}
-
-.crm-tools-row {
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.crm-kanban {
-  gap: 14px;
-  padding: 4px 2px 22px;
-  scroll-snap-type: x proximity;
-}
-
-.kanban-column {
-  min-width: 286px;
-  min-height: calc(100vh - 275px);
-  padding: 14px;
-  border: 1px solid rgba(203, 213, 225, 0.7);
-  border-top-width: 4px;
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
-  scroll-snap-align: start;
-}
-
-.kanban-column.drag-target {
-  outline: 2px solid rgba(47, 70, 217, 0.35);
-  outline-offset: 2px;
-}
-
-.kanban-column-header {
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.crm-col-count-badge {
-  min-width: 28px;
-  text-align: center;
-}
-
-.crm-col-subheader {
-  width: fit-content;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.order-card {
-  min-height: 168px;
-  border: 1px solid rgba(226, 232, 240, 0.96);
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
-}
-
-.order-card:hover {
-  border-color: rgba(47, 70, 217, 0.34);
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.11);
-}
-
-.card-order-no,
-.card-row-2 {
-  color: #64748b;
-}
-
-.order-card-title {
-  line-height: 1.35;
-}
-
-.card-row-financial {
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.card-price {
-  color: #2734a0;
-}
-
-.deadline-chip,
-.payment-badge,
-.sla-badge {
-  border-radius: 999px;
-}
-
-.card-badges {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.card-last-contact {
-  padding: 7px 9px;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.channel-icon {
-  border-radius: 10px;
-}
-
-.add-order-button {
-  min-height: 36px;
-  margin: 10px 2px 2px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.crm-kanban .kanban-column:nth-child(1) { background: linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%); }
-.crm-kanban .kanban-column:nth-child(2) { background: linear-gradient(180deg, #fff7ed 0%, #fffaf4 100%); }
-.crm-kanban .kanban-column:nth-child(3) { background: linear-gradient(180deg, #ecfdf5 0%, #f7fefb 100%); }
-.crm-kanban .kanban-column:nth-child(4) { background: linear-gradient(180deg, #faf5ff 0%, #fdfaff 100%); }
-.crm-kanban .kanban-column:nth-child(5) { background: linear-gradient(180deg, #ecfdf5 0%, #f6fff9 100%); }
+/* ───── Responsive ───── */
 
 @media (max-width: 1280px) {
-  .crm-board-header {
-    flex-direction: column;
-  }
-
-  .crm-header-right {
-    justify-content: flex-start;
-  }
-
-  .crm-insights-row {
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-  }
+  .crm-board-header { flex-direction: column; align-items: flex-start; }
+  .crm-header-right { justify-content: flex-start; }
+  .crm-insights-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 760px) {
-  .crm-board-page {
-    padding: 16px 12px;
-  }
-
-  .crm-title {
-    font-size: 24px;
-  }
-
-  .crm-header-right,
-  .crm-view-switch,
+  .crm-sticky-workbar { padding: 10px 14px 8px; }
+  .crm-kanban { padding: 14px 14px 20px; }
+  .crm-title { font-size: 22px; }
+  .crm-insights-row { grid-template-columns: 1fr; }
+  .kanban-column { min-width: 80vw; }
   .crm-search-input,
   .crm-filter-btn,
-  .crm-new-btn-indigo {
-    width: 100%;
-  }
-
-  .crm-filter-btn,
-  .crm-new-btn-indigo {
-    justify-content: center;
-  }
-
-  .crm-insights-row {
-    grid-template-columns: 1fr;
-  }
-
-  .kanban-column {
-    min-width: 82vw;
-  }
-
+  .crm-new-btn-indigo { width: 100%; }
   .selection-bar {
     width: calc(100vw - 24px);
-    bottom: 16px;
+    bottom: 14px;
     flex-direction: column;
     align-items: stretch;
+    border-radius: 14px;
     gap: 12px;
-    border-radius: 16px;
   }
-
-  .selection-actions {
-    flex-wrap: wrap;
-  }
+  .selection-actions { flex-wrap: wrap; }
 }
 
-/* ─── Compact density pass ─── */
-.crm-board-page {
-  padding: 14px 22px 12px;
-}
-
+/* ─── keep ─── */
 .crm-board-header {
   align-items: center;
-  margin-bottom: 8px;
 }
 
-.crm-title {
-  font-size: 26px;
-}
-
-.crm-subtitle {
-  display: none;
-}
-
-.crm-header-right {
-  gap: 8px;
-}
-
-.crm-view-switch,
-.crm-filter-btn,
-.tool-item,
-.crm-new-btn-indigo {
-  min-height: 34px;
-}
-
-.view-btn {
-  min-height: 28px;
-  padding: 5px 11px;
-}
-
-.crm-search-input {
-  width: 260px;
-}
-
-.crm-insights-row {
-  grid-template-columns: 1.1fr repeat(3, minmax(150px, 0.72fr));
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.crm-insight-card {
-  display: grid;
-  grid-template-columns: minmax(74px, auto) 1fr;
-  column-gap: 12px;
-  align-items: center;
-  min-height: 54px;
-  padding: 10px 14px;
-  border-radius: 12px;
-}
-
-.crm-insight-card::after {
-  right: -34px;
-  bottom: -44px;
-  width: 78px;
-  height: 78px;
-}
-
-.insight-label {
-  margin: 0;
-  font-size: 11px;
-}
-
-.crm-insight-card strong {
-  font-size: 22px;
-}
-
-.crm-insight-card small {
-  grid-column: 2;
-  margin-top: 2px;
-  font-size: 11px;
-  line-height: 1.15;
-}
-
-.crm-tools-row {
-  margin-bottom: 8px;
-}
-
-.tool-item {
-  padding: 4px 10px;
-}
-
-.crm-kanban {
-  gap: 10px;
-  padding-bottom: 10px;
-}
-
-.kanban-column {
-  min-width: 276px;
-  min-height: calc(100vh - 214px);
-  padding: 10px 12px;
-  border-radius: 12px;
-}
-
-.kanban-column-header {
-  gap: 7px;
-  margin-bottom: 10px;
-}
-
-.crm-col-title {
-  font-size: 13px;
-}
-
-.crm-col-subheader {
-  padding: 4px 8px;
-  font-size: 11px;
-}
-
-.kanban-column-content {
-  gap: 10px;
-}
-
-.order-card {
-  min-height: 140px;
-  padding: 12px 14px;
-  border-radius: 12px;
-}
-
-.card-row-1 {
-  margin-bottom: 4px;
-}
-
-.card-row-2 {
-  margin-bottom: 6px;
-}
-
-.order-card-title {
-  margin: 6px 0;
-  font-size: 14px;
-}
-
-.card-row-financial {
-  margin-bottom: 7px;
-}
-
-.card-price {
-  font-size: 16px;
-}
-
-.payment-badge,
-.sla-badge {
-  padding: 2px 8px;
-  font-size: 10px;
-}
-
-.card-divider {
-  margin: 8px 0;
-}
-
-.card-last-contact {
-  margin-bottom: 8px;
-  padding: 5px 8px;
-}
-
-.channel-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.add-order-button {
-  min-height: 32px;
-  margin-top: 8px;
-}
-
-@media (min-width: 1281px) {
-  .crm-board-header {
-    display: grid;
-    grid-template-columns: minmax(260px, auto) 1fr;
-  }
-}
-
-/* ─── Sticky workbar and card redesign ─── */
-.crm-sticky-workbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  margin: -14px -22px 8px;
-  padding: 12px 22px 10px;
-  border-bottom: 1px solid rgba(203, 213, 225, 0.72);
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(239, 246, 255, 0.92)),
-    rgba(248, 250, 252, 0.94);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
-}
-
-.crm-sticky-workbar .crm-board-header {
-  margin-bottom: 8px;
-}
-
-.crm-sticky-workbar .crm-insights-row {
-  margin-bottom: 7px;
-}
-
-.stage-meter {
-  height: 4px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.76);
-}
-
-.stage-meter span {
-  display: block;
-  height: 100%;
-  min-width: 16px;
-  border-radius: inherit;
-  opacity: 0.86;
-}
-
-.stage-empty-state {
-  display: grid;
-  place-items: center;
-  min-height: 126px;
-  padding: 16px 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.46);
-  border-radius: 12px;
-  color: #64748b;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.38);
-}
-
-.stage-empty-state span {
-  width: 10px;
-  height: 10px;
-  margin-bottom: 8px;
-  border-radius: 50%;
-  opacity: 0.78;
-}
+/* ─── end of styles ─── */
 
-.stage-empty-state strong {
-  color: #334155;
-  font-size: 13px;
-}
-
-.stage-empty-state small {
-  max-width: 190px;
-  margin-top: 4px;
-  line-height: 1.35;
-}
-
-.order-card {
-  overflow: hidden;
-  padding-left: 16px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
-}
-
-.card-health-rail {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;
-  height: 100%;
-  background: #cbd5e1;
-}
-
-.order-health-critical .card-health-rail {
-  background: linear-gradient(180deg, #ef4444, #fb7185);
-}
-
-.order-health-warning .card-health-rail {
-  background: linear-gradient(180deg, #f59e0b, #fbbf24);
-}
-
-.order-health-paid .card-health-rail {
-  background: linear-gradient(180deg, #10b981, #34d399);
-}
-
-.order-health-neutral .card-health-rail {
-  background: linear-gradient(180deg, #64748b, #94a3b8);
-}
-
-.card-row-1 {
-  gap: 8px;
-}
-
-.card-order-no {
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #f1f5f9;
-}
-
-.priority-wrapper {
-  min-width: fit-content;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(248, 250, 252, 0.9);
-}
-
-.card-row-2.clickable-client {
-  display: inline-flex;
-  width: fit-content;
-  max-width: 100%;
-  padding: 2px 0;
-  color: #3348b5;
-}
-
-.order-card-title {
-  color: #0f172a;
-}
-
-.card-footer-new {
-  margin-top: 2px;
-}
-
-.director-attention-strip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  overflow-x: auto;
-  padding: 6px 8px;
-  border: 1px solid rgba(251, 191, 36, 0.34);
-  border-radius: 12px;
-  background: rgba(255, 251, 235, 0.82);
-}
-
-.attention-strip-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex-shrink: 0;
-  min-height: 26px;
-  border: 0;
-  color: #92400e;
-  background: transparent;
-  cursor: pointer;
-}
-
-.attention-strip-title span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
-}
-
-.attention-strip-title strong {
-  font-size: 12px;
-}
-
-.attention-strip-title small {
-  color: #b45309;
-  font-size: 11px;
-}
-
-.attention-strip-title em {
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: #78350f;
-  background: rgba(255, 255, 255, 0.72);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.director-attention-strip:not(.is-expanded) {
-  width: fit-content;
-  max-width: 100%;
-  padding-right: 10px;
-}
-
-.director-attention-strip.is-expanded {
-  flex-wrap: wrap;
-}
-
-.attention-order-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 24px;
-  max-width: 230px;
-  padding: 4px 9px;
-  border: 1px solid rgba(245, 158, 11, 0.24);
-  border-radius: 999px;
-  color: #78350f;
-  background: rgba(255, 255, 255, 0.74);
-  cursor: pointer;
-}
-
-.attention-order-pill b,
-.attention-order-pill span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attention-order-pill span {
-  min-width: 0;
-  color: #92400e;
-  font-size: 11px;
-}
-
-.card-next-action {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 7px 0 0;
-  padding: 6px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.card-next-action.attention-critical {
-  color: #991b1b;
-  background: #fee2e2;
-}
-
-.card-next-action.attention-warning {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.card-next-action.attention-info {
-  color: #334155;
-  background: #f1f5f9;
-}
-
-.card-meta-right {
-  display: flex;
-}
-
-.card-avatar,
-.card-arrow-btn,
-.card-more-btn {
-  border-radius: 10px;
-}
-
-.card-avatar {
-  background: linear-gradient(135deg, #243b86, #4f46e5);
-}
-
-.card-arrow-btn {
-  font-size: 0;
-}
-
-.card-arrow-btn::before {
-  content: "›";
-  font-size: 20px;
-  line-height: 1;
-}
-
-.card-more-btn {
-  width: 30px;
-  height: 30px;
-  border: 1px solid #dbe4f0;
-  color: #334155;
-  background: #fff;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-
-.card-more-btn:hover {
-  color: #2734a0;
-  border-color: #c7d2fe;
-  background: #eef2ff;
-}
-
-.order-card.is-selected {
-  box-shadow: 0 0 0 2px rgba(61, 58, 168, 0.16), 0 16px 34px rgba(15, 23, 42, 0.12);
-}
-
-.channel-icon.telegram,
-.channel-icon.instagram {
-  display: flex;
-}
-
-@media (max-width: 760px) {
-  .crm-sticky-workbar {
-    margin: -16px -12px 8px;
-    padding: 12px;
-  }
-
-  .director-attention-strip {
-    align-items: flex-start;
-  }
-}
 </style>
