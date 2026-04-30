@@ -1,3 +1,4 @@
+<template>
   <div class="toolbar-section">
     <!-- ===== CONSOLIDATED ACTION & FILTER ROW ===== -->
     <div class="action-row">
