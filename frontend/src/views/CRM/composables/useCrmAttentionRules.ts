@@ -4,12 +4,12 @@ export const getOrderDeadline = (order: any) => order?.deadline || order?.deadli
 
 export const getNextContactLabel = (order: any) => {
   const value = getNextContactDate(order)
-  if (!value) return 'РљРѕРЅС‚Р°РєС‚ РЅРµ Р·Р°РїР»Р°РЅРѕРІР°РЅРѕ'
+  if (!value) return 'Контакт не заплановано'
   const date = new Date(value)
   const today = new Date().toDateString()
   const prefix = date < new Date()
-    ? 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ'
-    : (date.toDateString() === today ? 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚: СЃСЊРѕРіРѕРґРЅС–' : 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚')
+    ? 'Контакт прострочено'
+    : (date.toDateString() === today ? 'Наступний контакт: сьогодні' : 'Наступний контакт')
   return `${prefix} ${date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`
 }
 
@@ -37,31 +37,31 @@ export const createAttentionRules = ({ getSlaLevel, getSlaHours }: any) => {
 
     if (['new', 'payment'].includes(stage)) {
       if (!nextContact) {
-        reasons.push({ text: 'РќРµРјР°С” РЅР°СЃС‚СѓРїРЅРѕРіРѕ РєРѕРЅС‚Р°РєС‚Сѓ', level: 'warning' })
+        reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
       } else if (new Date(nextContact) < new Date()) {
-        reasons.push({ text: 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ', level: 'critical' })
+        reasons.push({ text: 'Контакт прострочено', level: 'critical' })
       }
 
       if (['critical', 'urgent'].includes(slaLevel)) {
-        reasons.push({ text: `Р‘РµР· РґС–С— ${getSlaHours(order.id)} РіРѕРґ`, level: 'critical' })
+        reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
       } else if (slaLevel === 'warning') {
-        reasons.push({ text: `Р—Р°С‚СЂРёРјРєР° РєРѕРЅС‚Р°РєС‚Сѓ: ${getSlaHours(order.id)} РіРѕРґ`, level: 'warning' })
+        reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
       }
     }
 
     if (stage !== 'done') {
       if (!deadline) {
-        reasons.push({ text: 'РќРµРјР°С” РґРµРґР»Р°Р№РЅСѓ', level: 'warning' })
+        reasons.push({ text: 'Немає дедлайну', level: 'warning' })
       } else if (new Date(deadline) < new Date()) {
-        reasons.push({ text: 'РџСЂРѕСЃС‚СЂРѕС‡РµРЅРёР№ РґРµРґР»Р°Р№РЅ', level: 'critical' })
+        reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
       }
 
       if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
-        reasons.push({ text: 'РќРµРјР°С” РїРµСЂРµРґРѕРїР»Р°С‚Рё', level: 'warning' })
+        reasons.push({ text: 'Немає передоплати', level: 'warning' })
       }
 
       if (needsPaymentControl(order)) {
-        reasons.push({ text: 'РџРѕС‚СЂС–Р±РµРЅ РєРѕРЅС‚СЂРѕР»СЊ РѕРїР»Р°С‚Рё', level: 'warning' })
+        reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
       }
     }
 

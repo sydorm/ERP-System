@@ -128,7 +128,7 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <button class="card-arrow-btn" @click.stop="$emit('openEditor', order)">в†’</button>
+        <button class="card-arrow-btn" @click.stop="$emit('openEditor', order)">→</button>
       </div>
     </div>
   </div>

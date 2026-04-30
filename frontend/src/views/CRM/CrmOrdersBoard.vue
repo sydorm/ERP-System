@@ -101,12 +101,12 @@
       <div v-if="selectedOrderIds.length > 1" class="selection-bar">
         <div class="selection-info">
           <el-icon @click="clearSelection" class="close-selection"><Close /></el-icon>
-          <span>Р’РёР±СЂР°РЅРѕ: <strong>{{ selectedOrderIds.length }}</strong> Р·Р°РјРѕРІР»РµРЅСЊ</span>
+          <span>Вибрано: <strong>{{ selectedOrderIds.length }}</strong> замовлень</span>
         </div>
         <div class="selection-actions">
           <el-dropdown @command="handleBulkManager" trigger="click">
             <el-button type="primary" plain size="default">
-              Р—РјС–РЅРёС‚Рё РјРµРЅРµРґР¶РµСЂР° <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              Змінити менеджера <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -123,7 +123,7 @@
 
           <el-dropdown @command="handleBulkStage" trigger="click">
             <el-button type="primary" plain size="default">
-              Р—РјС–РЅРёС‚Рё СЃС‚Р°С‚СѓСЃ <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              Змінити статус <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -138,33 +138,33 @@
             </template>
           </el-dropdown>
 
-          <el-button type="danger" plain @click="handleBulkCancel">РЎРєР°СЃСѓРІР°С‚Рё</el-button>
+          <el-button type="danger" plain @click="handleBulkCancel">Скасувати</el-button>
         </div>
       </div>
     </transition>
 
     <!-- Modals -->
-    <el-dialog v-model="rescheduleVisible" title="РџРµСЂРµРЅРµСЃС‚Рё РїРµСЂРµРґР·РІРѕРЅ" width="380px">
+    <el-dialog v-model="rescheduleVisible" title="Перенести передзвін" width="380px">
       <div v-if="selectedTask" class="reschedule-body">
-        <label>Р’СЃС‚Р°РЅРѕРІРёС‚Рё С‡Р°СЃ:</label>
+        <label>Встановити час:</label>
         <el-date-picker
           v-model="rescheduleTime"
           type="datetime"
-          placeholder="РћР±РµСЂС–С‚СЊ РґР°С‚Сѓ С‚Р° С‡Р°СЃ"
+          placeholder="Оберіть дату та час"
           format="DD.MM.YYYY HH:mm"
           value-format="YYYY-MM-DDTHH:mm:ss"
           style="width: 100%"
         />
         <div class="quick-reschedule-grid">
-          <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 РіРѕРґ</button>
-          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 10 })">Р—Р°РІС‚СЂР° 10:00</button>
-          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 14 })">Р—Р°РІС‚СЂР° 14:00</button>
-          <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 РґРЅС–</button>
+          <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 год</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 10 })">Завтра 10:00</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 14 })">Завтра 14:00</button>
+          <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 дні</button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="rescheduleVisible = false">РЎРєР°СЃСѓРІР°С‚Рё</el-button>
-        <el-button type="primary" @click="confirmReschedule">РџРµСЂРµРЅРµСЃС‚Рё</el-button>
+        <el-button @click="rescheduleVisible = false">Скасувати</el-button>
+        <el-button type="primary" @click="confirmReschedule">Перенести</el-button>
       </template>
     </el-dialog>
 
@@ -209,8 +209,8 @@ const openClientProfile = (clientId) => {
 }
 
 const getPriorityLabel = (p) => {
-  const map = { critical: 'РљСЂРёС‚РёС‡РЅРёР№', urgent: 'Р’РёСЃРѕРєРёР№', normal: 'РЎРµСЂРµРґРЅС–Р№', low: 'РќРёР·СЊРєРёР№' }
-  return map[p] || 'РЎРµСЂРµРґРЅС–Р№'
+  const map = { critical: 'Критичний', urgent: 'Високий', normal: 'Середній', low: 'Низький' }
+  return map[p] || 'Середній'
 }
 const getPriorityColor = (p) => {
   const map = { critical: '#EF4444', urgent: '#F97316', normal: '#F59E0B', low: '#10B981' }
@@ -230,9 +230,9 @@ const getDeadlineDaysText = (deadlineStr) => {
   const now = new Date()
   const dl = new Date(deadlineStr)
   const diffDays = Math.ceil((dl - now) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return 'РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ'
-  if (diffDays === 0) return 'СЃСЊРѕРіРѕРґРЅС–'
-  return `${diffDays} РґРЅ.`
+  if (diffDays < 0) return 'прострочено'
+  if (diffDays === 0) return 'сьогодні'
+  return `${diffDays} дн.`
 }
 const isReminderToday = (nextContactAt) => {
   if (!nextContactAt) return false
@@ -249,19 +249,19 @@ const getChannelIcon = (type) => {
   return map[type] || 'ChatDotRound'
 }
 const getChannelName = (type) => {
-  const map = { phone: 'рџ“ћ РўРµР»РµС„РѕРЅ', viber: 'рџ’¬ Viber', telegram: 'вњ€ Telegram', instagram: 'рџ“ё Instagram' }
+  const map = { phone: '📞 Телефон', viber: '💬 Viber', telegram: '✈ Telegram', instagram: '📸 Instagram' }
   return map[type] || type
 }
 const getContactResultLabel = (res) => {
   const map = {
-    thinking: 'Р”СѓРјР°С”',
-    no_answer: 'РќРµ РІС–РґРїРѕРІС–РІ',
-    confirmed: 'РџС–РґС‚РІРµСЂРґРёРІ',
-    refused: 'Р’С–РґРјРѕРІРёРІСЃСЏ',
-    THINKING: 'Р”СѓРјР°С”',
-    NO_ANSWER: 'РќРµ РІС–РґРїРѕРІС–РІ',
-    CONFIRMED: 'РџС–РґС‚РІРµСЂРґРёРІ',
-    REFUSED: 'Р’С–РґРјРѕРІРёРІСЃСЏ'
+    thinking: 'Думає',
+    no_answer: 'Не відповів',
+    confirmed: 'Підтвердив',
+    refused: 'Відмовився',
+    THINKING: 'Думає',
+    NO_ANSWER: 'Не відповів',
+    CONFIRMED: 'Підтвердив',
+    REFUSED: 'Відмовився'
   }
   return map[res] || res
 }
@@ -275,7 +275,7 @@ const handleComm = (order, channel) => {
       client_phone: order.client_phone
     })
   } else {
-    ElMessage.info(`РљР°РЅР°Р» Р·РІ'СЏР·РєСѓ: ${channel}`)
+    ElMessage.info(`Канал зв'язку: ${channel}`)
   }
 }
 const formatRelativeTime = (dateStr) => {
@@ -287,10 +287,10 @@ const formatRelativeTime = (dateStr) => {
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} С…РІ С‚РѕРјСѓ`
-  if (diffHours < 24) return `${diffHours} РіРѕРґ С‚РѕРјСѓ`
-  if (diffDays === 1) return 'РІС‡РѕСЂР°'
-  if (diffDays < 7) return `${diffDays} РґРЅС– С‚РѕРјСѓ`
+  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} хв тому`
+  if (diffHours < 24) return `${diffHours} год тому`
+  if (diffDays === 1) return 'вчора'
+  if (diffDays < 7) return `${diffDays} дні тому`
   return date.toLocaleDateString('uk-UA')
 }
 
@@ -435,10 +435,10 @@ const getLeadSourceLabel = (order) => {
 const getNextContactDate = (order) => order.next_contact_at || order.next_contact_date || null
 const getNextContactLabel = (order) => {
   const value = getNextContactDate(order)
-  if (!value) return 'РљРѕРЅС‚Р°РєС‚ РЅРµ Р·Р°РїР»Р°РЅРѕРІР°РЅРѕ'
+  if (!value) return 'Контакт не заплановано'
   const date = new Date(value)
   const today = new Date().toDateString()
-  const prefix = date < new Date() ? 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ' : (date.toDateString() === today ? 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚: СЃСЊРѕРіРѕРґРЅС–' : 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚')
+  const prefix = date < new Date() ? 'Контакт прострочено' : (date.toDateString() === today ? 'Наступний контакт: сьогодні' : 'Наступний контакт')
   return `${prefix} ${date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`
 }
 const getNextContactClass = (order) => {
@@ -460,33 +460,33 @@ const getAttentionReasons = (order) => {
   // 1. Contact-related warnings (ONLY for 'new' and 'payment')
   if (['new', 'payment'].includes(stage)) {
     if (!nextContact) {
-      reasons.push({ text: 'РќРµРјР°С” РЅР°СЃС‚СѓРїРЅРѕРіРѕ РєРѕРЅС‚Р°РєС‚Сѓ', level: 'warning' })
+      reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
     } else if (new Date(nextContact) < new Date()) {
-      reasons.push({ text: 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ', level: 'critical' })
+      reasons.push({ text: 'Контакт прострочено', level: 'critical' })
     }
 
     // SLA-based contact warnings
     if (['critical', 'urgent'].includes(slaLevel)) {
-      reasons.push({ text: `Р‘РµР· РґС–С— ${getSlaHours(order.id)} РіРѕРґ`, level: 'critical' })
+      reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
     } else if (slaLevel === 'warning') {
-      reasons.push({ text: `Р—Р°С‚СЂРёРјРєР° РєРѕРЅС‚Р°РєС‚Сѓ: ${getSlaHours(order.id)} РіРѕРґ`, level: 'warning' })
+      reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
     }
   }
 
   // 2. Deadline & Payment warnings (All stages except 'done')
   if (stage !== 'done') {
     if (!deadline) {
-      reasons.push({ text: 'РќРµРјР°С” РґРµРґР»Р°Р№РЅСѓ', level: 'warning' })
+      reasons.push({ text: 'Немає дедлайну', level: 'warning' })
     } else if (new Date(deadline) < new Date()) {
-      reasons.push({ text: 'РџСЂРѕСЃС‚СЂРѕС‡РµРЅРёР№ РґРµРґР»Р°Р№РЅ', level: 'critical' })
+      reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
     }
 
     if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
-      reasons.push({ text: 'РќРµРјР°С” РїРµСЂРµРґРѕРїР»Р°С‚Рё', level: 'warning' })
+      reasons.push({ text: 'Немає передоплати', level: 'warning' })
     }
 
     if (needsPaymentControl(order)) {
-      reasons.push({ text: 'РџРѕС‚СЂС–Р±РµРЅ РєРѕРЅС‚СЂРѕР»СЊ РѕРїР»Р°С‚Рё', level: 'warning' })
+      reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
     }
   }
 
@@ -527,17 +527,17 @@ const handleExport = async (type) => {
     link.click()
     document.body.removeChild(link)
   } catch (e) {
-    ElMessage.error('РџРѕРјРёР»РєР° РїСЂРё РµРєСЃРїРѕСЂС‚С–')
+    ElMessage.error('Помилка при експорті')
     console.error(e)
   }
 }
 
 const stages = [
-  { key: 'new', label: 'РќРѕРІС–', color: '#3D3AA8' },
-  { key: 'payment', label: 'РћРїР»Р°С‚Р°', color: '#F97316' },
-  { key: 'processing', label: 'Р’ СЂРѕР±РѕС‚С–', color: '#F59E0B' },
-  { key: 'production', label: 'Р’РёСЂРѕР±РЅРёС†С‚РІРѕ', color: '#8B5CF6' },
-  { key: 'done', label: 'Р’РёРєРѕРЅР°РЅРѕ', color: '#22C55E' }
+  { key: 'new', label: 'Нові', color: '#3D3AA8' },
+  { key: 'payment', label: 'Оплата', color: '#F97316' },
+  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
+  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
+  { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]
 
 const fetchStage = async (stage, reset = false) => {
@@ -573,7 +573,7 @@ const fetchStage = async (stage, reset = false) => {
     }
     stageHasMore.value[stage] = res.data.length === 20
   } catch (e) {
-    ElMessage.error(`РџРѕРјРёР»РєР° Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ СЃС‚Р°РґС–С— ${stage}`)
+    ElMessage.error(`Помилка завантаження стадії ${stage}`)
   }
 }
 
@@ -600,7 +600,7 @@ const fetchAll = async () => {
       fetchSlaStatus()
     ])
   } catch (e) {
-    ElMessage.error('РџРѕРјРёР»РєР° Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ РґР°РЅРёС…')
+    ElMessage.error('Помилка завантаження даних')
   } finally {
     loading.value = false
   }
@@ -629,20 +629,20 @@ const handleBulkUpdate = async (data) => {
   try {
     const idsString = selectedOrderIds.value.join('&ids=')
     await api.patch(`/api/v1/orders/bulk-update?ids=${idsString}`, data)
-    ElMessage.success(`РћРЅРѕРІР»РµРЅРѕ ${selectedOrderIds.value.length} Р·Р°РјРѕРІР»РµРЅСЊ`)
+    ElMessage.success(`Оновлено ${selectedOrderIds.value.length} замовлень`)
     clearSelection()
     await fetchAll()
   } catch (e) {
-    ElMessage.error('РџРѕРјРёР»РєР° РіСЂСѓРїРѕРІРѕРіРѕ РѕРЅРѕРІР»РµРЅРЅСЏ')
+    ElMessage.error('Помилка групового оновлення')
   }
 }
 
 const handleBulkManager = (managerId) => handleBulkUpdate({ manager_id: managerId })
 const handleBulkStage = (stage) => handleBulkUpdate({ crm_stage: stage })
 const handleBulkCancel = () => {
-  ElMessageBox.confirm('Р’Рё РІРїРµРІРЅРµРЅС–, С‰Рѕ С…РѕС‡РµС‚Рµ СЃРєР°СЃСѓРІР°С‚Рё РІРёР±СЂР°РЅС– Р·Р°РјРѕРІР»РµРЅРЅСЏ?', 'РЈРІР°РіР°', {
-    confirmButtonText: 'РўР°Рє, СЃРєР°СЃСѓРІР°С‚Рё',
-    cancelButtonText: 'РќС–',
+  ElMessageBox.confirm('Ви впевнені, що хочете скасувати вибрані замовлення?', 'Увага', {
+    confirmButtonText: 'Так, скасувати',
+    cancelButtonText: 'Ні',
     type: 'warning'
   }).then(() => {
     handleBulkUpdate({ status: 'cancelled' })
@@ -652,15 +652,15 @@ const handleBulkCancel = () => {
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 
 const getManagerName = (id) => {
-  if (!id) return 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
+  if (!id) return 'Без менеджера'
   const user = users.value.find(u => u.id === id)
-  if (user) return user.name || user.full_name || 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
+  if (user) return user.name || user.full_name || 'Без менеджера'
   // Never show raw UUID/ID on UI
-  return 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
+  return 'Без менеджера'
 }
 const getManagerInitials = (id) => {
   const name = getManagerName(id)
-  if (name === 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°') return '?'
+  if (name === 'Без менеджера') return '?'
   return name
     .split(' ')
     .filter(Boolean)
@@ -767,7 +767,7 @@ const getPriorityDotClass = (p) => {
   if (p === 'normal') return 'dot-yellow'
   return 'dot-green'
 }
-const getPaymentLabel = (s) => ({ unpaid: 'РќР• РћРџР›РђР§Р•РќРћ', partial: 'Р§РђРЎРўРљРћР’Рђ', paid: 'РћРџР›РђР§Р•РќРћ' }[s] || s)
+const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВА', paid: 'ОПЛАЧЕНО' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
@@ -792,12 +792,12 @@ const handleCardCommand = async (command, order) => {
   if (command === 'copy') {
     const value = order.client_phone || order.order_number || ''
     if (!value) {
-      ElMessage.warning('РќРµРјР°С” РґР°РЅРёС… РґР»СЏ РєРѕРїС–СЋРІР°РЅРЅСЏ')
+      ElMessage.warning('Немає даних для копіювання')
       return
     }
     try {
       await navigator.clipboard.writeText(value)
-      ElMessage.success('РЎРєРѕРїС–Р№РѕРІР°РЅРѕ')
+      ElMessage.success('Скопійовано')
     } catch {
       ElMessage.info(value)
     }

@@ -1,9 +1,9 @@
 export const CRM_STAGES = [
-  { key: 'new', label: 'РќРѕРІС–', color: '#3D3AA8' },
-  { key: 'payment', label: 'РћРїР»Р°С‚Р°', color: '#F97316' },
-  { key: 'processing', label: 'Р’ СЂРѕР±РѕС‚С–', color: '#F59E0B' },
-  { key: 'production', label: 'Р’РёСЂРѕР±РЅРёС†С‚РІРѕ', color: '#8B5CF6' },
-  { key: 'done', label: 'Р’РёРєРѕРЅР°РЅРѕ', color: '#22C55E' }
+  { key: 'new', label: 'Нові', color: '#3D3AA8' },
+  { key: 'payment', label: 'Оплата', color: '#F97316' },
+  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
+  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
+  { key: 'done', label: 'Виконано', color: '#22C55E' }
 ]
 
 export const createStageSkip = () => ({
@@ -29,8 +29,8 @@ export const normalizePhone = (phone: any) => {
 }
 
 export const getPriorityLabel = (p: string) => {
-  const map: Record<string, string> = { critical: 'РљСЂРёС‚РёС‡РЅРёР№', urgent: 'Р’РёСЃРѕРєРёР№', normal: 'РЎРµСЂРµРґРЅС–Р№', low: 'РќРёР·СЊРєРёР№' }
-  return map[p] || 'РЎРµСЂРµРґРЅС–Р№'
+  const map: Record<string, string> = { critical: 'Критичний', urgent: 'Високий', normal: 'Середній', low: 'Низький' }
+  return map[p] || 'Середній'
 }
 
 export const getPriorityColor = (p: string) => {
@@ -39,7 +39,7 @@ export const getPriorityColor = (p: string) => {
 }
 
 export const getPaymentLabel = (s: string) =>
-  ({ unpaid: 'РќР• РћРџР›РђР§Р•РќРћ', partial: 'Р§РђРЎРўРљРћР’Рђ', paid: 'РћРџР›РђР§Р•РќРћ' } as Record<string, string>)[s] || s
+  ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВА', paid: 'ОПЛАЧЕНО' } as Record<string, string>)[s] || s
 
 export const getDeadlineClass = (deadlineStr: any) => {
   if (!deadlineStr) return ''
@@ -56,9 +56,9 @@ export const getDeadlineDaysText = (deadlineStr: any) => {
   const now = new Date()
   const dl = new Date(deadlineStr)
   const diffDays = Math.ceil((dl.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return 'РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ'
-  if (diffDays === 0) return 'СЃСЊРѕРіРѕРґРЅС–'
-  return `${diffDays} РґРЅ.`
+  if (diffDays < 0) return 'прострочено'
+  if (diffDays === 0) return 'сьогодні'
+  return `${diffDays} дн.`
 }
 
 export const isReminderToday = (nextContactAt: any) => {
@@ -75,10 +75,10 @@ export const formatRelativeTime = (dateStr: any) => {
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} С…РІ С‚РѕРјСѓ`
-  if (diffHours < 24) return `${diffHours} РіРѕРґ С‚РѕРјСѓ`
-  if (diffDays === 1) return 'РІС‡РѕСЂР°'
-  if (diffDays < 7) return `${diffDays} РґРЅС– С‚РѕРјСѓ`
+  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} хв тому`
+  if (diffHours < 24) return `${diffHours} год тому`
+  if (diffDays === 1) return 'вчора'
+  if (diffDays < 7) return `${diffDays} дні тому`
   return date.toLocaleDateString('uk-UA')
 }
 
@@ -94,14 +94,14 @@ export const getChannelIcon = (type: string) => {
 
 export const getContactResultLabel = (res: string) => {
   const map: Record<string, string> = {
-    thinking: 'Р”СѓРјР°С”',
-    no_answer: 'РќРµ РІС–РґРїРѕРІС–РІ',
-    confirmed: 'РџС–РґС‚РІРµСЂРґРёРІ',
-    refused: 'Р’С–РґРјРѕРІРёРІСЃСЏ',
-    THINKING: 'Р”СѓРјР°С”',
-    NO_ANSWER: 'РќРµ РІС–РґРїРѕРІС–РІ',
-    CONFIRMED: 'РџС–РґС‚РІРµСЂРґРёРІ',
-    REFUSED: 'Р’С–РґРјРѕРІРёРІСЃСЏ'
+    thinking: 'Думає',
+    no_answer: 'Не відповів',
+    confirmed: 'Підтвердив',
+    refused: 'Відмовився',
+    THINKING: 'Думає',
+    NO_ANSWER: 'Не відповів',
+    CONFIRMED: 'Підтвердив',
+    REFUSED: 'Відмовився'
   }
   return map[res] || res
 }
