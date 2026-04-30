@@ -276,14 +276,7 @@
               </el-select>
             </el-form-item>
 
-            <div class="side-toggle">
-              <div class="toggle-meta">
-                <span class="toggle-title">Статус</span>
-                <span class="toggle-desc" :class="modelValue.is_active ? 'active' : 'inactive'">
-                  {{ modelValue.is_active ? 'Активний' : 'В архіві' }}
-                </span>
-              </div>
-              <el-switch v-model="modelValue.is_active" active-color="#4f46e5" />
+              <el-switch v-model="modelValue.is_active" active-color="#10b981" />
             </div>
 
             <div class="side-toggle">
@@ -293,7 +286,7 @@
                   {{ modelValue.track_inventory ? 'Ведеться' : 'Не ведеться' }}
                 </span>
               </div>
-              <el-switch v-model="modelValue.track_inventory" active-color="#4f46e5" />
+              <el-switch v-model="modelValue.track_inventory" active-color="#10b981" />
             </div>
 
             <el-form-item class="mt-3">
@@ -558,7 +551,7 @@ const handleImageChange = async (event) => {
 
 .ai-action-btn {
   font-size: 12px;
-  color: #4f46e5;
+  color: #6366f1;
   font-weight: 600;
   padding: 0;
 }
@@ -611,9 +604,9 @@ const handleImageChange = async (event) => {
 .modern-input :deep(.el-input__wrapper.is-focus),
 .modern-select :deep(.el-select__wrapper.is-focused),
 .modern-textarea :deep(.el-textarea__inner:focus) {
-  border-color: #4f46e5 !important;
+  border-color: #6366f1 !important;
   background-color: #ffffff !important;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1) !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
 }
 
 /* Physical params list */
@@ -654,9 +647,9 @@ const handleImageChange = async (event) => {
 }
 
 .modern-radios :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: #4f46e5 !important;
+  background: #6366f1 !important;
   color: #ffffff !important;
-  border-color: #4f46e5 !important;
+  border-color: #6366f1 !important;
 }
 
 .calc-settings {

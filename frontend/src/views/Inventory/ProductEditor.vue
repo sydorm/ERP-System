@@ -587,8 +587,9 @@ onMounted(() => {
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 4px;
-  background-color: #eef2ff;
-  color: #4f46e5;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
   text-transform: uppercase;
 }
 
@@ -648,7 +649,7 @@ onMounted(() => {
   border-radius: 8px;
   height: 32px;
   padding: 0 16px;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -656,7 +657,8 @@ onMounted(() => {
 }
 
 .btn-save:hover {
-  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.4);
   transform: translateY(-1px);
 }
 
@@ -713,12 +715,20 @@ onMounted(() => {
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
   height: 3px;
   border-radius: 3px 3px 0 0;
+  bottom: 1px;
 }
 
 .product-tabs :deep(.el-tabs__content) {
-  padding: 20px;
+  padding: 24px;
   background: #f1f5f9;
   min-height: calc(100vh - var(--product-editor-header-height) - var(--product-editor-tabs-height));
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure content doesn't overlap with sticky tabs */
+.product-tabs :deep(.el-tab-pane) {
+  padding-top: 4px; 
 }
 
 .empty-tab {
