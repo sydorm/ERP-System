@@ -319,7 +319,7 @@ watch(() => props.modelValue.performer_restriction_type, (newVal) => {
 
 <style scoped>
 .manufacturing-tab-content {
-  padding: 16px 24px;
+  padding: 0;
 }
 
 .section-card {

@@ -498,8 +498,7 @@ const handleImageChange = async (event) => {
 
 <style scoped>
 .general-tab-content {
-  padding: 24px;
-  background-color: #f8fafc;
+  padding: 0;
 }
 
 .form-grid {
@@ -522,7 +521,7 @@ const handleImageChange = async (event) => {
   flex-direction: column;
   gap: 24px;
   position: sticky;
-  top: 84px;
+  top: 24px; /* Relative to the scrolling container, which starts below the sticky header/tabs */
 }
 
 .form-section {

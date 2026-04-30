@@ -613,8 +613,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.characteristics-tab-content {
-  padding: 16px 24px;
+.characteristics-tab-content, .pricing-tab-content, .inventory-tab {
+  padding: 0;
 }
 
 .section-header {

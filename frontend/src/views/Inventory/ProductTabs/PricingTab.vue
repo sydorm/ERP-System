@@ -230,7 +230,7 @@ const markupStatusText = computed(() => {
 
 <style scoped>
 .pricing-tab-content {
-  padding: 16px 24px;
+  padding: 0;
 }
 
 .section-divider {

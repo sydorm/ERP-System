@@ -25,7 +25,7 @@ import { UploadFilled } from '@element-plus/icons-vue'
 
 <style scoped>
 .tab-card {
-  margin: 24px;
+  margin: 0;
   border: 1px solid #eef0f2;
 }
 </style>

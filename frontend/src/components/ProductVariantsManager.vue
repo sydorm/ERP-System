@@ -520,10 +520,7 @@ const getOptionLabelForAttr = (row, attr) => {
 
 <style scoped>
 .variants-manager {
-    background: var(--el-bg-color);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--el-border-color-light);
+    padding: 0;
 }
 
 .section-header {

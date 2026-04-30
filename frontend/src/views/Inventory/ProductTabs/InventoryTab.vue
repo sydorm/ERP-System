@@ -154,8 +154,8 @@ const formatQty = (val) => {
 
 <style scoped>
 .inventory-tab {
-  padding: 32px;
-  background: #fff;
+  padding: 0;
+  background: transparent;
 }
 
 .inventory-header {

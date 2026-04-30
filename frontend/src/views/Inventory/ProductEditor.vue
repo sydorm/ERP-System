@@ -481,11 +481,11 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  --product-editor-header-height: 74px;
+  --product-editor-header-height: 68px;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 /* === STICKY HEADER === */
@@ -493,15 +493,17 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  padding: 12px 24px;
-  min-height: var(--product-editor-header-height);
-  border-bottom: 1px solid #E6ECF3;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 0 24px;
+  height: var(--product-editor-header-height);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 90;
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
 }
 
 .header-left {
@@ -513,7 +515,7 @@ onMounted(() => {
 .header-titles {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .header-top-row {
@@ -525,80 +527,81 @@ onMounted(() => {
 .header-bottom-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .back-btn {
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   color: #64748b;
+  background: #ffffff;
   transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
 }
 
 .back-btn:hover {
   background-color: #f1f5f9;
   color: #4f46e5;
   border-color: #cbd5e1;
+  transform: translateX(-2px);
 }
 
 .header-titles h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-  line-height: 1.2;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
 .header-badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .status-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
   border-radius: 6px;
-  line-height: 1;
+  text-transform: uppercase;
 }
 .status-badge.active {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background-color: #dcfce7;
+  color: #16a34a;
 }
 .status-badge.inactive {
   background-color: #f1f5f9;
   color: #64748b;
-  border: 1px solid #e2e8f0;
 }
 
 .category-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
   border-radius: 6px;
-  background-color: #f5f3ff;
+  background-color: #eef2ff;
   color: #4f46e5;
-  border: 1px solid #ddd6fe;
-  line-height: 1;
+  text-transform: uppercase;
 }
 
 .product-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: #64748b;
 }
 
 .product-sku {
   font-size: 12px;
-  font-weight: 500;
   color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .btn-cancel {
@@ -606,80 +609,62 @@ onMounted(() => {
   color: #64748b;
   font-weight: 600;
   font-size: 13px;
-  border-radius: 12px;
-  height: 40px;
+  border-radius: 10px;
+  height: 38px;
   padding: 0 16px;
   transition: all 0.2s ease;
 }
 
-.btn-cancel:hover {
-  background: #f8fafc;
-  color: #1e293b;
-  border-color: #cbd5e1;
-}
-
 .btn-delete {
   font-weight: 600;
-  border-radius: 12px;
-  height: 40px;
+  border-radius: 10px;
+  height: 38px;
 }
 
 .btn-save {
-  background: #4f46e5;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   color: #ffffff;
-  border-radius: 12px;
-  height: 40px;
+  border-radius: 10px;
+  height: 38px;
   padding: 0 20px;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-save:hover {
-  background: #4338ca;
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
   box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+  transform: translateY(-1px);
 }
 
 /* === EDITOR CONTENT === */
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #f8fafc;
+  padding: 0; /* Remove padding to go full screen */
+  background-color: #ffffff;
 }
 
 /* === CONTENT CARD === */
 .content-card {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.1), 0 2px 8px -1px rgba(148, 163, 184, 0.05);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
+  border: none; /* Full width integration */
   width: 100%;
 }
 
 /* === TABS STYLING === */
 .product-tabs :deep(.el-tabs__header) {
   margin: 0;
-  background: #ffffff;
-  padding: 12px 24px 0 24px;
-  border-bottom: 1px solid #E6ECF3;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   position: sticky;
   top: var(--product-editor-header-height);
-  z-index: 80;
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
-}
-
-.product-tabs :deep(.el-tabs__nav-scroll) {
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-}
-
-.product-tabs :deep(.el-tabs__nav) {
-  white-space: nowrap;
+  z-index: 90;
 }
 
 .product-tabs :deep(.el-tabs__nav-wrap::after) {
@@ -687,13 +672,14 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__item) {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: #64748b;
-  height: 48px;
-  line-height: 48px;
-  padding: 0 20px !important;
+  height: 52px;
+  line-height: 52px;
+  padding: 0 16px !important;
   transition: all 0.2s ease;
+  text-transform: none;
 }
 
 .product-tabs :deep(.el-tabs__item:hover) {
@@ -711,7 +697,9 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__content) {
-  padding: 0;
+  padding: 24px; /* Padding inside the content instead of outside */
+  background: #f8fafc;
+  min-height: calc(100vh - var(--product-editor-header-height) - 52px);
 }
 
 .empty-tab {
@@ -720,6 +708,6 @@ onMounted(() => {
 }
 
 .notes-tab {
-  padding: 32px;
+  padding: 0;
 }
 </style>

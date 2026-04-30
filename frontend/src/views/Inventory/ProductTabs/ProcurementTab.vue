@@ -266,8 +266,8 @@ const openSupplierUrl = (link) => {
 
 <style scoped>
 .procurement-tab {
-  padding: 32px;
-  background: #fcfdfe;
+  padding: 0;
+  background: transparent;
   min-height: 400px;
 }
 
