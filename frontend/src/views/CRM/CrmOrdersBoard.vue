@@ -1,439 +1,99 @@
-<template>
+﻿<template>
   <div class="crm-board-page">
     <div class="crm-sticky-workbar">
 
-    <!-- ===== HEADER ===== -->
-    <div class="crm-board-header">
-      <div class="crm-header-left">
-        <div class="crm-title-row">
-          <h1 class="crm-title">Дошка замовлень</h1>
-          <span class="crm-count-badge">{{ orders.length }} замовлень</span>
-        </div>
-        <p class="crm-subtitle">Керування меблевим виробництвом</p>
-      </div>
-      <div class="crm-header-right">
-        <el-select
-          v-model="filters.managerScope"
-          class="manager-scope-select"
-          placeholder="Менеджер"
-        >
-          <el-option label="Мої заявки" value="mine" />
-          <el-option label="Усі заявки" value="all" />
-          <el-option
-            v-for="u in users"
-            :key="u.id"
-            :label="u.name"
-            :value="`manager:${u.id}`"
-          />
-        </el-select>
+    <CrmBoardHeader :orders-count="orders.length">
+      <CrmBoardToolbar
+        :users="users"
+        :filters="filters"
+        :search-query="searchQuery"
+        :sort-option="sortOption"
+        :active-controls-count="activeControlsCount"
+        :is-any-filter-active="isAnyFilterActive"
+        @update:search-query="searchQuery = $event"
+        @update:sort-option="sortOption = $event"
+        @analytics="router.push('/crm/analytics')"
+        @reset-all="resetAll"
+        @reset-filters="resetFilters"
+        @apply-filters="applyFilters"
+        @export="handleExport"
+        @new-order="openNewOrder"
+      />
+    </CrmBoardHeader>
 
-        <div class="crm-view-switch">
-          <button class="view-btn active">Kanban</button>
-          <button class="view-btn" @click="router.push('/crm/analytics')">Аналітика</button>
-        </div>
+    <CrmSummaryCards
+      :orders-count="orders.length"
+      :total-pipeline-amount="totalPipelineAmount"
+      :hot-sla-count="hotSlaCount"
+      :payment-progress="paymentProgress"
+      :today-tasks-count="todayTasks.length"
+      :overdue-tasks-count="overdueTasks.length"
+      :format-currency="formatCurrency"
+    />
 
-        <!-- SEARCH -->
-        <el-input
-          v-model="searchQuery"
-          placeholder="Пошук клієнта, тел, виробу..."
-          class="crm-search-input"
-          clearable
-          :prefix-icon="Search"
-        />
-
-        <!-- RESET ALL -->
-        <button 
-          v-if="isAnyFilterActive" 
-          class="crm-reset-all-btn" 
-          @click="resetAll"
-        >
-          ✕ Скинути все
-        </button>
-
-        <!-- FILTERS -->
-        <el-popover placement="bottom-end" :width="300" trigger="click">
-          <template #reference>
-            <button class="crm-filter-btn">
-              <el-icon><Operation /></el-icon> Фільтри
-              <el-badge v-if="activeControlsCount" :value="activeControlsCount" class="filter-badge" />
-            </button>
-          </template>
-          <div class="filter-popover-content">
-            <div class="filter-section">
-              <label>Сортування</label>
-              <el-select v-model="sortOption" placeholder="Сортувати">
-                <el-option label="За датою (нові)" value="created_desc" />
-                <el-option label="За дедлайном" value="deadline_asc" />
-                <el-option label="За сумою (спадання)" value="amount_desc" />
-                <el-option label="За пріоритетом" value="priority_desc" />
-              </el-select>
-            </div>
-            <div class="filter-section">
-              <label>Пріоритет</label>
-              <el-select v-model="filters.priority" placeholder="Всі" clearable>
-                <el-option label="Терміново" value="critical" />
-                <el-option label="Високий" value="urgent" />
-                <el-option label="Середній" value="normal" />
-                <el-option label="Низький" value="low" />
-              </el-select>
-            </div>
-            <div class="filter-section">
-              <label>Статус оплати</label>
-              <el-select v-model="filters.payment" placeholder="Всі" clearable>
-                <el-option label="Не оплачено" value="unpaid" />
-                <el-option label="Часткова" value="partial" />
-                <el-option label="Оплачено" value="paid" />
-              </el-select>
-            </div>
-            <div class="filter-section">
-              <label>Менеджер</label>
-              <el-select v-model="filters.managerScope" placeholder="Всі">
-                <el-option label="Мої заявки" value="mine" />
-                <el-option label="Усі заявки" value="all" />
-                <el-option
-                  v-for="u in users"
-                  :key="u.id"
-                  :label="u.name"
-                  :value="`manager:${u.id}`"
-                />
-              </el-select>
-            </div>
-            <div class="filter-section">
-              <el-checkbox v-model="filters.attentionOnly">Тільки потребують уваги</el-checkbox>
-            </div>
-            <div class="filter-section">
-              <label>Дедлайн</label>
-              <el-select v-model="filters.deadline" placeholder="Всі" clearable>
-                <el-option label="Прострочені" value="overdue" />
-                <el-option label="Сьогодні" value="today" />
-                <el-option label="Цього тижня" value="this_week" />
-              </el-select>
-            </div>
-            <div class="filter-footer">
-              <el-button @click="resetFilters" size="small">Скинути</el-button>
-              <el-button type="primary" size="small" @click="applyFilters">Застосувати</el-button>
-            </div>
-          </div>
-        </el-popover>
-
-        <el-dropdown trigger="click" @command="handleExport">
-          <button class="crm-export-btn">
-            <el-icon><Download /></el-icon> Експорт
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="excel">Excel (.csv)</el-dropdown-item>
-              <el-dropdown-item command="pdf" disabled>PDF (скоро)</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
-        <button class="crm-new-btn-indigo" @click="openNewOrder">
-          <el-icon><Plus /></el-icon> Нове замовлення
-        </button>
-      </div>
-    </div>
-
-    <!-- ===== TOOLS (SORT) ===== -->
-    <div class="crm-insights-row">
-      <div class="crm-insight-card primary">
-        <div class="insight-icon-badge"><el-icon><TrendCharts /></el-icon></div>
-        <div class="insight-content">
-          <span class="insight-label">Pipeline</span>
-          <div class="insight-value-row">
-            <strong>{{ formatCurrency(totalPipelineAmount) }} ₴</strong>
-            <div class="insight-sparkline">
-              <svg width="56" height="20" viewBox="0 0 64 28">
-                <path d="M0 22C12 18 24 20 36 13C48 6 56 10 64 6" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="none" stroke-linecap="round"/>
-              </svg>
-            </div>
-          </div>
-          <small>{{ orders.length }} активних замовлень</small>
-        </div>
-      </div>
-      <div class="crm-insight-card sla-card">
-        <div class="insight-icon-badge"><el-icon><Bell /></el-icon></div>
-        <div class="insight-content">
-          <span class="insight-label">Гарячі SLA</span>
-          <strong>{{ hotSlaCount }}</strong>
-          <small>потребують уваги</small>
-        </div>
-      </div>
-      <div class="crm-insight-card payment-card">
-        <div class="insight-icon-badge"><el-icon><Money /></el-icon></div>
-        <div class="insight-content">
-          <span class="insight-label">Оплата</span>
-          <strong>{{ paymentProgress }}%</strong>
-          <small>сплачених замовлень</small>
-        </div>
-      </div>
-      <div class="crm-insight-card today-card">
-        <div class="insight-icon-badge"><el-icon><Calendar /></el-icon></div>
-        <div class="insight-content">
-          <span class="insight-label">Сьогодні</span>
-          <strong>{{ todayTasks.length }}</strong>
-          <small>{{ overdueTasks.length }} прострочено</small>
-        </div>
-      </div>
-    </div>
-
-    <div
-      v-if="attentionOrders.length"
-      class="director-attention-strip"
-      :class="{ 'is-expanded': attentionExpanded }"
-    >
-      <button class="attention-strip-title" @click="attentionExpanded = !attentionExpanded">
-        <span></span>
-        <strong>Потребують уваги</strong>
-        <small>{{ attentionOrders.length }} заявок</small>
-        <em>{{ attentionExpanded ? 'Згорнути' : 'Розгорнути' }}</em>
-      </button>
-      <button
-        class="attention-filter-toggle"
-        :class="{ active: filters.attentionOnly }"
-        @click.stop="filters.attentionOnly = !filters.attentionOnly"
-      >
-        {{ filters.attentionOnly ? 'Показані тільки ці' : 'Показати на дошці' }}
-      </button>
-      <template v-if="attentionExpanded">
-        <button
-          v-for="order in attentionOrders.slice(0, 6)"
-          :key="order.id"
-          class="attention-order-pill"
-          @click="openEditor(order)"
-        >
-          <b>#{{ order.order_number }}</b>
-          <span>{{ getAttentionReasons(order).map(r => r.text).join(' · ') }}</span>
-        </button>
-      </template>
-    </div><!-- /director-attention-strip -->
+    <CrmAttentionPanel
+      :attention-orders="attentionOrders"
+      :attention-expanded="attentionExpanded"
+      :attention-only="filters.attentionOnly"
+      :get-attention-reasons="getAttentionReasons"
+      @update:attention-expanded="attentionExpanded = $event"
+      @update:attention-only="filters.attentionOnly = $event"
+      @open-order="openEditor"
+    />
     </div><!-- /crm-sticky-workbar -->
 
     <div class="crm-board-body">
 
     <!-- ===== KANBAN BOARD ===== -->
     <div class="crm-kanban" v-loading="loading">
-      <div
+      <CrmKanbanColumn
         v-for="stage in stages"
         :key="stage.key"
-        class="kanban-column"
-        :class="[dragOverStage === stage.key ? 'drag-target' : '']"
-        @dragover.prevent="dragOverStage = stage.key"
-        @dragleave="dragOverStage = null"
-        @drop.prevent="onDrop(stage.key)"
-      >
-        <!-- Column Header -->
-        <div class="kanban-column-header" :style="{ borderTopColor: stage.color }">
-          <div class="crm-col-title-row">
-            <div class="crm-col-title-left">
-              <span class="crm-col-dot" :style="{ background: stage.color }" />
-              <span class="crm-col-title">{{ stage.label }}</span>
-            </div>
-            <span class="crm-col-count-badge" :style="{ background: `${stage.color}33`, color: stage.color }">
-              {{ filteredOrdersInStage(stage.key).length }}
-            </span>
-          </div>
-          <div class="crm-col-subheader" :style="{ color: stage.color }">
-            ВСЬОГО: {{ formatCurrency(stageTotal(stage.key)) }} ₴
-          </div>
-          <div class="stage-meter" aria-hidden="true">
-            <span :style="{ width: `${stageShare(stage.key)}%`, background: stage.color }" />
-          </div>
-        </div>
-
-        <!-- Cards -->
-        <div class="kanban-column-content">
-          <div v-if="!filteredOrdersInStage(stage.key).length" class="stage-empty-state">
-            <span :style="{ background: stage.color }"></span>
-            <strong>Немає заявок</strong>
-            <small>Стадія готова прийняти нові замовлення</small>
-          </div>
-
-          <div
-            v-for="(order, index) in filteredOrdersInStage(stage.key)"
-            :key="order.id"
-            class="order-card"
-            :class="[{ 'is-selected': selectedOrderIds.includes(order.id) }, getOrderHealthClass(order)]"
-            :style="{ animationDelay: `${index * 50}ms` }"
-            draggable="true"
-            @dragstart="onDragStart(order)"
-            @dragend="dragOrderId = null"
-            @click="openEditor(order)"
-          >
-            <span class="card-health-rail" />
-            <!-- CHECKBOX FOR BULK ACTIONS -->
-            <div class="card-selection-overlay" @click.stop="toggleSelection(order.id)">
-              <el-checkbox 
-                :model-value="selectedOrderIds.includes(order.id)" 
-                @change="toggleSelection(order.id)" 
-                @click.stop
-              />
-            </div>
-
-            <!-- Рядок 1 -->
-            <div class="card-row-1">
-              <span class="card-order-no">#{{ order.order_number }}</span>
-              <div class="priority-wrapper" :class="order.priority">
-                <span class="priority-dot" :style="{ background: getPriorityColor(order.priority) }" />
-                <span class="priority-text" :style="{ color: getPriorityColor(order.priority) }">
-                  {{ getPriorityLabel(order.priority) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Рядок 2 (джерело/компанія) -->
-            <div class="card-row-2 card-source-row" v-if="getLeadSourceLabel(order) || getCounterpartyName(order.counterparty_id)">
-              <span
-                class="clickable-client"
-                v-if="getCounterpartyName(order.counterparty_id)"
-                @click.stop="openClientProfile(order.counterparty_id)"
-              >
-                {{ getCounterpartyName(order.counterparty_id) }}
-              </span>
-              <span v-if="getLeadSourceLabel(order)" class="lead-source-badge">
-                {{ getLeadSourceLabel(order) }}
-              </span>
-            </div>
-
-            <!-- Назва виробу -->
-            <div class="order-card-title">
-              {{ order.product_name || 'Індивідуальне замовлення' }}
-            </div>
-
-            <!-- Рядок 4: Сума + Дедлайн -->
-            <div class="card-row-financial">
-              <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
-              <span 
-                class="deadline-chip" 
-                v-if="getOrderDeadline(order)"
-                :class="getDeadlineClass(getOrderDeadline(order))"
-              >
-                📅 {{ formatDate(getOrderDeadline(order)) }} <span v-if="getDeadlineDaysText(getOrderDeadline(order))">· {{ getDeadlineDaysText(getOrderDeadline(order)) }}</span>
-              </span>
-            </div>
-
-            <!-- Рядок 5: Бейдж оплати + SLA таймер -->
-            <div class="card-badges">
-              <span class="payment-badge" :class="`payment-${order.payment_status}`">
-                ● {{ getPaymentLabel(order.payment_status) }}
-              </span>
-              <span
-                v-if="getSlaLevel(order.id) === 'warning'"
-                class="sla-badge sla-warning"
-              >⏱ {{ getSlaHours(order.id) }} год</span>
-              <span
-                v-else-if="getSlaLevel(order.id) === 'critical' || getSlaLevel(order.id) === 'urgent'"
-                class="sla-badge sla-critical"
-              >🔴 {{ getSlaHours(order.id) }} год</span>
-            </div>
-
-            <!-- Contact Warnings (Only for New and Payment stages) -->
-            <template v-if="['new', 'payment'].includes(order.crm_stage)">
-              <div v-if="getAttentionReason(order)" class="card-next-action" :class="getAttentionClass(order)">
-                <el-icon><Bell /></el-icon>
-                <span>{{ getAttentionReason(order) }}</span>
-              </div>
-
-              <div class="next-contact-chip" :class="getNextContactClass(order)">
-                <el-icon><Clock /></el-icon>
-                <span>{{ getNextContactLabel(order) }}</span>
-              </div>
-            </template>
-
-            <!-- Розділювач -->
-            <div class="card-divider"></div>
-
-            <!-- Останній контакт -->
-            <div class="card-last-contact" v-if="order.last_contact">
-              <el-icon v-if="isReminderToday(order.next_contact_at)" class="contact-channel-icon reminder"><Bell /></el-icon>
-              <el-icon v-else class="contact-channel-icon" :class="order.last_contact.communication_type">
-                <component :is="getChannelIcon(order.last_contact.communication_type)" />
-              </el-icon>
-              <span class="contact-result" :class="order.last_contact.result">
-                {{ getContactResultLabel(order.last_contact.result) }}
-              </span>
-              <span class="contact-time">{{ formatRelativeTime(order.last_contact.contacted_at) }}</span>
-            </div>
-
-            <!-- Іконки + аватар -->
-            <el-tooltip :content="getManagerName(getOrderManagerId(order))" placement="top">
-              <div class="card-manager-row">
-                <div class="card-avatar">
-                  <img v-if="getManagerAvatar(getOrderManagerId(order))" :src="getManagerAvatar(getOrderManagerId(order))" alt="avatar" />
-                  <span v-else>{{ getManagerInitials(getOrderManagerId(order)) }}</span>
-                </div>
-                <span class="manager-label">Менеджер:</span>
-                <span class="manager-name">{{ getManagerName(getOrderManagerId(order)) }}</span>
-              </div>
-            </el-tooltip>
-
-            <div class="card-footer-new">
-              <div class="card-comm-channels">
-                <el-tooltip content="Подзвонити" placement="top">
-                  <span class="channel-icon phone" @click.stop="handleComm(order, 'phone')"><el-icon><Phone /></el-icon></span>
-                </el-tooltip>
-                <el-tooltip content="Viber / коментар" placement="top">
-                  <span class="channel-icon viber" @click.stop="handleComm(order, 'viber')"><el-icon><ChatDotRound /></el-icon></span>
-                </el-tooltip>
-                <el-tooltip content="Telegram" placement="top">
-                  <span class="channel-icon telegram" @click.stop="handleComm(order, 'telegram')"><el-icon><Promotion /></el-icon></span>
-                </el-tooltip>
-                <el-tooltip content="Instagram" placement="top">
-                  <span class="channel-icon instagram" @click.stop="handleComm(order, 'instagram')"><el-icon><Camera /></el-icon></span>
-                </el-tooltip>
-              </div>
-              <div class="card-meta-right">
-                <el-tooltip content="Підказка по заявці" placement="top">
-                  <el-popover placement="top-end" :width="290" trigger="click" popper-class="crm-hint-popover">
-                    <template #reference>
-                      <button class="card-hint-btn" @click.stop>
-                        <el-icon><MagicStick /></el-icon>
-                      </button>
-                    </template>
-                    <div class="hint-popover-content" @click.stop>
-                      <div class="hint-popover-title">
-                        <el-icon><MagicStick /></el-icon>
-                        Підказка по заявці
-                      </div>
-                      <ul v-if="getOrderHints(order).length" class="hint-list">
-                        <li v-for="hint in getOrderHints(order)" :key="hint.text" :class="hint.level">
-                          {{ hint.text }}
-                        </li>
-                      </ul>
-                      <div v-else class="hint-good">Все добре. Критичних проблем немає.</div>
-                    </div>
-                  </el-popover>
-                </el-tooltip>
-                <el-dropdown trigger="click" @command="(cmd) => handleCardCommand(cmd, order)" @click.stop>
-                  <button class="card-more-btn" @click.stop>
-                    <el-icon><MoreFilled /></el-icon>
-                  </button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="open">Відкрити заявку</el-dropdown-item>
-                      <el-dropdown-item command="client" :disabled="!order.counterparty_id">Картка клієнта</el-dropdown-item>
-                      <el-dropdown-item command="call">Подзвонити</el-dropdown-item>
-                      <el-dropdown-item command="copy">Скопіювати номер</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-                <button class="card-arrow-btn" @click.stop="openEditor(order)">→</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- LOAD MORE BUTTON -->
-          <div v-if="stageHasMore[stage.key]" 
-               @click.stop="loadMore(stage.key)"
-               class="load-more-btn">
-            Завантажити ще ↓
-          </div>
-        </div>
-        
-        <button class="add-order-button" @click="openNewOrderInStage(stage.key)">
-          <el-icon><Plus /></el-icon> + ДОДАТИ ЗАМОВЛЕННЯ
-        </button>
-      </div>
+        :stage="stage"
+        :orders="filteredOrdersInStage(stage.key)"
+        :stage-total="stageTotal(stage.key)"
+        :stage-share="stageShare(stage.key)"
+        :stage-has-more="Boolean(stageHasMore[stage.key])"
+        :drag-over-stage="dragOverStage"
+        :selected-order-ids="selectedOrderIds"
+        :get-order-health-class="getOrderHealthClass"
+        :get-counterparty-name="getCounterpartyName"
+        :get-lead-source-label="getLeadSourceLabel"
+        :get-order-deadline="getOrderDeadline"
+        :get-sla-level="getSlaLevel"
+        :get-sla-hours="getSlaHours"
+        :get-attention-reason="getAttentionReason"
+        :get-attention-class="getAttentionClass"
+        :get-order-hints="getOrderHints"
+        :get-manager-name="getManagerName"
+        :get-manager-initials="getManagerInitials"
+        :get-order-manager-id="getOrderManagerId"
+        :get-priority-color="getPriorityColor"
+        :get-priority-label="getPriorityLabel"
+        :get-deadline-class="getDeadlineClass"
+        :get-deadline-days-text="getDeadlineDaysText"
+        :get-next-contact-class="getNextContactClass"
+        :get-next-contact-label="getNextContactLabel"
+        :get-payment-label="getPaymentLabel"
+        :get-contact-result-label="getContactResultLabel"
+        :get-channel-icon="getChannelIcon"
+        :format-currency="formatCurrency"
+        :format-date="formatDate"
+        :format-relative-time="formatRelativeTime"
+        :is-reminder-today="isReminderToday"
+        @drag-over="dragOverStage = $event"
+        @drag-leave="dragOverStage = null"
+        @drop="onDrop"
+        @drag-start="onDragStart"
+        @drag-end="dragOrderId = null"
+        @open-editor="openEditor"
+        @toggle-selection="toggleSelection"
+        @open-client-profile="openClientProfile"
+        @comm="handleComm"
+        @card-command="handleCardCommand"
+        @load-more="loadMore"
+        @new-order-in-stage="openNewOrderInStage"
+      />
     </div>
 
     <!-- BULK ACTIONS BAR -->
@@ -441,12 +101,12 @@
       <div v-if="selectedOrderIds.length > 1" class="selection-bar">
         <div class="selection-info">
           <el-icon @click="clearSelection" class="close-selection"><Close /></el-icon>
-          <span>Вибрано: <strong>{{ selectedOrderIds.length }}</strong> замовлень</span>
+          <span>Р’РёР±СЂР°РЅРѕ: <strong>{{ selectedOrderIds.length }}</strong> Р·Р°РјРѕРІР»РµРЅСЊ</span>
         </div>
         <div class="selection-actions">
           <el-dropdown @command="handleBulkManager" trigger="click">
             <el-button type="primary" plain size="default">
-              Змінити менеджера <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              Р—РјС–РЅРёС‚Рё РјРµРЅРµРґР¶РµСЂР° <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -463,7 +123,7 @@
 
           <el-dropdown @command="handleBulkStage" trigger="click">
             <el-button type="primary" plain size="default">
-              Змінити статус <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              Р—РјС–РЅРёС‚Рё СЃС‚Р°С‚СѓСЃ <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -478,33 +138,33 @@
             </template>
           </el-dropdown>
 
-          <el-button type="danger" plain @click="handleBulkCancel">Скасувати</el-button>
+          <el-button type="danger" plain @click="handleBulkCancel">РЎРєР°СЃСѓРІР°С‚Рё</el-button>
         </div>
       </div>
     </transition>
 
     <!-- Modals -->
-    <el-dialog v-model="rescheduleVisible" title="Перенести передзвон" width="380px">
+    <el-dialog v-model="rescheduleVisible" title="РџРµСЂРµРЅРµСЃС‚Рё РїРµСЂРµРґР·РІРѕРЅ" width="380px">
       <div v-if="selectedTask" class="reschedule-body">
-        <label>Встановити час:</label>
+        <label>Р’СЃС‚Р°РЅРѕРІРёС‚Рё С‡Р°СЃ:</label>
         <el-date-picker
           v-model="rescheduleTime"
           type="datetime"
-          placeholder="Оберіть дату та час"
+          placeholder="РћР±РµСЂС–С‚СЊ РґР°С‚Сѓ С‚Р° С‡Р°СЃ"
           format="DD.MM.YYYY HH:mm"
           value-format="YYYY-MM-DDTHH:mm:ss"
           style="width: 100%"
         />
         <div class="quick-reschedule-grid">
-          <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 год</button>
-          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 10 })">Завтра 10:00</button>
-          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 14 })">Завтра 14:00</button>
-          <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 дні</button>
+          <button class="qr-btn" @click="quickReschedule({ minutes: 60 })">+1 РіРѕРґ</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 10 })">Р—Р°РІС‚СЂР° 10:00</button>
+          <button class="qr-btn" @click="quickReschedule({ tomorrow: true, h: 14 })">Р—Р°РІС‚СЂР° 14:00</button>
+          <button class="qr-btn" @click="quickReschedule({ days: 2, h: 10 })">+2 РґРЅС–</button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="rescheduleVisible = false">Скасувати</el-button>
-        <el-button type="primary" @click="confirmReschedule">Перенести</el-button>
+        <el-button @click="rescheduleVisible = false">РЎРєР°СЃСѓРІР°С‚Рё</el-button>
+        <el-button type="primary" @click="confirmReschedule">РџРµСЂРµРЅРµСЃС‚Рё</el-button>
       </template>
     </el-dialog>
 
@@ -532,6 +192,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 import ClientProfile from '@/views/CRM/ClientProfile.vue'
+import CrmBoardHeader from './components/CrmBoardHeader.vue'
+import CrmBoardToolbar from './components/CrmBoardToolbar.vue'
+import CrmSummaryCards from './components/CrmSummaryCards.vue'
+import CrmAttentionPanel from './components/CrmAttentionPanel.vue'
+import CrmKanbanColumn from './components/CrmKanbanColumn.vue'
 
 const clientProfileVisible = ref(false)
 const selectedClientId = ref(null)
@@ -543,8 +208,8 @@ const openClientProfile = (clientId) => {
 }
 
 const getPriorityLabel = (p) => {
-  const map = { critical: 'Критичний', urgent: 'Високий', normal: 'Середній', low: 'Низький' }
-  return map[p] || 'Середній'
+  const map = { critical: 'РљСЂРёС‚РёС‡РЅРёР№', urgent: 'Р’РёСЃРѕРєРёР№', normal: 'РЎРµСЂРµРґРЅС–Р№', low: 'РќРёР·СЊРєРёР№' }
+  return map[p] || 'РЎРµСЂРµРґРЅС–Р№'
 }
 const getPriorityColor = (p) => {
   const map = { critical: '#EF4444', urgent: '#F97316', normal: '#F59E0B', low: '#10B981' }
@@ -564,9 +229,9 @@ const getDeadlineDaysText = (deadlineStr) => {
   const now = new Date()
   const dl = new Date(deadlineStr)
   const diffDays = Math.ceil((dl - now) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return 'прострочено'
-  if (diffDays === 0) return 'сьогодні'
-  return `${diffDays} дн.`
+  if (diffDays < 0) return 'РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ'
+  if (diffDays === 0) return 'СЃСЊРѕРіРѕРґРЅС–'
+  return `${diffDays} РґРЅ.`
 }
 const isReminderToday = (nextContactAt) => {
   if (!nextContactAt) return false
@@ -583,19 +248,19 @@ const getChannelIcon = (type) => {
   return map[type] || 'ChatDotRound'
 }
 const getChannelName = (type) => {
-  const map = { phone: '📞 Телефон', viber: '💬 Viber', telegram: '✈ Telegram', instagram: '📸 Instagram' }
+  const map = { phone: 'рџ“ћ РўРµР»РµС„РѕРЅ', viber: 'рџ’¬ Viber', telegram: 'вњ€ Telegram', instagram: 'рџ“ё Instagram' }
   return map[type] || type
 }
 const getContactResultLabel = (res) => {
   const map = {
-    thinking: 'Думає',
-    no_answer: 'Не відповів',
-    confirmed: 'Підтвердив',
-    refused: 'Відмовився',
-    THINKING: 'Думає',
-    NO_ANSWER: 'Не відповів',
-    CONFIRMED: 'Підтвердив',
-    REFUSED: 'Відмовився'
+    thinking: 'Р”СѓРјР°С”',
+    no_answer: 'РќРµ РІС–РґРїРѕРІС–РІ',
+    confirmed: 'РџС–РґС‚РІРµСЂРґРёРІ',
+    refused: 'Р’С–РґРјРѕРІРёРІСЃСЏ',
+    THINKING: 'Р”СѓРјР°С”',
+    NO_ANSWER: 'РќРµ РІС–РґРїРѕРІС–РІ',
+    CONFIRMED: 'РџС–РґС‚РІРµСЂРґРёРІ',
+    REFUSED: 'Р’С–РґРјРѕРІРёРІСЃСЏ'
   }
   return map[res] || res
 }
@@ -609,7 +274,7 @@ const handleComm = (order, channel) => {
       client_phone: order.client_phone
     })
   } else {
-    ElMessage.info(`Канал зв'язку: ${channel}`)
+    ElMessage.info(`РљР°РЅР°Р» Р·РІ'СЏР·РєСѓ: ${channel}`)
   }
 }
 const formatRelativeTime = (dateStr) => {
@@ -621,10 +286,10 @@ const formatRelativeTime = (dateStr) => {
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} хв тому`
-  if (diffHours < 24) return `${diffHours} год тому`
-  if (diffDays === 1) return 'вчора'
-  if (diffDays < 7) return `${diffDays} дні тому`
+  if (diffMins < 60) return `${diffMins > 0 ? diffMins : 1} С…РІ С‚РѕРјСѓ`
+  if (diffHours < 24) return `${diffHours} РіРѕРґ С‚РѕРјСѓ`
+  if (diffDays === 1) return 'РІС‡РѕСЂР°'
+  if (diffDays < 7) return `${diffDays} РґРЅС– С‚РѕРјСѓ`
   return date.toLocaleDateString('uk-UA')
 }
 
@@ -769,10 +434,10 @@ const getLeadSourceLabel = (order) => {
 const getNextContactDate = (order) => order.next_contact_at || order.next_contact_date || null
 const getNextContactLabel = (order) => {
   const value = getNextContactDate(order)
-  if (!value) return 'Контакт не заплановано'
+  if (!value) return 'РљРѕРЅС‚Р°РєС‚ РЅРµ Р·Р°РїР»Р°РЅРѕРІР°РЅРѕ'
   const date = new Date(value)
   const today = new Date().toDateString()
-  const prefix = date < new Date() ? 'Контакт прострочено' : (date.toDateString() === today ? 'Наступний контакт: сьогодні' : 'Наступний контакт')
+  const prefix = date < new Date() ? 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ' : (date.toDateString() === today ? 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚: СЃСЊРѕРіРѕРґРЅС–' : 'РќР°СЃС‚СѓРїРЅРёР№ РєРѕРЅС‚Р°РєС‚')
   return `${prefix} ${date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`
 }
 const getNextContactClass = (order) => {
@@ -794,33 +459,33 @@ const getAttentionReasons = (order) => {
   // 1. Contact-related warnings (ONLY for 'new' and 'payment')
   if (['new', 'payment'].includes(stage)) {
     if (!nextContact) {
-      reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
+      reasons.push({ text: 'РќРµРјР°С” РЅР°СЃС‚СѓРїРЅРѕРіРѕ РєРѕРЅС‚Р°РєС‚Сѓ', level: 'warning' })
     } else if (new Date(nextContact) < new Date()) {
-      reasons.push({ text: 'Контакт прострочено', level: 'critical' })
+      reasons.push({ text: 'РљРѕРЅС‚Р°РєС‚ РїСЂРѕСЃС‚СЂРѕС‡РµРЅРѕ', level: 'critical' })
     }
 
     // SLA-based contact warnings
     if (['critical', 'urgent'].includes(slaLevel)) {
-      reasons.push({ text: `Без дії ${getSlaHours(order.id)} год`, level: 'critical' })
+      reasons.push({ text: `Р‘РµР· РґС–С— ${getSlaHours(order.id)} РіРѕРґ`, level: 'critical' })
     } else if (slaLevel === 'warning') {
-      reasons.push({ text: `Затримка контакту: ${getSlaHours(order.id)} год`, level: 'warning' })
+      reasons.push({ text: `Р—Р°С‚СЂРёРјРєР° РєРѕРЅС‚Р°РєС‚Сѓ: ${getSlaHours(order.id)} РіРѕРґ`, level: 'warning' })
     }
   }
 
   // 2. Deadline & Payment warnings (All stages except 'done')
   if (stage !== 'done') {
     if (!deadline) {
-      reasons.push({ text: 'Немає дедлайну', level: 'warning' })
+      reasons.push({ text: 'РќРµРјР°С” РґРµРґР»Р°Р№РЅСѓ', level: 'warning' })
     } else if (new Date(deadline) < new Date()) {
-      reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
+      reasons.push({ text: 'РџСЂРѕСЃС‚СЂРѕС‡РµРЅРёР№ РґРµРґР»Р°Р№РЅ', level: 'critical' })
     }
 
     if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0 && ['payment', 'processing'].includes(stage)) {
-      reasons.push({ text: 'Немає передоплати', level: 'warning' })
+      reasons.push({ text: 'РќРµРјР°С” РїРµСЂРµРґРѕРїР»Р°С‚Рё', level: 'warning' })
     }
 
     if (needsPaymentControl(order)) {
-      reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
+      reasons.push({ text: 'РџРѕС‚СЂС–Р±РµРЅ РєРѕРЅС‚СЂРѕР»СЊ РѕРїР»Р°С‚Рё', level: 'warning' })
     }
   }
 
@@ -861,17 +526,17 @@ const handleExport = async (type) => {
     link.click()
     document.body.removeChild(link)
   } catch (e) {
-    ElMessage.error('Помилка при експорті')
+    ElMessage.error('РџРѕРјРёР»РєР° РїСЂРё РµРєСЃРїРѕСЂС‚С–')
     console.error(e)
   }
 }
 
 const stages = [
-  { key: 'new', label: 'Нові', color: '#3D3AA8' },
-  { key: 'payment', label: 'Оплата', color: '#F97316' },
-  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
-  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
-  { key: 'done', label: 'Виконано', color: '#22C55E' }
+  { key: 'new', label: 'РќРѕРІС–', color: '#3D3AA8' },
+  { key: 'payment', label: 'РћРїР»Р°С‚Р°', color: '#F97316' },
+  { key: 'processing', label: 'Р’ СЂРѕР±РѕС‚С–', color: '#F59E0B' },
+  { key: 'production', label: 'Р’РёСЂРѕР±РЅРёС†С‚РІРѕ', color: '#8B5CF6' },
+  { key: 'done', label: 'Р’РёРєРѕРЅР°РЅРѕ', color: '#22C55E' }
 ]
 
 const fetchStage = async (stage, reset = false) => {
@@ -907,7 +572,7 @@ const fetchStage = async (stage, reset = false) => {
     }
     stageHasMore.value[stage] = res.data.length === 20
   } catch (e) {
-    ElMessage.error(`Помилка завантаження стадії ${stage}`)
+    ElMessage.error(`РџРѕРјРёР»РєР° Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ СЃС‚Р°РґС–С— ${stage}`)
   }
 }
 
@@ -934,7 +599,7 @@ const fetchAll = async () => {
       fetchSlaStatus()
     ])
   } catch (e) {
-    ElMessage.error('Помилка завантаження даних')
+    ElMessage.error('РџРѕРјРёР»РєР° Р·Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ РґР°РЅРёС…')
   } finally {
     loading.value = false
   }
@@ -963,20 +628,20 @@ const handleBulkUpdate = async (data) => {
   try {
     const idsString = selectedOrderIds.value.join('&ids=')
     await api.patch(`/api/v1/orders/bulk-update?ids=${idsString}`, data)
-    ElMessage.success(`Оновлено ${selectedOrderIds.value.length} замовлень`)
+    ElMessage.success(`РћРЅРѕРІР»РµРЅРѕ ${selectedOrderIds.value.length} Р·Р°РјРѕРІР»РµРЅСЊ`)
     clearSelection()
     await fetchAll()
   } catch (e) {
-    ElMessage.error('Помилка групового оновлення')
+    ElMessage.error('РџРѕРјРёР»РєР° РіСЂСѓРїРѕРІРѕРіРѕ РѕРЅРѕРІР»РµРЅРЅСЏ')
   }
 }
 
 const handleBulkManager = (managerId) => handleBulkUpdate({ manager_id: managerId })
 const handleBulkStage = (stage) => handleBulkUpdate({ crm_stage: stage })
 const handleBulkCancel = () => {
-  ElMessageBox.confirm('Ви впевнені, що хочете скасувати вибрані замовлення?', 'Увага', {
-    confirmButtonText: 'Так, скасувати',
-    cancelButtonText: 'Ні',
+  ElMessageBox.confirm('Р’Рё РІРїРµРІРЅРµРЅС–, С‰Рѕ С…РѕС‡РµС‚Рµ СЃРєР°СЃСѓРІР°С‚Рё РІРёР±СЂР°РЅС– Р·Р°РјРѕРІР»РµРЅРЅСЏ?', 'РЈРІР°РіР°', {
+    confirmButtonText: 'РўР°Рє, СЃРєР°СЃСѓРІР°С‚Рё',
+    cancelButtonText: 'РќС–',
     type: 'warning'
   }).then(() => {
     handleBulkUpdate({ status: 'cancelled' })
@@ -985,167 +650,16 @@ const handleBulkCancel = () => {
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 
-const getAttentionReason = (order) => {
-  return getAttentionReasons(order)[0]?.text || ''
-}
-
-const getAttentionClass = (order) => {
-  const first = getAttentionReasons(order)[0]
-  if (first?.level === 'critical') return 'attention-critical'
-  if (first?.level === 'warning') return 'attention-warning'
-  return 'attention-info'
-}
-
-const handleExport = async (type) => {
-  if (type === 'pdf') return
-  
-  try {
-    const response = await api.get('/api/v1/orders/export', {
-      responseType: 'blob'
-    })
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    const date = new Date().toISOString().slice(0, 10)
-    link.setAttribute('download', `orders_export_${date}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  } catch (e) {
-    ElMessage.error('Помилка при експорті')
-    console.error(e)
-  }
-}
-
-const stages = [
-  { key: 'new', label: 'Нові', color: '#3D3AA8' },
-  { key: 'payment', label: 'Оплата', color: '#F97316' },
-  { key: 'processing', label: 'В роботі', color: '#F59E0B' },
-  { key: 'production', label: 'Виробництво', color: '#8B5CF6' },
-  { key: 'done', label: 'Виконано', color: '#22C55E' }
-]
-
-const fetchStage = async (stage, reset = false) => {
-  if (reset) stageSkip.value[stage] = 0
-  try {
-    const res = await api.get(
-      `/api/v1/orders?crm_stage=${stage}&limit=20&skip=${stageSkip.value[stage]}`
-    )
-    
-    const ordersWithContacts = await Promise.all(
-      res.data.map(async (order) => {
-        try {
-          const contactsRes = await api.get(`/api/v1/crm/orders/${order.id}/contacts`)
-          if (contactsRes.data && contactsRes.data.length > 0) {
-            order.last_contact = contactsRes.data[0]
-          } else {
-            order.last_contact = null
-          }
-        } catch (err) {
-          order.last_contact = null
-        }
-        return order
-      })
-    )
-
-    if (reset) {
-      orders.value = orders.value
-        .filter(o => o.crm_stage !== stage)
-        .concat(ordersWithContacts)
-    } else {
-      const newIds = new Set(ordersWithContacts.map(o => o.id))
-      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(ordersWithContacts)
-    }
-    stageHasMore.value[stage] = res.data.length === 20
-  } catch (e) {
-    ElMessage.error(`Помилка завантаження стадії ${stage}`)
-  }
-}
-
-const fetchAll = async () => {
-  loading.value = true
-  try {
-    if (!userStore.user) await userStore.fetchUser().catch(() => {})
-    if (!filters.value.managerScope) filters.value.managerScope = defaultManagerScope.value
-
-    const [cpRes, usersRes, tasksRes, leadSourceRes] = await Promise.all([
-      api.get('/api/v1/counterparties?limit=500'),
-      api.get('/users/colleagues'),
-      api.get('/api/v1/crm/tasks/today'),
-      api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] }))
-    ])
-    counterparties.value = cpRes.data
-    users.value = usersRes.data
-    todayTasks.value = tasksRes.data
-    leadSources.value = leadSourceRes.data || []
-
-    // Fetch all stages + SLA status in parallel
-    await Promise.all([
-      ...stages.map(s => fetchStage(s.key, true)),
-      fetchSlaStatus()
-    ])
-  } catch (e) {
-    ElMessage.error('Помилка завантаження даних')
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadMore = async (stage) => {
-  stageSkip.value[stage] += 20
-  await fetchStage(stage, false)
-}
-
-// Bulk Actions Logic
-const toggleSelection = (id) => {
-  const index = selectedOrderIds.value.indexOf(id)
-  if (index === -1) {
-    selectedOrderIds.value.push(id)
-  } else {
-    selectedOrderIds.value.splice(index, 1)
-  }
-}
-
-const clearSelection = () => {
-  selectedOrderIds.value = []
-}
-
-const handleBulkUpdate = async (data) => {
-  try {
-    const idsString = selectedOrderIds.value.join('&ids=')
-    await api.patch(`/api/v1/orders/bulk-update?ids=${idsString}`, data)
-    ElMessage.success(`Оновлено ${selectedOrderIds.value.length} замовлень`)
-    clearSelection()
-    await fetchAll()
-  } catch (e) {
-    ElMessage.error('Помилка групового оновлення')
-  }
-}
-
-const handleBulkManager = (managerId) => handleBulkUpdate({ manager_id: managerId })
-const handleBulkStage = (stage) => handleBulkUpdate({ crm_stage: stage })
-const handleBulkCancel = () => {
-  ElMessageBox.confirm('Ви впевнені, що хочете скасувати вибрані замовлення?', 'Увага', {
-    confirmButtonText: 'Так, скасувати',
-    cancelButtonText: 'Ні',
-    type: 'warning'
-  }).then(() => {
-    handleBulkUpdate({ status: 'cancelled' })
-  })
-}
-
-const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 const getManagerName = (id) => {
-  if (!id) return 'Без менеджера'
+  if (!id) return 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
   const user = users.value.find(u => u.id === id)
-  if (user) return user.name || user.full_name || 'Без менеджера'
+  if (user) return user.name || user.full_name || 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
   // Never show raw UUID/ID on UI
-  return 'Без менеджера'
+  return 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°'
 }
 const getManagerInitials = (id) => {
   const name = getManagerName(id)
-  if (name === 'Без менеджера') return '?'
+  if (name === 'Р‘РµР· РјРµРЅРµРґР¶РµСЂР°') return '?'
   return name
     .split(' ')
     .filter(Boolean)
@@ -1252,7 +766,7 @@ const getPriorityDotClass = (p) => {
   if (p === 'normal') return 'dot-yellow'
   return 'dot-green'
 }
-const getPaymentLabel = (s) => ({ unpaid: 'НЕ ОПЛАЧЕНО', partial: 'ЧАСТКОВА', paid: 'ОПЛАЧЕНО' }[s] || s)
+const getPaymentLabel = (s) => ({ unpaid: 'РќР• РћРџР›РђР§Р•РќРћ', partial: 'Р§РђРЎРўРљРћР’Рђ', paid: 'РћРџР›РђР§Р•РќРћ' }[s] || s)
 
 const openEditor = (o) => router.push(`/crm/orders/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
@@ -1277,12 +791,12 @@ const handleCardCommand = async (command, order) => {
   if (command === 'copy') {
     const value = order.client_phone || order.order_number || ''
     if (!value) {
-      ElMessage.warning('Немає даних для копіювання')
+      ElMessage.warning('РќРµРјР°С” РґР°РЅРёС… РґР»СЏ РєРѕРїС–СЋРІР°РЅРЅСЏ')
       return
     }
     try {
       await navigator.clipboard.writeText(value)
-      ElMessage.success('Скопійовано')
+      ElMessage.success('РЎРєРѕРїС–Р№РѕРІР°РЅРѕ')
     } catch {
       ElMessage.info(value)
     }
@@ -1298,7 +812,7 @@ const completeTask = async (task) => {
   try {
     await api.put(`/api/v1/crm/tasks/${task.id}/complete`)
     fetchAll()
-  } catch { ElMessage.error('Помилка') }
+  } catch { ElMessage.error('РџРѕРјРёР»РєР°') }
 }
 
 const openReschedule = (task) => {
@@ -1319,9 +833,9 @@ const confirmReschedule = async () => {
   try {
     await api.put(`/api/v1/crm/tasks/${selectedTask.value.id}/reschedule`, { scheduled_at: rescheduleTime.value })
     rescheduleVisible.value = false
-    ElMessage.success('Завдання перенесено')
+    ElMessage.success('Р—Р°РІРґР°РЅРЅСЏ РїРµСЂРµРЅРµСЃРµРЅРѕ')
     fetchAll()
-  } catch { ElMessage.error('Помилка') }
+  } catch { ElMessage.error('РџРѕРјРёР»РєР°') }
 }
 
 const dragOrderId = ref(null)
@@ -1334,7 +848,7 @@ const onDrop = async (stage) => {
     order.crm_stage = stage
     try {
       await api.patch(`/api/v1/orders/${oid}/stage?stage=${stage}`)
-    } catch { ElMessage.error('Помилка оновлення статусу') }
+    } catch { ElMessage.error('РџРѕРјРёР»РєР° РѕРЅРѕРІР»РµРЅРЅСЏ СЃС‚Р°С‚СѓСЃСѓ') }
   }
   dragOverStage.value = null
 }
@@ -1344,14 +858,14 @@ onActivated(() => fetchAll())
 watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 </script>
 
-<style scoped>
+<style>
 /* ============================================================
-   CRM BOARD — Unified design system (matches Purchases module)
-   Tokens: primary #1463FF · bg #F5F8FC · border #E6ECF3
-           success #15B97A · warning #F59E0B · danger #F04452
+   CRM BOARD вЂ” Unified design system (matches Purchases module)
+   Tokens: primary #1463FF В· bg #F5F8FC В· border #E6ECF3
+           success #15B97A В· warning #F59E0B В· danger #F04452
    ============================================================ */
 
-/* ───── Page ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Page в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-board-page {
   background: var(--erp-bg-page, #F5F8FC);
   min-height: calc(100vh - 60px);
@@ -1359,7 +873,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   padding: 0 0 32px;
 }
 
-/* ───── Sticky workbar ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Sticky workbar в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-sticky-workbar {
   position: sticky;
   top: 0;
@@ -1372,7 +886,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
 }
 
-/* ───── Header ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Header в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-board-header {
   display: flex;
   justify-content: space-between;
@@ -1533,7 +1047,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   box-shadow: 0 6px 18px rgba(20, 99, 255, 0.3);
 }
 
-/* ───── Filter popover ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Filter popover в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .filter-popover-content { padding: 4px 0; }
 .filter-section { margin-bottom: 12px; }
 .filter-section label {
@@ -1554,7 +1068,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   margin-top: 4px;
 }
 
-/* ───── KPI Insight Cards ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ KPI Insight Cards в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-insights-row {
   display: grid;
   grid-template-columns: 1.25fr repeat(3, 1fr);
@@ -1653,7 +1167,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .crm-insight-card.primary small { color: rgba(255,255,255,0.68); }
 .crm-insight-card.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(20,99,255,0.35); }
 
-/* ───── Attention strip ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Attention strip в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .director-attention-strip {
   display: flex;
   align-items: center;
@@ -1732,7 +1246,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   color: #FFF;
 }
 
-/* ───── Kanban Board ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Kanban Board в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .crm-kanban {
   display: flex;
   gap: 12px;
@@ -1919,7 +1433,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 }
 .load-more-btn:hover { background: rgba(20,99,255,0.1); }
 
-/* ───── Order Card ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Order Card в”Ђв”Ђв”Ђв”Ђв”Ђ */
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2290,7 +1804,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   font-size: 0;
   transition: all 0.18s;
 }
-.card-arrow-btn::before { content: "›"; font-size: 18px; line-height: 1; }
+.card-arrow-btn::before { content: "вЂє"; font-size: 18px; line-height: 1; }
 .card-arrow-btn:hover { background: var(--erp-primary, #1463FF); color: #FFF; }
 
 .card-more-btn {
@@ -2314,7 +1828,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .clickable-client { cursor: pointer; color: var(--erp-primary, #1463FF); font-weight: 600; }
 .clickable-client:hover { text-decoration: underline; }
 
-/* ───── Selection bar ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Selection bar в”Ђв”Ђв”Ђв”Ђв”Ђ */
 .selection-bar {
   position: fixed;
   bottom: 28px;
@@ -2358,7 +1872,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   color: #1B2430;
 }
 
-/* ───── Responsive ───── */
+/* в”Ђв”Ђв”Ђв”Ђв”Ђ Responsive в”Ђв”Ђв”Ђв”Ђв”Ђ */
 
 @media (max-width: 1280px) {
   .crm-board-header { flex-direction: column; align-items: flex-start; }
@@ -2387,12 +1901,12 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   .selection-actions { flex-wrap: wrap; }
 }
 
-/* ─── keep ─── */
+/* в”Ђв”Ђв”Ђ keep в”Ђв”Ђв”Ђ */
 .crm-board-header {
   align-items: center;
 }
 
-/* ─── end of styles ─── */
+/* в”Ђв”Ђв”Ђ end of styles в”Ђв”Ђв”Ђ */
 
 .ai-sparkle-btn {
   background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
