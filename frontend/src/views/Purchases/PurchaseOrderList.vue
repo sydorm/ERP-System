@@ -1,16 +1,11 @@
 <template>
   <div class="purchase-orders-page">
 
-    <!-- ===== PAGE HEADER (only "+ Нове замовлення") ===== -->
+    <!-- ===== COMPACT PAGE HEADER ===== -->
     <div class="page-header">
       <div class="header-left">
         <h1 class="page-title">Замовлення постачальникам</h1>
-        <p class="page-subtitle">Контроль закупівель матеріалів, оплат і очікуваних поставок</p>
-      </div>
-      <div class="header-actions">
-        <el-button type="primary" class="btn-primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon> Нове замовлення
-        </el-button>
+        <p class="page-subtitle">Управління закупівлями та поставками</p>
       </div>
     </div>
 
@@ -49,7 +44,7 @@
             ref="searchInputRef"
             type="text"
             v-model="filters.search"
-            placeholder="Пошук за номером, постачальником..."
+            placeholder="Пошук за номером, постачальником, матеріалом..."
           />
         </div>
 
@@ -149,10 +144,11 @@
         <el-button class="toolbar-btn icon-only" @click="fetchOrders" title="Оновити">
           <el-icon><Refresh /></el-icon>
         </el-button>
-
-        <!-- Settings -->
-        <el-button class="toolbar-btn icon-only" title="Налаштування колонок">
-          <el-icon><Setting /></el-icon>
+        
+        <!-- Create -->
+        <el-button type="primary" class="btn-primary-toolbar" @click="handleCreate">
+          <el-icon><Plus /></el-icon>
+          <span>Нове замовлення</span>
         </el-button>
       </div>
 
@@ -756,16 +752,16 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   padding: 0 0 24px;
 }
 
-/* ===== PAGE HEADER ===== */
+/* ===== COMPACT PAGE HEADER ===== */
 .page-header { 
   display: flex; 
   justify-content: space-between; 
-  align-items: flex-end; 
-  padding: 0 24px;
+  align-items: center; 
+  padding: 8px 24px 0;
 }
 
 .page-title { 
-  font-size: 26px; 
+  font-size: 22px; 
   font-weight: 800; 
   color: var(--erp-text-heading); 
   margin: 0; 
@@ -773,43 +769,24 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 }
 
 .page-subtitle { 
-  font-size: 14px; 
+  font-size: 13px; 
   color: var(--erp-text-muted); 
-  margin: 4px 0 0; 
+  margin: 2px 0 0; 
 }
 
-.header-actions { 
-  display: flex; 
-  gap: 12px; 
-}
-
-.btn-outline { 
-  background: #FFF; 
-  border: 1px solid var(--erp-border); 
-  border-radius: var(--erp-radius-btn); 
-  height: 40px; 
-  font-weight: 600; 
-  color: var(--erp-text-secondary); 
-}
-
-.btn-secondary { 
-  background: var(--erp-bg-surface-soft); 
-  border: 1px solid var(--erp-border); 
-  border-radius: var(--erp-radius-btn); 
-  height: 40px; 
-  font-weight: 600; 
-  color: var(--erp-text-primary); 
-}
-
-.btn-primary { 
+.btn-primary-toolbar { 
   background: var(--erp-primary); 
   border: none; 
   border-radius: var(--erp-radius-btn); 
   height: 40px; 
-  padding: 0 20px; 
+  padding: 0 16px; 
   font-weight: 700; 
   color: #FFF; 
-  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.15); 
+  box-shadow: 0 4px 10px rgba(20, 99, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
 }
 
 /* ===== KPI GRID ===== */
@@ -823,28 +800,28 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 .kpi-card { 
   background: #FFF; 
   border-radius: var(--erp-radius-kpi); 
-  padding: 20px; 
+  padding: 16px 18px; 
   box-shadow: var(--erp-shadow-soft); 
   display: flex; 
-  align-items: flex-start; 
-  gap: 16px; 
-  height: 116px;
+  align-items: center; 
+  gap: 14px; 
+  height: 104px;
   border: 1px solid var(--erp-border);
   transition: transform 0.2s, shadow 0.2s;
 }
 
 .kpi-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--erp-shadow-hover);
 }
 
 .kpi-icon-badge { 
-  width: 48px; 
-  height: 48px; 
-  border-radius: 14px; 
+  width: 44px; 
+  height: 44px; 
+  border-radius: 12px; 
   display: grid; 
   place-items: center; 
-  font-size: 22px; 
+  font-size: 20px; 
   flex-shrink: 0;
 }
 
@@ -955,39 +932,39 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 /* ===== TOOLBAR BUTTONS ===== */
 .toolbar-btn {
-  height: 42px;
-  border: 1px solid var(--erp-border);
-  background: var(--erp-bg-page);
+  height: 40px;
+  border-radius: 10px;
+  border-color: var(--erp-border);
   color: var(--erp-text-secondary);
-  border-radius: var(--erp-radius-btn);
   font-weight: 600;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 14px;
-  white-space: nowrap;
-  transition: all 0.18s;
+  padding: 0 12px;
+  transition: all 0.2s;
 }
-.toolbar-btn:hover {
-  background: #FFF;
-  border-color: var(--erp-primary);
-  color: var(--erp-primary);
-}
-.toolbar-btn.icon-only {
-  width: 42px;
-  padding: 0;
-  justify-content: center;
-}
-.btn-label { font-size: 13px; }
 
-/* Filters button with active state */
-.filters-btn { }
+.toolbar-btn:hover {
+  background: var(--erp-bg-surface-soft);
+  color: var(--erp-primary);
+  border-color: var(--erp-primary-light);
+}
+
+.toolbar-btn .btn-label {
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.toolbar-btn.icon-only {
+  width: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
 .filters-btn.filters-active {
   background: var(--erp-primary-light);
-  border-color: var(--erp-primary);
   color: var(--erp-primary);
+  border-color: var(--erp-primary);
 }
+
 .filter-badge :deep(.el-badge__content) {
   font-size: 10px;
   height: 16px;
