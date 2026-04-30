@@ -57,6 +57,41 @@ async def create_company(
     db.refresh(db_obj)
     return db_obj
 
+@router.get("/default", response_model=CompanyResponse)
+async def get_default_company(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get the default company."""
+    company = db.query(Company).filter(
+        Company.is_default == True,
+        Company.is_active == True
+    ).first()
+    if not company:
+        company = db.query(Company).filter(Company.is_active == True).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
+
+
+@router.patch("/default/cost-method")
+async def update_cost_method(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update the cost price calculation method for the default company."""
+    company = db.query(Company).filter(Company.id == current_user.company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    method = data.get("cost_method", "last_price")
+    if method not in ("none", "last_price", "weighted_average"):
+        raise HTTPException(status_code=422, detail="Invalid cost_method value")
+    company.cost_method = method
+    db.commit()
+    return {"cost_method": company.cost_method}
+
+
 @router.get("/{company_id}", response_model=CompanyResponse)
 async def get_company(
     company_id: UUID,
@@ -135,41 +170,6 @@ async def fetch_tax_rates(
     db.commit()
     db.refresh(company)
     return company
-
-@router.get("/default", response_model=CompanyResponse)
-async def get_default_company(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Get the default company."""
-    company = db.query(Company).filter(
-        Company.is_default == True,
-        Company.is_active == True
-    ).first()
-    if not company:
-        company = db.query(Company).filter(Company.is_active == True).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return company
-
-
-@router.patch("/default/cost-method")
-async def update_cost_method(
-    data: dict,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Update the cost price calculation method for the default company."""
-    company = db.query(Company).filter(Company.id == current_user.company_id).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    method = data.get("cost_method", "last_price")
-    if method not in ("none", "last_price", "weighted_average"):
-        raise HTTPException(status_code=422, detail="Invalid cost_method value")
-    company.cost_method = method
-    db.commit()
-    return {"cost_method": company.cost_method}
-
 
 @router.get("/default/accounts", response_model=List[dict])
 async def get_default_company_accounts(
