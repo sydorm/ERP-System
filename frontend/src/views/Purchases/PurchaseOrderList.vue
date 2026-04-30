@@ -3,79 +3,79 @@
     <div class="po-top">
       <div class="po-header">
         <div>
-          <h1>Замовлення постачальникам</h1>
-          <p>Контроль закупівель матеріалів, оплат і очікуваних поставок</p>
+          <h1 style="font-size: var(--erp-space-8); font-weight: 800; color: var(--erp-text-heading); margin: 0;">Замовлення постачальникам</h1>
+          <p style="font-size: 13px; color: var(--erp-text-muted); margin-top: 4px;">Контроль закупівель матеріалів, оплат і очікуваних поставок</p>
         </div>
         <div class="po-header-actions">
-          <button class="po-secondary-btn" @click="openNeedsDrawer">
+          <button class="po-secondary-btn" @click="openNeedsDrawer" style="background: var(--erp-bg-card); border: 1px solid var(--erp-border); border-radius: var(--erp-radius-btn); padding: 0 16px; height: 42px; font-weight: 600; color: var(--erp-text-main); display: flex; align-items: center; gap: 8px; cursor: pointer;">
             <el-icon><Box /></el-icon>
             Створити з потреб виробництва
           </button>
-          <button class="po-primary-btn" @click="handleCreate">
+          <button class="po-primary-btn" @click="handleCreate" style="background: var(--erp-primary); border: none; border-radius: var(--erp-radius-btn); padding: 0 16px; height: 42px; font-weight: 600; color: #FFFFFF; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(20, 99, 255, 0.2);">
             <el-icon><Plus /></el-icon>
             Нове замовлення
           </button>
         </div>
       </div>
 
-      <div class="po-kpis" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px;">
+      <div class="po-kpis" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
         
         <!-- Всього замовлень -->
-        <div class="po-kpi-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+        <div class="po-kpi-card" style="background: var(--erp-bg-card); border: 1px solid var(--erp-border); border-radius: var(--erp-radius-kpi); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--erp-shadow-soft);">
           <div>
-            <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Всього замовлень</span>
-            <strong style="font-size: 26px; font-weight: 800; color: #0F172A; display: block; margin-top: 4px;">{{ orders.length }}</strong>
-            <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">активні закупівлі</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--erp-text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Всього замовлень</span>
+            <strong style="font-size: 28px; font-weight: 800; color: var(--erp-text-heading); display: block; margin-top: 4px;">{{ orders.length }}</strong>
+            <span style="font-size: 12px; color: var(--erp-text-muted); margin-top: 2px; display: block;">активні закупівлі</span>
           </div>
-          <div style="background: #F1F5F9; color: #64748B; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+          <div style="background: #F1F5F9; color: var(--erp-text-muted); width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;">
             <el-icon><List /></el-icon>
           </div>
         </div>
 
         <!-- Очікується поставка -->
-        <div class="po-kpi-card" style="background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+        <div class="po-kpi-card" style="background: var(--erp-blue-bg); border: 1px solid #DBEAFE; border-radius: var(--erp-radius-kpi); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--erp-shadow-soft);">
           <div>
-            <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.5px;">Очікується поставка</span>
-            <strong style="font-size: 26px; font-weight: 800; color: #1E40AF; display: block; margin-top: 4px;">{{ expectedOrders.length }}</strong>
-            <span style="font-size: 11px; color: #60A5FA; margin-top: 2px; display: block;">в дорозі</span>
+            <span style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.5px;">Очікується поставка</span>
+            <strong style="font-size: 28px; font-weight: 800; color: #1E40AF; display: block; margin-top: 4px;">{{ expectedOrders.length }}</strong>
+            <span style="font-size: 12px; color: #60A5FA; margin-top: 2px; display: block;">в дорозі</span>
           </div>
-          <div style="background: #DBEAFE; color: #2563EB; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+          <div style="background: #DBEAFE; color: #2563EB; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;">
             <el-icon><Van /></el-icon>
           </div>
         </div>
 
         <!-- Прострочено -->
-        <div class="po-kpi-card" style="background: #FFF1F2; border: 1px solid #FFE4E6; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+        <div class="po-kpi-card" style="background: var(--erp-danger-bg); border: 1px solid #FFE4E6; border-radius: var(--erp-radius-kpi); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--erp-shadow-soft);">
           <div>
-            <span style="font-size: 11px; font-weight: 700; color: #E11D48; text-transform: uppercase; letter-spacing: 0.5px;">Прострочено</span>
-            <strong style="font-size: 26px; font-weight: 800; color: #9F1239; display: block; margin-top: 4px;">{{ overdueOrders.length }}</strong>
-            <span style="font-size: 11px; color: #FB7185; margin-top: 2px; display: block;">потребують уваги</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--erp-danger); text-transform: uppercase; letter-spacing: 0.5px;">Прострочено</span>
+            <strong style="font-size: 28px; font-weight: 800; color: #9F1239; display: block; margin-top: 4px;">{{ overdueOrders.length }}</strong>
+            <span style="font-size: 12px; color: #FB7185; margin-top: 2px; display: block;">потребують уваги</span>
           </div>
-          <div style="background: #FFE4E6; color: #E11D48; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+          <div style="background: #FFE4E6; color: var(--erp-danger); width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;">
             <el-icon><Warning /></el-icon>
           </div>
         </div>
 
         <!-- Не оплачено -->
-        <div class="po-kpi-card" style="background: #FFFBEB; border: 1px solid #FEF3C7; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+        <div class="po-kpi-card" style="background: var(--erp-warning-bg); border: 1px solid #FEF3C7; border-radius: var(--erp-radius-kpi); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--erp-shadow-soft);">
           <div>
-            <span style="font-size: 11px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px;">Не оплачено</span>
-            <strong style="font-size: 26px; font-weight: 800; color: #92400E; display: block; margin-top: 4px;">{{ unpaidOrders.length }}</strong>
-            <span style="font-size: 11px; color: #FBBF24; margin-top: 2px; display: block;">не закрито оплатою</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--erp-warning); text-transform: uppercase; letter-spacing: 0.5px;">Не оплачено</span>
+            <strong style="font-size: 28px; font-weight: 800; color: #92400E; display: block; margin-top: 4px;">{{ unpaidOrders.length }}</strong>
+            <span style="font-size: 12px; color: #FBBF24; margin-top: 2px; display: block;">не закрито оплатою</span>
           </div>
-          <div style="background: #FEF3C7; color: #D97706; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+          <div style="background: #FEF3C7; color: var(--erp-warning); width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;">
             <el-icon><Wallet /></el-icon>
           </div>
         </div>
 
         <!-- Загальна сума -->
-        <div class="po-kpi-card" style="background: #ECFDF5; border: 1px solid #D1FAE5; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; min-height: 90px;">
+        <div class="po-kpi-card" style="background: var(--erp-success-bg); border: 1px solid #D1FAE5; border-radius: var(--erp-radius-kpi); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--erp-shadow-soft);">
           <div>
-            <span style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">Загальна сума</span>
-            <strong style="font-size: 26px; font-weight: 800; color: #065F46; display: block; margin-top: 4px;">{{ formatCurrency(totalAmount) }}</strong>
-            <span style="font-size: 11px; color: #34D399; margin-top: 2px; display: block;">сума закупівель</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--erp-success); text-transform: uppercase; letter-spacing: 0.5px;">Загальна сума</span>
+            <strong style="font-size: 28px; font-weight: 800; color: #065F46; display: block; margin-top: 4px;">{{ formatCurrency(totalAmount) }}</strong>
+            <span style="font-size: 12px; color: #34D399; margin-top: 2px; display: block;">сума закупівель</span>
           </div>
-          <div style="background: #D1FAE5; color: #059669; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px;">
+          <div style="background: #D1FAE5; color: var(--erp-success); width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px;">
             <el-icon><Money /></el-icon>
           </div>
         </div>
@@ -113,8 +113,8 @@
         <div 
           class="po-filter-chip" 
           @click="filters.onlyOverdue = !filters.onlyOverdue"
-          style="display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E2E8F0; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.15s;"
-          :style="filters.onlyOverdue ? 'border-color: #F43F5E; background: #FFF1F2; color: #E11D48;' : ''"
+          style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--erp-radius-btn); border: 1px solid var(--erp-border); background: var(--erp-bg-card); font-size: 14px; font-weight: 600; color: var(--erp-text-muted); cursor: pointer; transition: all 0.2s;"
+          :style="filters.onlyOverdue ? 'border-color: var(--erp-danger); background: var(--erp-danger-bg); color: var(--erp-danger);' : ''"
         >
           <el-icon v-if="filters.onlyOverdue"><Check /></el-icon>
           <span>Тільки прострочені</span>
@@ -123,8 +123,8 @@
         <div 
           class="po-filter-chip" 
           @click="filters.onlyNotReceived = !filters.onlyNotReceived"
-          style="display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E2E8F0; background: #FFFFFF; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.15s;"
-          :style="filters.onlyNotReceived ? 'border-color: #3B82F6; background: #EFF6FF; color: #1D4ED8;' : ''"
+          style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--erp-radius-btn); border: 1px solid var(--erp-border); background: var(--erp-bg-card); font-size: 14px; font-weight: 600; color: var(--erp-text-muted); cursor: pointer; transition: all 0.2s;"
+          :style="filters.onlyNotReceived ? 'border-color: var(--erp-primary); background: var(--erp-blue-bg); color: var(--erp-primary);' : ''"
         >
           <el-icon v-if="filters.onlyNotReceived"><Check /></el-icon>
           <span>Тільки неотримані</span>
@@ -873,14 +873,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 }
 
 .po-table :deep(th.el-table__cell) {
-  padding: 8px 10px !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  background: #f8fafc !important;
-  color: #334155;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  padding: 12px 10px !important;
+  border-bottom: 1px solid var(--erp-border) !important;
+  background: #F8FAFC !important;
+  color: var(--erp-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .po-table :deep(td.el-table__cell) {
@@ -959,21 +959,21 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   white-space: nowrap;
 }
 
-.status-draft { background: #f1f5f9; color: #475569; }
-.status-ordered { background: #dbeafe; color: #1d4ed8; }
-.status-expected { background: #eef2ff; color: #4338ca; }
-.status-partial_received { background: #fffbeb; color: #b45309; }
-.status-received { background: #dcfce7; color: #15803d; }
-.status-cancelled { background: #ffe4e6; color: #be123c; }
+.status-draft { background: var(--erp-bg-page); color: var(--erp-text-muted); }
+.status-ordered { background: var(--erp-blue-bg); color: var(--erp-primary); }
+.status-expected { background: var(--erp-info-bg); color: var(--erp-info); }
+.status-partial_received { background: var(--erp-warning-bg); color: var(--erp-warning); }
+.status-received { background: var(--erp-success-bg); color: var(--erp-success); }
+.status-cancelled { background: var(--erp-danger-bg); color: var(--erp-danger); }
 
-.payment-unpaid { background: #fff1f2; color: #be123c; }
-.payment-partial { background: #fef3c7; color: #b45309; }
-.payment-paid { background: #dcfce7; color: #15803d; }
+.payment-unpaid { background: var(--erp-danger-bg); color: var(--erp-danger); }
+.payment-partial { background: var(--erp-warning-bg); color: var(--erp-warning); }
+.payment-paid { background: var(--erp-success-bg); color: var(--erp-success); }
 
-.priority-low { background: #f1f5f9; color: #475569; }
-.priority-medium { background: #e0f2fe; color: #0369a1; }
-.priority-high { background: #fef3c7; color: #b45309; }
-.priority-urgent { background: #ffe4e6; color: #be123c; }
+.priority-low { background: var(--erp-bg-page); color: var(--erp-text-muted); }
+.priority-medium { background: var(--erp-blue-bg); color: var(--erp-primary); }
+.priority-high { background: var(--erp-warning-bg); color: var(--erp-warning); }
+.priority-urgent { background: var(--erp-danger-bg); color: var(--erp-danger); }
 
 .expected-cell small {
   width: fit-content;

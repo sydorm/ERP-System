@@ -14,7 +14,9 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: var(--erp-bg-page);
+  color: var(--erp-text-main);
 }
 
 #app {

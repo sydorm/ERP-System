@@ -454,8 +454,9 @@ const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA')
 }
 
 .sidebar {
-  background-color: var(--sidebar-bg, #ffffff);
-  border-right: 1px solid var(--el-border-color-light);
+  background: linear-gradient(180deg, var(--erp-sidebar-start) 0%, var(--erp-sidebar-middle) 50%, var(--erp-sidebar-end) 100%);
+  border-right: none;
+  box-shadow: 4px 0 24px rgba(7, 22, 43, 0.1);
   transition: width 0.3s, background-color 0.3s;
   overflow-x: hidden;
   display: flex;
@@ -489,7 +490,8 @@ html.dark .logo {
 .logo h2 {
   margin: 0;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   white-space: nowrap;
 }
 
@@ -508,14 +510,14 @@ html.dark .custom-sidebar-menu {
 
 .custom-sidebar-menu :deep(.el-menu-item),
 .custom-sidebar-menu :deep(.el-sub-menu__title) {
-  color: var(--el-text-color-regular);
-  margin: 4px 8px;
-  border-radius: 8px;
-  height: 48px;
+  color: #8FA6C7 !important;
+  margin: 4px 12px;
+  border-radius: var(--erp-radius-btn);
+  height: 44px;
   line-height: normal;
   display: flex !important;
   align-items: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   position: relative;
   box-sizing: border-box;
@@ -623,12 +625,15 @@ html.dark .custom-sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__titl
 /* Custom modern active state for sidebar (Light Mode) */
 .custom-sidebar-menu :deep(.el-menu-item.is-active),
 :global(.el-menu--popup .el-menu-item.is-active) {
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  color: #4f46e5 !important;
-  box-shadow: inset -3px 0 0 0 #6366f1 !important;
-  border-right: none !important;
+  background-color: var(--erp-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.3) !important;
+  font-weight: 600;
+
+
+
   position: relative;
-  font-weight: 500;
+
 }
 
 .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
@@ -656,9 +661,9 @@ html.dark .custom-sidebar-menu :deep(.el-menu-item.is-active::before) {
 }
 
 .top-header {
-  background-color: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  background-color: var(--erp-bg-card);
+  border-bottom: 1px solid var(--erp-border);
+
   display: flex;
   justify-content: space-between;
   align-items: center;

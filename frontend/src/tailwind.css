@@ -3,24 +3,52 @@
 @tailwind utilities;
 
 :root {
-  --kimi-bg: #f8fafc;
-  --kimi-sidebar-bg: #ffffff;
-  --kimi-primary: #6366f1;
-  --kimi-primary-light: #818cf8;
-  --kimi-primary-dark: #4f46e5;
+  /* SaaS ERP 2026 Design Tokens */
+  --erp-primary: #1463FF;
+  --erp-primary-hover: #0F56E8;
+  --erp-primary-light: #EAF2FF;
   
-  --kimi-card-bg: rgba(255, 255, 255, 0.8);
-  --kimi-card-border: rgba(226, 232, 240, 0.8);
-  --kimi-glass-bg: rgba(255, 255, 255, 0.7);
-  --kimi-glass-border: rgba(255, 255, 255, 0.3);
+  --erp-bg-page: #F5F8FC;
+  --erp-bg-card: #FFFFFF;
   
-  --kimi-text-main: #1e293b;
-  --kimi-text-muted: #64748b;
+  /* Sidebar Gradients */
+  --erp-sidebar-start: #07162B;
+  --erp-sidebar-middle: #0C2345;
+  --erp-sidebar-end: #0A1D38;
   
-  --kimi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --kimi-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --kimi-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --kimi-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --erp-text-main: #1B2430;
+  --erp-text-heading: #0F1724;
+  --erp-text-muted: #5F6C7B;
+  
+  /* Status Colors & Backgrounds */
+  --erp-success: #15B97A;
+  --erp-success-bg: #E9FBF3;
+  --erp-warning: #F59E0B;
+  --erp-warning-bg: #FFF4DD;
+  --erp-danger: #F04452;
+  --erp-danger-bg: #FDECEE;
+  --erp-info: #7C4DFF;
+  --erp-info-bg: #F1EBFF;
+  --erp-blue-bg: #EAF2FF;
+  --erp-teal-bg: #E9FBFC;
+  
+  /* Geometry */
+  --erp-radius-kpi: 16px;
+  --erp-radius-card: 14px;
+  --erp-radius-btn: 10px;
+  
+  /* Spacing Scale */
+  --erp-space-1: 4px;
+  --erp-space-2: 8px;
+  --erp-space-3: 12px;
+  --erp-space-4: 16px;
+  --erp-space-5: 20px;
+  --erp-space-6: 24px;
+  --erp-space-8: 32px;
+  
+  --erp-shadow-soft: 0 6px 18px rgba(16, 24, 40, 0.04);
+  --erp-shadow-hover: 0 12px 24px rgba(16, 24, 40, 0.08);
+  --erp-border: #E6ECF3;
 }
 
 @layer base {
