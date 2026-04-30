@@ -7,6 +7,7 @@
         <div class="header-titles">
           <div class="header-top-row">
             <h2>{{ isEditMode ? 'Редагування товару' : 'Новий товар' }}</h2>
+            <span class="product-sku" v-if="form.sku && isEditMode">#{{ form.sku }}</span>
             <div class="header-badges" v-if="isEditMode">
               <span class="status-badge" :class="form.is_active ? 'active' : 'inactive'">
                 {{ form.is_active ? 'Активний' : 'В архіві' }}
@@ -17,8 +18,7 @@
             </div>
           </div>
           <div class="header-bottom-row">
-            <span class="product-title">{{ form.name || 'Новий товар' }}</span>
-            <span class="product-sku" v-if="form.sku && isEditMode">Артикул: {{ form.sku }}</span>
+            <span class="product-title">{{ form.name || 'Назва не вказана' }}</span>
           </div>
         </div>
       </div>
@@ -481,10 +481,11 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  --product-editor-header-height: 68px;
+  --product-editor-header-height: 56px;
+  --product-editor-tabs-height: 48px;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   min-height: 100vh;
 }
 
@@ -493,17 +494,17 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 0 24px;
   height: var(--product-editor-header-height);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
   flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 .header-left {
@@ -515,19 +516,20 @@ onMounted(() => {
 .header-titles {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0; /* Tightened */
 }
 
 .header-top-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .header-bottom-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: -2px; /* Pull SKU closer to title */
 }
 
 .back-btn {
@@ -535,22 +537,26 @@ onMounted(() => {
   color: #64748b;
   background: #ffffff;
   transition: all 0.2s ease;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-btn:hover {
-  background-color: #f1f5f9;
-  color: #4f46e5;
-  border-color: #cbd5e1;
+  background-color: #f8fafc;
+  color: #6366f1;
+  border-color: #6366f1;
   transform: translateX(-2px);
 }
 
 .header-titles h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
-  color: #0f172a;
+  color: #1e293b;
   letter-spacing: -0.01em;
 }
 
@@ -561,15 +567,15 @@ onMounted(() => {
 }
 
 .status-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   text-transform: uppercase;
 }
 .status-badge.active {
   background-color: #dcfce7;
-  color: #16a34a;
+  color: #15803d;
 }
 .status-badge.inactive {
   background-color: #f1f5f9;
@@ -577,66 +583,80 @@ onMounted(() => {
 }
 
 .category-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   background-color: #eef2ff;
   color: #4f46e5;
   text-transform: uppercase;
 }
 
 .product-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .product-sku {
-  font-size: 12px;
+  font-size: 13px;
   color: #94a3b8;
   font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-cancel {
   border: 1px solid #e2e8f0;
   color: #64748b;
   font-weight: 600;
-  font-size: 13px;
-  border-radius: 10px;
-  height: 38px;
-  padding: 0 16px;
+  font-size: 12px;
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 12px;
   transition: all 0.2s ease;
+  background: #fff;
+}
+.btn-cancel:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
 }
 
 .btn-delete {
   font-weight: 600;
-  border-radius: 10px;
-  height: 38px;
+  font-size: 12px;
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 12px;
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   border: none;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #ffffff;
-  border-radius: 10px;
-  height: 38px;
-  padding: 0 20px;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 16px;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-save:hover {
-  background: linear-gradient(135deg, #4338ca, #4f46e5);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
   transform: translateY(-1px);
 }
 
@@ -644,24 +664,23 @@ onMounted(() => {
 .editor-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0; /* Remove padding to go full screen */
-  background-color: #ffffff;
+  padding: 0;
+  background-color: #f1f5f9;
 }
 
 /* === CONTENT CARD === */
 .content-card {
-  background: #ffffff;
-  border: none; /* Full width integration */
+  background: transparent;
   width: 100%;
 }
 
 /* === TABS STYLING === */
 .product-tabs :deep(.el-tabs__header) {
   margin: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(15px);
   padding: 0 24px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
   position: sticky;
   top: var(--product-editor-header-height);
   z-index: 90;
@@ -672,42 +691,50 @@ onMounted(() => {
 }
 
 .product-tabs :deep(.el-tabs__item) {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: #64748b;
-  height: 52px;
-  line-height: 52px;
-  padding: 0 16px !important;
+  color: #94a3b8;
+  height: var(--product-editor-tabs-height);
+  line-height: var(--product-editor-tabs-height);
+  padding: 0 12px !important;
   transition: all 0.2s ease;
   text-transform: none;
 }
 
 .product-tabs :deep(.el-tabs__item:hover) {
-  color: #4f46e5;
+  color: #6366f1;
 }
 
 .product-tabs :deep(.el-tabs__item.is-active) {
-  color: #4f46e5;
+  color: #6366f1;
 }
 
 .product-tabs :deep(.el-tabs__active-bar) {
-  background-color: #4f46e5;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
   height: 3px;
   border-radius: 3px 3px 0 0;
 }
 
 .product-tabs :deep(.el-tabs__content) {
-  padding: 24px; /* Padding inside the content instead of outside */
-  background: #f8fafc;
-  min-height: calc(100vh - var(--product-editor-header-height) - 52px);
+  padding: 20px;
+  background: #f1f5f9;
+  min-height: calc(100vh - var(--product-editor-header-height) - var(--product-editor-tabs-height));
 }
 
 .empty-tab {
-  padding: 80px 40px;
+  padding: 60px 40px;
   text-align: center;
 }
 
 .notes-tab {
   padding: 0;
 }
+
+/* Responsive adjustments for full-screen daily use */
+@media screen and (min-width: 1600px) {
+  .product-tabs :deep(.el-tabs__content) {
+    padding: 24px 40px;
+  }
+}
+
 </style>

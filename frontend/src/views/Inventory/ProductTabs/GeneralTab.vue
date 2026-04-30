@@ -503,7 +503,7 @@ const handleImageChange = async (event) => {
 
 .form-grid {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   align-items: flex-start;
 }
 
@@ -511,25 +511,25 @@ const handleImageChange = async (event) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: calc(100% - 384px);
+  gap: 20px;
+  max-width: calc(100% - 380px);
 }
 
 .form-right-col {
   width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   position: sticky;
-  top: 24px; /* Relative to the scrolling container, which starts below the sticky header/tabs */
+  top: 20px;
 }
 
 .form-section {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
 .section-header {
