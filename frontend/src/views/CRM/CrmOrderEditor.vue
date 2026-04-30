@@ -117,6 +117,27 @@
 
           </div>
 
+          <div class="crm-field manager-field">
+            <label class="crm-label">Відповідальний менеджер</label>
+            <el-select
+              v-model="form.manager_id"
+              filterable
+              placeholder="Оберіть менеджера"
+              style="width:100%"
+              :disabled="!canReassignManager"
+            >
+              <el-option
+                v-for="u in managerOptions"
+                :key="u.id"
+                :label="u.name"
+                :value="u.id"
+              />
+            </el-select>
+            <small v-if="!canReassignManager" class="field-help">
+              Призначається автоматично. Змінювати може директор або користувач із правом crm.order.reassign.
+            </small>
+          </div>
+
           <!-- Nova Poshta branch — shown only when NP selected -->
           <div v-if="form.delivery_type === 'nova_poshta'" class="crm-field">
             <label class="crm-label">Відділення Нової Пошти</label>
@@ -518,6 +539,14 @@
             style="width: 100%; margin-top: 8px;"
           />
 
+          <el-input
+            v-model="form.next_contact_comment"
+            class="next-contact-comment"
+            type="textarea"
+            :rows="2"
+            placeholder="Коротко: що зробити під час наступного контакту..."
+          />
+
           <div class="quick-touch-buttons">
             <button @click="setNextContactPreset({ minutes: 15, reason: 'first_touch' })">+15 хв</button>
             <button @click="setNextContactPreset({ hours: 2, reason: 'retry_no_answer' })">+2 год</button>
@@ -802,6 +831,21 @@ const router    = useRouter()
 const route     = useRoute()
 const userStore = useUserStore()
 const orderId   = computed(() => route.params.id !== 'new' ? route.params.id : null)
+const currentUser = computed(() => userStore.user || {})
+const currentUserId = computed(() => currentUser.value?.id || null)
+const currentUserName = computed(() => {
+  const u = currentUser.value
+  return u?.name || [u?.first_name, u?.last_name].filter(Boolean).join(' ') || u?.email || 'Поточний користувач'
+})
+const canReassignManager = computed(() => {
+  const u = currentUser.value
+  return Boolean(
+    u?.is_superuser
+    || ['admin', 'director'].includes(u?.role)
+    || userStore.hasPermission?.('crm.order.reassign')
+    || userStore.hasPermission?.('crm.manage')
+  )
+})
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const loading        = ref(false)
@@ -859,6 +903,14 @@ const messageTemplates = [
 const materialCheck = reactive({ has_issues: false, items: [] })
 
 const newClient = reactive({ name: '', phone: '', email: '' })
+
+const managerOptions = computed(() => {
+  const list = [...users.value]
+  if (currentUserId.value && !list.some(u => u.id === currentUserId.value)) {
+    list.unshift({ id: currentUserId.value, name: currentUserName.value })
+  }
+  return list
+})
 
 
 // Communication
@@ -918,6 +970,8 @@ const form = reactive({
   discount_percent: 0,
   np_branch:        null,
   next_contact_at:  null,
+  next_contact_channel: 'CALL',
+  next_contact_comment: null,
   contact_attempts: 0,
 })
 
@@ -1025,6 +1079,10 @@ const autoPaymentStatus = computed(() => {
 
 watch(() => autoPaymentStatus.value, (newVal) => {
   form.payment_status = newVal.key
+}, { immediate: true })
+
+watch(() => contactCommType.value, (newVal) => {
+  form.next_contact_channel = newVal
 }, { immediate: true })
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1423,6 +1481,12 @@ const save = async (action) => {
     const mergedAttrs = { ...form.attributes_values }
     if (form.np_branch) mergedAttrs._np_branch = form.np_branch
     else                delete mergedAttrs._np_branch
+    if (form.next_contact_channel) mergedAttrs._next_contact_channel = form.next_contact_channel
+    else                           delete mergedAttrs._next_contact_channel
+    if (form.next_contact_comment) mergedAttrs._next_contact_comment = form.next_contact_comment
+    else                           delete mergedAttrs._next_contact_comment
+
+    if (!form.manager_id && currentUserId.value) form.manager_id = currentUserId.value
 
     const payload = {
       order_number:       form.order_number,
@@ -1499,6 +1563,8 @@ const save = async (action) => {
 const loadData = async () => {
   loading.value = true
   try {
+    if (!userStore.user) await userStore.fetchUser().catch(() => {})
+
     const [pRes, cpRes, usersRes] = await Promise.allSettled([
       api.get('/api/v1/products?limit=500'),
       api.get('/api/v1/counterparties?limit=500&is_customer=true'),
@@ -1507,6 +1573,9 @@ const loadData = async () => {
     products.value       = pRes.status       === 'fulfilled' ? pRes.value.data       : []
     counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
     users.value          = usersRes.status   === 'fulfilled' ? usersRes.value.data   : []
+    if (!orderId.value && !form.manager_id && currentUserId.value) {
+      form.manager_id = currentUserId.value
+    }
 
     // 1. Load Dictionaries (always needed, even for new orders)
     try {
@@ -1570,6 +1639,8 @@ const loadData = async () => {
           return av
         })(),
         np_branch:        o.attributes_values?._np_branch || null,
+        next_contact_channel: o.attributes_values?._next_contact_channel || 'CALL',
+        next_contact_comment: o.attributes_values?._next_contact_comment || null,
         next_contact_at:  o.next_contact_at || null,
         contact_attempts: o.contact_attempts || 0,
         total_amount:     Number(o.total_amount),
@@ -1586,6 +1657,7 @@ const loadData = async () => {
         reference_photo: o.reference_photo,
         discount_percent: Number(o.discount_percent || 0),
       })
+      contactCommType.value = form.next_contact_channel || contactCommType.value
       if (form.product_id) await onProductChange(form.product_id)
 
       const cp = counterparties.value.find(c => c.id === form.counterparty_id)
@@ -1683,6 +1755,22 @@ onMounted(loadData)
   background: #6366f1; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 .crm-save-btn:hover { background: #4f46e5; }
+
+.manager-field {
+  margin-top: 12px;
+}
+
+.field-help {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.next-contact-comment {
+  margin-top: 8px;
+}
 
 /* ─── Body ────────────────────────────────────────────────────────────────── */
 .crm-body {

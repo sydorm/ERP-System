@@ -12,6 +12,21 @@
         <p class="crm-subtitle">Керування меблевим виробництвом</p>
       </div>
       <div class="crm-header-right">
+        <el-select
+          v-model="filters.managerScope"
+          class="manager-scope-select"
+          placeholder="Менеджер"
+        >
+          <el-option label="Мої заявки" value="mine" />
+          <el-option label="Усі заявки" value="all" />
+          <el-option
+            v-for="u in users"
+            :key="u.id"
+            :label="u.name"
+            :value="`manager:${u.id}`"
+          />
+        </el-select>
+
         <div class="crm-view-switch">
           <button class="view-btn active">Kanban</button>
           <button class="view-btn" @click="router.push('/crm/analytics')">Аналітика</button>
@@ -56,7 +71,7 @@
             <div class="filter-section">
               <label>Пріоритет</label>
               <el-select v-model="filters.priority" placeholder="Всі" clearable>
-                <el-option label="Критичний" value="critical" />
+                <el-option label="Терміново" value="critical" />
                 <el-option label="Високий" value="urgent" />
                 <el-option label="Середній" value="normal" />
                 <el-option label="Низький" value="low" />
@@ -72,9 +87,19 @@
             </div>
             <div class="filter-section">
               <label>Менеджер</label>
-              <el-select v-model="filters.manager" placeholder="Всі" clearable>
-                <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
+              <el-select v-model="filters.managerScope" placeholder="Всі">
+                <el-option label="Мої заявки" value="mine" />
+                <el-option label="Усі заявки" value="all" />
+                <el-option
+                  v-for="u in users"
+                  :key="u.id"
+                  :label="u.name"
+                  :value="`manager:${u.id}`"
+                />
               </el-select>
+            </div>
+            <div class="filter-section">
+              <el-checkbox v-model="filters.attentionOnly">Тільки потребують уваги</el-checkbox>
             </div>
             <div class="filter-section">
               <label>Дедлайн</label>
@@ -163,15 +188,22 @@
         <small>{{ attentionOrders.length }} заявок</small>
         <em>{{ attentionExpanded ? 'Згорнути' : 'Розгорнути' }}</em>
       </button>
+      <button
+        class="attention-filter-toggle"
+        :class="{ active: filters.attentionOnly }"
+        @click.stop="filters.attentionOnly = !filters.attentionOnly"
+      >
+        {{ filters.attentionOnly ? 'Показані тільки ці' : 'Показати на дошці' }}
+      </button>
       <template v-if="attentionExpanded">
         <button
-          v-for="order in attentionOrders.slice(0, 4)"
+          v-for="order in attentionOrders.slice(0, 6)"
           :key="order.id"
           class="attention-order-pill"
           @click="openEditor(order)"
         >
           <b>#{{ order.order_number }}</b>
-          <span>{{ getAttentionReason(order) }}</span>
+          <span>{{ getAttentionReasons(order).map(r => r.text).join(' · ') }}</span>
         </button>
       </template>
     </div>
@@ -248,8 +280,17 @@
             </div>
 
             <!-- Рядок 2 (джерело/компанія) -->
-            <div class="card-row-2 clickable-client" v-if="order.source || getCounterpartyName(order.counterparty_id)" @click.stop="openClientProfile(order.counterparty_id)">
-              {{ order.source || getCounterpartyName(order.counterparty_id) }}
+            <div class="card-row-2 card-source-row" v-if="getLeadSourceLabel(order) || getCounterpartyName(order.counterparty_id)">
+              <span
+                class="clickable-client"
+                v-if="getCounterpartyName(order.counterparty_id)"
+                @click.stop="openClientProfile(order.counterparty_id)"
+              >
+                {{ getCounterpartyName(order.counterparty_id) }}
+              </span>
+              <span v-if="getLeadSourceLabel(order)" class="lead-source-badge">
+                {{ getLeadSourceLabel(order) }}
+              </span>
             </div>
 
             <!-- Назва виробу -->
@@ -262,10 +303,10 @@
               <span class="card-price">{{ formatCurrency(order.total_amount) }} ₴</span>
               <span 
                 class="deadline-chip" 
-                v-if="order.deadline"
-                :class="getDeadlineClass(order.deadline)"
+                v-if="getOrderDeadline(order)"
+                :class="getDeadlineClass(getOrderDeadline(order))"
               >
-                📅 {{ formatDate(order.deadline) }} <span v-if="getDeadlineDaysText(order.deadline)">· {{ getDeadlineDaysText(order.deadline) }}</span>
+                📅 {{ formatDate(getOrderDeadline(order)) }} <span v-if="getDeadlineDaysText(getOrderDeadline(order))">· {{ getDeadlineDaysText(getOrderDeadline(order)) }}</span>
               </span>
             </div>
 
@@ -287,6 +328,11 @@
             <div v-if="getAttentionReason(order)" class="card-next-action" :class="getAttentionClass(order)">
               <el-icon><Bell /></el-icon>
               <span>{{ getAttentionReason(order) }}</span>
+            </div>
+
+            <div class="next-contact-chip" :class="getNextContactClass(order)">
+              <el-icon><Clock /></el-icon>
+              <span>{{ getNextContactLabel(order) }}</span>
             </div>
 
             <!-- Розділювач -->
@@ -321,8 +367,32 @@
                 </el-tooltip>
               </div>
               <div class="card-meta-right">
-                <el-tooltip :content="getManagerName(order.manager_id)" placement="top">
-                  <div class="card-avatar">{{ (getManagerName(order.manager_id) || '?').charAt(0) }}</div>
+                <el-tooltip content="Підказка по заявці" placement="top">
+                  <el-popover placement="top-end" :width="290" trigger="click" popper-class="crm-hint-popover">
+                    <template #reference>
+                      <button class="card-hint-btn" @click.stop>
+                        <el-icon><MagicStick /></el-icon>
+                      </button>
+                    </template>
+                    <div class="hint-popover-content" @click.stop>
+                      <div class="hint-popover-title">
+                        <el-icon><MagicStick /></el-icon>
+                        Підказка по заявці
+                      </div>
+                      <ul v-if="getOrderHints(order).length" class="hint-list">
+                        <li v-for="hint in getOrderHints(order)" :key="hint.text" :class="hint.level">
+                          {{ hint.text }}
+                        </li>
+                      </ul>
+                      <div v-else class="hint-good">Все добре. Критичних проблем немає.</div>
+                    </div>
+                  </el-popover>
+                </el-tooltip>
+                <el-tooltip :content="getManagerName(getOrderManagerId(order))" placement="top">
+                  <div class="manager-chip">
+                    <span class="card-avatar">{{ getManagerInitials(getOrderManagerId(order)) }}</span>
+                    <span class="manager-name">{{ getManagerName(getOrderManagerId(order)) }}</span>
+                  </div>
                 </el-tooltip>
                 <el-dropdown trigger="click" @command="(cmd) => handleCardCommand(cmd, order)" @click.stop>
                   <button class="card-more-btn" @click.stop>
@@ -446,8 +516,9 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
-import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download, Promotion, Camera, TrendCharts, Money, Warning } from '@element-plus/icons-vue'
+import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download, Promotion, Camera, TrendCharts, Money, Warning, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 import ClientProfile from '@/views/CRM/ClientProfile.vue'
 
@@ -548,14 +619,25 @@ const formatRelativeTime = (dateStr) => {
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const orders = ref([])
 const counterparties = ref([])
 const users = ref([])
+const leadSources = ref([])
 const todayTasks = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 const slaStatus = ref({})
 const attentionExpanded = ref(false)
+
+const currentUser = computed(() => userStore.user || {})
+const currentUserId = computed(() => currentUser.value?.id || null)
+const currentUserRole = computed(() => currentUser.value?.role || '')
+const canSeeAllOrders = computed(() => {
+  const u = currentUser.value
+  return Boolean(u?.is_superuser || ['admin', 'director'].includes(u?.role) || userStore.hasPermission?.('crm.manage'))
+})
+const defaultManagerScope = computed(() => canSeeAllOrders.value ? 'all' : 'mine')
 
 const getSlaLevel = (orderId) => slaStatus.value[orderId]?.sla_level || 'ok'
 const getSlaHours = (orderId) => {
@@ -573,11 +655,18 @@ const fetchSlaStatus = async () => {
 const filters = ref({
   priority: '',
   payment: '',
-  manager: '',
-  deadline: ''
+  managerScope: '',
+  deadline: '',
+  attentionOnly: false
 })
 const activeFiltersCount = computed(() => {
-  return Object.values(filters.value).filter(v => v !== '').length
+  return [
+    filters.value.priority,
+    filters.value.payment,
+    filters.value.deadline,
+    filters.value.attentionOnly ? 'attention' : '',
+    filters.value.managerScope && filters.value.managerScope !== defaultManagerScope.value ? filters.value.managerScope : '',
+  ].filter(Boolean).length
 })
 const activeControlsCount = computed(() => {
   return activeFiltersCount.value + (sortOption.value !== 'created_desc' ? 1 : 0)
@@ -643,31 +732,71 @@ const getOrderHealthClass = (order) => {
   return 'order-health-neutral'
 }
 
-const getAttentionScore = (order) => {
+const getOrderDeadline = (order) => order.deadline || order.deadline_date || null
+const getOrderManagerId = (order) => order.responsible_manager_id || order.manager_id || order.created_by || null
+
+const getLeadSourceLabel = (order) => {
+  if (order.lead_source?.name) return order.lead_source.name
+  if (order.lead_source_name) return order.lead_source_name
+  if (order.source) return order.source
+  if (order.channel) return order.channel
+  const found = leadSources.value.find(i => i.id === order.lead_source_id || i.code === order.lead_source_id)
+  return found?.name || ''
+}
+
+const getNextContactDate = (order) => order.next_contact_at || order.next_contact_date || null
+const getNextContactLabel = (order) => {
+  const value = getNextContactDate(order)
+  if (!value) return 'Контакт не заплановано'
+  const date = new Date(value)
+  const today = new Date().toDateString()
+  const prefix = date < new Date() ? 'Контакт прострочено' : (date.toDateString() === today ? 'Наступний контакт: сьогодні' : 'Наступний контакт')
+  return `${prefix} ${date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`
+}
+const getNextContactClass = (order) => {
+  const value = getNextContactDate(order)
+  if (!value) return 'is-empty'
+  return new Date(value) < new Date() ? 'is-overdue' : 'is-planned'
+}
+
+const hasPrepayment = (order) => Number(order.prepayment_amount || order.paid_amount || 0) > 0 || order.payment_status === 'paid'
+const needsPaymentControl = (order) => order.payment_status !== 'paid' && Number(order.total_amount || 0) > 0 && ['payment', 'processing', 'production'].includes(order.crm_stage)
+
+const getAttentionReasons = (order) => {
+  const reasons = []
+  const nextContact = getNextContactDate(order)
+  const deadline = getOrderDeadline(order)
   const slaLevel = getSlaLevel(order.id)
-  let score = 0
-  if (['critical', 'urgent'].includes(slaLevel)) score += 90
-  else if (slaLevel === 'warning') score += 60
-  if (order.deadline && new Date(order.deadline) < new Date()) score += 45
-  if (order.payment_status !== 'paid' && Number(order.total_amount || 0) > 0) score += 18
-  if (!order.last_contact) score += 12
-  return score
+
+  if (!nextContact) reasons.push({ text: 'Немає наступного контакту', level: 'warning' })
+  else if (new Date(nextContact) < new Date()) reasons.push({ text: 'Контакт прострочено', level: 'critical' })
+
+  if (!hasPrepayment(order) && Number(order.total_amount || 0) > 0) reasons.push({ text: 'Немає передоплати', level: 'warning' })
+  if (!deadline) reasons.push({ text: 'Немає дедлайну', level: 'warning' })
+  else if (new Date(deadline) < new Date()) reasons.push({ text: 'Прострочений дедлайн', level: 'critical' })
+
+  if (['critical', 'urgent'].includes(slaLevel)) reasons.push({ text: `Заявка довго на етапі: ${getSlaHours(order.id)} год`, level: 'critical' })
+  else if (slaLevel === 'warning') reasons.push({ text: `Наближається SLA: ${getSlaHours(order.id)} год`, level: 'warning' })
+
+  if (needsPaymentControl(order)) reasons.push({ text: 'Потрібен контроль оплати', level: 'warning' })
+
+  return reasons
+}
+
+const getOrderHints = (order) => getAttentionReasons(order)
+
+const getAttentionScore = (order) => {
+  return getAttentionReasons(order).reduce((score, reason) => score + (reason.level === 'critical' ? 40 : 18), 0)
 }
 
 const getAttentionReason = (order) => {
-  const slaLevel = getSlaLevel(order.id)
-  if (['critical', 'urgent'].includes(slaLevel)) return `Без дії ${getSlaHours(order.id)} год`
-  if (slaLevel === 'warning') return `Наближається SLA: ${getSlaHours(order.id)} год`
-  if (order.deadline && new Date(order.deadline) < new Date()) return 'Прострочений дедлайн'
-  if (order.payment_status !== 'paid' && Number(order.total_amount || 0) > 0) return 'Потрібен контроль оплати'
-  if (!order.last_contact) return 'Немає останнього контакту'
-  return ''
+  return getAttentionReasons(order)[0]?.text || ''
 }
 
 const getAttentionClass = (order) => {
-  const slaLevel = getSlaLevel(order.id)
-  if (['critical', 'urgent'].includes(slaLevel)) return 'attention-critical'
-  if (slaLevel === 'warning') return 'attention-warning'
+  const first = getAttentionReasons(order)[0]
+  if (first?.level === 'critical') return 'attention-critical'
+  if (first?.level === 'warning') return 'attention-warning'
   return 'attention-info'
 }
 
@@ -741,14 +870,19 @@ const fetchStage = async (stage, reset = false) => {
 const fetchAll = async () => {
   loading.value = true
   try {
-    const [cpRes, usersRes, tasksRes] = await Promise.all([
+    if (!userStore.user) await userStore.fetchUser().catch(() => {})
+    if (!filters.value.managerScope) filters.value.managerScope = defaultManagerScope.value
+
+    const [cpRes, usersRes, tasksRes, leadSourceRes] = await Promise.all([
       api.get('/api/v1/counterparties?limit=500'),
       api.get('/users/colleagues'),
-      api.get('/api/v1/crm/tasks/today')
+      api.get('/api/v1/crm/tasks/today'),
+      api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] }))
     ])
     counterparties.value = cpRes.data
     users.value = usersRes.data
     todayTasks.value = tasksRes.data
+    leadSources.value = leadSourceRes.data || []
 
     // Fetch all stages + SLA status in parallel
     await Promise.all([
@@ -807,6 +941,16 @@ const handleBulkCancel = () => {
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 const getManagerName = (id) => users.value.find(u => u.id === id)?.name || id
+const getManagerInitials = (id) => {
+  const name = getManagerName(id)
+  if (!name) return '?'
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+}
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' })
 const isTaskOverdue = (task) => new Date(task.scheduled_at) < new Date()
@@ -817,7 +961,7 @@ const normalizePhone = (phone) => {
 }
 
 const resetFilters = () => {
-  filters.value = { priority: '', payment: '', manager: '', deadline: '' }
+  filters.value = { priority: '', payment: '', managerScope: defaultManagerScope.value, deadline: '', attentionOnly: false }
 }
 const resetAll = () => {
   resetFilters()
@@ -858,22 +1002,29 @@ const filteredOrdersInStage = (stage) => {
   // 2. Filters
   if (filters.value.priority) list = list.filter(o => o.priority === filters.value.priority)
   if (filters.value.payment) list = list.filter(o => o.payment_status === filters.value.payment)
-  if (filters.value.manager) list = list.filter(o => o.manager_id === filters.value.manager)
+  const scope = filters.value.managerScope || defaultManagerScope.value
+  if (scope === 'mine' && currentUserId.value) list = list.filter(o => getOrderManagerId(o) === currentUserId.value)
+  if (scope.startsWith('manager:')) {
+    const managerId = scope.replace('manager:', '')
+    list = list.filter(o => getOrderManagerId(o) === managerId)
+  }
+  if (filters.value.attentionOnly) list = list.filter(o => getAttentionReasons(o).length > 0)
   if (filters.value.deadline) {
     const now = new Date()
     if (filters.value.deadline === 'overdue') {
-      list = list.filter(o => o.deadline && new Date(o.deadline) < now)
+      list = list.filter(o => getOrderDeadline(o) && new Date(getOrderDeadline(o)) < now)
     } else if (filters.value.deadline === 'today') {
       const today = now.toDateString()
-      list = list.filter(o => o.deadline && new Date(o.deadline).toDateString() === today)
+      list = list.filter(o => getOrderDeadline(o) && new Date(getOrderDeadline(o)).toDateString() === today)
     }
   }
 
   // 3. Sorting
   list.sort((a, b) => {
     if (sortOption.value === 'deadline_asc') {
-      if (!a.deadline) return 1; if (!b.deadline) return -1;
-      return new Date(a.deadline) - new Date(b.deadline)
+      const ad = getOrderDeadline(a); const bd = getOrderDeadline(b)
+      if (!ad) return 1; if (!bd) return -1;
+      return new Date(ad) - new Date(bd)
     }
     if (sortOption.value === 'amount_desc') return (b.total_amount || 0) - (a.total_amount || 0)
     if (sortOption.value === 'created_desc') return new Date(b.created_at) - new Date(a.created_at)
@@ -1057,6 +1208,8 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+.manager-scope-select { width: 176px; }
 
 /* View switch */
 .crm-view-switch {
@@ -1356,6 +1509,23 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .attention-order-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attention-order-pill span { min-width: 0; color: #92400E; font-size: 11px; }
 
+.attention-filter-toggle {
+  height: 28px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(255, 255, 255, 0.72);
+  color: #92400E;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.attention-filter-toggle.active {
+  background: #92400E;
+  border-color: #92400E;
+  color: #FFF;
+}
+
 /* ───── Kanban Board ───── */
 .crm-kanban {
   display: flex;
@@ -1364,6 +1534,8 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   padding: 20px 24px 28px;
   align-items: flex-start;
   scroll-snap-type: x proximity;
+  height: calc(100vh - 230px);
+  min-height: 440px;
 }
 
 /* Column tint per stage */
@@ -1381,6 +1553,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 260px);
+  max-height: 100%;
   border-radius: 14px;
   border: 1px solid var(--erp-border, #E6ECF3);
   border-top-width: 3px;
@@ -1400,6 +1573,11 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding-bottom: 10px;
+  backdrop-filter: blur(10px);
 }
 
 .crm-col-title-row {
@@ -1462,6 +1640,8 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   gap: 10px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
+  padding-right: 2px;
 }
 
 /* Empty state */
@@ -1619,6 +1799,24 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   letter-spacing: 0.4px;
   margin-bottom: 6px;
 }
+.card-source-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lead-source-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #EEF4FF;
+  color: #1463FF;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+}
 
 /* Title */
 .order-card-title {
@@ -1697,6 +1895,34 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 .card-next-action.attention-warning { color: #92400E; background: #FEF3C7; }
 .card-next-action.attention-info { color: var(--erp-text-secondary, #5A6A80); background: var(--erp-bg-page, #F5F8FC); }
 
+.next-contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.next-contact-chip.is-empty {
+  color: #64748B;
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+.next-contact-chip.is-planned {
+  color: #0F766E;
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+.next-contact-chip.is-overdue {
+  color: #92400E;
+  background: #FFFBEB;
+  border-color: #FDE68A;
+}
+
 /* Divider */
 .card-divider { border-top: 1px solid var(--erp-border, #E6ECF3); margin: 8px 0; }
 
@@ -1748,6 +1974,18 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
 
 .card-meta-right { display: flex; align-items: center; gap: 7px; }
 
+.manager-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 112px;
+  padding: 2px 7px 2px 2px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E6ECF3;
+}
+
 .card-avatar {
   width: 28px; height: 28px;
   border-radius: 8px;
@@ -1758,6 +1996,68 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.manager-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.card-hint-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  border: 1px solid #D8B4FE;
+  color: #7E22CE;
+  background: #FAF5FF;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.18s;
+}
+.card-hint-btn:hover {
+  background: #7E22CE;
+  color: #FFF;
+  border-color: #7E22CE;
+}
+
+.hint-popover-content { padding: 4px 2px; }
+.hint-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+.hint-list {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.hint-list li {
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.hint-list li.warning { background: #FFFBEB; color: #92400E; }
+.hint-list li.critical { background: #FEF2F4; color: #991B1B; }
+.hint-good {
+  padding: 10px;
+  border-radius: 10px;
+  background: #ECFDF5;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .card-arrow-btn {
@@ -1856,6 +2156,7 @@ watch(() => route.path, (newPath) => { if (newPath === '/crm') fetchAll() })
   .crm-insights-row { grid-template-columns: 1fr; }
   .kanban-column { min-width: 80vw; }
   .crm-search-input,
+  .manager-scope-select,
   .crm-filter-btn,
   .crm-new-btn-indigo { width: 100%; }
   .selection-bar {

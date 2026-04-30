@@ -20,9 +20,19 @@ from app.schemas.order import (
 )
 from app.services.sequence_service import SequenceService
 from app.services.audit_service import AuditService
+from app.core.permissions import has_permission
 import uuid
 
 router = APIRouter()
+
+
+def can_reassign_crm_order(user: User) -> bool:
+    return bool(
+        user.is_superuser
+        or user.role in {"admin", "director"}
+        or has_permission(user, "crm.order.reassign")
+        or has_permission(user, "crm.manage")
+    )
 
 
 def populate_product_summary(orders: List[Order], db: Session) -> None:
@@ -111,7 +121,7 @@ async def create_order(
         next_contact_date=order_in.next_contact_date,
         next_contact_at=order_in.next_contact_at,
         priority=order_in.priority,
-        manager_id=order_in.manager_id,
+        manager_id=(order_in.manager_id or current_user.id) if can_reassign_crm_order(current_user) else current_user.id,
         internal_notes=order_in.internal_notes,
         reference_photo=order_in.reference_photo,
         comment=order_in.comment,
@@ -197,6 +207,10 @@ async def update_order(
 
     old_obj = AuditService.get_dict(order, relationships=["lines"])
     update_data = order_in.dict(exclude_unset=True)
+
+    if "manager_id" in update_data and update_data["manager_id"] != order.manager_id:
+        if not can_reassign_crm_order(current_user):
+            update_data.pop("manager_id", None)
 
     # Handle payment transaction if paid_amount increases and bank_account_id is provided
     new_paid_amount = update_data.get("paid_amount")
