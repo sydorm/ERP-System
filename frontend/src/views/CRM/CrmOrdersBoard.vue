@@ -327,15 +327,18 @@
               >🔴 {{ getSlaHours(order.id) }} год</span>
             </div>
 
-            <div v-if="getAttentionReason(order)" class="card-next-action" :class="getAttentionClass(order)">
-              <el-icon><Bell /></el-icon>
-              <span>{{ getAttentionReason(order) }}</span>
-            </div>
+            <!-- Contact Warnings (Only for New and Payment stages) -->
+            <template v-if="['new', 'payment'].includes(order.crm_stage)">
+              <div v-if="getAttentionReason(order)" class="card-next-action" :class="getAttentionClass(order)">
+                <el-icon><Bell /></el-icon>
+                <span>{{ getAttentionReason(order) }}</span>
+              </div>
 
-            <div class="next-contact-chip" :class="getNextContactClass(order)">
-              <el-icon><Clock /></el-icon>
-              <span>{{ getNextContactLabel(order) }}</span>
-            </div>
+              <div class="next-contact-chip" :class="getNextContactClass(order)">
+                <el-icon><Clock /></el-icon>
+                <span>{{ getNextContactLabel(order) }}</span>
+              </div>
+            </template>
 
             <!-- Розділювач -->
             <div class="card-divider"></div>
@@ -943,10 +946,16 @@ const handleBulkCancel = () => {
 }
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
-const getManagerName = (id) => users.value.find(u => u.id === id)?.name || id
+const getManagerName = (id) => {
+  if (!id) return 'Без менеджера'
+  const user = users.value.find(u => u.id === id)
+  if (user) return user.name || user.full_name || 'Без менеджера'
+  // Never show raw UUID/ID on UI
+  return 'Без менеджера'
+}
 const getManagerInitials = (id) => {
   const name = getManagerName(id)
-  if (!name) return '?'
+  if (name === 'Без менеджера') return '?'
   return name
     .split(' ')
     .filter(Boolean)
