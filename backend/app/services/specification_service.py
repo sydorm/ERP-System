@@ -346,6 +346,8 @@ class SpecificationService:
             if not all_pieces:
                 return 0.0
 
+            allow_rotation = bool(cfg.get('allowRotation', False))
+            respect_nap    = bool(cfg.get('respectNapDirection', False))
             remaining = sorted(all_pieces, key=lambda p: (-p['cutL'], -p['cutW']))
             total_length_mm = 0.0
 
@@ -356,10 +358,20 @@ class SpecificationService:
                 i = 0
                 while i < len(remaining):
                     p = remaining[i]
-                    if used_width + p['cutW'] <= roll_width_mm:
-                        in_strip.append(remaining.pop(i))
-                        used_width += in_strip[-1]['cutW']
-                        strip_height = max(strip_height, in_strip[-1]['cutL'])
+                    can_normal  = used_width + p['cutW'] <= roll_width_mm
+                    can_rotated = (allow_rotation and not respect_nap
+                                   and p['cutW'] != p['cutL']
+                                   and used_width + p['cutL'] <= roll_width_mm)
+                    if can_normal or can_rotated:
+                        placed = dict(p)
+                        if can_normal and can_rotated and p['cutW'] > p['cutL']:
+                            placed = {'cutW': p['cutL'], 'cutL': p['cutW']}
+                        elif can_rotated and not can_normal:
+                            placed = {'cutW': p['cutL'], 'cutL': p['cutW']}
+                        in_strip.append(placed)
+                        remaining.pop(i)
+                        used_width  += placed['cutW']
+                        strip_height = max(strip_height, placed['cutL'])
                     else:
                         i += 1
                 if not in_strip:

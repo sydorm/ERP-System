@@ -219,23 +219,21 @@
         <div></div>
       </div>
 
-      <!-- ── Rotation & nap (single-piece only) ────────────────────────── -->
-      <template v-if="!cfg.multiPieceMode">
-        <div class="fc-section-title mt-3">Поворот та ворс</div>
-        <div class="fc-row-2 fc-checkboxes">
-          <el-checkbox v-model="cfg.allowRotation" @change="clearPreview">
-            Дозволити поворот деталі
-          </el-checkbox>
-          <el-checkbox v-model="cfg.respectNapDirection" @change="clearPreview">
-            Враховувати напрямок ворсу / малюнка
-          </el-checkbox>
-        </div>
-        <el-alert
-          v-if="cfg.respectNapDirection && cfg.allowRotation"
-          title="Поворот заборонено — напрямок ворсу активовано"
-          type="warning" :closable="false" size="small" class="mt-1"
-        />
-      </template>
+      <!-- ── Rotation & nap (both modes) ─────────────────────────────── -->
+      <div class="fc-section-title mt-3">Поворот та ворс</div>
+      <div class="fc-row-2 fc-checkboxes">
+        <el-checkbox v-model="cfg.allowRotation" @change="clearPreview">
+          Дозволити поворот деталі
+        </el-checkbox>
+        <el-checkbox v-model="cfg.respectNapDirection" @change="clearPreview">
+          Враховувати напрямок ворсу / малюнка
+        </el-checkbox>
+      </div>
+      <el-alert
+        v-if="cfg.respectNapDirection && cfg.allowRotation"
+        title="Поворот заборонено — напрямок ворсу активовано"
+        type="warning" :closable="false" size="small" class="mt-1"
+      />
 
       <!-- ── Waste (shared) ────────────────────────────────────────────── -->
       <div class="fc-row-2 mt-3">

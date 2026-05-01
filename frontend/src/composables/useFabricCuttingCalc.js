@@ -103,7 +103,9 @@ export function computeFabricCuttingMulti(config, dims = {}, ignoreWaste = false
     return { finalQty: 0, valid: false, errors, warnings, breakdownLines: errors.map(e => `❌ ${e}`), meta: {} }
   }
 
-  const wastePercent = ignoreWaste ? 0 : Math.max(0, Number(cfg.wastePercent) || 0)
+  const wastePercent  = ignoreWaste ? 0 : Math.max(0, Number(cfg.wastePercent) || 0)
+  const allowRotation = Boolean(cfg.allowRotation)
+  const respectNap    = Boolean(cfg.respectNapDirection)
 
   // Expand pieces into individual cut instances
   const allPieces = []
@@ -150,14 +152,25 @@ export function computeFabricCuttingMulti(config, dims = {}, ignoreWaste = false
     let stripHeight = 0
     const inStrip = []
 
-    // Scan ALL remaining pieces, place anything that fits (FFDH)
+    // Scan ALL remaining pieces, place anything that fits (FFDH + optional rotation)
     let i = 0
     while (i < remaining.length) {
       const p = remaining[i]
-      if (usedWidth + p.cutW <= rollWidthMm) {
-        inStrip.push(p)
-        usedWidth += p.cutW
-        stripHeight = Math.max(stripHeight, p.cutL)
+      const canNormal  = usedWidth + p.cutW <= rollWidthMm
+      const canRotated = allowRotation && !respectNap && p.cutW !== p.cutL
+                         && usedWidth + p.cutL <= rollWidthMm
+
+      if (canNormal || canRotated) {
+        let placedW = p.cutW, placedL = p.cutL
+        if (canNormal && canRotated) {
+          // Both fit — pick orientation with smaller height contribution
+          if (p.cutW > p.cutL) { placedW = p.cutL; placedL = p.cutW }
+        } else if (canRotated) {
+          placedW = p.cutL; placedL = p.cutW
+        }
+        inStrip.push({ ...p, cutW: placedW, cutL: placedL })
+        usedWidth += placedW
+        stripHeight = Math.max(stripHeight, placedL)
         remaining.splice(i, 1)
       } else {
         i++
