@@ -225,7 +225,7 @@
           <el-input v-model="newCp.name" placeholder="Петро Петренко" />
         </el-form-item>
         <el-form-item label="Телефон">
-          <el-input v-model="newCp.phone" v-maska data-maska="+38 (0##) ###-##-##" />
+          <el-input v-model="newCp.phone" placeholder="+38 (0XX) XXX-XX-XX" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -243,7 +243,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Picture, MagicStick, Loading, Printer, Promotion 
 } from '@element-plus/icons-vue'
-import { vMaska } from 'maska'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
 import { useCrmOrderValidation } from './composables/useCrmOrderValidation'
