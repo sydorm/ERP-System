@@ -109,35 +109,8 @@
       <!-- RIGHT COLUMN: ADDITIONAL (40%) -->
       <div class="lg:col-span-5 space-y-8 sticky top-28">
         
-        <!-- CARD 3: Financial Details -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-          <div class="p-6">
-            <h2 class="text-[16px] font-bold flex items-center gap-2 mb-6">
-              <el-icon class="text-blue-600"><Money /></el-icon>
-              Фінанси та терміни
-            </h2>
-            <div class="space-y-6">
-              <CrmFinanceBlock
-                :form="form"
-                :bank-accounts="bankAccounts"
-                :auto-payment-status="autoPaymentStatus"
-                :format-currency="formatCurrency"
-                @set-prepay-pct="setPrepayPercent"
-              />
-              
-              <div class="h-px bg-gray-100"></div>
-
-              <CrmDeadlinesBlock
-                :form="form"
-                :priorities="priorities"
-                :format-date="formatDate"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 4: Manager & Tasks -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <!-- Readiness Checklist -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-28">
            <CrmReadinessChecklist
              :progress="readinessData.progress"
              :items="readinessData.items"
@@ -145,6 +118,19 @@
         </div>
       </div>
     </main>
+
+    <!-- ─── FULL WIDTH FINALIZATION BLOCK ─── -->
+    <div class="max-w-[1440px] mx-auto px-6 pb-24">
+      <CrmFinalizationBlock
+        :form="form"
+        :base-price="selectedProductPrice"
+        :priorities="priorities"
+        :format-currency="formatCurrency"
+        :format-date="formatDate"
+        @set-prepay-pct="setPrepayPercent"
+        @update-total="val => form.total_amount = val"
+      />
+    </div>
 
     <!-- ─── STICKY FOOTER ACTIONS ─── -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-[1030] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
@@ -193,13 +179,8 @@ import api from '@/api'
 import CrmOrderHeader from './components/CrmOrderHeader.vue'
 import CrmClientBlock from './components/CrmClientBlock.vue'
 import CrmProductBlock from './components/CrmProductBlock.vue'
-import CrmFinanceBlock from './components/CrmFinanceBlock.vue'
-import CrmContactPanel from './components/CrmContactPanel.vue'
-import CrmCommunicationHistory from './components/CrmCommunicationHistory.vue'
-import CrmMaterialsCheckBlock from './components/CrmMaterialsCheckBlock.vue'
-import CrmDeadlinesBlock from './components/CrmDeadlinesBlock.vue'
+import CrmFinalizationBlock from './components/CrmFinalizationBlock.vue'
 import CrmReadinessChecklist from './components/CrmReadinessChecklist.vue'
-import CrmAiAssistant from './components/CrmAiAssistant.vue'
 import CrmNewClientDialog from './components/CrmNewClientDialog.vue'
 
 const router = useRouter()
@@ -225,11 +206,18 @@ const form = reactive({
   city: '',
   delivery_method_id: null,
   attributes_values: {},
+  base_price: 0,
+  manual_price: null,
+  price_override_reason: '',
+  discount_percent: 0,
+  discount_amount: 0,
+  discount_reason: '',
   total_amount: 0,
   prepayment_amount: 0,
   payment_status: 'unpaid',
   deadline_date: null,
   comment: '',
+  production_comment: '',
   next_contact_at: null,
   next_contact_comment: '',
   priority: 'normal'
@@ -280,6 +268,11 @@ const autoPaymentStatus = computed(() => {
 })
 
 const nextTouchSummary = computed(() => form.next_contact_at ? `Наступний контакт: ${new Date(form.next_contact_at).toLocaleString()}` : 'Не заплановано')
+
+const selectedProductPrice = computed(() => {
+  const p = products.value.find(p => String(p.id) === String(form.product_id))
+  return p ? p.price : 0
+})
 
 const currentStep = computed(() => {
   if (readinessData.value.progress < 25) return 0
