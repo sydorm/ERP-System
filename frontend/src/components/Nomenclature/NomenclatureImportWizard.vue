@@ -55,75 +55,109 @@
           </el-select>
         </section>
 
-        <section v-else-if="activeStep === 2" class="wizard-panel">
+      <div class="wizard-content-scroll">
+        <section v-if="activeStep === 0" class="wizard-panel upload-panel">
+          <div class="upload-card" @click="fileInput?.click()" @dragover.prevent @drop.prevent="handleDrop">
+            <input ref="fileInput" type="file" accept=".xlsx,.csv" hidden @change="handleFileSelect" />
+            <div class="upload-icon"><el-icon><UploadFilled /></el-icon></div>
+            <h3>Завантажте Excel або CSV файл</h3>
+            <p>Підтримуються `.xlsx` та `.csv`, до 10 MB і до 5000 рядків.</p>
+            <button class="primary-soft-btn" type="button">Обрати файл</button>
+            <span v-if="selectedFile" class="selected-file">{{ selectedFile.name }}</span>
+          </div>
+        </section>
+
+        <section v-else-if="activeStep === 1" class="wizard-panel">
           <div class="panel-title-row">
             <div>
-              <h3>Попередній перегляд</h3>
-              <p>Показуємо перші {{ previewRows.length }} рядків із {{ rowCount }}. Перевірте, що заголовки визначені правильно.</p>
+              <h3>Вибір листа Excel</h3>
+              <p>Якщо в файлі кілька листів, оберіть той, де знаходиться номенклатура.</p>
             </div>
           </div>
-          <el-table :data="previewRows" height="420" border class="preview-table">
-            <el-table-column label="#" prop="_row_number" width="70" fixed />
-            <el-table-column
-              v-for="header in headers"
-              :key="header"
-              :prop="header"
-              :label="header"
-              min-width="160"
-              show-overflow-tooltip
-            />
-          </el-table>
+          <el-select v-model="selectedSheet" class="sheet-select" placeholder="Оберіть лист" @change="reloadPreview">
+            <el-option v-for="sheet in sheets" :key="sheet" :label="sheet" :value="sheet" />
+          </el-select>
+        </section>
+
+        <section v-else-if="activeStep === 2" class="wizard-panel mapping-preview-panel">
+          <div class="panel-title-row">
+            <div>
+              <h3>Зіставлення та перегляд</h3>
+              <p>Оберіть відповідну колонку над кожним стовпцем таблиці. Рядки будуть імпортовані згідно з вашим вибором.</p>
+            </div>
+            <div class="import-mode-compact">
+              <el-select v-model="importMode" size="small" class="mode-select">
+                <el-option label="Створити та оновити" value="create_update" />
+                <el-option label="Тільки створити нові" value="create_only" />
+                <el-option label="Тільки оновити існуючі" value="update_only" />
+              </el-select>
+            </div>
+          </div>
+
+          <div class="table-container-modern">
+            <el-table :data="previewRows" height="520" border class="preview-table mapping-table">
+              <el-table-column label="#" prop="_row_number" width="60" fixed />
+              
+              <el-table-column
+                v-for="header in headers"
+                :key="header"
+                :prop="header"
+                min-width="220"
+              >
+                <template #header>
+                  <div class="column-mapping-header">
+                    <span class="excel-col-name">{{ header }}</span>
+                    <el-select
+                      v-model="reverseMapping[header]"
+                      placeholder="Не імпортувати"
+                      clearable
+                      filterable
+                      size="small"
+                      class="mapping-select"
+                      @change="onColumnMapChange(header, $event)"
+                    >
+                      <el-option
+                        v-for="field in fields"
+                        :key="field.key"
+                        :label="field.label"
+                        :value="field.key"
+                        :disabled="isFieldMapped(field.key, header)"
+                      >
+                        <div class="field-option">
+                          <span>{{ field.label }}</span>
+                          <el-tag v-if="field.required" size="small" type="danger" effect="plain">REQ</el-tag>
+                        </div>
+                      </el-option>
+                    </el-select>
+                  </div>
+                </template>
+                <template #default="{ row }">
+                  <div class="cell-preview">{{ row[header] }}</div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div class="mapping-footer-options">
+            <div class="options-group">
+              <span class="group-label">Пошук дублікатів:</span>
+              <el-checkbox-group v-model="duplicateKeys" size="small">
+                <el-checkbox label="sku">Артикул</el-checkbox>
+                <el-checkbox label="name">Назва</el-checkbox>
+              </el-checkbox-group>
+            </div>
+            <div class="options-group">
+              <el-checkbox v-model="options.create_missing_categories" size="small">Створювати категорії</el-checkbox>
+              <el-checkbox v-model="options.normalize_units" size="small">Нормалізувати одиниці</el-checkbox>
+            </div>
+          </div>
         </section>
 
         <section v-else-if="activeStep === 3" class="wizard-panel">
           <div class="panel-title-row">
             <div>
-              <h3>Зіставлення колонок</h3>
-              <p>Система запропонувала відповідність за назвами колонок. За потреби змініть вручну.</p>
-            </div>
-          </div>
-          <div class="mapping-layout">
-            <div class="mapping-list">
-              <div v-for="field in fields" :key="field.key" class="mapping-row">
-                <div>
-                  <b>{{ field.label }}</b>
-                  <span v-if="field.required" class="required-badge">обов'язково</span>
-                  <span v-else-if="field.recommended" class="soft-badge">бажано</span>
-                </div>
-                <el-select v-model="mapping[field.key]" clearable filterable placeholder="Не імпортувати">
-                  <el-option v-for="header in headers" :key="header" :label="header" :value="header" />
-                </el-select>
-              </div>
-            </div>
-            <div class="import-options">
-              <h4>Режим імпорту</h4>
-              <el-radio-group v-model="importMode" class="vertical-radios">
-                <el-radio label="create_only">Створити тільки нові</el-radio>
-                <el-radio label="update_only">Оновити існуючі</el-radio>
-                <el-radio label="create_update">Створити нові та оновити існуючі</el-radio>
-              </el-radio-group>
-
-              <h4>Пошук дублікатів</h4>
-              <el-checkbox-group v-model="duplicateKeys" class="vertical-checks">
-                <el-checkbox label="sku">по Артикулу</el-checkbox>
-                <el-checkbox label="name">по Назві</el-checkbox>
-                <el-checkbox label="internal_code">по Внутрішньому коду</el-checkbox>
-                <el-checkbox label="barcode">по Штрихкоду</el-checkbox>
-              </el-checkbox-group>
-
-              <h4>Опції</h4>
-              <el-checkbox v-model="options.create_missing_categories">Створювати відсутні категорії автоматично</el-checkbox>
-              <el-checkbox v-model="options.normalize_units">Нормалізувати одиниці виміру</el-checkbox>
-              <el-checkbox v-model="options.create_missing_suppliers">Створювати постачальника, якщо не знайдено</el-checkbox>
-            </div>
-          </div>
-        </section>
-
-        <section v-else-if="activeStep === 4" class="wizard-panel">
-          <div class="panel-title-row">
-            <div>
               <h3>Перевірка даних</h3>
-              <p>Рядки з критичними помилками будуть пропущені під час імпорту.</p>
+              <p>Ми перевірили ваші дані на відповідність типам та наявність обов'язкових полів.</p>
             </div>
             <button class="primary-soft-btn" type="button" @click="validateImport" :disabled="loading">Перевірити ще раз</button>
           </div>
@@ -134,7 +168,7 @@
             <div><b>{{ validationSummary.warnings || 0 }}</b><span>warnings</span></div>
             <div class="danger"><b>{{ validationSummary.errors || 0 }}</b><span>errors</span></div>
           </div>
-          <el-table :data="validationRows" height="360" border class="preview-table">
+          <el-table :data="validationRows" height="380" border class="preview-table">
             <el-table-column prop="row_number" label="Рядок" width="80" />
             <el-table-column prop="action" label="Дія" width="120">
               <template #default="{ row }">
@@ -234,20 +268,44 @@ watch(() => props.visible, (value) => {
   if (value) resetWizard()
 })
 
+const reverseMapping = reactive({})
+
+const onColumnMapChange = (header, fieldKey) => {
+  // Clear old mapping if this field was mapped elsewhere
+  if (fieldKey) {
+    Object.keys(reverseMapping).forEach(h => {
+      if (h !== header && reverseMapping[h] === fieldKey) {
+        reverseMapping[h] = undefined
+      }
+    })
+  }
+  
+  // Sync back to original mapping object
+  Object.keys(mapping).forEach(key => delete mapping[key])
+  Object.entries(reverseMapping).forEach(([h, key]) => {
+    if (key) mapping[key] = h
+  })
+}
+
+const isFieldMapped = (fieldKey, currentHeader) => {
+  return Object.entries(reverseMapping).some(([h, key]) => key === fieldKey && h !== currentHeader)
+}
+
 const canGoNext = computed(() => {
   if (activeStep.value === 0) return Boolean(importId.value)
-  if (activeStep.value === 3) return Boolean(mapping.name && mapping.unit_of_measure)
-  if (activeStep.value === 4) return Boolean(validationRows.value.length)
-  if (activeStep.value === 6) return false
+  if (activeStep.value === 2) return Boolean(mapping.name && mapping.unit_of_measure)
+  if (activeStep.value === 3) return Boolean(validationRows.value.length)
+  if (activeStep.value === 5) return false
   return true
 })
 
 const nextButtonText = computed(() => {
   if (activeStep.value === 0) return 'Далі'
-  if (activeStep.value === 3) return 'Перевірити дані'
-  if (activeStep.value === 4) return 'До підтвердження'
-  if (activeStep.value === 5) return 'Запустити імпорт'
-  if (activeStep.value === 6) return 'Готово'
+  if (activeStep.value === 1) return 'До таблиці'
+  if (activeStep.value === 2) return 'Перевірити дані'
+  if (activeStep.value === 3) return 'До підтвердження'
+  if (activeStep.value === 4) return 'Запустити імпорт'
+  if (activeStep.value === 5) return 'Готово'
   return 'Далі'
 })
 
@@ -262,6 +320,7 @@ const resetWizard = () => {
   rowCount.value = 0
   fields.value = []
   Object.keys(mapping).forEach(key => delete mapping[key])
+  Object.keys(reverseMapping).forEach(key => delete reverseMapping[key])
   validationSummary.value = {}
   validationRows.value = []
   importResult.value = {}
@@ -308,8 +367,14 @@ const applyPreview = (data) => {
   previewRows.value = data.rows || []
   rowCount.value = data.row_count || 0
   fields.value = data.fields || []
+  
   Object.keys(mapping).forEach(key => delete mapping[key])
-  Object.entries(data.suggested_mapping || {}).forEach(([key, value]) => { mapping[key] = value })
+  Object.keys(reverseMapping).forEach(key => delete reverseMapping[key])
+  
+  Object.entries(data.suggested_mapping || {}).forEach(([key, value]) => { 
+    mapping[key] = value 
+    reverseMapping[value] = key
+  })
 }
 
 const reloadPreview = () => {
@@ -344,7 +409,7 @@ const executeImport = async () => {
       mode: importMode.value,
     })
     importResult.value = res.data
-    activeStep.value = 6
+    activeStep.value = 5
     emit('completed')
     ElMessage.success('Імпорт завершено')
   } catch (error) {
@@ -355,12 +420,12 @@ const executeImport = async () => {
 }
 
 const nextStep = async () => {
-  if (activeStep.value === 3) {
+  if (activeStep.value === 2) {
     await validateImport()
-    if (validationRows.value.length) activeStep.value = 4
+    if (validationRows.value.length) activeStep.value = 3
     return
   }
-  if (activeStep.value === 5) {
+  if (activeStep.value === 4) {
     await executeImport()
     return
   }
@@ -512,6 +577,91 @@ const actionLabel = (action) => ({
   padding: 24px;
 }
 
+.mapping-preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.table-container-modern {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+}
+
+.column-mapping-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 8px;
+  background: #F8FAFC;
+}
+
+.excel-col-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mapping-select {
+  width: 100%;
+}
+
+:deep(.mapping-select .el-input__wrapper) {
+  background: #fff !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+  border-radius: 10px !important;
+}
+
+.cell-preview {
+  font-size: 13px;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.field-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.mapping-footer-options {
+  display: flex;
+  gap: 24px;
+  padding: 16px 24px;
+  background: #F8FAFC;
+  border-radius: 16px;
+  border: 1px solid #F1F5F9;
+  margin-top: 12px;
+}
+
+.options-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+}
+
+.import-mode-compact {
+  display: flex;
+  align-items: center;
+}
+
+.mode-select {
+  width: 180px;
+}
 .wizard-panel {
   min-height: 380px;
 }
@@ -591,84 +741,6 @@ const actionLabel = (action) => ({
   border: 1px solid #F1F5F9;
 }
 
-.mapping-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-}
-
-.mapping-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mapping-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 20px;
-  border: 1px solid #F1F5F9;
-  border-radius: 16px;
-  background: #fff;
-  transition: all 0.2s;
-}
-
-.mapping-row:hover {
-  border-color: #CBD5E1;
-  background: #F8FAFC;
-}
-
-.mapping-row b {
-  color: #1E293B;
-  font-size: 14px;
-}
-
-.required-badge,
-.soft-badge {
-  margin-left: 8px;
-  padding: 3px 8px;
-  border-radius: 99px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.required-badge {
-  background: #FEF2F2;
-  color: #EF4444;
-}
-
-.soft-badge {
-  background: #EFF6FF;
-  color: #1463FF;
-}
-
-.import-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 24px;
-  border: 1px solid #F1F5F9;
-  border-radius: 20px;
-  background: #F8FAFC;
-}
-
-.import-options h4 {
-  margin: 8px 0 4px;
-  color: #0F172A;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.vertical-radios,
-.vertical-checks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -714,19 +786,9 @@ const actionLabel = (action) => ({
 .action-chip.create { background: #ECFDF5; color: #059669; }
 .action-chip.update { background: #EFF6FF; color: #1463FF; }
 .action-chip.error { background: #FEF2F2; color: #EF4444; }
-.message-stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.msg.error { background: #FEF2F2; color: #EF4444; }
-.msg.warn { background: #FFF7ED; color: #B45309; }
+
 .confirm-panel,
 .result-panel {
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 16px;
   text-align: center;
 }
 .confirm-card {
