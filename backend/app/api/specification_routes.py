@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional, Dict, Any
 from uuid import UUID
+from decimal import Decimal
+from datetime import datetime
 
 from app.api.dependencies import get_db, get_current_user
 from app.models.product import Product
@@ -13,10 +15,15 @@ from app.schemas.specification import (
     ProductSpecificationResponse,
     ProductSpecificationUpdate,
     BOMLineCharacteristicMappingCreate,
-    BOMLineCharacteristicMappingResponse
+    BOMLineCharacteristicMappingResponse,
+    SpecificationCalculationRequest,
+    CalculatedMaterialResponse
 )
 
 from sqlalchemy.orm import Session, joinedload
+from app.services.specification_service import SpecificationService
+from app.models.register import AccumulationRegister, RegisterType
+from sqlalchemy import func
 
 router = APIRouter(prefix="/products", tags=["Specifications"])
 
@@ -201,11 +208,6 @@ async def delete_specification(
     db.commit()
     return None
 
-from app.services.specification_service import SpecificationService
-from app.schemas.specification import SpecificationCalculationRequest, CalculatedMaterialResponse
-from app.models.register import AccumulationRegister, RegisterType
-from sqlalchemy import func
-
 @router.post("/specifications/{spec_id}/calculate", response_model=List[CalculatedMaterialResponse])
 async def calculate_specification_materials(
     spec_id: UUID,
@@ -217,19 +219,22 @@ async def calculate_specification_materials(
     Calculates the materials list for a specification given the parent product dimensions.
     """
     db_spec = db.query(ProductSpecification).options(
-        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component)
+        joinedload(ProductSpecification.items).joinedload(SpecificationItem.component),
+        joinedload(ProductSpecification.product)
     ).filter(ProductSpecification.id == spec_id).first()
     
     if not db_spec:
         raise HTTPException(status_code=404, detail="Specification not found")
     
     results = []
+    
+    # Standardize to mm and implement fallback from product master data
     parent_dims = {
-        'width_cm': dims.width_cm,
-        'height_cm': dims.height_cm,
-        'length_cm': dims.length_cm,
-        'weight_kg': dims.weight_kg,
-        'custom_attributes': dims.custom_attributes
+        'width_mm': dims.width_mm or float(db_spec.product.width_mm or 0),
+        'height_mm': dims.height_mm or float(db_spec.product.height_mm or 0),
+        'length_mm': dims.length_mm or float(db_spec.product.length_mm or 0),
+        'weight_kg': dims.weight_kg or float(db_spec.product.weight_kg or 0),
+        'custom_attributes': dims.custom_attributes or {}
     }
     
     for item in db_spec.items:
@@ -241,7 +246,6 @@ async def calculate_specification_materials(
             component = SpecificationService.resolve_detail_component(item, parent_dims, db)
             
             # 2. Calculate Dimensions for the detail
-            # Length: size_from_attr * size_multiplier OR fixed_length
             target_length = 0.0
             if item.size_from_attr:
                 attr_val = parent_dims['custom_attributes'].get(item.size_from_attr, 0)
@@ -268,7 +272,6 @@ async def calculate_specification_materials(
         if variant:
             stock_quantity = stock_query.filter(AccumulationRegister.variant_id == variant.id).scalar() or 0.0
         elif component:
-            # If no variant, check total stock for component
             stock_quantity = stock_query.filter(AccumulationRegister.product_id == component.id).scalar() or 0.0
 
         results.append(CalculatedMaterialResponse(
@@ -282,7 +285,6 @@ async def calculate_specification_materials(
             notes=item.notes
         ))
         
-    return results
     return results
 
 @router.get("/bom-lines/{line_id}/characteristic-mapping", response_model=List[BOMLineCharacteristicMappingResponse])

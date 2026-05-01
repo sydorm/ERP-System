@@ -70,7 +70,7 @@
       </div><!-- /left col -->
 
       <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-      <div class="crm-right-col" style="width: 340px; display: flex; flex-direction: column; gap: 16px;">
+      <div class="crm-right-col">
 
         <CrmReadinessChecklist
           class="saas-glass-card saas-premium-shadow"
@@ -91,15 +91,23 @@
           v-model:contact-note="contactNote"
           :next-touch-summary="nextTouchSummary"
           :saving-contact="savingContact"
-          :get-result-hint="getResultHint"
+          :getResultHint="getResultHint"
           @set-next-contact-preset="setNextContactPreset"
           @open-communication="commDrawerVisible = true"
           @apply-contact-result="applyContactResult"
           @log-contact="logContact"
         />
 
+        <CrmAiAssistant
+          class="saas-glass-card"
+          :form="form"
+          :readiness-progress="readinessProgress"
+          @check="ElMessage.success('AI Аналіз завершено')"
+        />
+
         <CrmCommunicationHistory
           class="saas-glass-card"
+          v-if="orderId"
           :contacts="contacts"
           :get-contact-result-color="getContactResultColor"
           :get-comm-icon="getCommIcon"
@@ -110,15 +118,9 @@
 
         <CrmOrderHistoryNotes
           class="saas-glass-card"
+          v-if="orderId"
           :form="form"
           :history="history"
-        />
-
-        <CrmAiAssistant
-          class="saas-glass-card"
-          :form="form"
-          :readiness-progress="readinessProgress"
-          @check="ElMessage.success('AI Перевірку завершено')"
         />
 
         <CrmRelatedDocuments
@@ -131,7 +133,7 @@
       </div><!-- /right col -->
     </div><!-- /body -->
 
-    <!-- ===== AUTOMATION CONFIRM ===== -->
+    <!-- ===== DIALOGS ===== -->
     <AutomationConfirmModal
       v-model="automationModal.visible"
       :rule="automationModal.rule"
@@ -159,6 +161,12 @@
     <PrintPreviewModal
       v-if="orderId"
       v-model="printModalVisible"
+      :document-id="orderId"
+      document-type="invoice"
+    />
+  </div>
+</template>
+-model="printModalVisible"
       :document-id="orderId"
       document-type="invoice"
     />

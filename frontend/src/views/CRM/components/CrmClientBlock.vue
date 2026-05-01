@@ -2,9 +2,9 @@
   <div class="crm-section crm-client-section">
     <div class="client-block-head">
       <div class="client-title-block">
-        <span class="client-kicker">Дані клієнта</span>
-        <h3>Клієнт і перший контакт</h3>
-        <p>Вся інформація, яка потрібна менеджеру для швидкої розмови та подальшої роботи із заявкою.</p>
+        <span class="client-kicker">Крок 1 · Клієнт</span>
+        <h3>Дані замовника</h3>
+        <p>Виберіть існуючого клієнта або введіть дані нового для швидкого старту.</p>
       </div>
       <button class="client-add-btn" type="button" @click="$emit('new-client')">
         <el-icon><Plus /></el-icon>
@@ -12,91 +12,102 @@
       </button>
     </div>
 
-    <div class="client-picker-row">
-      <div class="client-picker-icon">
-        <el-icon><User /></el-icon>
-      </div>
-      <div class="client-picker-field">
-        <label class="crm-label">Клієнт із бази</label>
+    <div class="client-form-container">
+      <div class="client-picker-wrapper">
+        <label class="crm-label">Пошук у базі</label>
         <el-select
           v-model="form.counterparty_id"
           filterable
           clearable
-          placeholder="Оберіть клієнта або залиште ручне введення"
-          class="cp-select"
+          placeholder="Прізвище, ім'я або телефон..."
+          class="cp-select-modern"
           :class="{ 'field-error': vErrors.client }"
           @change="$emit('counterparty-change', $event)"
         >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
           <el-option
             v-for="cp in counterparties"
             :key="cp.id"
             :label="cp.name"
             :value="cp.id"
-          />
+          >
+            <div class="cp-option">
+              <span>{{ cp.name }}</span>
+              <small v-if="cp.phone">{{ cp.phone }}</small>
+            </div>
+          </el-option>
         </el-select>
       </div>
-    </div>
 
-    <div class="client-contact-grid">
-      <div class="crm-field client-main-field">
-        <label class="crm-label">Ім'я та прізвище</label>
-        <el-input
-          v-model="clientNameModel"
-          placeholder="Наприклад: Олена Ковальчук"
-          :class="{ 'field-error': vErrors.client }"
-        />
-      </div>
-      <div class="crm-field client-main-field">
-        <label class="crm-label">Телефон</label>
-        <el-input v-model="clientPhoneModel" placeholder="+380 96 123 45 67" />
-      </div>
-    </div>
-
-    <div class="client-contact-grid compact">
-      <div class="crm-field">
-        <label class="crm-label">Місто</label>
-        <el-input v-model="form.city" placeholder="Київ" />
-      </div>
-      <div class="crm-field">
-        <label class="crm-label">Доставка</label>
-        <el-select v-model="form.delivery_method_id" placeholder="Оберіть спосіб доставки" clearable style="width:100%">
-          <el-option
-            v-for="dm in deliveryMethods"
-            :key="dm.id"
-            :label="dm.name"
-            :value="dm.id"
-          />
-        </el-select>
-      </div>
-    </div>
-
-    <div class="client-meta-grid">
-      <div class="crm-field client-channel-field">
-        <label class="crm-label">Канал звернення</label>
-        <div class="channel-pills client-channel-pills">
-          <button
-            v-for="ch in leadSources"
-            :key="ch.id"
-            type="button"
-            class="channel-pill client-channel-pill"
-            :class="{ active: form.lead_source_id === ch.id }"
-            :style="getLeadSourceStyle(ch)"
-            @click="form.lead_source_id = form.lead_source_id === ch.id ? null : ch.id"
-          >{{ ch.name }}</button>
+      <div class="client-main-grid">
+        <div class="crm-field">
+          <label class="crm-label">Ім'я клієнта</label>
+          <el-input
+            v-model="clientNameModel"
+            placeholder="Олена Ковальчук"
+            :class="{ 'field-error': vErrors.client }"
+          >
+            <template #prefix><el-icon><User /></el-icon></template>
+          </el-input>
+        </div>
+        <div class="crm-field">
+          <label class="crm-label">Контактний телефон</label>
+          <el-input v-model="clientPhoneModel" placeholder="+380..." >
+            <template #prefix><el-icon><Phone /></el-icon></template>
+          </el-input>
         </div>
       </div>
 
-      <CrmManagerBlock
-        class="client-manager-card"
-        :form="form"
-        :manager-options="managerOptions"
-        :can-reassign-manager="canReassignManager"
-      />
-    </div>
+      <div class="client-extra-grid">
+        <div class="crm-field">
+          <label class="crm-label">Джерело</label>
+          <div class="channel-pills-modern">
+            <button
+              v-for="ch in leadSources"
+              :key="ch.id"
+              type="button"
+              class="channel-pill-modern"
+              :class="{ active: form.lead_source_id === ch.id }"
+              @click="form.lead_source_id = form.lead_source_id === ch.id ? null : ch.id"
+            >
+              <span class="ch-dot" :style="{ background: ch.color || '#94a3b8' }"></span>
+              {{ ch.name }}
+            </button>
+          </div>
+        </div>
 
-    <div v-if="form.delivery_type === 'nova_poshta'" class="crm-field nova-poshta-field">
-      <label class="crm-label">Відділення Нової Пошти</label>
-      <el-input v-model="form.np_branch" placeholder="Наприклад: відділення №12" />
+        <div class="crm-field">
+          <label class="crm-label">Менеджер</label>
+          <CrmManagerBlock
+            :form="form"
+            :manager-options="managerOptions"
+            :can-reassign-manager="canReassignManager"
+          />
+        </div>
+      </div>
+
+      <div class="client-delivery-grid">
+        <div class="crm-field">
+          <label class="crm-label">Місто та доставка</label>
+          <div class="delivery-combined">
+            <el-input v-model="form.city" placeholder="Місто" class="city-input" />
+            <el-select v-model="form.delivery_method_id" placeholder="Спосіб" clearable class="delivery-select">
+              <el-option
+                v-for="dm in deliveryMethods"
+                :key="dm.id"
+                :label="dm.name"
+                :value="dm.id"
+              />
+            </el-select>
+          </div>
+        </div>
+        <div v-if="form.delivery_type === 'nova_poshta'" class="crm-field">
+          <label class="crm-label">Відділення НП</label>
+          <el-input v-model="form.np_branch" placeholder="№ відділення" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -140,8 +151,7 @@ const getLeadSourceStyle = (ch) => ({
 
 <style scoped>
 .crm-client-section {
-  padding: 18px;
-  overflow: hidden;
+  padding: 24px;
 }
 
 .client-block-head {
@@ -149,169 +159,157 @@ const getLeadSourceStyle = (ch) => ({
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #E6ECF3;
-}
-
-.client-title-block {
-  min-width: 0;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .client-kicker {
   display: inline-flex;
-  margin-bottom: 4px;
-  color: #1463FF;
+  margin-bottom: 6px;
+  color: #6366F1;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .client-title-block h3 {
   margin: 0;
   color: #0F172A;
-  font-size: 18px;
-  font-weight: 850;
-  line-height: 1.2;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .client-title-block p {
-  margin: 5px 0 0;
-  max-width: 680px;
+  margin: 6px 0 0;
   color: #64748B;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .client-add-btn {
-  flex: none;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 13px;
-  border: 1px solid #D7E3F4;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid #E2E8F0;
   border-radius: 12px;
-  background: #FFFFFF;
-  color: #1463FF;
+  background: #fff;
+  color: #0F172A;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: all 0.2s;
 }
 
 .client-add-btn:hover {
-  background: #F5F8FC;
-  border-color: #BFD4F4;
-  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+  background: #F8FAF7;
+  border-color: #6366F1;
+  color: #6366F1;
 }
 
-.client-picker-row {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 12px;
-  align-items: end;
-  margin-bottom: 14px;
-  padding: 12px;
-  border: 1px solid #E6ECF3;
+.client-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.client-picker-wrapper {
+  background: #F8FAFC;
+  padding: 16px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+  border: 1px solid #F1F5F9;
 }
 
-.client-picker-icon {
-  width: 42px;
-  height: 42px;
+.cp-select-modern {
+  width: 100%;
+}
+
+.cp-option {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.cp-option small {
+  color: #94A3B8;
+  font-size: 11px;
+}
+
+.client-main-grid {
   display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: #EFF6FF;
-  color: #1463FF;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
 }
 
-.client-picker-field {
-  min-width: 0;
-}
-
-.client-contact-grid {
+.client-extra-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
-  gap: 12px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
 }
 
-.client-contact-grid.compact {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
-}
-
-.client-main-field :deep(.el-input__wrapper),
-.client-picker-field :deep(.el-select__wrapper),
-.client-contact-grid :deep(.el-input__wrapper),
-.client-contact-grid :deep(.el-select__wrapper) {
-  min-height: 38px;
-  border-radius: 12px;
-  box-shadow: 0 0 0 1px #DCE6F2 inset;
-}
-
-.client-main-field :deep(.el-input__inner),
-.client-contact-grid :deep(.el-input__inner) {
-  color: #0F172A;
-  font-size: 14px;
-}
-
-.client-meta-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.78fr);
-  gap: 12px;
-  align-items: stretch;
-  margin-top: 2px;
-}
-
-.client-channel-field,
-.client-manager-card {
-  min-height: 86px;
-  margin-bottom: 0;
-  padding: 12px;
-  border: 1px solid #E6ECF3;
-  border-radius: 16px;
-  background: #FFFFFF;
-}
-
-.client-channel-pills {
+.channel-pills-modern {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
-.client-channel-pill {
-  min-height: 30px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-weight: 700;
+.channel-pill-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.client-manager-card :deep(.manager-field) {
-  margin-top: 0;
+.channel-pill-modern.active {
+  border-color: #6366F1;
+  background: #EEF2FF;
+  color: #6366F1;
 }
 
-.nova-poshta-field {
-  margin-top: 12px;
+.ch-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-@media (max-width: 1180px) {
-  .client-contact-grid,
-  .client-contact-grid.compact,
-  .client-meta-grid {
+.client-delivery-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+.delivery-combined {
+  display: flex;
+  gap: 8px;
+}
+
+.city-input { flex: 1.5; }
+.delivery-select { flex: 1; }
+
+:deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+  padding: 0 12px;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #6366F1 inset !important;
+}
+
+@media (max-width: 1024px) {
+  .client-main-grid, .client-extra-grid, .client-delivery-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .client-block-head {
-    flex-direction: column;
-  }
-
-  .client-add-btn {
-    width: 100%;
   }
 }
 </style>

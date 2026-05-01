@@ -1,41 +1,60 @@
-﻿<template>
-  <div class="crm-section ai-assistant-card" style="background: #F0FDFA; border: 1px solid #CCFBF1; border-radius: 12px; padding: 16px; margin-top: 12px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-      <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #0D9488; text-transform: uppercase; letter-spacing: 0.8px;">
-        <el-icon><MagicStick /></el-icon>
-        <span>AI Помічник</span>
+<template>
+  <div class="crm-section ai-assistant-modern">
+    <div class="ai-header">
+      <div class="ai-brand">
+        <div class="ai-icon-wrapper">
+          <el-icon><MagicStick /></el-icon>
+        </div>
+        <div class="ai-title-block">
+          <span class="ai-kicker">Розумні підказки</span>
+          <h3>AI Асистент</h3>
+        </div>
       </div>
-      <el-button type="primary" size="small" plain @click="$emit('check')">Перевірити</el-button>
+      <button class="ai-refresh-btn" @click="$emit('check')" title="Оновити аналіз">
+        <el-icon><Refresh /></el-icon>
+      </button>
     </div>
 
-    <div class="ai-insights-list" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #1F2937;">
-      <div class="ai-insight-item" v-if="readinessProgress < 100" style="display: flex; align-items: flex-start; gap: 6px;">
-        <el-icon style="color: #F59E0B; margin-top: 2px;"><Warning /></el-icon>
-        <span>Заявку заповнено на {{ readinessProgress }}%. Дозаповніть обов'язкові параметри для запуску.</span>
-      </div>
-
-      <template v-if="['new', 'payment'].includes(form.crm_stage)">
-        <div class="ai-insight-item" v-if="!form.next_contact_at" style="display: flex; align-items: flex-start; gap: 6px;">
-          <el-icon style="color: #EF4444; margin-top: 2px;"><Calendar /></el-icon>
-          <span>Наступний контакт не заплановано. Ризик втрати клієнта!</span>
+    <div class="ai-insights-container">
+      <transition-group name="list">
+        <div class="ai-insight-card" v-if="readinessProgress < 100" key="readiness" class-name="warning">
+          <div class="insight-icon"><el-icon><Warning /></el-icon></div>
+          <div class="insight-content">
+            <p>Заявка готова на <b>{{ readinessProgress }}%</b>. Заповніть відсутні поля для успішного запуску.</p>
+          </div>
         </div>
-      </template>
 
-      <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="form.total_amount > 0 && (form.prepayment_amount || 0) < (form.total_amount * 0.2)">
-        <el-icon style="color: #3D3AA8; margin-top: 2px;"><Money /></el-icon>
-        <span>Низький рівень передоплати (менше 20%). Рекомендовано отримати завдаток.</span>
-      </div>
+        <div class="ai-insight-card error" v-if="['new', 'payment'].includes(form.crm_stage) && !form.next_contact_at" key="contact">
+          <div class="insight-icon"><el-icon><Calendar /></el-icon></div>
+          <div class="insight-content">
+            <p><b>Контакт не заплановано!</b> Клієнт може «охолонути». Вкажіть дату наступного кроку.</p>
+          </div>
+        </div>
 
-      <div class="ai-insight-item" style="display: flex; align-items: flex-start; gap: 6px;" v-if="readinessProgress === 100">
-        <el-icon style="color: #10B981; margin-top: 2px;"><SuccessFilled /></el-icon>
-        <span>Всі дані зібрані. Можна сміливо передавати заявку в роботу!</span>
-      </div>
+        <div class="ai-insight-card info" v-if="form.total_amount > 0 && (form.prepayment_amount || 0) < (form.total_amount * 0.2)" key="prepay">
+          <div class="insight-icon"><el-icon><Money /></el-icon></div>
+          <div class="insight-content">
+            <p>Передоплата менше 20%. Спробуйте погодити вищий аванс для фіксації замовлення.</p>
+          </div>
+        </div>
+
+        <div class="ai-insight-card success" v-if="readinessProgress === 100" key="success">
+          <div class="insight-icon"><el-icon><SuccessFilled /></el-icon></div>
+          <div class="insight-content">
+            <p>Чудова робота! Всі дані зібрані. Можна передавати замовлення у виробництво.</p>
+          </div>
+        </div>
+      </transition-group>
+    </div>
+
+    <div class="ai-footer">
+      <span class="ai-sam-tip">Креативність від Сема: «Спілкування — це ключ. Спробуйте запропонувати клієнту невелику знижку за 100% оплату сьогодні.»</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Calendar, MagicStick, Money, SuccessFilled, Warning } from '@element-plus/icons-vue'
+import { Calendar, MagicStick, Money, SuccessFilled, Warning, Refresh } from '@element-plus/icons-vue'
 
 defineProps({
   form: { type: Object, required: true },
@@ -44,3 +63,111 @@ defineProps({
 
 defineEmits(['check'])
 </script>
+
+<style scoped>
+.ai-assistant-modern {
+  background: linear-gradient(135deg, #F0FDFA 0%, #E6FFFA 100%);
+  border: 1px solid #CCFBF1 !important;
+  padding: 24px;
+}
+
+.ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ai-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  background: #14B8A6;
+  color: #fff;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(20, 184, 166, 0.3);
+}
+
+.ai-kicker {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0D9488;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.ai-title-block h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.ai-refresh-btn {
+  background: transparent;
+  border: none;
+  color: #0D9488;
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+.ai-refresh-btn:hover { transform: rotate(180deg); }
+
+.ai-insights-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-insight-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #374151;
+}
+
+.insight-icon {
+  font-size: 18px;
+  margin-top: 1px;
+}
+
+.ai-insight-card.error { border-left: 4px solid #EF4444; }
+.ai-insight-card.warning { border-left: 4px solid #F59E0B; }
+.ai-insight-card.info { border-left: 4px solid #6366F1; }
+.ai-insight-card.success { border-left: 4px solid #10B981; }
+
+.insight-content p { margin: 0; }
+.insight-content b { color: #0F172A; font-weight: 700; }
+
+.ai-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(20, 184, 166, 0.1);
+}
+
+.ai-sam-tip {
+  font-size: 11px;
+  font-style: italic;
+  color: #0D9488;
+  line-height: 1.4;
+  display: block;
+}
+
+.list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+.list-enter-from, .list-leave-to { opacity: 0; transform: translateX(20px); }
+</style>
