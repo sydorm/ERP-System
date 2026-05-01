@@ -38,66 +38,84 @@
         <!-- LEFT COLUMN (65%) -->
         <div class="crm-content-left">
           
-          <!-- Block 1: Клієнт -->
-          <div class="crm-block-card card-client">
-            <div class="block-title">
-              <el-icon><User /></el-icon> Клієнт
+          <!-- Block 1: Клієнт (Premium Redesign) -->
+          <div class="crm-block-card card-client-premium">
+            <div class="block-header-modern">
+              <div class="bh-title">
+                <el-icon class="icon-pulse"><User /></el-icon> 
+                <span>Дані клієнта</span>
+              </div>
+              <div class="bh-actions">
+                <el-button v-if="form.counterparty_id" link @click="showClientDrawer = true">
+                  Повний профіль <el-icon><ArrowRight /></el-icon>
+                </el-button>
+              </div>
             </div>
             
-            <div class="card-inner-split">
-              <!-- Sub-Left: Main Data -->
-              <div class="split-left">
-                <div class="client-selection-row">
-                  <el-select
-                    v-model="form.counterparty_id"
-                    filterable
-                    remote
-                    :remote-method="searchCounterparties"
-                    placeholder="Пошук клієнта за ім'ям або тел..."
-                    class="modern-select-large"
-                    @change="onClientChange"
-                  >
-                    <template #prefix><el-icon><Search /></el-icon></template>
-                    <el-option
-                      v-for="cp in counterparties"
-                      :key="cp.id"
-                      :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
-                      :value="cp.id"
-                    />
-                  </el-select>
-                  <el-button @click="openCreateCounterparty" size="default" :icon="Plus" type="primary">Новий</el-button>
-                </div>
+            <div class="client-form-body">
+              <!-- Row 1: Search -->
+              <div class="client-search-row">
+                <el-select
+                  v-model="form.counterparty_id"
+                  filterable
+                  remote
+                  :remote-method="searchCounterparties"
+                  placeholder="Введіть ім'я або номер телефону..."
+                  class="modern-search-bar"
+                  @change="onClientChange"
+                >
+                  <template #prefix><el-icon><Search /></el-icon></template>
+                  <el-option
+                    v-for="cp in counterparties"
+                    :key="cp.id"
+                    :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
+                    :value="cp.id"
+                  />
+                </el-select>
+                <el-button @click="openCreateCounterparty" type="primary" class="btn-add-modern">
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+              </div>
 
-                <div class="crm-grid-3" style="margin-top: 16px;">
-                  <div class="crm-field">
-                    <span class="mini-label">Джерело</span>
-                    <el-select v-model="form.lead_source_id" placeholder="Джерело" size="small">
-                      <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
-                    </el-select>
-                  </div>
-                  <div class="crm-field">
-                    <span class="mini-label">Місто</span>
-                    <el-input v-model="form.city" placeholder="Місто" size="small" />
-                  </div>
-                  <div class="crm-field">
-                    <span class="mini-label">Канал</span>
-                    <el-select v-model="form.channel" placeholder="Канал" size="small">
-                      <el-option v-for="ch in channels" :key="ch.code" :label="ch.name" :value="ch.code" />
-                    </el-select>
+              <!-- Row 2: Lead Source Tiles (Replacing Dropdown) -->
+              <div class="source-selection-container">
+                <span class="mini-label-modern">Звідки прийшов клієнт? (Джерело)</span>
+                <div class="source-tiles-grid">
+                  <div 
+                    v-for="src in leadSourceIcons" 
+                    :key="src.id"
+                    class="source-tile"
+                    :class="[src.id, { active: form.lead_source_id === src.id }]"
+                    @click="form.lead_source_id = src.id"
+                  >
+                    <div class="st-icon">
+                      <component :is="src.icon" />
+                    </div>
+                    <span class="st-label">{{ src.name }}</span>
+                    <el-icon v-if="form.lead_source_id === src.id" class="st-check"><Check /></el-icon>
                   </div>
                 </div>
               </div>
 
-              <!-- Sub-Right: Integrated History -->
-              <div class="split-right">
-                <span class="mini-label" style="margin-bottom: 8px; display: block;">Історія контакту</span>
-                <div class="history-scroll-mini">
-                  <div v-if="!contactHistory.length" class="history-empty">Записів не знайдено</div>
-                  <div v-for="log in contactHistory" :key="log.id" class="mini-log-item">
-                    <div class="ml-body">
-                      <span class="ml-res">{{ getResultHint(log.result) }}</span>
-                      <p class="ml-note" v-if="log.note">{{ log.note }}</p>
-                      <span class="ml-time">{{ formatDate(log.contacted_at) }}</span>
+              <!-- Row 3: Meta (City + Communication Channel) -->
+              <div class="client-meta-row">
+                <div class="meta-field city">
+                  <span class="mini-label-modern">Місто</span>
+                  <el-input v-model="form.city" placeholder="Напр. Київ" />
+                </div>
+                
+                <div class="meta-field channels">
+                  <span class="mini-label-modern">Канал зв'язку</span>
+                  <div class="channel-pills-modern">
+                    <div 
+                      v-for="ch in channelPills" 
+                      :key="ch.code"
+                      class="ch-pill-modern"
+                      :class="[ch.code, { active: form.channel === ch.code }]"
+                      @click="form.channel = ch.code"
+                    >
+                      <el-icon><component :is="ch.icon" /></el-icon>
+                      <span>{{ ch.name }}</span>
                     </div>
                   </div>
                 </div>
@@ -202,74 +220,139 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN (35% - Sticky) -->
+        <!-- ─── RIGHT COLUMN (35%) - STICKY ─── -->
         <div class="crm-sidebar-right">
-          <div class="crm-block-card card-summary saas-premium-shadow">
-            <div class="block-title">
-              <el-icon><Wallet /></el-icon> Підсумок
+          <div class="crm-sidebar-tabs">
+            <div 
+              class="sidebar-tab" 
+              :class="{ active: activeSidebarTab === 'summary' }"
+              @click="activeSidebarTab = 'summary'"
+            >
+              <el-icon><Wallet /></el-icon> ПІДСУМОК
             </div>
-
-            <div class="summary-total-large">
-              <el-input-number v-model="form.total_amount" :controls="false" class="large-total-input" />
-              <span class="sum-currency">₴</span>
-            </div>
-
-            <div class="crm-field">
-              <span class="mini-label">Предоплата</span>
-              <div class="prepay-grid">
-                <button v-for="pct in [0, 30, 50, 100]" :key="pct"
-                        class="prepay-btn" :class="{ active: isPrepayActive(pct) }"
-                        @click="setPrepayPercent(pct)">
-                  {{ pct === 0 ? 'Без' : pct + '%' }}
-                </button>
-              </div>
-              <el-input-number v-model="form.prepayment_amount" :controls="false" style="width: 100%; margin-top: 8px;" />
-            </div>
-
-            <div class="crm-field" style="margin-top: 20px;">
-              <span class="mini-label">Менеджер</span>
-              <el-select v-model="form.manager_id" style="width: 100%">
-                <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
-              </el-select>
-            </div>
-
-            <div class="crm-field" style="margin-top: 20px;">
-              <span class="mini-label">Пріоритет</span>
-              <div class="priority-pills">
-                <div v-for="p in priorities" :key="p.id" class="priority-pill"
-                     :class="[`pp-${p.code}`, { active: form.priority === p.code }]"
-                     @click="form.priority_id = p.id; form.priority = p.code">
-                  {{ p.name }}
-                </div>
-              </div>
-            </div>
-
-            <div class="crm-field" style="margin-top: 20px;">
-              <span class="mini-label">Дедлайн виготовлення</span>
-              <el-date-picker v-model="form.deadline_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
-            </div>
-
-            <div class="action-buttons-stack">
-              <el-button class="btn-save-main" @click="saveAndClose" :loading="saving" type="primary">ЗБЕРЕГТИ ТА ПЕРЕДАТИ</el-button>
-              <el-button class="btn-draft" @click="saveDraft">ЗБЕРЕГТИ ЯК ЧЕРНЕТКУ</el-button>
-              
-              <div class="quick-comms-group">
-                 <el-button size="small" :icon="ChatDotRound">Чат</el-button>
-                 <el-button size="small" :icon="Phone">Дзвінок</el-button>
-                 <el-button size="small" :icon="List">Історія</el-button>
-              </div>
+            <div 
+              class="sidebar-tab" 
+              :class="{ active: activeSidebarTab === 'activity' }"
+              @click="activeSidebarTab = 'activity'"
+            >
+              <el-icon><List /></el-icon> АКТИВНІСТЬ
+              <span class="activity-badge" v-if="contactHistory.length">{{ contactHistory.length }}</span>
             </div>
           </div>
+
+          <div class="sidebar-content-scroll">
+            <!-- TAB 1: SUMMARY -->
+            <transition name="fade-slide">
+              <div v-if="activeSidebarTab === 'summary'" class="tab-pane">
+                <div class="crm-block-card card-summary saas-premium-shadow">
+                  <div class="summary-total-large">
+                    <el-input-number v-model="form.total_amount" :controls="false" class="large-total-input" />
+                    <span class="sum-currency">₴</span>
+                  </div>
+
+                  <div class="crm-field">
+                    <span class="mini-label-modern">Предоплата</span>
+                    <div class="prepay-grid">
+                      <button v-for="pct in [0, 30, 50, 100]" :key="pct"
+                              class="prepay-btn" :class="{ active: isPrepayActive(pct) }"
+                              @click="setPrepayPercent(pct)">
+                        {{ pct === 0 ? 'Без' : pct + '%' }}
+                      </button>
+                    </div>
+                    <el-input-number v-model="form.prepayment_amount" :controls="false" style="width: 100%; margin-top: 8px;" />
+                  </div>
+
+                  <div class="crm-field" style="margin-top: 20px;">
+                    <span class="mini-label-modern">Менеджер</span>
+                    <el-select v-model="form.manager_id" style="width: 100%">
+                      <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
+                    </el-select>
+                  </div>
+
+                  <div class="crm-field" style="margin-top: 20px;">
+                    <span class="mini-label-modern">Пріоритет</span>
+                    <div class="priority-pills">
+                      <div v-for="p in priorities" :key="p.id" class="priority-pill"
+                           :class="[`pp-${p.code}`, { active: form.priority === p.code }]"
+                           @click="form.priority_id = p.id; form.priority = p.code">
+                        {{ p.name }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="crm-field" style="margin-top: 20px;">
+                    <span class="mini-label-modern">Дедлайн виготовлення</span>
+                    <el-date-picker v-model="form.deadline_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
+                  </div>
+
+                  <div class="action-buttons-stack">
+                    <el-button class="btn-save-main" @click="saveAndClose" :loading="saving" type="primary">ЗБЕРЕГТИ ТА ПЕРЕДАТИ</el-button>
+                    <el-button class="btn-draft" @click="saveDraft">ЗБЕРЕГТИ ЯК ЧЕРНЕТКУ</el-button>
+                    
+                    <div class="quick-comms-group">
+                       <el-button size="small" :icon="ChatDotRound">Чат</el-button>
+                       <el-button size="small" :icon="Phone">Дзвінок</el-button>
+                       <el-button size="small" :icon="ChatDotSquare">SMS</el-button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </transition>
+
+            <!-- TAB 2: ACTIVITY TIMELINE (Alternative for history) -->
+            <transition name="fade-slide">
+              <div v-if="activeSidebarTab === 'activity'" class="tab-pane">
+                <div class="crm-block-card card-activity-timeline">
+                  <div class="timeline-header">
+                    <span class="mini-label-modern">Останні події</span>
+                    <el-button link @click="loadContacts"><el-icon><Refresh /></el-icon></el-button>
+                  </div>
+
+                  <div class="activity-feed">
+                    <div v-if="!contactHistory.length" class="activity-empty-state">
+                      <el-icon><ChatLineRound /></el-icon>
+                      <p>Історія взаємодії порожня</p>
+                    </div>
+                    
+                    <div v-for="log in contactHistory" :key="log.id" class="activity-item">
+                      <div class="activity-line"></div>
+                      <div class="activity-icon-container" :class="log.communication_type.toLowerCase()">
+                        <el-icon><component :is="getChannelIcon(log.communication_type)" /></el-icon>
+                      </div>
+                      <div class="activity-body">
+                        <div class="activity-top">
+                          <span class="activity-type">{{ getResultHint(log.result) }}</span>
+                          <span class="activity-time">{{ formatDate(log.contacted_at) }}</span>
+                        </div>
+                        <p class="activity-text" v-if="log.note">{{ log.note }}</p>
+                        <div class="activity-meta" v-if="log.manager_name">
+                          <el-avatar :size="16" class="mini-avatar">M</el-avatar>
+                          <span>Менеджер: {{ log.manager_name }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="activity-footer">
+                    <el-button type="primary" plain round size="small" @click="showClientDrawer = true">
+                      ДОДАТИ КОНТАКТ
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+            </transition>
+          </div>
           
-          <!-- REMINDERS WIDGET -->
-          <div class="crm-block-card card-reminder" v-if="missedTasks.length">
-             <div class="block-title" style="color: #F59E0B; margin-bottom: 12px;">
-                <el-icon><Bell /></el-icon> Нагадування
+          <!-- REMINDERS WIDGET (Secondary) -->
+          <div class="crm-block-card card-reminder-mini" v-if="missedTasks.length">
+             <div class="rem-header">
+                <el-icon class="rem-icon-anim"><Bell /></el-icon>
+                <span>Нагадування</span>
              </div>
-             <div v-for="task in missedTasks" :key="task.id" class="reminder-item">
-                <div class="reminder-body">
-                  <div class="rem-title">Передзвонити</div>
-                  <div class="rem-date">{{ formatDate(task.scheduled_at) }}</div>
+             <div v-for="task in missedTasks" :key="task.id" class="reminder-item-mini">
+                <div class="rem-info">
+                  <span class="rem-time">{{ formatDate(task.scheduled_at) }}</span>
+                  <p class="rem-text">Передзвонити клієнту</p>
                 </div>
                 <el-button type="warning" size="small" circle :icon="Check" @click="completeTask(task.id)" />
              </div>
@@ -366,7 +449,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Picture, MagicStick, Loading, Printer, Promotion,
-  User, Box, DataAnalysis, Wallet, Search, Bell, Check, Collection
+  User, Box, DataAnalysis, Wallet, Search, Bell, Check, Collection,
+  Camera, Share, VideoPlay, Star, More, ChatDotRound, ChatLineRound, Phone,
+  ArrowRight, ArrowDown, UserFilled, Clock, Document, ChatDotSquare,
+  View, Edit, CopyDocument, Delete, TrendCharts, Grid, QuestionFilled
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
@@ -400,6 +486,7 @@ const currentUserId = computed(() => currentUser.value?.id || null)
 // ─── State ──────────────────────────────────────────────────────────────────
 const loading = ref(true)
 const saving  = ref(false)
+const activeSidebarTab = ref('summary')
 const stages = [
   { code: 'new',        name: 'Нова заявка', color: '#6366f1' },
   { code: 'processing', name: 'Уточнення',   color: '#f59e0b' },
@@ -409,13 +496,20 @@ const stages = [
   { code: 'done',       name: 'Виконано',     color: '#22c55e' },
 ]
 
-const channels = [
-  { code: 'instagram', name: 'Instagram', icon: '📸' },
-  { code: 'website',   name: 'Сайт',      icon: '🌐' },
-  { code: 'referral',  name: 'Рекомендація', icon: '🤝' },
-  { code: 'telegram',  name: 'Telegram',  icon: '✈️' },
-  { code: 'olx',       name: 'OLX',       icon: '📦' },
-  { code: 'phone',     name: 'Телефон',   icon: '📞' },
+const leadSourceIcons = [
+  { id: 'instagram', name: 'Instagram', icon: 'Camera' },
+  { id: 'facebook', name: 'Facebook', icon: 'Share' },
+  { id: 'google', name: 'Google', icon: 'Search' },
+  { id: 'tiktok', name: 'TikTok', icon: 'VideoPlay' },
+  { id: 'referral', name: 'Рекомендація', icon: 'Star' },
+  { id: 'other', name: 'Інше', icon: 'More' }
+]
+
+const channelPills = [
+  { code: 'viber', name: 'Viber', icon: 'ChatDotRound' },
+  { code: 'telegram', name: 'Telegram', icon: 'Promotion' },
+  { code: 'whatsapp', name: 'WhatsApp', icon: 'ChatLineRound' },
+  { code: 'phone', name: 'Дзвінок', icon: 'Phone' }
 ]
 
 const form = reactive({
