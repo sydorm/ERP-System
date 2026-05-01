@@ -315,8 +315,14 @@ const router = createRouter({
                 {
                     path: '/settings/users/create',
                     name: 'user-create',
-                    component: () => import('@/views/Settings/UserCreate.vue'),
+                    component: () => import('@/views/Settings/UserEditor.vue'),
                     meta: { title: 'Новий користувач', permission: 'users.create' }
+                },
+                {
+                    path: '/settings/users/:id/edit',
+                    name: 'user-edit',
+                    component: () => import('@/views/Settings/UserEditor.vue'),
+                    meta: { title: 'Редагування користувача', permission: 'users.edit' }
                 },
 
                 {

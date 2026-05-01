@@ -21,6 +21,7 @@ export const PERMISSION_MODULES = [
   { key: 'print_templates', label: 'Шаблони документів' },
   { key: 'business_processes', label: 'Бізнес-процеси' },
   { key: 'users', label: 'Користувачі' },
+  { key: 'personnel', label: 'Персонал' },
 ]
 
 export const ROLE_OPTIONS = [
@@ -69,6 +70,7 @@ export const ROLE_PRESETS = {
       sales: ['view', 'print', 'export'],
       reports: ['view', 'print', 'export'],
       crm: ['view'],
+      personnel: ['view', 'create', 'edit', 'print', 'export'],
     },
   },
   viewer: {
