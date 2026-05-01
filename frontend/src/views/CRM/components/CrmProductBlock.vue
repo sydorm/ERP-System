@@ -119,6 +119,7 @@ const productStatusLabel = computed(() => {
 })
 </script>
 
+<style scoped>
 .input-card-premium {
   display: flex;
   flex-direction: column;

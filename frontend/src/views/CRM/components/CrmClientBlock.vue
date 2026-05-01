@@ -192,6 +192,7 @@ const getDeliveryIcon = (name) => {
 }
 </script>
 
+<style scoped>
 .input-card-premium {
   display: flex;
   flex-direction: column;
