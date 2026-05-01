@@ -43,7 +43,6 @@
           <el-icon><InfoFilled /></el-icon>
           <span>Впливає на чергу у виробництві</span>
         </div>
-      </div>
     </div>
   </div>
 </template>

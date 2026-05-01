@@ -86,7 +86,6 @@
             :value="acc.id"
           />
         </el-select>
-      </div>
     </div>
   </div>
 </template>
