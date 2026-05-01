@@ -285,6 +285,14 @@ const getContactResultLabel = (res) => {
   }
   return map[res] || res
 }
+const getPaymentLabel = (status) => {
+  const map = {
+    unpaid: 'Не оплачено',
+    partial: 'Частково',
+    paid: 'Оплачено'
+  }
+  return map[status] || status
+}
 const handleComm = (order, channel) => {
   if (channel === 'phone') {
     handleCall({

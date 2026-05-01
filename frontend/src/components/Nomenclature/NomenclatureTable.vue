@@ -153,15 +153,15 @@ const isAllSelected = computed(() => {
 .nom-header {
   background: #F8F9FC;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  height: 48px;
+  height: 46px;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .nom-header .nom-cell {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #94A3B8;
