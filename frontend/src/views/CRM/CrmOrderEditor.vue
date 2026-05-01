@@ -166,12 +166,6 @@
     />
   </div>
 </template>
--model="printModalVisible"
-      :document-id="orderId"
-      document-type="invoice"
-    />
-  </div>
-</template>
 
 <script setup>
 import './styles/CrmOrderEditor.css'
