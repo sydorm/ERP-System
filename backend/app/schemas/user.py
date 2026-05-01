@@ -21,7 +21,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a new user"""
     password: str = Field(..., min_length=8, max_length=100)
-    company_id: UUID
+    company_id: Optional[UUID] = None
     
     @validator('password')
     def password_strength(cls, v):

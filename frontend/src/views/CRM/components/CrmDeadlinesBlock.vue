@@ -105,7 +105,7 @@ const selectedPriority = computed(() => props.priorities.find(p => p.value === p
 }
 
 .step-badge {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
   color: #fff;
   padding: 4px 12px;
   border-radius: 8px;

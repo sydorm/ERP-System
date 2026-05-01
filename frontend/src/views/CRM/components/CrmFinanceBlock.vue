@@ -164,7 +164,7 @@ const focusPrepaymentAmount = () => {
 }
 
 .step-badge {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
   color: #fff;
   padding: 4px 12px;
   border-radius: 8px;

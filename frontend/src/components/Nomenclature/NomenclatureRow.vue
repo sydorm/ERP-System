@@ -149,7 +149,7 @@ const getAiWarningReason = (row) => {
 .nom-row {
   display: grid;
   grid-template-columns:
-    44px    /* checkbox */
+    32px    /* checkbox */
     64px    /* photo */
     minmax(240px, 2.2fr) /* name */
     180px   /* category */
@@ -163,7 +163,7 @@ const getAiWarningReason = (row) => {
 
 .nom-body-row {
   height: 72px;
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 5px solid #F8FAFC;
   cursor: pointer;
   transition: background 0.14s ease;
   background: #ffffff;
@@ -190,8 +190,8 @@ const getAiWarningReason = (row) => {
   padding: 0;
 }
 .nom-cell--check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   cursor: pointer;
   accent-color: #1463FF;
 }

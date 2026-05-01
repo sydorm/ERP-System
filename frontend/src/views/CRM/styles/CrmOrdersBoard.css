@@ -5,16 +5,104 @@
    ============================================================ */
 
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ Page в”Ђв”Ђв”Ђв”Ђв”Ђ */
-.crm-board-page {
-  background: var(--erp-bg-page, #F5F8FC);
-  /* Counters view-container's 24px padding on all sides so the board fills el-main edge-to-edge */
-  margin: -24px;
-  /* Exact height: viewport minus 64px top-header — el-main has no own scroll */
+.crm-board-page-wrapper {
+  display: flex;
   height: calc(100vh - 64px);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: -24px;
+  overflow: hidden;
+  background: #F8FAFC;
+}
+
+/* Vertical Side Nav */
+.crm-vertical-nav {
+  width: 68px;
+  background: #fff;
+  border-right: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  gap: 12px;
+  z-index: 1002;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.nav-item .el-icon {
+  font-size: 20px;
+}
+
+.nav-label {
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: none;
+}
+
+.nav-item:hover {
+  background: #F1F5F9;
+  color: #1E293B;
+}
+
+.nav-item.active {
+  background: #1463FF;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.25);
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.nav-item-secondary {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #CBD5E1;
+  cursor: pointer;
+}
+
+/* Board & Analytics containers */
+.crm-board-page {
+  flex: 1;
+  background: var(--erp-bg-page, #F5F8FC);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+}
+
+.crm-analytics-view {
+  flex: 1;
+  overflow-y: auto;
+  background: #F8FAFC;
+  min-width: 0;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .crm-sticky-workbar {

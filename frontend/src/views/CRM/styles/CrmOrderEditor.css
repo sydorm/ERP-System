@@ -4,9 +4,10 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #F1F5F9;
+  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
   font-family: 'Inter', sans-serif;
-  padding: 12px; /* Add padding to show the background and rounding */
+  padding: 0 12px 12px 12px;
+  margin-top: -24px; /* Compensate for DashboardLayout .view-container padding */
 }
 
 .crm-editor-page-inner {
@@ -14,10 +15,11 @@
   flex-direction: column;
   flex: 1;
   background: #fff;
-  border-radius: 32px; /* Rounded window */
+  border-radius: 0 0 32px 32px; /* Attached to top, rounded bottom */
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.6);
+  border-top: none; /* No border where it touches the tabs bar */
   position: relative;
 }
 

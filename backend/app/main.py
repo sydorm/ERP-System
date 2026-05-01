@@ -175,7 +175,7 @@ from app.api.purchase_order_routes import router as purchase_order_router
 app.include_router(purchase_order_router, prefix="/api/v1", tags=["Purchases"])
 
 from app.api.user_routes import router as user_router
-app.include_router(user_router, tags=["Users"])
+app.include_router(user_router, prefix="/api/v1", tags=["Users"])
 
 from app.api.product_routes import router as product_router
 app.include_router(product_router, prefix="/api/v1", tags=["Products"])

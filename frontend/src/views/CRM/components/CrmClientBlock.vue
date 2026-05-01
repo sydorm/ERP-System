@@ -1,14 +1,18 @@
 <template>
-  <div class="crm-section-premium crm-client-section">
+  <div class="crm-section crm-client-section-premium">
     <div class="product-block-header">
       <div class="header-main">
-        <div class="step-badge">Крок 1</div>
+        <div class="step-badge step-1">Крок 1</div>
         <div class="title-group">
           <h3>Дані замовника</h3>
           <p>Виберіть існуючого клієнта або введіть дані нового для швидкого старту.</p>
         </div>
       </div>
       <div class="header-actions">
+        <div v-if="form.counterparty_id" class="glass-pill success mr-2">
+          <el-icon><Check /></el-icon>
+          <span>Клієнта обрано</span>
+        </div>
         <button class="client-add-btn-premium" type="button" @click="$emit('new-client')">
           <el-icon><Plus /></el-icon>
           <span>Новий клієнт</span>
@@ -169,12 +173,33 @@ const clientPhoneModel = computed({
 </script>
 
 <style scoped>
-.crm-section-premium {
+.crm-client-section-premium {
   padding: 32px;
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
+
+.step-badge.step-1 {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+}
+
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.glass-pill.success {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.mr-2 { margin-right: 8px; }
 
 .product-block-header {
   display: flex;

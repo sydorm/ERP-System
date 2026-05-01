@@ -164,7 +164,7 @@ defineEmits(['product-change', 'set-attr-value', 'set-attr-dim', 'upload-photo']
 }
 
 .step-badge {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #15B97A 0%, #0E905F 100%);
   color: #fff;
   padding: 4px 12px;
   border-radius: 8px;

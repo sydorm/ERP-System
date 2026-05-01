@@ -286,6 +286,29 @@ async def block_user(
     return {"status": "blocked", "blocked_at": user.blocked_at.isoformat()}
 
 
+@router.patch("/users/{user_id}/unblock")
+async def unblock_user(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(PermissionChecker(["users.manage"])),
+):
+    user = db.query(User).filter(User.id == user_id, User.company_id == current_user.company_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Користувача не знайдено")
+        
+    user.blocked_at = None
+    db.commit()
+    create_audit_log(
+        db,
+        user_id=current_user.id,
+        action="status_change",
+        entity_type="user",
+        entity_id=user.id,
+        changes={"blocked_at": None}
+    )
+    return {"status": "active"}
+
+
 @router.get("/users/{user_id}/activity")
 async def read_user_activity(
     user_id: UUID,

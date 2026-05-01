@@ -63,11 +63,10 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: #fff !important;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border-top: none !important;
+  box-shadow: none;
 }
 
 .back-pill {

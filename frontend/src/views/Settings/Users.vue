@@ -1,300 +1,284 @@
 <template>
-  <div class="users-page">
-    <div class="fixed-top-area">
-      <!-- ===== STAT CARDS ===== -->
-      <div class="kimi-stats-row">
-        <div class="kimi-stat-card kimi-stat-indigo">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Всього користувачів</p>
-            <p class="kimi-stat-value text-indigo-600">{{ users.length }}</p>
+  <div class="users-page-premium">
+    <div class="page-header-zone">
+      <!-- ===== PREMIUM KPI CARDS ===== -->
+      <div class="premium-stats-grid">
+        <div class="stat-glass-card indigo">
+          <div class="stat-content">
+            <span class="stat-label">Всього користувачів</span>
+            <span class="stat-value">{{ users.length }}</span>
           </div>
-          <div class="kimi-stat-icon-wrapper bg-indigo-100 text-indigo-600">
+          <div class="stat-icon-box">
             <el-icon><User /></el-icon>
           </div>
         </div>
-        <div class="kimi-stat-card kimi-stat-emerald">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Адміністратори</p>
-            <p class="kimi-stat-value text-emerald-600">{{ users.filter(u => u.role === 'admin').length }}</p>
+
+        <div class="stat-glass-card emerald">
+          <div class="stat-content">
+            <span class="stat-label">Адміністратори</span>
+            <span class="stat-value">{{ users.filter(u => u.role === 'admin').length }}</span>
           </div>
-          <div class="kimi-stat-icon-wrapper bg-emerald-100 text-emerald-600">
+          <div class="stat-icon-box">
             <el-icon><Key /></el-icon>
           </div>
         </div>
-        <div class="kimi-stat-card kimi-stat-amber">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Менеджери</p>
-            <p class="kimi-stat-value text-amber-600">{{ users.filter(u => u.role === 'manager').length }}</p>
+
+        <div class="stat-glass-card amber">
+          <div class="stat-content">
+            <span class="stat-label">Менеджери</span>
+            <span class="stat-value">{{ users.filter(u => u.role === 'manager').length }}</span>
           </div>
-          <div class="kimi-stat-icon-wrapper bg-amber-100 text-amber-600">
+          <div class="stat-icon-box">
             <el-icon><Avatar /></el-icon>
           </div>
         </div>
-        <div class="kimi-stat-card kimi-stat-blue">
-          <div class="kimi-stat-info">
-            <p class="kimi-stat-label">Активні зараз</p>
-            <p class="kimi-stat-value text-blue-600">{{ users.filter(u => u.is_active).length }}</p>
+
+        <div class="stat-glass-card blue">
+          <div class="stat-content">
+            <span class="stat-label">В мережі</span>
+            <span class="stat-value">{{ onlineCount }}</span>
           </div>
-          <div class="kimi-stat-icon-wrapper bg-blue-100 text-blue-600">
+          <div class="stat-icon-box">
             <el-icon><Monitor /></el-icon>
           </div>
         </div>
       </div>
 
-      <!-- ===== SEARCH & FILTER BAR ===== -->
-      <div class="kimi-filter-bar">
-        <div class="kimi-filter-left">
-          <el-input
+      <!-- ===== ACTION TOOLBAR ===== -->
+      <div class="premium-toolbar-card saas-premium-shadow">
+        <div class="search-wrapper">
+          <el-icon class="search-icon"><Search /></el-icon>
+          <input
             v-model="searchQuery"
-            placeholder="Пошук за ім'ям або email..."
-            :prefix-icon="Search"
-            clearable
-            class="kimi-search-input"
+            placeholder="Пошук за ім'ям або email"
+            class="premium-native-search"
           />
-      </div>
-        <div class="kimi-filter-right">
-          <button class="kimi-primary-btn" @click="router.push('/settings/users/create')">
-
-            <el-icon><Plus /></el-icon> Новий користувач
+        </div>
+        <div class="actions-wrapper">
+          <button class="premium-add-btn" @click="openCreateModal">
+            <el-icon><Plus /></el-icon>
+            <span>Новий користувач</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- ===== MAIN TABLE CARD ===== -->
-    <div class="table-card scrollable-table-area">
-      <el-table
-        v-loading="loading"
-        :data="filteredUsers"
-        height="100%"
-        size="small"
-        style="width: 100%"
-        class="kimi-table"
-        row-class-name="kimi-row"
-        header-row-class-name="kimi-header-row"
-      >
-        <el-table-column label="Користувач" min-width="250">
-          <template #default="{ row }">
-            <div class="user-info-cell">
-              <el-avatar :size="32" :src="row.avatar_url" v-if="row.avatar_url" />
-              <div v-else class="user-avatar" :style="{ backgroundColor: getAvatarColor(row) }">
-                {{ getInitials(row) }}
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="users-content-area">
+      <div class="premium-table-container saas-premium-shadow">
+        <el-table
+          v-loading="loading"
+          :data="filteredUsers"
+          height="100%"
+          class="premium-modern-table"
+          header-row-class-name="premium-header-row"
+          row-class-name="premium-row"
+        >
+          <el-table-column label="Користувач" min-width="280">
+            <template #default="{ row }">
+              <div class="user-cell-premium">
+                <div class="avatar-container">
+                  <el-avatar :size="40" :src="row.avatar_url" v-if="row.avatar_url" class="avatar-main" />
+                  <div v-else class="avatar-placeholder" :style="{ background: getAvatarColor(row) }">
+                    {{ getInitials(row) }}
+                  </div>
+                  <div class="online-indicator" :class="{ active: isUserOnline(row) }" />
+                </div>
+                <div class="user-meta">
+                  <span class="user-full-name">
+                    {{ row.first_name }} {{ row.last_name }}
+                    <span v-if="isRecentlyAdded(row)" class="new-badge">NEW</span>
+                  </span>
+                  <span class="user-email">{{ row.email }}</span>
+                </div>
               </div>
-              <div class="user-details">
-                <p class="kimi-text-sm kimi-font-medium">{{ row.first_name }} {{ row.last_name }}</p>
-                <p class="kimi-text-xxs kimi-text-slate-400">{{ row.email }}</p>
+            </template>
+          </el-table-column>
+          
+          <el-table-column label="Телефон" width="160">
+            <template #default="{ row }">
+              <span class="phone-text">{{ row.phone || '—' }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="Роль" width="160">
+            <template #default="{ row }">
+              <div class="role-pill" :class="row.role">
+                <span class="dot"></span>
+                {{ getRoleName(row.role) }}
               </div>
-            </div>
-          </template>
-        </el-table-column>
-        
-        <el-table-column label="Телефон" width="150">
-          <template #default="{ row }">
-            <span>{{ row.phone || '—' }}</span>
-          </template>
-        </el-table-column>
+            </template>
+          </el-table-column>
+          
+          <el-table-column label="Активність" width="180">
+            <template #default="{ row }">
+              <span class="activity-text">{{ formatTime(row.last_login_at) }}</span>
+            </template>
+          </el-table-column>
 
-        <el-table-column label="Роль" width="150" align="center">
-          <template #default="{ row }">
-            <span class="role-badge" :style="getRoleBadgeStyle(row.role)">
-              {{ getRoleName(row.role) }}
-            </span>
-          </template>
-        </el-table-column>
-        
-        <el-table-column label="Останній вхід" width="180">
-          <template #default="{ row }">
-            <span>{{ formatTime(row.last_login_at) }}</span>
-          </template>
-        </el-table-column>
+          <el-table-column label="Статус" width="140" align="center">
+            <template #default="{ row }">
+              <div class="status-badge-premium" :class="row.blocked_at ? 'blocked' : 'active'">
+                {{ row.blocked_at ? 'Заблокований' : 'Активний' }}
+              </div>
+            </template>
+          </el-table-column>
 
-        <el-table-column label="Статус" width="120" align="center">
-          <template #default="{ row }">
-            <div class="status-cell">
-              <span class="status-dot" :class="{ 'is-active': !row.blocked_at, 'is-blocked': row.blocked_at }"></span>
-              <span class="kimi-text-xs">{{ row.blocked_at ? 'Заблокований' : 'Активний' }}</span>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="Дії" width="200" align="center">
-          <template #default="{ row }">
-            <div class="kimi-actions-col">
-              <button class="kimi-ghost-btn" @click="openEditModal(row)" title="Редагувати">
-                <el-icon class="kimi-text-indigo-400"><Edit /></el-icon>
-              </button>
-              <button class="kimi-ghost-btn" @click="blockUser(row)" title="Заблокувати" v-if="!row.blocked_at && row.id !== userStore.user?.id">
-                <el-icon class="kimi-text-orange-400"><CircleClose /></el-icon>
-              </button>
-              <button class="kimi-ghost-btn" @click="confirmDelete(row)" title="Видалити" v-if="row.id !== userStore.user?.id">
-                <el-icon class="kimi-text-rose-400"><Delete /></el-icon>
-              </button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+          <el-table-column label="Дії" width="120" align="right">
+            <template #default="{ row }">
+              <div class="table-actions-premium">
+                <el-tooltip content="Редагувати" placement="top">
+                  <button class="action-minimal-btn" @click="openEditModal(row)">
+                    <el-icon><Edit /></el-icon>
+                  </button>
+                </el-tooltip>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </div>
 
-    <!-- Create/Edit Dialog -->
+    <!-- ===== PREMIUM DIALOG ===== -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEditing ? 'Редагувати користувача' : 'Новий користувач'"
-      width="760px"
-      class="kimi-dialog"
+      :title="isEditing ? 'Налаштування профілю' : 'Реєстрація користувача'"
+      width="800px"
+      class="premium-glass-dialog"
+      destroy-on-close
     >
-      <el-tabs v-model="dialogTab" class="user-card-tabs">
-        <el-tab-pane label="Основне" name="main" />
-        <el-tab-pane label="Доступи" name="permissions" />
-        <el-tab-pane label="Активність" name="activity" />
-        <el-tab-pane label="Безпека" name="security" />
-        <el-tab-pane label="Історія змін" name="history" />
-      </el-tabs>
-
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <div v-show="dialogTab === 'main'">
-          <el-form-item label="Аватар">
-            <el-upload
-              class="avatar-uploader"
-              action="/api/v1/upload"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-            >
-              <img v-if="form.avatar_url" :src="form.avatar_url" class="avatar" />
-              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-            </el-upload>
-          </el-form-item>
-
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="Ім'я" prop="first_name">
-                <el-input v-model="form.first_name" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="Прізвище" prop="last_name">
-                <el-input v-model="form.last_name" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="Email" prop="email">
-                <el-input v-model="form.email" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="Телефон" prop="phone">
-                <el-input v-model="form.phone" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-form-item label="Роль" prop="role">
-            <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange">
-              <el-option
-                v-for="role in ROLE_OPTIONS"
-                :key="role.value"
-                :label="role.label"
-                :value="role.value"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-row :gutter="20" v-if="!isEditing">
-            <el-col :span="12">
-              <el-form-item label="Пароль" prop="password">
-                <el-input v-model="form.password" type="password" show-password />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="Підтвердження" prop="confirmPassword">
-                <el-input v-model="form.confirmPassword" type="password" show-password />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <el-form-item v-show="dialogTab === 'permissions'" label="Доступи">
-          <div class="permissions-container">
-            <div v-for="group in permissionGroups" :key="group.key" class="permission-group">
-              <div class="group-header">
-                <el-checkbox 
-                  v-model="group.all" 
-                  @change="(val) => handleGroupAllChange(group, val)"
+      <div class="dialog-content-wrapper">
+        <el-tabs v-model="dialogTab" class="premium-tabs-vertical">
+          <el-tab-pane label="Основні дані" name="main">
+            <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="premium-form">
+              <div class="avatar-upload-zone">
+                <el-upload
+                  class="avatar-uploader-premium"
+                  action="/api/v1/upload/image"
+                  :show-file-list="false"
+                  :on-success="handleAvatarSuccess"
+                  :before-upload="beforeAvatarUpload"
                 >
-                  <strong>{{ group.label }}</strong>
-                </el-checkbox>
+                  <img v-if="form.avatar_url" :src="form.avatar_url" class="uploaded-avatar" />
+                  <div v-else class="upload-placeholder">
+                    <el-icon><Camera /></el-icon>
+                    <span>Додати фото</span>
+                  </div>
+                </el-upload>
+                <div class="avatar-help">
+                  <h4>Фото профілю</h4>
+                  <p>Рекомендовано квадратне фото, мін. 400x400px</p>
+                </div>
               </div>
-              <div class="group-items">
-                <el-checkbox 
-                  v-for="perm in group.items" 
-                  :key="perm.key"
-                  v-model="form.permissions[perm.key]"
-                >
-                  {{ perm.label }}
-                </el-checkbox>
+
+              <div class="form-grid-2">
+                <el-form-item label="Ім'я" prop="first_name">
+                  <el-input v-model="form.first_name" placeholder="Введіть ім'я" />
+                </el-form-item>
+                <el-form-item label="Прізвище" prop="last_name">
+                  <el-input v-model="form.last_name" placeholder="Введіть прізвище" />
+                </el-form-item>
+              </div>
+              
+              <div class="form-grid-2">
+                <el-form-item label="Email адреса" prop="email">
+                  <el-input v-model="form.email" placeholder="example@mail.com" />
+                </el-form-item>
+                <el-form-item label="Телефон" prop="phone">
+                  <el-input v-model="form.phone" placeholder="+380..." />
+                </el-form-item>
+              </div>
+
+              <el-form-item label="Системна роль" prop="role">
+                <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange" class="premium-select">
+                  <el-option
+                    v-for="role in ROLE_OPTIONS"
+                    :key="role.value"
+                    :label="role.label"
+                    :value="role.value"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <div v-if="!isEditing" class="form-grid-2">
+                <el-form-item label="Пароль" prop="password">
+                  <el-input v-model="form.password" type="password" show-password placeholder="Мінімум 8 символів" />
+                </el-form-item>
+                <el-form-item label="Підтвердження" prop="confirmPassword">
+                  <el-input v-model="form.confirmPassword" type="password" show-password placeholder="Повторіть пароль" />
+                </el-form-item>
+              </div>
+            </el-form>
+          </el-tab-pane>
+
+          <el-tab-pane label="Права доступу" name="permissions">
+            <div class="permissions-explorer">
+              <div v-for="group in permissionGroups" :key="group.key" class="perm-group-card">
+                <div class="group-head">
+                  <el-checkbox 
+                    v-model="group.all" 
+                    @change="(val) => handleGroupAllChange(group, val)"
+                  >
+                    {{ group.label }}
+                  </el-checkbox>
+                </div>
+                <div class="group-body">
+                  <el-checkbox 
+                    v-for="perm in group.items" 
+                    :key="perm.key"
+                    v-model="form.permissions[perm.key]"
+                  >
+                    {{ perm.label }}
+                  </el-checkbox>
+                </div>
               </div>
             </div>
-          </div>
-        </el-form-item>
-
-        <div v-show="dialogTab === 'activity'" class="user-tab-placeholder">
-          Журнал активності доступний через API картки користувача після збереження.
-        </div>
-        <div v-show="dialogTab === 'security'" class="user-tab-placeholder">
-          Скидання пароля виконується окремою дією у списку користувачів.
-        </div>
-        <div v-show="dialogTab === 'history'" class="user-tab-placeholder">
-          Історія змін фіксується в audit log при створенні, редагуванні та зміні прав.
-        </div>
-      </el-form>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Скасувати</el-button>
-          <el-button type="primary" @click="submitForm" :loading="submitting">
-            {{ isEditing ? 'Зберегти' : 'Створити' }}
-          </el-button>
-        </span>
+        <div class="premium-dialog-footer">
+          <button class="btn-secondary" @click="dialogVisible = false">Скасувати</button>
+          <button class="btn-primary" @click="submitForm" :loading="submitting">
+            <el-icon><Check /></el-icon>
+            {{ isEditing ? 'Зберегти зміни' : 'Створити акаунт' }}
+          </button>
+        </div>
       </template>
     </el-dialog>
 
-    <!-- Password Reset Dialog -->
+    <!-- ===== PASSWORD RESET DIALOG ===== -->
     <el-dialog
       v-model="passwordDialogVisible"
       title="Скидання пароля"
-      width="400px"
-      class="kimi-dialog"
+      width="440px"
+      class="premium-glass-dialog secondary"
     >
       <div class="password-reset-content">
-        <p class="kimi-text-sm kimi-mb-4">
-          Ви збираєтеся скинути пароль для <strong>{{ passwordForm.name }}</strong>.
-        </p>
+        <p class="desc">Ви збираєтеся згенерувати новий пароль для <strong>{{ passwordForm.name }}</strong>.</p>
         
-        <el-checkbox v-model="passwordForm.sendEmail" class="kimi-mb-4">
+        <el-checkbox v-model="passwordForm.sendEmail" class="send-email-check">
           Надіслати новий пароль на email
         </el-checkbox>
 
-        <div v-if="passwordForm.newPassword" class="new-password-display kimi-mt-4">
-          <p class="kimi-text-xs kimi-text-slate-400">Новий тимчасовий пароль:</p>
-          <div class="password-box">
-            <span class="password-text">{{ passwordForm.newPassword }}</span>
-            <el-button link @click="copyToClipboard(passwordForm.newPassword)">
+        <div v-if="passwordForm.newPassword" class="new-password-box">
+          <span class="label">Новий тимчасовий пароль:</span>
+          <div class="code-wrapper">
+            <span class="code">{{ passwordForm.newPassword }}</span>
+            <button class="copy-btn" @click="copyToClipboard(passwordForm.newPassword)">
               <el-icon><CopyDocument /></el-icon>
-            </el-button>
+            </button>
           </div>
-          <p class="kimi-text-xxs kimi-text-rose-500 kimi-mt-2">
-            * Обов'язково скопіюйте цей пароль зараз, він не буде показаний знову.
-          </p>
+          <p class="warning">* Скопіюйте цей пароль зараз. Він не буде показаний знову.</p>
         </div>
       </div>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="passwordDialogVisible = false">Закрити</el-button>
-          <el-button type="primary" @click="submitPasswordReset" :loading="submitting">
+        <div class="premium-dialog-footer">
+          <button class="btn-secondary" @click="passwordDialogVisible = false">Закрити</button>
+          <button class="btn-primary warning" @click="submitPasswordReset" :loading="submitting">
+            <el-icon><Refresh /></el-icon>
             {{ passwordForm.newPassword ? 'Згенерувати ще раз' : 'Згенерувати пароль' }}
-          </el-button>
+          </button>
         </div>
       </template>
     </el-dialog>
@@ -305,8 +289,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { 
   Plus, Search, Edit, Delete, Key, 
-  Refresh, User, Avatar, Monitor, 
-  CopyDocument, Check, Close, CircleClose 
+  User, Avatar, Monitor, Camera,
+  CircleClose, Check, Close
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -327,7 +311,6 @@ const userStore = useUserStore()
 const users = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
-const passwordDialogVisible = ref(false)
 const submitting = ref(false)
 const isEditing = ref(false)
 const searchQuery = ref('')
@@ -358,22 +341,26 @@ const handleRoleChange = (newRole) => {
   syncPermissionGroups(permissionGroups.value, form.permissions)
 }
 
-const passwordForm = reactive({
-  id: null,
-  name: '',
-  sendEmail: true,
-  newPassword: ''
-})
-
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value
   const q = searchQuery.value.toLowerCase()
   return users.value.filter(u => 
     u.first_name.toLowerCase().includes(q) || 
     u.last_name.toLowerCase().includes(q) || 
-    u.email.toLowerCase().includes(q)
+    u.email.toLowerCase().includes(q) ||
+    (u.phone && u.phone.includes(q))
   )
 })
+
+const onlineCount = computed(() => {
+  const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000)
+  return users.value.filter(u => u.last_login_at && new Date(u.last_login_at) > fifteenMinsAgo).length
+})
+
+const isUserOnline = (user) => {
+  if (!user.last_login_at) return false
+  return new Date(user.last_login_at) > new Date(Date.now() - 15 * 60 * 1000)
+}
 
 const rules = {
   first_name: [{ required: true, message: "Введіть ім'я", trigger: 'blur' }],
@@ -405,7 +392,7 @@ const rules = {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    const response = await api.get('/users')
+    const response = await api.get('/api/v1/users')
     users.value = response.data
   } catch (error) {
     ElMessage.error('Не вдалося завантажити користувачів')
@@ -414,22 +401,14 @@ const fetchUsers = async () => {
   }
 }
 
-const getRoleName = (role) => {
-  return getRegistryRoleName(role)
-}
+const getRoleName = (role) => getRegistryRoleName(role)
 
 const openCreateModal = () => {
   isEditing.value = false
-  form.id = null
-  form.first_name = ''
-  form.last_name = ''
-  form.email = ''
-  form.phone = ''
-  form.role = 'manager'
-  form.password = ''
-  form.confirmPassword = ''
-  form.avatar_url = ''
-  form.permissions = {}
+  Object.assign(form, {
+    id: null, first_name: '', last_name: '', email: '', phone: '',
+    role: 'manager', password: '', confirmPassword: '', avatar_url: '', permissions: {}
+  })
   permissionGroups.value.forEach(g => g.all = false)
   handleRoleChange('manager')
   dialogTab.value = 'main'
@@ -438,70 +417,36 @@ const openCreateModal = () => {
 
 const openEditModal = (row) => {
   isEditing.value = true
-  form.id = row.id
-  form.first_name = row.first_name
-  form.last_name = row.last_name
-  form.email = row.email
-  form.phone = row.phone || ''
-  form.role = row.role
-  form.avatar_url = row.avatar_url || ''
-  form.permissions = { ...(row.permissions || {}) }
-  
+  Object.assign(form, {
+    id: row.id, first_name: row.first_name, last_name: row.last_name,
+    email: row.email, phone: row.phone || '', role: row.role,
+    avatar_url: row.avatar_url || '', permissions: { ...(row.permissions || {}) }
+  })
   permissionGroups.value.forEach(group => {
     group.all = group.items.every(item => form.permissions[item.key])
   })
-  
   dialogTab.value = 'main'
   dialogVisible.value = true
 }
 
-const openPasswordModal = (row) => {
-  passwordForm.id = row.id
-  passwordForm.name = `${row.first_name} ${row.last_name}`
-  passwordForm.sendEmail = true
-  passwordForm.newPassword = ''
-  passwordDialogVisible.value = true
-}
-
-const submitPasswordReset = async () => {
-  submitting.value = true
-  try {
-    const response = await api.post(`/users/${passwordForm.id}/password-reset`, null, {
-      params: { send_email: passwordForm.sendEmail }
-    })
-    passwordForm.newPassword = response.data.temp_password
-    ElMessage.success('Пароль успішно скинуто')
-  } catch (error) {
-    ElMessage.error(error.response?.data?.detail || 'Помилка скидання пароля')
-  } finally {
-    submitting.value = false
-  }
-}
-
 const submitForm = async () => {
   if (!formRef.value) return
-  
   await formRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true
       try {
         const payload = {
-          first_name: form.first_name,
-          last_name: form.last_name,
-          email: form.email,
-          phone: form.phone,
-          role: form.role,
-          avatar_url: form.avatar_url,
-          permissions: form.permissions
+          first_name: form.first_name, last_name: form.last_name,
+          email: form.email, phone: form.phone, role: form.role,
+          avatar_url: form.avatar_url, permissions: form.permissions
         }
-        
         if (isEditing.value) {
-          await api.put(`/users/${form.id}`, payload)
+          await api.put(`/api/v1/users/${form.id}`, payload)
           ElMessage.success('Користувача оновлено')
         } else {
           payload.password = form.password
           payload.company_id = userStore.user?.companyId
-          await api.post('/users', payload)
+          await api.post('/api/v1/users', payload)
           ElMessage.success('Користувача створено')
         }
         dialogVisible.value = false
@@ -516,17 +461,22 @@ const submitForm = async () => {
 }
 
 const blockUser = (row) => {
+  const action = row.blocked_at ? 'розблокувати' : 'заблокувати'
   ElMessageBox.confirm(
-    `Ви впевнені, що хочете заблокувати користувача ${row.first_name} ${row.last_name}?`,
+    `Ви впевнені, що хочете ${action} користувача ${row.first_name} ${row.last_name}?`,
     'Попередження',
-    { confirmButtonText: 'Заблокувати', cancelButtonText: 'Скасувати', type: 'warning' }
+    { confirmButtonText: action.charAt(0).toUpperCase() + action.slice(1), cancelButtonText: 'Скасувати', type: 'warning' }
   ).then(async () => {
     try {
-      await api.patch(`/api/v1/users/${row.id}/block`)
-      ElMessage.success('Користувача заблоковано')
+      if (row.blocked_at) {
+        await api.patch(`/api/v1/users/${row.id}/unblock`)
+      } else {
+        await api.patch(`/api/v1/users/${row.id}/block`)
+      }
+      ElMessage.success(`Користувача ${action}овано`)
       fetchUsers()
     } catch (error) {
-      ElMessage.error(error.response?.data?.detail || 'Не вдалося заблокувати')
+      ElMessage.error('Не вдалося змінити статус')
     }
   })
 }
@@ -534,17 +484,74 @@ const blockUser = (row) => {
 const confirmDelete = (row) => {
   ElMessageBox.confirm(
     `Ви впевнені, що хочете видалити користувача ${row.first_name} ${row.last_name}?`,
-    'Попередження',
-    { confirmButtonText: 'Видалити', cancelButtonText: 'Скасувати', type: 'warning' }
+    'Видалення користувача',
+    { confirmButtonText: 'Видалити назавжди', cancelButtonText: 'Скасувати', type: 'error' }
   ).then(async () => {
     try {
-      await api.delete(`/users/${row.id}`)
+      await api.delete(`/api/v1/users/${row.id}`)
       ElMessage.success('Користувача видалено')
       fetchUsers()
     } catch (error) {
-      ElMessage.error(error.response?.data?.detail || 'Не вдалося видалити')
+      ElMessage.error('Помилка видалення')
     }
   })
+}
+
+const handleAvatarSuccess = (res) => { form.avatar_url = res.url }
+const beforeAvatarUpload = (file) => {
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) ElMessage.error('Розмір фото не може перевищувати 2MB!')
+  return isLt2M
+}
+
+const formatTime = (dateString) => {
+  if (!dateString) return 'Давно'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  if (diffMins < 1) return 'Тільки що'
+  if (diffMins < 60) return `${diffMins} хв тому`
+  return date.toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+const getInitials = (user) => `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase()
+const getAvatarColor = (user) => {
+  const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+  const index = (user.first_name?.length || 0) % colors.length
+  return colors[index]
+}
+
+const selectedUserRow = ref(null)
+const passwordDialogVisible = ref(false)
+const passwordForm = reactive({
+  id: null,
+  name: '',
+  sendEmail: true,
+  newPassword: ''
+})
+
+const openPasswordModal = (row) => {
+  passwordForm.id = row.id
+  passwordForm.name = `${row.first_name} ${row.last_name}`
+  passwordForm.sendEmail = true
+  passwordForm.newPassword = ''
+  passwordDialogVisible.value = true
+}
+
+const submitPasswordReset = async () => {
+  submitting.value = true
+  try {
+    const response = await api.post(`/api/v1/users/${passwordForm.id}/password-reset`, null, {
+      params: { send_email: passwordForm.sendEmail }
+    })
+    passwordForm.newPassword = response.data.temp_password
+    ElMessage.success('Пароль успішно скинуто')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || 'Помилка скидання пароля')
+  } finally {
+    submitting.value = false
+  }
 }
 
 const copyToClipboard = (text) => {
@@ -552,190 +559,260 @@ const copyToClipboard = (text) => {
   ElMessage.success('Скопійовано!')
 }
 
-const handleAvatarSuccess = (res) => {
-  form.avatar_url = res.url
+const isRecentlyAdded = (user) => {
+  if (!user.created_at) return false
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  return new Date(user.created_at) > oneDayAgo
 }
 
-const beforeAvatarUpload = (file) => {
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    ElMessage.error('Розмір фото не може перевищувати 2MB!')
-  }
-  return isLt2M
-}
-
-const formatTime = (dateString) => {
-  if (!dateString) return 'Ніколи'
-  const date = new Date(dateString)
-  return date.toLocaleString('uk-UA', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const getRoleBadgeStyle = (role) => {
-  const map = {
-    'admin': { backgroundColor: '#EFF6FF', color: '#3B82F6' },
-    'manager': { backgroundColor: '#F0FDF4', color: '#22C55E' },
-    'production': { backgroundColor: '#FFF7ED', color: '#F59E0B' },
-    'warehouse': { backgroundColor: '#F0FDFA', color: '#0F766E' },
-    'accountant': { backgroundColor: '#FDF4FF', color: '#A855F7' },
-    'viewer': { backgroundColor: '#F8FAFC', color: '#64748B' }
-  }
-  return map[role] || { backgroundColor: '#F1F5F9', color: '#64748B' }
-}
-
-const getInitials = (user) => {
-  return `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase()
-}
-
-const getAvatarColor = (user) => {
-  const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-  const index = (user.first_name?.length || 0) % colors.length
-  return colors[index]
-}
-
-const getRoleBadgeClass = (role) => {
-  const map = {
-    'admin': 'kimi-status-rose',
-    'manager': 'kimi-status-amber',
-    'worker': 'kimi-status-slate'
-  }
-  return map[role] || 'kimi-status-slate'
-}
-onMounted(fetchUsers)
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
-/* ===== PAGE ===== */
-.users-page {
-  position: relative;
-  flex: 1;
+.users-page-premium {
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #F8FAFC;
   overflow: hidden;
-  background-color: #f1f5f9;
 }
 
-/* ===== FIXED TOP AREA ===== */
-.fixed-top-area {
-  @apply flex-shrink-0 bg-slate-50 px-5 pt-4 flex flex-col;
+.page-header-zone {
+  padding: 24px 32px 0;
+  background: #fff;
+  border-bottom: 1px solid #E2E8F0;
+  flex-shrink: 0;
 }
 
-/* ===== TABLE CARD ===== */
-.table-card {
-  @apply bg-white rounded-xl border border-slate-200 m-5 flex-1 flex flex-col overflow-hidden shadow-sm;
+/* KPI CARDS */
+.premium-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-.scrollable-table-area {
-  @apply overflow-auto;
+.stat-glass-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* ===== USER CELL ===== */
-.user-info-cell {
-  @apply flex items-center gap-3;
+.stat-glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
 }
 
-.user-avatar {
-  @apply w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-sm border border-white/20;
+.stat-content { display: flex; flex-direction: column; gap: 4px; }
+.stat-label { font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; }
+.stat-value { font-size: 32px; font-weight: 900; }
+
+.stat-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
 }
 
-.user-details p {
-  @apply m-0 leading-tight;
+.indigo .stat-value { color: #6366F1; }
+.emerald .stat-value { color: #15B97A; }
+.amber .stat-value { color: #F59E0B; }
+.blue .stat-value { color: #1463FF; }
+
+.indigo .stat-icon-box { background: rgba(99, 102, 241, 0.1); color: #6366F1; }
+.emerald .stat-icon-box { background: rgba(21, 185, 122, 0.1); color: #15B97A; }
+.amber .stat-icon-box { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.blue .stat-icon-box { background: rgba(20, 99, 255, 0.1); color: #1463FF; }
+
+/* TOOLBAR */
+.premium-toolbar-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fff;
+  border-radius: 16px;
+  margin-bottom: 24px;
 }
 
-/* ===== STATUS CELL ===== */
-.status-cell {
-  @apply flex items-center gap-2;
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
 }
 
-.status-dot {
-  @apply w-2 h-2 rounded-full bg-slate-300;
+.search-icon {
+  font-size: 18px;
+  color: #94A3B8;
 }
 
-.status-dot.is-active {
-  @apply bg-emerald-500 ring-4 ring-emerald-500/20;
+.premium-native-search {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #1E293B;
+  width: 100%;
+  outline: none;
 }
 
-/* ===== PASSWORD RESET ===== */
-.password-box {
-  @apply bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3 flex justify-between items-center mt-2;
+.premium-native-search::placeholder {
+  color: #94A3B8;
 }
 
-.password-text {
-  @apply font-mono text-lg font-bold text-slate-900 tracking-wider;
-}
-
-/* ===== PERMISSIONS ===== */
-.permissions-container {
-  @apply border border-slate-100 rounded-lg p-3 max-h-[300px] overflow-y-auto bg-slate-50/50;
-}
-
-.user-card-tabs {
-  margin-top: -8px;
-  margin-bottom: 12px;
-}
-
-.user-tab-placeholder {
-  min-height: 220px;
-  padding: 18px;
-  border: 1px dashed #cbd5e1;
+.premium-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
   border-radius: 12px;
-  color: #64748b;
-  background: #f8fafc;
-}
-
-.permission-group {
-  @apply mb-4;
-}
-
-.group-header {
-  @apply border-b border-slate-100 mb-2 pb-1;
-}
-
-.group-items {
-  @apply flex flex-wrap gap-x-5 gap-y-2.5 pl-2;
-}
-
-.nimi-actions-col {
-  @apply flex justify-center gap-2;
-}
-
-.role-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-dot.is-blocked {
-  @apply bg-rose-500 ring-4 ring-rose-500/20;
-}
-
-.avatar-uploader {
-  display: inline-block;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
+  color: #fff;
+  border: none;
+  font-weight: 700;
   cursor: pointer;
-  position: relative;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.25);
+}
+
+.premium-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+/* CONTENT AREA */
+.users-content-area {
+  flex: 1;
+  padding: 24px 32px;
   overflow: hidden;
 }
-.avatar-uploader:hover {
-  border-color: #409eff;
+
+.premium-table-container {
+  height: 100%;
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
 }
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 64px;
-  height: 64px;
-  line-height: 64px;
-  text-align: center;
+
+.user-cell-premium {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.avatar {
-  width: 64px;
-  height: 64px;
-  display: block;
+
+.avatar-container { position: relative; }
+.avatar-placeholder {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-size: 14px;
 }
+.online-indicator {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #CBD5E1; border: 2px solid #fff;
+}
+.online-indicator.active { background: #15B97A; box-shadow: 0 0 0 4px rgba(21, 185, 122, 0.2); }
+
+.user-meta { display: flex; flex-direction: column; }
+.user-full-name { font-weight: 700; color: #0F172A; font-size: 14px; }
+.user-email { font-size: 12px; color: #94A3B8; }
+
+.role-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700;
+  background: #F1F5F9; color: #475569;
+}
+.role-pill.admin { background: #EEF2FF; color: #6366F1; }
+.role-pill.manager { background: #ECFDF5; color: #15B97A; }
+.role-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.status-badge-premium {
+  display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+}
+.status-badge-premium.active { background: #DCFCE7; color: #166534; }
+.status-badge-premium.blocked { background: #FEE2E2; color: #991B1B; }
+
+.table-actions-premium { display: flex; gap: 8px; justify-content: flex-end; }
+.action-minimal-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; color: #94A3B8; cursor: pointer; transition: all 0.2s;
+  display: grid; place-items: center;
+}
+.action-minimal-btn:hover { color: #6366F1; background: #F5F7FF; }
+
+/* DIALOG */
+.premium-glass-dialog :deep(.el-dialog) {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.avatar-upload-zone {
+  display: flex; align-items: center; gap: 20px; margin-bottom: 24px;
+  padding: 20px; background: #F8FAFC; border-radius: 16px;
+}
+.avatar-uploader-premium {
+  width: 80px; height: 80px; border-radius: 20px; border: 2px dashed #E2E8F0;
+  display: grid; place-items: center; cursor: pointer; overflow: hidden;
+}
+.uploaded-avatar { width: 100%; height: 100%; object-fit: cover; }
+.upload-placeholder { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #94A3B8; }
+.upload-placeholder .el-icon { font-size: 24px; margin-bottom: 4px; }
+
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.premium-tabs-vertical :deep(.el-tabs__item) {
+  font-weight: 700; height: 50px; border-radius: 12px; margin-bottom: 4px;
+}
+
+.premium-dialog-footer {
+  display: flex; justify-content: flex-end; gap: 12px; padding: 20px 0 0;
+}
+.btn-secondary {
+  padding: 10px 20px; border-radius: 12px; border: 1px solid #E2E8F0; background: #fff;
+  font-weight: 700; cursor: pointer;
+}
+.btn-primary {
+  display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 12px;
+  background: #6366F1; color: #fff; border: none; font-weight: 700; cursor: pointer;
+}
+
+.permissions-explorer { display: grid; gap: 16px; }
+.perm-group-card { border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; }
+.group-head { background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; }
+.group-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+@media (max-width: 1200px) {
+  .premium-stats-grid { grid-template-columns: 1fr 1fr; }
+}
+.btn-primary.warning { background: #F59E0B; }
+
+.new-badge {
+  font-size: 9px; background: #6366F1; color: #fff; padding: 1px 5px; border-radius: 4px;
+  margin-left: 6px; vertical-align: middle; font-weight: 900;
+}
+
+.password-reset-content { padding: 10px 0; }
+.password-reset-content .desc { font-size: 14px; color: #475569; margin-bottom: 20px; }
+.send-email-check { margin-bottom: 24px; }
+
+.new-password-box {
+  background: #F8FAFC; border: 1px dashed #E2E8F0; border-radius: 16px; padding: 20px;
+}
+.new-password-box .label { font-size: 12px; font-weight: 700; color: #94A3B8; margin-bottom: 8px; display: block; }
+.code-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.code-wrapper .code { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: 2px; }
+.copy-btn { border: none; background: #EEF2FF; color: #6366F1; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: grid; place-items: center; font-size: 20px; }
+.new-password-box .warning { font-size: 11px; color: #EF4444; font-weight: 700; margin-top: 12px; }
 </style>

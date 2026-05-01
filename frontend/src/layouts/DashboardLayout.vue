@@ -35,7 +35,6 @@
               <span>CRM</span>
             </template>
             <el-menu-item index="/crm">Замовлення</el-menu-item>
-            <el-menu-item index="/crm/analytics">Аналітика</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="sales" v-if="userStore.hasPermission('sales.view')">

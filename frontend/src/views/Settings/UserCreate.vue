@@ -244,7 +244,7 @@ const submitForm = async () => {
           password: form.password
         }
         
-        await api.post('/users', payload)
+        await api.post('/api/v1/users', payload)
         ElMessage.success('Користувача успішно створено!')
         router.push('/settings/users')
       } catch (error) {
