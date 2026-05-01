@@ -1,387 +1,205 @@
 <template>
-  <div class="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans antialiased text-slate-900">
-    <div class="max-w-[1600px] mx-auto">
+  <div class="min-h-screen bg-[#F8FAFC] p-8 font-inter text-slate-900 antialiased">
+    <div class="max-w-[1440px] mx-auto">
       
-      <div class="sticky top-0 z-[100] -mx-4 px-4 py-4 mb-10 bg-[#F8FAFC]/80 backdrop-blur-xl border-b border-gray-100/50">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div class="space-y-1">
-            <h1 class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-              {{ orderId ? 'Заявка' : 'Нова заявка' }}
-              <span v-if="orderId" class="px-2 py-0.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-indigo-600 shadow-sm">
-                {{ form.order_number }}
-              </span>
-            </h1>
-            <!-- Mini Stage Stepper -->
-            <div class="flex items-center gap-1.5 pt-1">
-              <div v-for="(s, idx) in ['new', 'negotiation', 'payment', 'production', 'delivery', 'done']" :key="s" class="flex items-center gap-1">
-                <div 
-                  :class="[
-                    'w-6 h-1 rounded-full transition-all', 
-                    form.crm_stage === s ? 'bg-indigo-600 w-10' : 'bg-gray-200'
-                  ]"
-                />
-              </div>
-              <span class="text-[9px] font-black uppercase text-indigo-400 ml-2 tracking-widest">{{ form.crm_stage }}</span>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <button @click="save('draft')" class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-[11px] font-black text-gray-500 hover:bg-gray-50 transition-all shadow-sm">ЧЕРНЕТКА</button>
-            <button 
-              @click="save('production')" 
-              :disabled="saving"
-              class="px-7 py-2.5 bg-indigo-600 rounded-xl text-[11px] font-black text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
-            >
-              <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
-              {{ orderId ? 'ОНОВИТИ' : 'СТВОРІТИ' }}
-            </button>
-          </div>
+      <!-- HEADER -->
+      <header class="flex items-center justify-between mb-8">
+        <div>
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Редагування заявки</div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+            ORD-00004 
+            <span v-if="orderId" class="px-2 py-0.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-indigo-600 shadow-sm">
+              {{ form.order_number }}
+            </span>
+          </h1>
         </div>
-      </div>
+        <div class="flex gap-3">
+          <button @click="router.back()" class="px-5 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all shadow-sm">Скасувати</button>
+          <button @click="save('production')" :disabled="saving" class="px-6 py-2 bg-[#2563EB] text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm shadow-blue-200 flex items-center gap-2">
+            <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
+            Зберегти зміни
+          </button>
+        </div>
+      </header>
 
-      <!-- ─── MAIN LAYOUT (70/30 CSS Grid) ─── -->
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10 items-start">
+      <!-- MAIN GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8">
         
-        <!-- LEFT COLUMN: Main Workspace (70%) -->
-        <div class="space-y-10">
+        <!-- LEFT COLUMN (60%) -->
+        <div class="space-y-8">
           
-          <!-- SECTION 1: Client Block -->
-          <section id="section-client" class="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-[32px] p-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.03] transition-all hover:shadow-[0_12px_50px_rgba(0,0,0,0.04)]">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="p-3 bg-indigo-50 rounded-2xl text-indigo-600 shadow-inner">
-                <el-icon :size="20"><User /></el-icon>
-              </div>
-              <div class="space-y-0.5">
-                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Дані клієнта</h2>
-                <p class="text-[11px] text-slate-400 font-medium">Основна інформація про замовника</p>
-              </div>
+          <!-- CARD: Client Data -->
+          <section class="bg-white rounded-xl border border-slate-200 p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-base font-bold text-slate-800 uppercase tracking-tight">Дані клієнта</h2>
+              <button @click="openCreateCounterparty" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <el-icon :size="18"><Plus /></el-icon>
+              </button>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <!-- Autocomplete Client Search -->
-              <div class="md:col-span-2 space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Пошук клієнта</label>
-                <div class="flex gap-2">
-                  <el-select
-                    v-model="form.counterparty_id"
-                    filterable
-                    remote
-                    clearable
-                    placeholder="ПІБ або телефон..."
-                    :remote-method="searchCounterparties"
-                    @change="onClientChange"
-                    class="saas-select-premium flex-1"
-                  >
-                    <el-option
-                      v-for="item in counterparties"
-                      :key="item.id"
-                      :label="`${item.name} (${item.phone || ''})`"
-                      :value="item.id"
-                    />
-                  </el-select>
-                  <button @click="openCreateCounterparty" class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all shadow-sm">
-                    <el-icon :size="18"><Plus /></el-icon>
-                  </button>
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Місто</label>
-                <input v-model="form.city" class="saas-input-premium" placeholder="Київ" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Телефон</label>
-                <input v-model="form.phone" class="saas-input-premium" placeholder="+380..." />
-              </div>
-            </div>
-
-            <!-- Source Chips (Full Width) -->
-            <div class="mt-8 space-y-3">
-              <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Джерело</label>
-              <div class="flex flex-wrap gap-2">
-                <button 
-                  v-for="src in leadSourceIcons" 
-                  :key="src.id"
-                  @click="form.lead_source_id = src.id"
-                  :class="[
-                    'flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold transition-all shadow-sm',
-                    form.lead_source_id === src.id 
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-100' 
-                      : 'bg-white border-gray-100 text-slate-500 hover:border-indigo-200'
-                  ]"
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2 space-y-1.5">
+                <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1 tracking-wider">Пошук клієнта</label>
+                <el-select
+                  v-model="form.counterparty_id"
+                  filterable
+                  remote
+                  clearable
+                  placeholder="Введіть ПІБ або номер телефону..."
+                  :remote-method="searchCounterparties"
+                  @change="onClientChange"
+                  class="minimal-select w-full"
                 >
-                  <el-icon :size="14"><component :is="src.icon" /></el-icon>
-                  <span>{{ src.name }}</span>
-                </button>
+                  <el-option v-for="c in counterparties" :key="c.id" :label="`${c.name} (${c.phone || ''})`" :value="c.id" />
+                </el-select>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1 tracking-wider">Місто</label>
+                <input v-model="form.city" class="minimal-input" placeholder="Київ" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1 tracking-wider">Телефон</label>
+                <input v-model="form.phone" class="minimal-input" placeholder="+380..." />
               </div>
             </div>
           </section>
 
-          <!-- SECTION 2: Nomenclature Block -->
-          <section id="section-product" class="bg-white/80 border border-gray-100 rounded-[32px] p-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.03]">
-            <div class="flex items-center justify-between mb-8">
-              <div class="flex items-center gap-4">
-                <div class="p-3 bg-amber-50 rounded-2xl text-amber-600 shadow-inner">
-                  <el-icon :size="20"><Box /></el-icon>
-                </div>
-                <div class="space-y-0.5">
-                  <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Виріб та Характеристики</h2>
-                  <p class="text-[11px] text-slate-400 font-medium">Конфігурація замовлення</p>
-                </div>
-              </div>
-            </div>
-
+          <!-- CARD: Product & Specs -->
+          <section class="bg-white rounded-xl border border-slate-200 p-8 shadow-sm transition-shadow hover:shadow-md">
+            <h2 class="text-base font-bold text-slate-800 mb-6 uppercase tracking-tight">Виріб та Характеристики</h2>
             <div class="space-y-8">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Оберіть модель</label>
-                  <el-select v-model="form.product_id" filterable @change="onProductChange" class="saas-select-premium w-full">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1 tracking-wider">Модель</label>
+                  <el-select v-model="form.product_id" filterable @change="onProductChange" class="minimal-select w-full" placeholder="Оберіть модель...">
                     <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
                   </el-select>
                 </div>
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Коментар до замовлення</label>
-                  <textarea v-model="form.comment" class="saas-input-premium min-h-[46px] py-2.5" placeholder="Додаткові побажання..."></textarea>
+                <div class="space-y-1.5">
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1 tracking-wider">Коментар</label>
+                  <textarea v-model="form.comment" class="minimal-input min-h-[42px] py-2" placeholder="Додаткові побажання..."></textarea>
                 </div>
               </div>
 
-              <!-- Dynamic Attributes (Specs) -->
-              <div v-if="productAttributes.length" class="p-6 bg-slate-50/50 rounded-3xl border border-slate-100/50 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div v-for="attr in productAttributes" :key="attr.id" class="space-y-2">
-                  <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">{{ attr.name }}</label>
-                  <el-select v-model="form.attributes_values[attr.id]" class="saas-select-mini w-full">
+              <!-- Dynamic Attributes -->
+              <div v-if="productAttributes.length" class="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50 rounded-xl border border-slate-100">
+                <div v-for="attr in productAttributes" :key="attr.id" class="space-y-1.5">
+                  <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ attr.name }}</label>
+                  <el-select v-model="form.attributes_values[attr.id]" class="minimal-select-mini w-full">
                     <el-option v-for="v in attr.values" :key="v" :label="v" :value="v" />
                   </el-select>
                 </div>
               </div>
 
-              <!-- SECTION 3: Inventory Analysis -->
-              <div class="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[28px] text-white shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full -mr-32 -mt-32"></div>
-                <div class="flex items-center justify-between mb-6 relative">
-                  <div class="flex items-center gap-3">
-                    <el-icon class="text-indigo-400 animate-pulse"><MagicStick /></el-icon>
-                    <span class="text-[10px] font-black uppercase tracking-[2px]">Аналіз залишків BOM</span>
-                  </div>
-                  <div :class="['px-3 py-1 rounded-full text-[10px] font-black uppercase', matStatusClass === 'mat-ok' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400']">
-                    {{ matStatusLabel }}
-                  </div>
+              <!-- BOM Status -->
+              <div class="flex items-center justify-between p-4 bg-slate-900 rounded-xl text-white">
+                <div class="flex items-center gap-3">
+                  <el-icon class="text-blue-400"><MagicStick /></el-icon>
+                  <span class="text-[11px] font-bold uppercase tracking-wider">Аналіз матеріалів</span>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 relative">
-                  <div v-for="mat in materials" :key="mat.id" class="flex items-center justify-between group">
-                    <span class="text-xs text-indigo-100/70 font-medium">{{ mat.name }}</span>
-                    <div class="flex items-center gap-3">
-                      <div class="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div 
-                          class="h-full transition-all duration-1000" 
-                          :style="{ width: mat.status === 'missing' ? '20%' : '100%', background: mat.status === 'missing' ? '#fb7185' : '#34d399' }"
-                        ></div>
-                      </div>
-                      <span :class="['text-[9px] font-bold uppercase', mat.status === 'missing' ? 'text-rose-400' : 'text-emerald-400']">
-                        {{ mat.status === 'missing' ? 'ДЕФІЦИТ' : 'ОК' }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- SECTION 4: Logistics & Deadline Block -->
-          <section id="section-analysis" class="bg-white/80 border border-gray-100 rounded-[32px] p-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.03]">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shadow-inner">
-                <el-icon :size="20"><Van /></el-icon>
-              </div>
-              <div class="space-y-0.5">
-                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Логістика та Дедлайни</h2>
-                <p class="text-[11px] text-slate-400 font-medium">Спосіб відвантаження та термін готовності</p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div class="space-y-6">
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Метод відвантаження</label>
-                  <el-select v-model="form.delivery_type" class="saas-select-premium w-full">
-                    <el-option label="Нова Пошта" value="NP" />
-                    <el-option label="Самовивіз" value="PICKUP" />
-                    <el-option label="Кур'єр" value="COURIER" />
-                  </el-select>
-                </div>
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Склад відправки</label>
-                  <el-select v-model="form.warehouse_id" class="saas-select-premium w-full">
-                    <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-                  </el-select>
-                </div>
-              </div>
-              <div class="relative group cursor-pointer" @click="currentSection = 'deadline'">
-                <div class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
-                <div class="relative bg-white border border-gray-100 rounded-3xl p-6 h-full flex flex-col justify-between shadow-sm">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Дедлайн виготовлення</span>
-                    <el-icon class="text-indigo-200"><Calendar /></el-icon>
-                  </div>
-                  <el-date-picker
-                    v-model="form.deadline_date"
-                    type="date"
-                    placeholder="Оберіть дату"
-                    format="DD MMMM, YYYY"
-                    value-format="YYYY-MM-DD"
-                    class="saas-datepicker-invisible"
-                  />
-                  <div class="text-2xl font-black text-slate-800 mt-2">
-                    {{ form.deadline_date ? formatDate(form.deadline_date) : 'Оберіть дату' }}
-                  </div>
-                  <div v-if="form.deadline_date" class="text-[10px] text-indigo-400 font-bold uppercase mt-2">
-                    Залишилось: {{ getRemainingDays(form.deadline_date) }} роб. дні
-                  </div>
-                </div>
+                <span :class="['text-[10px] font-black uppercase px-2 py-0.5 rounded', matStatusClass === 'mat-ok' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400']">
+                  {{ matStatusLabel }}
+                </span>
               </div>
             </div>
           </section>
         </div>
 
-        <!-- RIGHT COLUMN: Sidebar (30%) -->
-        <aside class="space-y-8 sticky top-8">
+        <!-- RIGHT COLUMN (40%) -->
+        <div class="space-y-8">
           
-          <!-- SECTION 5: Finance Summary -->
-          <div class="bg-slate-900 rounded-[40px] p-8 shadow-2xl text-white relative overflow-hidden border border-white/5">
-            <div class="absolute top-0 right-0 w-48 h-48 bg-indigo-500/20 blur-3xl rounded-full -mr-24 -mt-24"></div>
-            <div class="flex items-center gap-3 mb-10 opacity-60">
-              <el-icon :size="16"><Wallet /></el-icon>
-              <span class="text-[10px] font-black uppercase tracking-[3px]">Finance Summary</span>
-            </div>
-            
-            <div class="space-y-8">
-              <div>
-                <label class="text-[11px] text-indigo-300/70 font-bold uppercase tracking-wider mb-2 block">Загальна сума</label>
-                <div class="flex items-baseline gap-2">
-                  <input 
-                    type="number" 
-                    v-model="form.total_amount" 
-                    class="bg-transparent text-4xl font-black tracking-tight text-white border-none focus:ring-0 w-full p-0"
-                  />
-                  <span class="text-2xl opacity-30 font-light">₴</span>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/10 group focus-within:border-indigo-400 transition-all">
-                  <label class="text-[10px] text-gray-500 uppercase font-black mb-1 block tracking-widest">Предоплата</label>
-                  <div class="flex items-center gap-1">
-                    <input 
-                      type="number" 
-                      v-model="form.prepayment_amount" 
-                      class="bg-transparent text-base font-bold text-white border-none focus:ring-0 w-full p-0"
-                      placeholder="0"
-                    />
-                    <span class="text-xs opacity-30">₴</span>
-                  </div>
-                </div>
-                <div :class="['p-4 rounded-2xl border transition-all', form.payment_status === 'paid' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20']">
-                  <label class="text-[10px] text-gray-500 uppercase font-black mb-1 block">Статус</label>
-                  <div :class="['text-sm font-bold', form.payment_status === 'paid' ? 'text-emerald-400' : 'text-amber-400']">
-                    {{ form.payment_status === 'paid' ? 'СПЛАЧЕНО' : 'ОЧІКУЄ' }}
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex gap-2">
-                <button 
-                  v-for="pct in [20, 30, 50, 100]" 
-                  :key="pct"
-                  @click="setPrepayPercent(pct)"
-                  class="flex-1 py-2 rounded-xl border border-white/10 text-[10px] font-black uppercase hover:bg-white/5 transition-all"
-                >
-                  {{ pct }}%
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- SECTION 6: Communication Channel & History -->
-          <div class="bg-white rounded-[40px] border border-gray-100 p-8 shadow-[0_15px_50px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.02]">
-            <div class="flex items-center justify-between mb-8">
-              <div class="flex items-center gap-2">
-                <el-icon class="text-slate-400"><Timer /></el-icon>
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Activity Timeline</span>
-              </div>
-              <div class="flex gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] font-black text-slate-900 uppercase italic">{{ form.channel }}</span>
-              </div>
-            </div>
-
-            <div class="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-              <div v-for="log in contactHistory.slice(0, 3)" :key="log.id" class="relative pl-10 group">
-                <div class="absolute left-1.5 top-1 w-3 h-3 rounded-full bg-white border-2 border-slate-200 group-hover:border-indigo-500 transition-colors"></div>
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between">
-                    <span :class="['text-[11px] font-black uppercase tracking-tight', log.result === 'REFUSED' ? 'text-rose-500' : 'text-slate-800']">
-                      {{ getResultHint(log.result) || log.result }}
-                    </span>
-                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{{ formatRelativeTime(log.contacted_at) }}</span>
-                  </div>
-                  <p class="text-[11px] text-slate-500 leading-relaxed font-medium line-clamp-2 italic">"{{ log.note }}"</p>
-                </div>
-              </div>
-              <div v-if="!contactHistory.length" class="pl-10 text-[11px] text-slate-400 font-medium italic">
-                Історія взаємодії порожня...
-              </div>
-            </div>
-          </div>
-
-          <!-- SECTION 8: Future Communication (Next Step) -->
-          <div class="bg-indigo-600 rounded-[40px] p-8 text-white shadow-[0_20px_60px_rgba(79,70,229,0.35)] relative overflow-hidden group">
-            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 blur-3xl rounded-full transition-all group-hover:scale-150"></div>
-            <div class="flex items-center gap-3 mb-6 relative">
-              <el-icon class="text-indigo-200"><Clock /></el-icon>
-              <span class="text-[10px] font-black uppercase tracking-widest">Наступний крок</span>
-            </div>
-            
-            <textarea 
-              v-model="form.next_contact_comment"
-              class="w-full bg-white/10 border border-white/20 rounded-2xl p-4 text-xs font-medium placeholder:text-indigo-200 focus:outline-none focus:bg-white/20 transition-all resize-none h-24 mb-4 relative z-10"
-              placeholder="Що потрібно зробити наступним кроком?"
-            ></textarea>
-            
-            <div class="flex items-center justify-between relative z-10">
-              <div class="space-y-1">
-                <span class="text-[9px] font-bold text-indigo-200 uppercase tracking-widest block">Заплановано на:</span>
-                <div class="text-xs font-black">{{ form.next_contact_at ? formatDate(form.next_contact_at) : 'Час не вказано' }}</div>
-              </div>
+          <!-- CARD: Source Selection (Segmented Control) -->
+          <section class="bg-white rounded-xl border border-slate-200 p-8 shadow-sm transition-shadow hover:shadow-md">
+            <h2 class="text-base font-bold text-slate-800 mb-6 uppercase tracking-tight">Джерело клієнта</h2>
+            <div class="grid grid-cols-3 gap-2">
               <button 
-                @click="onLogContact"
-                class="p-4 bg-white rounded-2xl text-indigo-600 hover:scale-105 active:scale-95 transition-all shadow-xl"
+                v-for="src in leadSources" :key="src.id"
+                @click="form.lead_source_id = src.id"
+                :class="[
+                  'flex flex-col items-center gap-2 py-3 rounded-lg border transition-all',
+                  form.lead_source_id === src.id 
+                    ? 'bg-blue-50 border-blue-500 text-blue-600 shadow-sm ring-1 ring-blue-500' 
+                    : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300 hover:bg-slate-50'
+                ]"
               >
-                <el-icon :size="20"><Promotion /></el-icon>
+                <el-icon :size="18"><component :is="src.icon" /></el-icon>
+                <span class="text-[10px] font-bold uppercase tracking-wider">{{ src.name }}</span>
               </button>
             </div>
-          </div>
+          </section>
 
-        </aside>
+          <!-- CARD: Sales Progress -->
+          <section class="bg-white rounded-xl border border-slate-200 p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div class="flex items-end justify-between mb-6">
+              <div>
+                <h2 class="text-base font-bold text-slate-800 uppercase tracking-tight mb-1">Продаж</h2>
+                <div class="flex items-baseline gap-1">
+                  <input type="number" v-model="form.total_amount" class="text-24 font-black text-[#2563EB] bg-transparent border-none p-0 w-32 focus:ring-0" />
+                  <span class="text-lg font-bold text-blue-300">₴</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Оплачено</div>
+                <div class="text-lg font-bold text-slate-700">{{ prepaymentPercent }}%</div>
+              </div>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-[#2563EB] transition-all duration-500 shadow-[0_0_12px_rgba(37,99,235,0.4)]" :style="{ width: `${prepaymentPercent}%` }"></div>
+              </div>
+              
+              <div class="flex items-center gap-3">
+                <div class="flex-1 space-y-1.5">
+                  <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Предоплата</label>
+                  <input type="number" v-model="form.prepayment_amount" class="minimal-input font-bold" />
+                </div>
+                <div class="flex flex-wrap gap-1 pt-5">
+                  <button v-for="pct in [20, 30, 50, 100]" :key="pct" @click="setPrepayPercent(pct)" class="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold text-slate-500 hover:bg-slate-100 transition-all">{{ pct }}%</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- CARD: Activity Timeline -->
+          <section class="bg-white rounded-xl border border-slate-200 p-8 shadow-sm transition-shadow hover:shadow-md">
+            <h2 class="text-base font-bold text-slate-800 mb-8 uppercase tracking-tight">Activity Timeline</h2>
+            <div class="space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+              <div v-for="event in contactHistory.slice(0, 5)" :key="event.id" class="relative pl-8 group">
+                <div class="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-white border-2 border-emerald-500 z-10 transition-transform group-hover:scale-125">
+                  <div class="w-full h-full bg-emerald-500 rounded-full scale-0 group-hover:scale-50 transition-transform"></div>
+                </div>
+                <div class="space-y-1">
+                  <div class="flex items-center gap-3">
+                    <span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase tracking-widest">Підтверджено</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ formatRelativeTime(event.contacted_at) }}</span>
+                  </div>
+                  <div class="text-[13px] font-medium text-slate-600 leading-snug">{{ event.note }}</div>
+                </div>
+              </div>
+              <div v-if="!contactHistory.length" class="pl-8 text-xs text-slate-400 italic">Історія порожня...</div>
+            </div>
+          </section>
+
+        </div>
       </div>
-
     </div>
 
-    <!-- CREATE CLIENT DIALOG (Premium Styling) -->
-    <el-dialog v-model="cpDialogVisible" title="Новий Клієнт" width="420px" class="saas-dialog-premium">
-      <div class="space-y-6 p-2">
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ім'я та Прізвище</label>
-          <input v-model="newCp.name" class="saas-input-premium" placeholder="Олександр Коваленко" />
+    <!-- Create Client Dialog -->
+    <el-dialog v-model="cpDialogVisible" title="Новий Клієнт" width="400px" class="minimal-dialog">
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1">Ім'я</label>
+          <input v-model="newCp.name" class="minimal-input" placeholder="ПІБ Клієнта" />
         </div>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Номер телефону</label>
-          <input v-model="newCp.phone" class="saas-input-premium" placeholder="+38 (0XX) XXX-XX-XX" />
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-slate-500 uppercase ml-1">Телефон</label>
+          <input v-model="newCp.phone" class="minimal-input" placeholder="+380..." />
         </div>
       </div>
       <template #footer>
-        <div class="flex gap-3 px-2 pb-2">
-          <button @click="cpDialogVisible = false" class="flex-1 py-3 bg-slate-50 text-slate-500 text-[11px] font-black uppercase rounded-2xl hover:bg-slate-100 transition-all">Скасувати</button>
-          <button @click="createCounterparty" :loading="creatingCp" class="flex-1 py-3 bg-indigo-600 text-white text-[11px] font-black uppercase rounded-2xl hover:bg-indigo-700 shadow-lg transition-all">Створити</button>
+        <div class="flex gap-2">
+          <button @click="cpDialogVisible = false" class="flex-1 py-2 text-slate-500 font-bold uppercase text-[11px]">Скасувати</button>
+          <button @click="createCounterparty" :loading="creatingCp" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold uppercase text-[11px] shadow-lg shadow-blue-100">Створити</button>
         </div>
       </template>
     </el-dialog>
@@ -393,103 +211,70 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
-  User, Box, MagicStick, Van, Calendar, Wallet, Timer, Clock, 
-  Promotion, Loading, Bell, ChatDotRound, Camera, Phone, MoreFilled, Star, Position, Refresh, ShoppingBag, More
+  Phone, Camera, ChatDotRound, Promotion, Position, ShoppingBag, 
+  Plus, Loading, MagicStick, Timer, Clock, Wallet, Van, Calendar 
 } from '@element-plus/icons-vue'
 import api from '@/api'
-import { useUserStore } from '@/stores/user'
-import { validateCrmOrderRequiredFields, collectMissingProductionFields } from './composables/useCrmOrderValidation'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
 
 const orderId = computed(() => {
   const id = route.params.id
   return (id && id !== 'new') ? id : null
 })
 
-// ─── STATE ───
+// STATE
 const loading = ref(true)
 const saving = ref(false)
-const currentSection = ref('client')
-
 const form = reactive({
   counterparty_id: null,
-  lead_source_id:  null,
-  order_number:    '',
-  warehouse_id:    null,
-  product_id:      null,
-  crm_stage:       'new',
-  channel:         'Viber',
-  city:            '',
-  delivery_type:   'NP',
+  lead_source_id: 'instagram',
+  city: '',
+  phone: '',
+  product_id: null,
   attributes_values: {},
-  total_amount:     0,
+  total_amount: 0,
   prepayment_amount: 0,
-  payment_status:  'unpaid',
-  deadline_date:   null,
-  next_contact_at: null,
-  next_contact_comment: '',
-  comment:         '',
+  comment: '',
+  crm_stage: 'new',
+  order_number: ''
 })
 
-// Dictionaries
 const products = ref([])
 const counterparties = ref([])
-const warehouses = ref([])
 const productAttributes = ref([])
 const materials = ref([])
 const contactHistory = ref([])
 
-const leadSourceIcons = [
-  { id: 'phone',       name: 'Дзвінок',       icon: 'Phone' },
-  { id: 'instagram',   name: 'Instagram',     icon: 'Camera' },
-  { id: 'viber',       name: 'Viber',         icon: 'ChatDotRound' },
-  { id: 'telegram',    name: 'Telegram',      icon: 'Promotion' },
-  { id: 'website',     name: 'Сайт',          icon: 'Position' },
-  { id: 'marketplace', name: 'Market',        icon: 'ShoppingBag' }
+const leadSources = [
+  { id: 'phone', name: 'Дзвінок', icon: 'Phone' },
+  { id: 'instagram', name: 'Instagram', icon: 'Camera' },
+  { id: 'viber', name: 'Viber', icon: 'ChatDotRound' },
+  { id: 'telegram', name: 'Telegram', icon: 'Promotion' },
+  { id: 'website', name: 'Сайт', icon: 'Position' },
+  { id: 'marketplace', name: 'Market', icon: 'ShoppingBag' }
 ]
 
-// ─── LOGIC ───
-const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
-const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: 'long' })
-
-const getRemainingDays = (dateStr) => {
-  const diff = new Date(dateStr) - new Date()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-}
-
-const formatRelativeTime = (d) => {
-  const diff = new Date() - new Date(d)
-  const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins} хв тому`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} год тому`
-  return formatDate(d)
-}
-
-const getResultHint = (res) => {
-  const map = { REFUSED: 'Відмова', CONFIRMED: 'Підтверджено', THINKING: 'Думає', NO_ANSWER: 'Не відповів' }
-  return map[res] || res
-}
+// LOGIC
+const prepaymentPercent = computed(() => {
+  if (!form.total_amount) return 0
+  return Math.round((form.prepayment_amount / form.total_amount) * 100)
+})
 
 const setPrepayPercent = (pct) => {
   form.prepayment_amount = Math.round(form.total_amount * (pct / 100))
 }
 
-// Watch for payment status automation
-watch(() => form.prepayment_amount, (val) => {
-  if (val >= form.total_amount && form.total_amount > 0) {
-    form.payment_status = 'paid'
-  } else if (val > 0) {
-    form.payment_status = 'partial'
-  } else {
-    form.payment_status = 'unpaid'
-  }
-})
-
-import { Plus } from '@element-plus/icons-vue'
+const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' })
+const formatRelativeTime = (d) => {
+  const diff = new Date() - new Date(d)
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}хв тому`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}год тому`
+  return formatDate(d)
+}
 
 const searchCounterparties = async (query) => {
   if (!query || query.length < 2) return
@@ -499,24 +284,14 @@ const searchCounterparties = async (query) => {
 
 const onClientChange = async (id) => {
   if (!id) return
-  
-  // Try to find in already loaded list first
-  let client = counterparties.value.find(c => c.id === id)
-  
-  // If not found or incomplete, fetch full details for hydration
   try {
     const res = await api.get(`/api/v1/counterparties/${id}`)
-    client = res.data
-    
-    // Hydrate form fields
-    if (client.city) form.city = client.city
-    if (client.phone) form.phone = client.phone
-    if (client.lead_source_id) form.lead_source_id = client.lead_source_id
-    
+    const c = res.data
+    form.city = c.city || ''
+    form.phone = c.phone || ''
+    if (c.lead_source_id) form.lead_source_id = c.lead_source_id
     loadContacts()
-  } catch (e) {
-    console.error('Failed to hydrate client data', e)
-  }
+  } catch (e) { console.error(e) }
 }
 
 const onProductChange = async (id) => {
@@ -533,7 +308,7 @@ const checkMaterials = async () => {
 }
 
 const matStatusClass = computed(() => materials.value.some(m => m.status === 'missing') ? 'mat-error' : 'mat-ok')
-const matStatusLabel = computed(() => materials.value.some(m => m.status === 'missing') ? 'Дефіцит матеріалів' : 'Матеріали в наявності')
+const matStatusLabel = computed(() => materials.value.some(m => m.status === 'missing') ? 'Дефіцит матеріалів' : 'Все в наявності')
 
 const loadContacts = async () => {
   if (!orderId.value) return
@@ -544,24 +319,20 @@ const loadContacts = async () => {
 const save = async (action) => {
   saving.value = true
   try {
-    if (action === 'production') form.crm_stage = 'production'
     const method = orderId.value ? 'patch' : 'post'
     const url = orderId.value ? `/api/v1/orders/${orderId.value}` : '/api/v1/orders'
     const res = await api[method](url, form)
-    ElMessage.success('Заявку збережено успішно')
+    ElMessage.success('Заявку оновлено')
     if (!orderId.value) router.push(`/crm/orders/${res.data.id}`)
-  } catch (e) {
-    ElMessage.error('Помилка при збереженні')
-  } finally {
-    saving.value = false
-  }
+  } catch (e) { ElMessage.error('Помилка збереження') }
+  finally { saving.value = false }
 }
 
-// Create CP
+// Dialog Logic
 const cpDialogVisible = ref(false)
 const creatingCp = ref(false)
 const newCp = reactive({ name: '', phone: '' })
-const openCreateCounterparty = () => { cpDialogVisible.value = true }
+const openCreateCounterparty = () => cpDialogVisible.value = true
 const createCounterparty = async () => {
   creatingCp.value = true
   try {
@@ -575,78 +346,40 @@ const createCounterparty = async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    const [p, wh] = await Promise.all([
-      api.get('/api/v1/products?limit=200'),
-      api.get('/api/v1/warehouses')
-    ])
+    const p = await api.get('/api/v1/products?limit=200')
     products.value = p.data
-    warehouses.value = wh.data
     if (orderId.value) {
       const res = await api.get(`/api/v1/orders/${orderId.value}`)
-      const o = res.data
-      Object.assign(form, o)
-      
-      // Fix types for numeric fields
-      form.total_amount = Number(o.total_amount)
-      form.prepayment_amount = Number(o.prepayment_amount || 0)
-
+      Object.assign(form, res.data)
       loadContacts()
       if (form.product_id) onProductChange(form.product_id)
     }
   } finally { loading.value = false }
 }
 
-const onLogContact = async () => {
-  if (!orderId.value) return
-  try {
-    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, {
-      note: form.next_contact_comment,
-      next_contact_at: form.next_contact_at,
-      communication_type: 'CALL'
-    })
-    ElMessage.success('Заплановано')
-    loadContacts()
-  } catch (e) {
-    ElMessage.error('Помилка планування')
-  }
-}
-
 onMounted(loadData)
 </script>
 
 <style>
-/* ─── Premium SaaS Styling ─── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-.saas-input-premium {
-  @apply w-full bg-white border border-gray-100 rounded-2xl px-5 py-3 text-sm font-medium 
-         text-slate-700 shadow-sm transition-all outline-none 
-         focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 placeholder:text-slate-300;
+.font-inter { font-family: 'Inter', sans-serif; }
+
+.minimal-input {
+  @apply w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm 
+         text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 placeholder:text-slate-300;
 }
 
-.saas-select-premium .el-input__wrapper {
-  @apply !bg-white !border-gray-100 !rounded-2xl !px-4 !py-1 !shadow-sm !transition-all
-         hover:!border-indigo-300 focus:!ring-4 focus:!ring-indigo-500/5 !h-[48px];
+.minimal-select .el-input__wrapper {
+  @apply !bg-white !border-slate-200 !rounded-lg !px-4 !py-1 !shadow-none !transition-all
+         hover:!border-slate-300 focus:!border-blue-500 focus:!ring-4 focus:!ring-blue-50/50 !h-[44px];
 }
 
-.saas-select-mini .el-input__wrapper {
-  @apply !bg-white/50 !border-gray-100 !rounded-xl !px-3 !py-0 !shadow-none !h-[36px];
+.minimal-select-mini .el-input__wrapper {
+  @apply !bg-white !border-slate-100 !rounded-md !px-2 !py-0 !shadow-none !h-[34px];
 }
 
-.saas-datepicker-invisible {
-  @apply !absolute !inset-0 !opacity-0 !cursor-pointer !w-full !h-full;
-}
+.minimal-dialog { @apply !rounded-2xl !border-none !shadow-2xl; }
 
-.saas-dialog-premium {
-  @apply !rounded-[32px] !border-none !shadow-2xl overflow-hidden;
-}
-
-.saas-dialog-premium .el-dialog__header {
-  @apply !pt-8 !px-8 !m-0;
-}
-.saas-dialog-premium .el-dialog__title {
-  @apply !text-sm !font-black !uppercase !tracking-[2px] !text-slate-800;
-}
-
-/* Hide original Element Plus styles we override */
-.el-select-dropdown__item.selected { @apply !text-indigo-600 !font-bold; }
+.text-24 { font-size: 24px; }
 </style>
