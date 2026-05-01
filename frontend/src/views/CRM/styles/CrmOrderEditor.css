@@ -151,6 +151,79 @@
 }
 .crm-save-btn:hover { background: #4f46e5; }
 
+/* ─── ENHANCED ANALYSIS ─── */
+.mat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mat-hint {
+  font-size: 10px;
+  color: #64748B;
+}
+
+.mat-status-val {
+  text-align: right;
+}
+
+.status-ok {
+  color: #059669;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.status-need {
+  color: #DC2626;
+  font-weight: 800;
+  font-size: 11px;
+  background: #FEF2F2;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.priority-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.priority-pill {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #E2E8F0;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.priority-pill:hover {
+  border-color: #3D3AA8;
+  color: #3D3AA8;
+}
+
+.priority-pill.active {
+  background: #3D3AA8;
+  color: #fff;
+  border-color: #3D3AA8;
+  box-shadow: 0 4px 10px rgba(61, 58, 168, 0.2);
+}
+
+.pp-urgent.active {
+  background: #F59E0B;
+  border-color: #F59E0B;
+}
+
+.pp-critical.active {
+  background: #EF4444;
+  border-color: #EF4444;
+}
+
 .manager-field {
   margin-top: 12px;
 }

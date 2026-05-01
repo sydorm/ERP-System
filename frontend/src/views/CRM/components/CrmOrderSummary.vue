@@ -69,7 +69,7 @@
     <div class="crm-field" style="margin-top: 16px;">
       <label class="crm-label">Менеджер</label>
       <el-select v-model="form.manager_id" placeholder="Оберіть відповідального" class="modern-select">
-        <el-option v-for="u in managers" :key="u.id" :label="u.name || u.full_name" :value="u.id" />
+        <el-option v-for="u in managers" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
       </el-select>
     </div>
 

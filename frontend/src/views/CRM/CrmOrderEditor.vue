@@ -57,18 +57,33 @@
               <el-input v-model="form.city" placeholder="Населений пункт" />
             </div>
           </div>
-          
-          <div class="crm-field">
-            <label class="crm-label">Канал зв'язку</label>
-            <div class="channel-pills">
-              <div 
-                v-for="ch in channels" 
-                :key="ch.code"
-                class="channel-pill"
-                :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
-                @click="form.channel = ch.code"
-              >
-                {{ ch.icon }} {{ ch.name }}
+          <div class="crm-grid-2" style="margin-top: 12px;">
+            <div class="crm-field">
+              <label class="crm-label">Приорітет</label>
+              <div class="priority-pills">
+                <div 
+                  v-for="p in priorities" 
+                  :key="p.id"
+                  class="priority-pill"
+                  :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
+                  @click="form.priority_id = p.id; form.priority = p.code"
+                >
+                  {{ p.name }}
+                </div>
+              </div>
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">Канал зв'язку</label>
+              <div class="channel-pills">
+                <div 
+                  v-for="ch in channels" 
+                  :key="ch.code"
+                  class="channel-pill"
+                  :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
+                  @click="form.channel = ch.code"
+                >
+                  {{ ch.icon }} {{ ch.name }}
+                </div>
               </div>
             </div>
           </div>
@@ -154,9 +169,17 @@
             </div>
             
             <div class="mat-list-compact" v-if="materials.length">
-              <div v-for="m in materials" :key="m.id" class="mat-row-compact">
-                <span class="mat-name">{{ m.component_name }}</span>
-                <span class="mat-stock-val" :class="m.status">{{ m.available_qty }}</span>
+              <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
+                <div class="mat-info">
+                  <span class="mat-name">{{ m.component_name }}</span>
+                  <span class="mat-hint" v-if="m.status !== 'ok'">
+                    Потрібно: {{ m.required_qty }} | Є: {{ m.available_qty }}
+                  </span>
+                </div>
+                <div class="mat-status-val">
+                  <span v-if="m.status === 'ok'" class="status-ok">В наявності</span>
+                  <span v-else class="status-need">Замовити: {{ Math.max(0, m.required_qty - m.available_qty) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -747,6 +770,12 @@ onMounted(() => {
 watch(() => form.product_id, (newVal) => {
   if (newVal) checkMaterials()
 })
+
+watch(currentUserId, (newId) => {
+  if (!orderId.value && !form.manager_id && newId) {
+    form.manager_id = newId
+  }
+}, { immediate: true })
 </script>
 
 <style src="./styles/CrmOrderEditor.css"></style>
