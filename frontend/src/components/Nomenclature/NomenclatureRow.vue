@@ -162,8 +162,8 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 82px;
-  border-bottom: 4px solid #F8FAFC;
+  height: 100px;
+  border-bottom: 12px solid #F8FAFC;
   cursor: pointer;
   transition: background 0.14s ease;
   background: #ffffff;
@@ -179,7 +179,7 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-cell {
-  padding: 0 8px;
+  padding: 0 16px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -201,9 +201,9 @@ const getAiWarningReason = (row) => {
   padding: 0;
 }
 .nom-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   object-fit: cover;
   border: 1px solid #E2E8F0;
   background: #F8FAFC;
@@ -221,7 +221,7 @@ const getAiWarningReason = (row) => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
   padding-right: 12px;
 }
 .nom-name-row {
@@ -231,17 +231,17 @@ const getAiWarningReason = (row) => {
   width: 100%;
 }
 .nom-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 800;
   color: #0F172A;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #94A3B8;
+  color: #64748B;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

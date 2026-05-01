@@ -151,21 +151,23 @@ const isAllSelected = computed(() => {
 }
 
 .nom-header {
-  background: #F8F9FC;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  height: 46px;
+  background: #ffffff;
+  border-bottom: 2px solid #F1F5F9;
+  height: 56px;
   position: sticky;
   top: 0;
   z-index: 10;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .nom-header .nom-cell {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #94A3B8;
-  padding: 0 8px;
+  letter-spacing: 0.12em;
+  color: #64748B;
+  padding: 0 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
