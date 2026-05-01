@@ -235,9 +235,7 @@
 
         <div class="view-container">
           <router-view v-slot="{ Component }">
-            <keep-alive>
-              <component :is="Component" :key="route.path" />
-            </keep-alive>
+            <component :is="Component" :key="route.path" />
           </router-view>
         </div>
       </el-main>
@@ -416,7 +414,13 @@ const handleGlobalSearchKeydown = (event) => {
 
 const handleCommand = (command) => {
   switch (command) {
-    case 'profile': router.push('/profile'); break
+    case 'profile': 
+      if (userStore.user?.id) {
+        router.push(`/settings/users/${userStore.user.id}/edit`)
+      } else {
+        router.push('/profile')
+      }
+      break
     case 'users': router.push('/settings/users'); break
     case 'settings': router.push('/settings'); break
     case 'logout':
