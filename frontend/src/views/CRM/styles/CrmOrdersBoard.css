@@ -106,7 +106,7 @@
 .crm-top-compact-line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  align-items: center;
   gap: 10px;
   min-width: 0;
 }
@@ -303,7 +303,7 @@
 .crm-toolbar-row {
   display: flex;
   justify-content: flex-end;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   padding: 0;
   min-width: max-content;
@@ -336,23 +336,24 @@
   align-items: center;
   gap: 6px;
   overflow-x: auto;
-  padding: 3px 8px;
+  width: 100%;
+  padding: 4px 10px;
   border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 999px;
-  background: #FFFBEB;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #FFFBEB 0%, #FFF7ED 55%, #FFFFFF 100%);
   margin-bottom: 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 30px;
-  flex: 0 1 auto;
+  min-height: 32px;
+  flex: 1 1 auto;
+  box-sizing: border-box;
   box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
 }
 .director-attention-strip.is-expanded { 
-  flex: 1;
   flex-wrap: wrap;
   padding: 6px 8px;
   border-radius: 14px;
 }
-.director-attention-strip:not(.is-expanded) { width: fit-content; max-width: 100%; padding-right: 8px; }
+.director-attention-strip:not(.is-expanded) { max-width: 100%; padding-right: 10px; }
 
 .attention-strip-title {
   display: inline-flex;
@@ -402,6 +403,7 @@
 .attention-order-pill span { min-width: 0; color: #92400E; font-size: 10px; }
 
 .attention-filter-toggle {
+  margin-left: auto;
   height: 24px;
   border: 1px solid rgba(245, 158, 11, 0.25);
   background: rgba(255, 255, 255, 0.72);
@@ -627,6 +629,7 @@
 .crm-attention-row {
   margin: 6px 0 0;
   background: transparent;
+  width: 100%;
 }
 
 

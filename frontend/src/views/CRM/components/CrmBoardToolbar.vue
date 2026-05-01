@@ -56,19 +56,6 @@
       </template>
 
       <div class="ctrl-panel">
-        <!-- View switch -->
-        <div class="ctrl-section">
-          <span class="ctrl-label">Вигляд</span>
-          <div class="ctrl-view-tabs">
-            <button class="view-tab active">
-              <el-icon><Grid /></el-icon> Kanban
-            </button>
-            <button v-if="canViewAnalytics" class="view-tab" @click="$emit('analytics'); controlsOpen = false">
-              <el-icon><TrendCharts /></el-icon> Аналітика
-            </button>
-          </div>
-        </div>
-
         <!-- Manager scope -->
         <div class="ctrl-section">
           <span class="ctrl-label">Менеджер</span>
@@ -177,7 +164,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Search, Plus, Setting, Download, ArrowDown, Grid, TrendCharts } from '@element-plus/icons-vue'
+import { Search, Plus, Setting, Download, ArrowDown } from '@element-plus/icons-vue'
 
 defineProps({
   users: { type: Array, default: () => [] },
@@ -185,14 +172,12 @@ defineProps({
   searchQuery: { type: String, default: '' },
   sortOption: { type: String, default: 'created_desc' },
   activeControlsCount: { type: Number, default: 0 },
-  isAnyFilterActive: { type: Boolean, default: false },
-  canViewAnalytics: { type: Boolean, default: false }
+  isAnyFilterActive: { type: Boolean, default: false }
 })
 
 defineEmits([
   'update:searchQuery',
   'update:sortOption',
-  'analytics',
   'resetAll',
   'resetFilters',
   'applyFilters',

@@ -453,6 +453,7 @@ onMounted(loadData)
 
 .order-topbar-wrapper {
   margin: 0 !important;
+  margin-top: -24px !important;
   padding: 0 !important;
   width: calc(100% + 48px) !important;
   margin-left: -24px !important;
@@ -489,6 +490,7 @@ onMounted(loadData)
 }
 
 .crm-order-page {
+  padding-top: 0 !important;
   padding-bottom: 64px;
 }
 

@@ -294,6 +294,12 @@ const router = createRouter({
                     meta: { title: 'CRM' }
                 },
                 {
+                    path: '/crm/analytics',
+                    name: 'crm-analytics',
+                    component: () => import('@/views/CRM/CrmInsights.vue'),
+                    meta: { title: 'CRM — Аналітика', permission: 'crm.analytics' }
+                },
+                {
                     path: '/crm/orders/new',
                     name: 'crm-order-new',
                     component: () => import('@/views/CRM/CrmOrderEditor.vue'),
