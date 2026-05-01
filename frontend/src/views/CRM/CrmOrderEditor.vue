@@ -389,14 +389,15 @@ const createCounterparty = async (data) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const [p, ls, dm, u, ba] = await Promise.all([
+    const [p, ls, dm, u, ba, cp] = await Promise.all([
       api.get('/api/v1/products?limit=200'),
       api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] })),
       api.get('/api/v1/warehouses').catch(() => ({ data: [] })),
       api.get('/api/v1/users/colleagues'),
-      api.get('/api/v1/bank-accounts').catch(() => ({ data: [] }))
+      api.get('/api/v1/bank-accounts').catch(() => ({ data: [] })),
+      api.get('/api/v1/counterparties?limit=1000').catch(() => ({ data: [] }))
     ])
-    products.value = p.data; leadSources.value = ls.data; deliveryMethods.value = dm.data; users.value = u.data; bankAccounts.value = ba.data
+    products.value = p.data; leadSources.value = ls.data; deliveryMethods.value = dm.data; users.value = u.data; bankAccounts.value = ba.data; counterparties.value = cp.data
     if (orderId.value) {
       const res = await api.get(`/api/v1/orders/${orderId.value}`)
       Object.assign(form, res.data)

@@ -17,13 +17,15 @@
 
     <div class="header-right">
       <div class="action-group">
-        <el-button
-          v-if="orderId"
-          class="icon-btn-modern"
-          :icon="Printer"
+        <button
+          v-if="orderId && activeStage === 'payment'"
+          class="btn-print-modern"
           @click="$emit('print')"
           title="Друк рахунку"
-        />
+        >
+          <el-icon><Printer /></el-icon>
+          <span>Рахунок</span>
+        </button>
         <button class="btn-draft-modern" @click="$emit('save-draft')" :disabled="saving">
           Записати чернетку
         </button>
@@ -104,19 +106,27 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   gap: 12px;
 }
 
-.icon-btn-modern {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 14px !important;
-  border-color: rgba(226, 232, 240, 0.8) !important;
-  color: #64748B !important;
-  transition: all 0.2s !important;
+.btn-print-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1.5px solid #6366F1;
+  background: #fff;
+  color: #6366F1;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.05);
 }
 
-.icon-btn-modern:hover {
-  border-color: #6366F1 !important;
-  color: #6366F1 !important;
-  background: #F5F7FF !important;
+.btn-print-modern:hover {
+  background: #F5F7FF;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
 }
 
 .btn-draft-modern {
