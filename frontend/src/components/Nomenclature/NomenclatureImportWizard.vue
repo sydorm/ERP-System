@@ -476,7 +476,13 @@ const actionLabel = (action) => ({
   max-height: 90vh;
   margin: 5vh auto !important;
   border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
+}
+
+:deep(.nomenclature-import-dialog .el-dialog__header) {
+  padding: 0;
+  margin: 0;
 }
 
 :deep(.nomenclature-import-dialog .el-dialog__body) {
@@ -485,6 +491,7 @@ const actionLabel = (action) => ({
   padding: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .import-header {
@@ -492,7 +499,8 @@ const actionLabel = (action) => ({
   justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
-  padding: 24px 24px 16px;
+  padding: 24px 32px;
+  background: #fff;
   border-bottom: 1px solid #F1F5F9;
 }
 
