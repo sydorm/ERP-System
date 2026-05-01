@@ -120,72 +120,80 @@
         <div class="fc-pieces-wrap">
           <!-- Header -->
           <div class="fc-pieces-head">
-            <span>Назва</span>
-            <span>Ш, мм</span>
-            <span>Д, мм</span>
-            <span>Зліва</span>
-            <span>Справа</span>
-            <span>Зверху</span>
-            <span>Знизу</span>
-            <span>Шт</span>
+            <span>Назва деталі</span>
+            <span title="Базова ширина деталі без припусків">Ш, мм</span>
+            <span title="Базова довжина деталі без припусків">Д, мм</span>
+            <span title="Припуск зліва (додається до ширини)">← Зліва</span>
+            <span title="Припуск справа (додається до ширини)">Справа →</span>
+            <span title="Припуск зверху (додається до довжини)">↑ Зверху</span>
+            <span title="Припуск знизу (додається до довжини)">↓ Знизу</span>
+            <span title="Кількість деталей цього типу">Шт</span>
             <span></span>
           </div>
 
           <!-- Rows -->
           <div v-for="(piece, idx) in (cfg.pieces || [])" :key="idx" class="fc-piece-row">
-            <el-input
+            <input
               v-model="piece.name"
-              placeholder="Назва"
-              size="small"
+              class="fc-cell-input fc-cell-name"
+              placeholder="напр. Сидіння"
               @input="clearPreview"
             />
-            <el-input-number
-              v-model="piece.baseWidthMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.baseWidthMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-num"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.baseLengthMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.baseLengthMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-num"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.allowanceLeftMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.allowanceLeftMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-allow"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.allowanceRightMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.allowanceRightMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-allow"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.allowanceTopMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.allowanceTopMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-allow"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.allowanceBottomMm"
-              :min="0" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.allowanceBottomMm"
+              type="number" min="0" step="1"
+              class="fc-cell-input fc-cell-allow"
+              placeholder="0"
               @change="clearPreview"
             />
-            <el-input-number
-              v-model="piece.count"
-              :min="1" :precision="0"
-              size="small"
+            <input
+              v-model.number="piece.count"
+              type="number" min="1" step="1"
+              class="fc-cell-input fc-cell-count"
+              placeholder="1"
               @change="clearPreview"
             />
-            <el-button
-              type="danger" link size="small"
+            <button
+              class="fc-cell-del"
               @click="removePiece(idx)"
               :disabled="(cfg.pieces || []).length <= 1"
-            >✕</el-button>
+              title="Видалити рядок"
+            >✕</button>
           </div>
         </div>
 
@@ -498,24 +506,62 @@ const runPreview = async () => {
 .fc-pieces-head,
 .fc-piece-row {
   display: grid;
-  grid-template-columns: 140px repeat(7, 80px) 32px;
-  gap: 4px;
-  padding: 4px 6px;
+  grid-template-columns: 160px 80px 80px 72px 72px 72px 72px 56px 28px;
+  gap: 0;
   align-items: center;
+  min-width: 700px;
 }
 .fc-pieces-head {
-  background: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
+  background: #f0f4f8;
+  border-bottom: 2px solid #dde3ea;
   font-size: 10px;
-  font-weight: 600;
-  color: #78909c;
+  font-weight: 700;
+  color: #546e7a;
   text-transform: uppercase;
+  letter-spacing: .04em;
 }
+.fc-pieces-head span {
+  padding: 6px 8px;
+  border-right: 1px solid #dde3ea;
+}
+.fc-pieces-head span:last-child { border-right: none; }
 .fc-piece-row {
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid #f0f0f0;
 }
 .fc-piece-row:last-child { border-bottom: none; }
-.fc-piece-row:nth-child(even) { background: #fafafa; }
+.fc-piece-row:nth-child(odd) { background: #fafbfc; }
+
+/* Compact native inputs for table cells */
+.fc-cell-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  border-right: 1px solid #ebebeb;
+  background: transparent;
+  font-size: 13px;
+  color: #263238;
+  outline: none;
+  box-sizing: border-box;
+}
+.fc-cell-input:focus {
+  background: #fffde7;
+  border-right-color: #fbc02d;
+}
+.fc-cell-input::placeholder { color: #bdbdbd; font-size: 11px; }
+.fc-cell-num   { text-align: right; font-weight: 600; color: #1565c0; }
+.fc-cell-allow { text-align: right; color: #2e7d32; }
+.fc-cell-count { text-align: center; font-weight: 700; }
+.fc-cell-name  { font-style: italic; }
+
+.fc-cell-del {
+  width: 28px; height: 32px;
+  border: none; background: transparent;
+  color: #bdbdbd; cursor: pointer;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+}
+.fc-cell-del:hover:not(:disabled) { color: #c62828; background: #fce4e4; }
+.fc-cell-del:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .fc-multi-hint {
   font-size: 10px;
