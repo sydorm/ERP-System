@@ -334,9 +334,24 @@
         <div v-if="showBreakdown" class="fc-breakdown-body">
           <div v-for="(line, i) in previewResult.breakdownLines" :key="i" class="fc-bd-line">{{ line }}</div>
         </div>
+
+        <!-- Cutting map button -->
+        <div class="fc-map-btn-row">
+          <el-button size="small" plain @click="showCuttingMap = true">
+            🗺 Відкрити карту розкрою
+          </el-button>
+        </div>
       </template>
 
     </div>
+
+    <!-- Cutting map modal -->
+    <CuttingMapModal
+      v-if="previewResult?.valid"
+      v-model="showCuttingMap"
+      :result="previewResult"
+      :cfg="cfg"
+    />
 
   </div>
 </template>
@@ -345,6 +360,7 @@
 import { ref, computed } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { computeFabricCutting, PIECE_DEFAULTS } from '@/composables/useFabricCuttingCalc'
+import CuttingMapModal from './CuttingMapModal.vue'
 import api from '@/api'
 
 const props = defineProps({
@@ -361,6 +377,7 @@ const previewResult  = ref(null)
 const previewLoading = ref(false)
 const stockInfo      = ref(null)
 const showBreakdown  = ref(false)
+const showCuttingMap = ref(false)
 
 const clearPreview = () => { previewResult.value = null; stockInfo.value = null }
 
@@ -613,6 +630,8 @@ const runPreview = async () => {
   padding: 8px 10px; margin-top: 4px;
 }
 .fc-bd-line { font-size: 11px; color: #37474f; font-family: monospace; padding: 1px 0; }
+
+.fc-map-btn-row { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e8f5e9; }
 
 .w-full { width: 100%; }
 .mt-1   { margin-top: 4px; }
