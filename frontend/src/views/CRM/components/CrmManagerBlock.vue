@@ -1,25 +1,38 @@
 <template>
-  <div class="crm-field manager-field">
-    <label class="crm-label">Відповідальний менеджер</label>
-    <div v-if="!canReassignManager" class="manager-readonly">
-      <span class="manager-avatar">{{ managerInitials }}</span>
-      <span class="manager-info">
-        <b>{{ selectedManagerName }}</b>
-      </span>
+  <div class="manager-selection-wrapper">
+    <div v-if="!canReassignManager" class="manager-display-only">
+      <div class="manager-avatar-mini">{{ initials(selectedManagerName) }}</div>
+      <div class="manager-text">
+        <span class="name">{{ selectedManagerName }}</span>
+        <span class="role">Відповідальний</span>
+      </div>
     </div>
     <el-select
       v-else
       v-model="form.manager_id"
       filterable
       placeholder="Оберіть менеджера"
-      class="manager-select"
+      class="premium-manager-select"
     >
+      <template #prefix v-if="selectedManager">
+        <div class="manager-avatar-mini prefix-avatar">
+          {{ initials(selectedManagerName) }}
+        </div>
+      </template>
       <el-option
         v-for="u in normalizedManagerOptions"
         :key="u.id"
         :label="u.name"
         :value="u.id"
-      />
+      >
+        <div class="manager-option-item">
+          <div class="manager-avatar-mini">{{ initials(u.name) }}</div>
+          <div class="manager-info-stack">
+            <span class="name">{{ u.name }}</span>
+            <span class="role">Менеджер</span>
+          </div>
+        </div>
+      </el-option>
     </el-select>
   </div>
 </template>
@@ -42,6 +55,12 @@ const getUserName = (u) => (
   || 'Менеджер'
 )
 
+const initials = (name) => {
+  if (!name) return 'М'
+  const words = name.split(/\s+/).filter(Boolean)
+  return words.slice(0, 2).map(word => word[0]).join('').toUpperCase() || 'М'
+}
+
 const normalizedManagerOptions = computed(() => (
   props.managerOptions.map(u => ({ ...u, name: getUserName(u) }))
 ))
@@ -51,70 +70,90 @@ const selectedManager = computed(() => (
 ))
 
 const selectedManagerName = computed(() => selectedManager.value?.name || 'Поточний користувач')
-
-const managerInitials = computed(() => {
-  const words = selectedManagerName.value.split(/\s+/).filter(Boolean)
-  return words.slice(0, 2).map(word => word[0]).join('').toUpperCase() || 'М'
-})
 </script>
 
 <style scoped>
-.manager-field {
-  gap: 7px;
-}
-
-.manager-select {
+.manager-selection-wrapper {
   width: 100%;
 }
 
-.manager-select :deep(.el-select__wrapper) {
-  min-height: 38px;
-  border-radius: 12px;
-  box-shadow: 0 0 0 1px #DCE6F2 inset;
-}
-
-.manager-readonly {
+.manager-display-only {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 42px;
-  padding: 7px 9px;
-  border: 1px solid #DCE6F2;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+  height: 32px;
 }
 
-.manager-avatar {
-  flex: none;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
-  color: #FFFFFF;
-  font-size: 11px;
-  font-weight: 850;
+.manager-avatar-mini {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6366F1;
+  color: white;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.manager-info {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
+.manager-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
 }
 
-.manager-info b {
-  min-width: 0;
-  color: #0F172A;
+.manager-text .name {
   font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 700;
+  color: #1E293B;
 }
 
-.manager-info small {
-  color: #64748B;
-  font-size: 11px;
+.manager-text .role {
+  font-size: 10px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.premium-manager-select {
+  width: 100%;
+}
+
+:deep(.el-select__wrapper) {
+  padding-left: 8px !important;
+}
+
+.prefix-avatar {
+  margin-right: 8px;
+}
+
+.manager-option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.manager-info-stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.manager-info-stack .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.manager-info-stack .role {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+:deep(.el-select__prefix) {
+  display: flex;
+  align-items: center;
 }
 </style>

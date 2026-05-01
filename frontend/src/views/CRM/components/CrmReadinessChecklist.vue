@@ -1,9 +1,9 @@
 <template>
-  <div class="crm-section readiness-card-modern">
+  <div class="readiness-card-compact">
     <div class="readiness-header">
       <div class="title-block">
         <span class="kicker">Прогрес заповнення</span>
-        <h3>Готовність заявки</h3>
+        <h3 class="text-sm font-extrabold text-slate-800">Готовність заявки</h3>
       </div>
       <div class="progress-percent" :class="{ complete: progress === 100 }">
         {{ progress }}%
@@ -17,7 +17,7 @@
     <div class="checklist-items">
       <div v-for="item in items" :key="item.key" class="checklist-item" :class="{ done: item.done }">
         <div class="check-icon">
-          <el-icon v-if="item.done"><CircleCheckFilled /></el-icon>
+          <el-icon v-if="item.done" class="text-emerald-500"><CircleCheckFilled /></el-icon>
           <div v-else class="check-circle" />
         </div>
         <span class="item-label">{{ item.label }}</span>
@@ -35,39 +35,30 @@ defineProps({
 </script>
 
 <style scoped>
-.readiness-card-modern {
-  padding: 24px;
+.readiness-card-compact {
+  padding: 20px;
 }
 
 .readiness-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .kicker {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  color: #64748B;
+  color: #94A3B8;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 4px;
-}
-
-.title-block h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0F172A;
+  letter-spacing: 0.05em;
 }
 
 .progress-percent {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   color: #6366F1;
-  font-variant-numeric: tabular-nums;
 }
 
 .progress-percent.complete {
@@ -75,32 +66,36 @@ defineProps({
 }
 
 .progress-bar-container {
-  height: 8px;
+  height: 6px;
   background: #F1F5F9;
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366F1 0%, #10B981 100%);
-  border-radius: 4px;
-  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: #6366F1;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.complete + .progress-bar-container .progress-bar-fill {
+  background: #10B981;
 }
 
 .checklist-items {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .checklist-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  opacity: 0.6;
-  transition: all 0.3s;
+  gap: 10px;
+  opacity: 0.5;
+  transition: all 0.2s;
 }
 
 .checklist-item.done {
@@ -108,24 +103,25 @@ defineProps({
 }
 
 .check-icon {
-  font-size: 18px;
-  color: #10B981;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
 .check-circle {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #CBD5E1;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #CBD5E1;
   border-radius: 50%;
 }
 
 .item-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #64748B;
 }
 
 .done .item-label {
-  color: #0F172A;
+  color: #1E293B;
 }
 </style>
