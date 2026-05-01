@@ -670,9 +670,10 @@ const showClientDrawer = ref(false)
 
 const getManagerInitials = (userId) => {
   const user = users.value.find(u => u.id === userId)
-  if (!user) return '??'
-  const names = user.name.split(' ')
-  return names.map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  if (!user || (!user.name && !user.username)) return '??'
+  const displayName = user.name || user.username || '?'
+  const names = displayName.split(' ')
+  return names.filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
 const onClientChange = (val) => {
