@@ -14,12 +14,12 @@
     />
 
     <div class="crm-body">
-      <div class="crm-left-col">
-        <!-- Main Form Section -->
-        <div class="crm-section">
-          <div class="crm-section-head">
-            <h3 class="crm-section-title">Основна інформація</h3>
-            <span class="crm-attr-hint" v-if="orderId">Замовлення #{{ form.order_number }}</span>
+      <div class="crm-editor-grid-4">
+        <!-- 1. Дані клієнта -->
+        <div class="crm-card client-data">
+          <div class="crm-card-title">
+            <el-icon><User /></el-icon>
+            Дані клієнта
           </div>
           
           <div class="crm-field">
@@ -30,7 +30,7 @@
                 filterable
                 remote
                 :remote-method="searchCounterparties"
-                placeholder="Виберіть або знайдіть клієнта"
+                placeholder="Знайдіть клієнта"
                 class="cp-select modern-select"
                 :class="{ 'field-error': vErrors.counterparty_id }"
               >
@@ -41,14 +41,14 @@
                   :value="cp.id"
                 />
               </el-select>
-              <el-button @click="openCreateCounterparty" :icon="Plus" circle title="Додати клієнта" />
+              <el-button @click="openCreateCounterparty" :icon="Plus" circle />
             </div>
           </div>
 
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Джерело</label>
-              <el-select v-model="form.lead_source_id" placeholder="Звідки прийшов" class="modern-select">
+              <el-select v-model="form.lead_source_id" placeholder="Джерело" class="modern-select">
                 <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
               </el-select>
             </div>
@@ -58,7 +58,7 @@
             </div>
           </div>
           
-          <div class="crm-field" style="margin-top: 12px;">
+          <div class="crm-field">
             <label class="crm-label">Канал зв'язку</label>
             <div class="channel-pills">
               <div 
@@ -74,11 +74,11 @@
           </div>
         </div>
 
-        <!-- Product Attributes Section -->
-        <div class="crm-section">
-          <div class="crm-section-head">
-            <h3 class="crm-section-title">Параметри виробу</h3>
-            <span class="crm-attr-hint"><el-icon><MagicStick /></el-icon> Адаптивно</span>
+        <!-- 2. Номенклатура -->
+        <div class="crm-card nomenclature-data">
+          <div class="crm-card-title">
+            <el-icon><Box /></el-icon>
+            Номенклатура
           </div>
 
           <div class="crm-field">
@@ -97,8 +97,6 @@
           <div class="attributes-block" v-if="productAttributes.length">
             <div v-for="attr in productAttributes" :key="attr.id" class="attr-group">
               <label class="crm-label">{{ attr.name }}</label>
-              
-              <!-- Color/Options Selection -->
               <div class="attr-pills" v-if="attr.type !== 'dimensions'">
                 <div 
                   v-for="opt in attr.options" 
@@ -111,12 +109,10 @@
                   {{ opt.name }}
                 </div>
               </div>
-
-              <!-- Dimensions Input -->
               <div class="attr-dims" v-else>
-                <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" placeholder="Ширина" />
+                <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" />
                 <span class="dims-sep">×</span>
-                <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" placeholder="Висота" />
+                <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" />
                 <span class="dims-unit">мм</span>
               </div>
             </div>
@@ -124,28 +120,47 @@
 
           <div class="crm-field">
             <label class="crm-label">Коментар до виробу</label>
-            <el-input type="textarea" v-model="form.comment" :rows="3" placeholder="Особливості конструкції, фурнітура тощо..." />
+            <el-input type="textarea" v-model="form.comment" :rows="2" placeholder="Особливості конструкції..." />
           </div>
           
-          <!-- Image Upload Placeholder -->
-          <div class="crm-field" style="margin-top: 12px;">
+          <div class="crm-field">
             <label class="crm-label">Фото/Ескіз</label>
-            <div class="photo-upload-zone" @click="triggerPhotoUpload">
+            <div class="photo-upload-zone-compact" @click="triggerPhotoUpload">
               <img v-if="form.reference_photo" :src="form.reference_photo" class="photo-preview" />
               <div v-else class="photo-placeholder">
                 <el-icon><Picture /></el-icon>
-                <span>Натисніть або перетягніть фото</span>
+                <span>Завантажити</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Fulfillment & Internal -->
-        <div class="crm-section">
-          <div class="crm-section-head">
-            <h3 class="crm-section-title">Виконання</h3>
+        <!-- 3. Аналіз -->
+        <div class="crm-card analysis-data">
+          <div class="crm-card-title">
+            <el-icon><DataAnalysis /></el-icon>
+            Аналіз
           </div>
-          
+
+          <div class="analysis-section" v-if="form.product_id">
+            <div class="crm-section-head">
+              <span class="crm-label">Матеріали</span>
+              <span v-if="checkingMaterials" class="mat-loading">
+                <el-icon class="is-loading"><Loading /></el-icon>
+              </span>
+              <span v-else class="mat-status-badge" :class="matStatusClass">
+                {{ matStatusLabel }}
+              </span>
+            </div>
+            
+            <div class="mat-list-compact" v-if="materials.length">
+              <div v-for="m in materials" :key="m.id" class="mat-row-compact">
+                <span class="mat-name">{{ m.component_name }}</span>
+                <span class="mat-stock-val" :class="m.status">{{ m.available_qty }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="crm-grid-2">
             <div class="crm-field">
               <label class="crm-label">Склад відвантаження</label>
@@ -161,64 +176,46 @@
             </div>
           </div>
 
-          <div class="crm-field" style="margin-top: 12px;">
-            <label class="crm-label">Внутрішні нотатки (не бачить клієнт)</label>
+          <div class="crm-field">
+            <label class="crm-label">Внутрішні нотатки</label>
             <el-input type="textarea" v-model="form.internal_notes" :rows="2" />
           </div>
         </div>
-      </div>
 
-      <div class="crm-right-col">
-        <!-- Order Summary Card -->
-        <CrmOrderSummary
-          :form="form"
-          :priorities="priorities"
-          :managers="users"
-          :format-currency="formatCurrency"
-          @update-amount="updateTotalAmount"
-        />
-
-        <!-- Contact Management Card -->
-        <CrmContactPanel
-          v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)"
-          v-model:contact-comm-type="contactCommType"
-          v-model:contact-plan-reason="contactPlanReason"
-          v-model:contact-next-at="contactNextAt"
-          v-model:contact-note="contactNote"
-          :form="form"
-          :order-id="orderId"
-          :communication-types="communicationTypes"
-          :contact-results="contactResults"
-          :contact-result="contactResult"
-          :next-touch-summary="nextTouchSummary"
-          :saving-contact="savingContact"
-          :get-result-hint="getResultHint"
-          @set-next-contact-preset="setNextContactPreset"
-          @apply-contact-result="contactResult = $event"
-          @log-contact="onLogContact"
-        />
-
-        <!-- Material Availability (Placeholder) -->
-        <div class="crm-section" v-if="form.product_id">
-          <div class="crm-section-head">
-            <h3 class="crm-section-title">Матеріали</h3>
-            <span v-if="checkingMaterials" class="mat-loading">
-              <el-icon class="is-loading"><Loading /></el-icon>
-            </span>
-            <span v-else class="mat-status-badge" :class="matStatusClass">
-              {{ matStatusLabel }}
-            </span>
+        <!-- 4. Фінанси -->
+        <div class="crm-card finance-data">
+          <div class="crm-card-title">
+            <el-icon><Wallet /></el-icon>
+            Фінанси
           </div>
-          
-          <div class="mat-list" v-if="materials.length">
-            <div v-for="m in materials" :key="m.id" class="mat-row" :class="`mat-${m.status}`">
-              <span class="mat-name">{{ m.component_name }}</span>
-              <span class="mat-req">{{ m.required_qty }} {{ m.unit_of_measure }}</span>
-              <span class="mat-stock-badge">{{ m.available_qty }}</span>
-            </div>
-          </div>
-          <div class="mat-empty" v-else>
-            {{ checkingMaterials ? 'Перевірка...' : 'Специфікація не завантажена' }}
+
+          <CrmOrderSummary
+            :form="form"
+            :priorities="priorities"
+            :managers="users"
+            :format-currency="formatCurrency"
+            @update-amount="updateTotalAmount"
+          />
+
+          <div class="contact-action-box" v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)" style="margin-top: 16px;">
+            <label class="crm-label" style="display: block; margin-bottom: 8px;">Комунікація</label>
+            <CrmContactPanel
+              v-model:contact-comm-type="contactCommType"
+              v-model:contact-plan-reason="contactPlanReason"
+              v-model:contact-next-at="contactNextAt"
+              v-model:contact-note="contactNote"
+              :form="form"
+              :order-id="orderId"
+              :communication-types="communicationTypes"
+              :contact-results="contactResults"
+              :contact-result="contactResult"
+              :next-touch-summary="nextTouchSummary"
+              :saving-contact="savingContact"
+              :get-result-hint="getResultHint"
+              @set-next-contact-preset="setNextContactPreset"
+              @apply-contact-result="contactResult = $event"
+              @log-contact="onLogContact"
+            />
           </div>
         </div>
       </div>
@@ -247,7 +244,8 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  Plus, Picture, MagicStick, Loading, Printer, Promotion 
+  Plus, Picture, MagicStick, Loading, Printer, Promotion,
+  User, Box, DataAnalysis, Wallet
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
