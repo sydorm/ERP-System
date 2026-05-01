@@ -462,8 +462,8 @@ onMounted(loadData)
 
 .order-topbar {
   position: sticky;
-  top: 64px; /* Точна висота головного хедераDashboardLayout.vue */
-  z-index: 1050;
+  top: 0;
+  z-index: 9999;
   width: 100%;
   border-radius: 0;
   border-left: none;
