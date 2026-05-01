@@ -668,6 +668,18 @@ const completeTask = async (taskId) => {
 const clientProfile = ref(null)
 const showClientDrawer = ref(false)
 
+const getManagerInitials = (userId) => {
+  const user = users.value.find(u => u.id === userId)
+  if (!user) return '??'
+  const names = user.name.split(' ')
+  return names.map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+const onClientChange = (val) => {
+  form.counterparty_id = val
+  if (val) loadClientProfile(val)
+}
+
 const isStepCompleted = (stepId) => {
   switch (stepId) {
     case 'client': return !!form.counterparty_id && !!form.lead_source_id
@@ -978,6 +990,11 @@ const save = async (action) => {
   } finally {
     saving.value = false
   }
+}
+
+const saveAndClose = async () => {
+  await save()
+  router.push('/crm')
 }
 
 // ─── Create Counterparty ───
