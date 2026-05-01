@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <div class="crm-board-page" v-if="viewMode === 'board'">
+    <div class="crm-board-page" v-show="viewMode === 'board'">
       <div class="crm-sticky-workbar">
         <CrmSummaryCards
         :orders-count="orders.length"
@@ -39,34 +39,31 @@
       />
 
       <div class="crm-toolbar-row">
-        <transition name="toolbar-fade">
-          <CrmBoardToolbar
-            :users="users"
-            :filters="filters"
-            :search-query="searchQuery"
-            :sort-option="sortOption"
-            :active-controls-count="activeControlsCount"
-            :is-any-filter-active="isAnyFilterActive"
-            @update:search-query="searchQuery = $event"
-            @update:sort-option="sortOption = $event"
-            @analytics="viewMode = 'analytics'"
-            @reset-all="resetAll"
-            @reset-filters="resetFilters"
-            @apply-filters="applyFilters"
-            @export="handleExport"
-            @new-order="openNewOrder"
-          />
-        </transition>
+        <CrmBoardToolbar
+          :users="users"
+          :filters="filters"
+          :search-query="searchQuery"
+          :sort-option="sortOption"
+          :active-controls-count="activeControlsCount"
+          :is-any-filter-active="isAnyFilterActive"
+          @update:search-query="searchQuery = $event"
+          @update:sort-option="sortOption = $event"
+          @analytics="viewMode = 'analytics'"
+          @reset-all="resetAll"
+          @reset-filters="resetFilters"
+          @apply-filters="applyFilters"
+          @export="handleExport"
+          @new-order="openNewOrder"
+        />
       </div>
       </div><!-- /crm-sticky-workbar -->
 
       <div class="crm-board-body">
 
-      <!-- ===== KANBAN BOARD ===== -->
       <div class="crm-kanban" v-loading="loading">
         <CrmKanbanColumn
-          v-for="stage in stages"
-          :key="stage.key"
+          v-for="(stage, idx) in stages"
+          :key="`${stage.key}-${idx}`"
           :stage="stage"
           :orders="filteredOrdersInStage(stage.key)"
           :stage-total="stageTotal(stage.key)"
@@ -201,7 +198,7 @@
     </div><!-- /crm-board-page (Board View) -->
 
     <!-- Analytics View -->
-    <div class="crm-analytics-view fade-in" v-else-if="viewMode === 'analytics'">
+    <div class="crm-analytics-view fade-in" v-show="viewMode === 'analytics'">
       <CrmInsights />
     </div>
   </div><!-- /crm-board-page-wrapper -->
@@ -209,7 +206,7 @@
 
 <script setup>
 import './styles/CrmOrdersBoard.css'
-import { ref, computed, onMounted, onActivated, watch } from 'vue'
+import { ref, computed, onMounted, onActivated, onDeactivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
 import { Search, Plus, Bell, Clock, Calendar, MoreFilled, Operation, ArrowDown, User as UserIcon, Phone, ChatDotRound, Close, Download, Promotion, Camera, TrendCharts, Money, Warning, MagicStick, Grid, QuestionFilled } from '@element-plus/icons-vue'
@@ -580,6 +577,12 @@ const fetchStage = async (stage, reset = false) => {
     ElMessage.error(`Помилка завантаження стадії ${stage}`)
   }
 }
+
+onDeactivated(() => {
+  dragOrderId.value = null
+  dragOverStage.value = null
+  selectedOrderIds.value = []
+})
 
 const fetchAll = async () => {
   loading.value = true
