@@ -350,32 +350,33 @@ const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
 }
 
-const quickSearchSections = [
-  { title: 'Номенклатура', group: 'Розділ', icon: 'NM', path: '/inventory/nomenclature' },
-  { title: 'Замовлення', group: 'Продажі', icon: 'SO', path: '/sales/orders' },
-  { title: 'CRM', group: 'CRM', icon: 'CRM', path: '/crm' },
-  { title: 'Закупівлі', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders' },
-  { title: 'Прибуткові накладні', group: 'Закупівлі', icon: 'PR', path: '/purchases/receipts' },
-  { title: 'Клієнти', group: 'Продажі', icon: 'CL', path: '/sales/counterparties' },
-  { title: 'Постачальники', group: 'Закупівлі', icon: 'SU', path: '/sales/counterparties' },
-]
+const quickSearchSections = computed(() => [
+  { title: 'Номенклатура', group: 'Розділ', icon: 'NM', path: '/inventory/nomenclature', permission: 'inventory.view' },
+  { title: 'Замовлення', group: 'Продажі', icon: 'SO', path: '/sales/orders', permission: 'sales.view' },
+  { title: 'CRM', group: 'CRM', icon: 'CRM', path: '/crm', permission: 'crm.view' },
+  { title: 'Закупівлі', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders', permission: 'purchases.view' },
+  { title: 'Прибуткові накладні', group: 'Закупівлі', icon: 'PR', path: '/purchases/receipts', permission: 'purchases.view' },
+  { title: 'Клієнти', group: 'Продажі', icon: 'CL', path: '/sales/counterparties', permission: 'sales.view' },
+  { title: 'Постачальники', group: 'Закупівлі', icon: 'SU', path: '/sales/counterparties', permission: 'purchases.view' },
+].filter(s => userStore.hasPermission(s.permission)))
 
-const searchResults = [
-  { title: 'Профіль 30x30*1,2', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature' },
-  { title: 'ДСП Sonoma 18 мм', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature' },
-  { title: 'PO-00006', group: 'Документи', icon: 'PO', path: '/purchases/orders' },
-  { title: 'PR-00004', group: 'Документи', icon: 'PR', path: '/purchases/receipts' },
-  { title: 'Заявка Jack', group: 'CRM', icon: 'CRM', path: '/crm' },
-  { title: 'Замовлення постачальникам', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders' },
-  { title: 'Контрагенти', group: 'Клієнти і постачальники', icon: 'CP', path: '/sales/counterparties' },
+const allSearchResults = [
+  { title: 'Профіль 30x30*1,2', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature', permission: 'inventory.view' },
+  { title: 'ДСП Sonoma 18 мм', group: 'Номенклатура', icon: 'NM', path: '/inventory/nomenclature', permission: 'inventory.view' },
+  { title: 'PO-00006', group: 'Документи', icon: 'PO', path: '/purchases/orders', permission: 'purchases.view' },
+  { title: 'PR-00004', group: 'Документи', icon: 'PR', path: '/purchases/receipts', permission: 'purchases.view' },
+  { title: 'Заявка Jack', group: 'CRM', icon: 'CRM', path: '/crm', permission: 'crm.view' },
+  { title: 'Замовлення постачальникам', group: 'Закупівлі', icon: 'PO', path: '/purchases/orders', permission: 'purchases.view' },
+  { title: 'Контрагенти', group: 'Клієнти і постачальники', icon: 'CP', path: '/sales/counterparties', permission: 'sales.view' },
 ]
 
 const filteredSearchResults = computed(() => {
   const query = globalSearchQuery.value.trim().toLowerCase()
   if (!query) return []
-  return searchResults.filter(item =>
-    item.title.toLowerCase().includes(query) ||
-    item.group.toLowerCase().includes(query)
+  return allSearchResults.filter(item =>
+    userStore.hasPermission(item.permission) &&
+    (item.title.toLowerCase().includes(query) ||
+    item.group.toLowerCase().includes(query))
   )
 })
 
