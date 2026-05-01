@@ -355,9 +355,17 @@ const searchPaletteInput = ref(null)
 const isDark = useDark()
 const toggleTheme = useToggle(isDark)
 
-const hasAdministrationAccess = computed(() => [
-  'settings.view', 'settings.manage', 'dictionaries.view', 'print_templates.view', 'business_processes.view', 'users.view'
-].some(p => userStore.hasPermission(p)))
+const hasAdministrationAccess = computed(() => {
+  const u = userStore.user
+  if (!u) return false
+  // Superusers and Admins/Directors always see it
+  if (u.is_superuser || ['admin', 'director'].includes(u.role)) return true
+  
+  // Otherwise check specific management permissions
+  return [
+    'settings.manage', 'dictionaries.view', 'print_templates.view', 'business_processes.view', 'users.view'
+  ].some(p => userStore.hasPermission(p))
+})
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value

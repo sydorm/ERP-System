@@ -170,7 +170,7 @@
 
       <div class="crm-right-col">
         <!-- Order Summary Card -->
-        <CrmOrderSummary
+        <CrmSummaryCards
           :form="form"
           :saving="saving"
           :payment-statuses="paymentStatuses"
@@ -250,7 +250,7 @@ import { useCrmOrderValidation } from './composables/useCrmOrderValidation'
 
 // Components
 import CrmOrderHeader from './components/CrmOrderHeader.vue'
-import CrmOrderSummary from './components/CrmOrderSummary.vue'
+import CrmSummaryCards from './components/CrmSummaryCards.vue'
 import CrmContactPanel from './components/CrmContactPanel.vue'
 
 const router    = useRouter()

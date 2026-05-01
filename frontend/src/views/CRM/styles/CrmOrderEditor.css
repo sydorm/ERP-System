@@ -3,12 +3,10 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+  background: #F8FAFC;
   font-family: 'Inter', sans-serif;
   padding: 0;
-  margin-top: -24px;
-  margin-left: -24px;
-  margin-right: -24px;
+  margin: -24px -24px 0 -24px;
 }
 
 .crm-editor-page-inner {
@@ -1104,8 +1102,10 @@
 .crm-top-bar {
   position: sticky;
   top: 0;
-  z-index: 20;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+  z-index: 1000;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .crm-section {
@@ -1114,10 +1114,11 @@
 
 .crm-right-col {
   position: sticky;
-  top: 0;
+  top: 80px;
   align-self: flex-start;
-  max-height: calc(100vh - 116px);
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 @media (max-width: 1100px) {
