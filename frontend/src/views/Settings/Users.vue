@@ -211,7 +211,7 @@
             </el-form>
           </el-tab-pane>
 
-          <el-tab-pane label="Права доступу" name="permissions">
+          <el-tab-pane label="Доступи" name="permissions">
             <div class="permissions-explorer">
               <div v-for="group in permissionGroups" :key="group.key" class="perm-group-card">
                 <div class="group-head">
@@ -232,6 +232,61 @@
                   </el-checkbox>
                 </div>
               </div>
+            </div>
+          </el-tab-pane>
+          
+          <el-tab-pane label="Активність" name="activity">
+            <div class="user-activity-log">
+              <div v-if="loadingActivity" class="activity-loading">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                <span>Завантаження активності...</span>
+              </div>
+              <div v-else-if="userActivity.length === 0" class="activity-empty">
+                <el-icon><InfoFilled /></el-icon>
+                <span>Немає записів про активність</span>
+              </div>
+              <div v-else class="activity-list">
+                <div v-for="log in userActivity" :key="log.id" class="activity-item">
+                  <div class="activity-icon" :class="log.action">
+                    <el-icon v-if="log.action === 'login'"><Key /></el-icon>
+                    <el-icon v-else-if="log.action === 'create'"><Plus /></el-icon>
+                    <el-icon v-else><Edit /></el-icon>
+                  </div>
+                  <div class="activity-info">
+                    <div class="activity-header">
+                      <span class="activity-action">{{ getActionText(log.action) }}</span>
+                      <span class="activity-time">{{ formatFullTime(log.created_at) }}</span>
+                    </div>
+                    <div class="activity-details" v-if="log.changes">
+                      {{ formatActivityDetails(log) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="Історія руху" name="history">
+            <div class="user-history-log">
+              <el-table :data="userHistory" style="width: 100%" height="400px" class="history-table">
+                <el-table-column prop="created_at" label="Час" width="160">
+                  <template #default="{ row }">
+                    {{ formatFullTime(row.created_at) }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="action" label="Подія" width="120">
+                  <template #default="{ row }">
+                    <el-tag :type="getActionTagType(row.action)" size="small">
+                      {{ getActionText(row.action) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="details" label="Деталі">
+                  <template #default="{ row }">
+                    <span class="history-details-text">{{ formatActivityDetails(row) }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -290,7 +345,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { 
   Plus, Search, Edit, Delete, Key, 
   User, Avatar, Monitor, Camera,
-  CircleClose, Check, Close
+  CircleClose, Check, Close, Loading, InfoFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -316,6 +371,9 @@ const isEditing = ref(false)
 const searchQuery = ref('')
 const formRef = ref()
 const dialogTab = ref('main')
+const userActivity = ref([])
+const userHistory = ref([])
+const loadingActivity = ref(false)
 
 const form = reactive({
   id: null,
@@ -419,6 +477,62 @@ const openEditModal = (row) => {
   })
   dialogTab.value = 'main'
   dialogVisible.value = true
+  fetchUserActivity(row.id)
+}
+
+const fetchUserActivity = async (userId) => {
+  loadingActivity.value = true
+  try {
+    const response = await api.get(`/api/v1/users/${userId}/activity`)
+    userActivity.value = response.data
+    userHistory.value = response.data // Using same source for history for now
+  } catch (error) {
+    console.error('Error fetching activity:', error)
+  } finally {
+    loadingActivity.value = false
+  }
+}
+
+const getActionText = (action) => {
+  const map = {
+    'login': 'Вхід в систему',
+    'logout': 'Вихід',
+    'create': 'Створення об\'єкта',
+    'update': 'Оновлення даних',
+    'delete': 'Видалення',
+    'status_change': 'Зміна статусу',
+    'permission_change': 'Зміна прав доступу'
+  }
+  return map[action] || action
+}
+
+const getActionTagType = (action) => {
+  const map = {
+    'create': 'success',
+    'update': 'warning',
+    'delete': 'danger',
+    'login': 'info',
+    'permission_change': 'primary'
+  }
+  return map[action] || ''
+}
+
+const formatActivityDetails = (log) => {
+  if (log.action === 'login') return 'Авторизація через Web-інтерфейс'
+  if (log.action === 'permission_change') return 'Оновлено набір дозволів користувача'
+  if (log.changes) {
+    const keys = Object.keys(log.changes).filter(k => k !== 'password')
+    if (keys.length > 0) return `Змінено: ${keys.join(', ')}`
+  }
+  return 'Системна подія'
+}
+
+const formatFullTime = (dateString) => {
+  if (!dateString) return '—'
+  return new Date(dateString).toLocaleString('uk-UA', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
 }
 
 const submitForm = async () => {
@@ -807,4 +921,94 @@ onMounted(fetchUsers)
 .code-wrapper .code { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: 2px; }
 .copy-btn { border: none; background: #EEF2FF; color: #6366F1; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: grid; place-items: center; font-size: 20px; }
 .new-password-box .warning { font-size: 11px; color: #EF4444; font-weight: 700; margin-top: 12px; }
+
+/* ACTIVITY & HISTORY TABS */
+.user-activity-log, .user-history-log {
+  padding: 8px 0;
+  min-height: 400px;
+}
+
+.activity-loading, .activity-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #94A3B8;
+  gap: 12px;
+}
+
+.activity-loading .el-icon { font-size: 24px; }
+.activity-empty .el-icon { font-size: 32px; }
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  transition: all 0.2s;
+}
+
+.activity-item:hover {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+}
+
+.activity-icon.login { color: #1463FF; background: rgba(20, 99, 255, 0.05); }
+.activity-icon.create { color: #10B981; background: rgba(16, 185, 129, 0.05); }
+.activity-icon.update { color: #F59E0B; background: rgba(245, 158, 11, 0.05); }
+
+.activity-info { flex: 1; min-width: 0; }
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.activity-action {
+  font-weight: 700;
+  color: #1E293B;
+  font-size: 14px;
+}
+
+.activity-time {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.activity-details {
+  font-size: 13px;
+  color: #64748B;
+}
+
+.history-details-text {
+  font-size: 13px;
+  color: #475569;
+}
+
+.history-table :deep(.el-table__row) {
+  cursor: default;
+}
 </style>
