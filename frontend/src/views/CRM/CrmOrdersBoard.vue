@@ -28,16 +28,6 @@
     </div>
 
     <div class="crm-board-page" v-show="viewMode === 'board'">
-      <CrmSummaryCards
-        :orders-count="orders.length"
-        :total-pipeline-amount="totalPipelineAmount"
-        :hot-sla-count="hotSlaCount"
-        :payment-progress="paymentProgress"
-        :today-tasks-count="todayTasks.length"
-        :overdue-tasks-count="overdueTasks.length"
-        :format-currency="formatCurrency"
-      />
-
       <div class="crm-toolbar-row">
         <CrmBoardToolbar
           :users="users"
@@ -55,6 +45,28 @@
           @apply-filters="applyFilters"
           @export="handleExport"
           @new-order="openNewOrder"
+        />
+      </div>
+
+      <div class="crm-summary-cards">
+        <CrmSummaryCards
+          :orders-count="orders.length"
+          :total-pipeline-amount="totalPipelineAmount"
+          :hot-sla-count="hotSlaCount"
+          :payment-progress="paymentProgress"
+          :today-tasks-count="todayTasks.length"
+          :overdue-tasks-count="overdueTasks.length"
+          :format-currency="formatCurrency"
+        />
+      </div>
+
+      <div v-if="attentionOrders.length" class="crm-attention-row">
+        <CrmAttentionPanel
+          :attention-orders="attentionOrders"
+          v-model:attention-expanded="attentionExpanded"
+          v-model:attention-only="filters.attentionOnly"
+          :get-attention-reasons="getAttentionReasons"
+          @open-order="openEditor"
         />
       </div>
 
@@ -216,12 +228,14 @@ import CallResultDialog from '@/components/crm/CallResultDialog.vue'
 import ClientProfile from '@/views/CRM/ClientProfile.vue'
 import CrmBoardToolbar from './components/CrmBoardToolbar.vue'
 import CrmSummaryCards from './components/CrmSummaryCards.vue'
+import CrmAttentionPanel from './components/CrmAttentionPanel.vue'
 import CrmKanbanColumn from './components/CrmKanbanColumn.vue'
 import CrmInsights from './CrmInsights.vue'
 
 const viewMode = ref('board') // 'board' or 'analytics'
 const clientProfileVisible = ref(false)
 const selectedClientId = ref(null)
+const attentionExpanded = ref(false)
 
 const openClientProfile = (clientId) => {
   if (!clientId) return
@@ -409,6 +423,12 @@ const paymentProgress = computed(() => {
   if (!orders.value.length) return 0
   const paidCount = orders.value.filter(order => order.payment_status === 'paid').length
   return Math.round((paidCount / orders.value.length) * 100)
+})
+
+const attentionOrders = computed(() => {
+  return orders.value
+    .filter(o => getAttentionReasons(o).length > 0)
+    .sort((a, b) => b.id - a.id)
 })
 
 const stageShare = (stage) => {

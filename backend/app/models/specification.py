@@ -20,6 +20,7 @@ class CalculationType(str, enum.Enum):
     VOLUME = "volume"
     FORMULA = "formula"
     FABRIC_CUTTING = "fabric_cutting"
+    CHARACTERISTIC_MAPPING = "characteristic_mapping"
 
 class ProductSpecification(BaseModel):
     """

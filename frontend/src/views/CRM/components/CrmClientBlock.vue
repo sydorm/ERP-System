@@ -1,141 +1,111 @@
 <template>
-  <div class="crm-section crm-client-section-premium">
-    <div class="product-block-header">
-      <div class="header-main">
-        <div class="step-badge step-1">Крок 1</div>
-        <div class="title-group">
-          <h3>Дані замовника</h3>
-          <p>Виберіть існуючого клієнта або введіть дані нового для швидкого старту.</p>
+  <div class="crm-client-block-2026 overflow-hidden transition-all duration-500">
+    <!-- ─── HEADER: Premium Layer ─── -->
+    <div class="flex items-center justify-between px-6 py-4 bg-white/40 backdrop-blur-md border-b border-slate-100/50">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center justify-center px-3 py-1 bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-200/50">
+          Крок 1
+        </div>
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-800 leading-none">Дані замовника</h3>
+          <p class="text-[11px] text-slate-400 mt-1 font-medium">Керування базою та новими контактами</p>
         </div>
       </div>
-      <div class="header-actions">
-        <div v-if="form.counterparty_id" class="glass-pill success mr-2">
-          <el-icon><Check /></el-icon>
-          <span>Клієнта обрано</span>
-        </div>
-        <button class="client-add-btn-premium" type="button" @click="$emit('new-client')">
-          <el-icon><Plus /></el-icon>
+
+      <div class="flex items-center gap-3">
+        <!-- Subtle Glow Badge -->
+        <transition name="el-fade-in-linear">
+          <div v-if="form.counterparty_id" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/80 border border-emerald-100 rounded-full group cursor-default">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+            <span class="text-[11px] font-bold text-emerald-700">Клієнта обрано</span>
+          </div>
+        </transition>
+
+        <button 
+          type="button"
+          @click="$emit('new-client')"
+          class="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl text-xs font-bold hover:border-indigo-400 hover:text-indigo-600 hover:shadow-xl hover:shadow-indigo-500/5 transition-all active:scale-95 group"
+        >
+          <el-icon class="transition-transform group-hover:rotate-90"><Plus /></el-icon>
           <span>Новий клієнт</span>
         </button>
       </div>
     </div>
 
-    <div class="premium-form-zone">
-      <div class="selection-card client-search-card">
-        <label class="premium-label">
-          <el-icon><Search /></el-icon>
-          Пошук у базі
-        </label>
-        <el-select
-          v-model="form.counterparty_id"
-          filterable
-          clearable
-          placeholder="Прізвище, ім'я або телефон..."
-          class="premium-select"
-          :class="{ 'field-error': vErrors.client }"
-          @change="$emit('counterparty-change', $event)"
-        >
-          <template #prefix>
-            <el-icon class="select-icon-modern"><Search /></el-icon>
-          </template>
-          <el-option
-            v-for="cp in counterparties"
-            :key="cp.id"
-            :label="cp.name"
-            :value="cp.id"
+    <!-- ─── CONTENT: Depth Grid ─── -->
+    <div class="p-5 space-y-5 bg-[#FDFDFF]">
+      
+      <!-- 1. Master Search: Prominent & Clean -->
+      <div class="relative group">
+        <div class="absolute inset-0 bg-indigo-500/5 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+        <div class="relative bg-white border border-slate-200/60 rounded-2xl p-1 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.03)] focus-within:border-indigo-300 focus-within:shadow-indigo-100/50 transition-all">
+          <el-select
+            v-model="form.counterparty_id"
+            filterable
+            clearable
+            placeholder="Почніть вводити ім'я або номер телефону..."
+            class="premium-search-select w-full"
+            @change="$emit('counterparty-change', $event)"
           >
-            <div class="cp-option">
-              <span>{{ cp.name }}</span>
-              <small v-if="cp.phone">{{ cp.phone }}</small>
-            </div>
-          </el-option>
-        </el-select>
-      </div>
-
-      <div class="client-info-grid">
-        <div class="info-card">
-          <label class="premium-label">
-            <el-icon><User /></el-icon>
-            Ім'я клієнта
-          </label>
-          <el-input
-            v-model="clientNameModel"
-            placeholder="Олена Ковальчук"
-            class="premium-input"
-            :class="{ 'field-error': vErrors.client }"
-          />
-        </div>
-
-        <div class="info-card">
-          <label class="premium-label">
-            <el-icon><Phone /></el-icon>
-            Контактний телефон
-          </label>
-          <el-input 
-            v-model="clientPhoneModel" 
-            placeholder="+380..." 
-            class="premium-input"
-          />
-        </div>
-      </div>
-
-      <div class="client-details-row">
-        <div class="details-card sources-block">
-          <label class="premium-label">
-            <el-icon><MagicStick /></el-icon>
-            Джерело звернення
-          </label>
-          <div class="channel-pills-premium">
-            <button
-              v-for="ch in leadSources"
-              :key="ch.id"
-              type="button"
-              class="pill-choice"
-              :class="{ active: form.lead_source_id === ch.id }"
-              @click="form.lead_source_id = form.lead_source_id === ch.id ? null : ch.id"
+            <template #prefix>
+              <el-icon class="text-indigo-400 ml-2"><Search /></el-icon>
+            </template>
+            <el-option
+              v-for="cp in counterparties"
+              :key="cp.id"
+              :label="cp.name"
+              :value="cp.id"
             >
-              <span class="color-indicator" :style="{ background: ch.color || '#94a3b8' }"></span>
-              {{ ch.name }}
-            </button>
-          </div>
+              <div class="flex items-center justify-between w-full py-1">
+                <span class="font-bold text-slate-700">{{ cp.name }}</span>
+                <span class="text-[10px] text-slate-400 font-mono tracking-tighter">{{ cp.phone }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </div>
+      </div>
+
+      <!-- 2. Inputs Grid: 3x2 Architecture -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Row 1: The Core Trio -->
+        <div class="input-card-premium" :class="{ 'is-selected': !!form.counterparty_id }">
+          <label><el-icon><User /></el-icon> Ім'я клієнта</label>
+          <el-input v-model="clientNameModel" :readonly="!!form.counterparty_id" placeholder="Прізвище та ім'я" />
         </div>
 
-        <div class="details-card manager-block">
-          <label class="premium-label">
-            <el-icon><Avatar /></el-icon>
-            Менеджер
-          </label>
+        <div class="input-card-premium" :class="{ 'is-selected': !!form.counterparty_id }">
+          <label><el-icon><Phone /></el-icon> Телефон</label>
+          <el-input v-model="clientPhoneModel" :readonly="!!form.counterparty_id" placeholder="+380..." />
+        </div>
+
+        <div class="input-card-premium">
+          <label><el-icon><Location /></el-icon> Місто</label>
+          <el-input v-model="form.city" placeholder="Напр. Київ" />
+        </div>
+
+        <!-- Row 2: Logistics & Ops -->
+        <div class="input-card-premium">
+          <label><el-icon><MagicStick /></el-icon> Джерело</label>
+          <el-select v-model="form.lead_source_id" placeholder="Обрати канал" class="w-full" clearable>
+            <el-option v-for="ch in leadSources" :key="ch.id" :label="ch.name" :value="ch.id" />
+          </el-select>
+        </div>
+
+        <div class="input-card-premium">
+          <label><el-icon><Avatar /></el-icon> Менеджер</label>
           <CrmManagerBlock
             :form="form"
             :manager-options="managerOptions"
             :can-reassign-manager="canReassignManager"
           />
         </div>
-      </div>
 
-      <div class="delivery-zone">
-        <div class="details-card full-width">
-          <label class="premium-label">
-            <el-icon><Location /></el-icon>
-            Місто та доставка
-          </label>
-          <div class="delivery-combined-premium">
-            <el-input v-model="form.city" placeholder="Місто" class="premium-input city-input" />
-            <el-select v-model="form.delivery_method_id" placeholder="Спосіб доставки" clearable class="premium-select delivery-select">
-              <el-option
-                v-for="dm in deliveryMethods"
-                :key="dm.id"
-                :label="dm.name"
-                :value="dm.id"
-              />
-            </el-select>
-            <el-input 
-              v-if="form.delivery_type === 'nova_poshta' || form.delivery_method_id" 
-              v-model="form.np_branch" 
-              placeholder="№ відділення / адреса" 
-              class="premium-input branch-input"
-            />
-          </div>
+        <div class="input-card-premium">
+          <label><el-icon><Van /></el-icon> Доставка</label>
+          <el-select v-model="form.delivery_method_id" placeholder="Спосіб доставки" class="w-full" clearable>
+            <el-option v-for="dm in deliveryMethods" :key="dm.id" :label="dm.name" :value="dm.id" />
+          </el-select>
         </div>
       </div>
     </div>
@@ -144,7 +114,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Plus, User, Search, Phone, MagicStick, Avatar, Location } from '@element-plus/icons-vue'
+import { Plus, User, Search, Phone, MagicStick, Avatar, Location, Check, Van } from '@element-plus/icons-vue'
 import CrmManagerBlock from './CrmManagerBlock.vue'
 
 const props = defineProps({
@@ -173,231 +143,59 @@ const clientPhoneModel = computed({
 </script>
 
 <style scoped>
-.crm-client-section-premium {
-  padding: 32px;
-  background: #fff;
-  border-radius: 24px;
-}
-
-.step-badge.step-1 {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-}
-
-.glass-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.glass-pill.success {
-  background: #ECFDF5;
-  color: #059669;
-  border: 1px solid #A7F3D0;
-}
-
-.mr-2 { margin-right: 8px; }
-
-.product-block-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-}
-
-.header-main {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.step-badge {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.title-group h3 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 850;
-  color: #0F172A;
-  letter-spacing: -0.02em;
-}
-
-.title-group p {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #64748B;
-}
-
-.client-add-btn-premium {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  background: #fff;
-  color: #0F172A;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.client-add-btn-premium:hover {
-  background: #F8FAFC;
-  border-color: #6366F1;
-  color: #6366F1;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
-}
-
-.premium-form-zone {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.selection-card {
-  background: #F8FAFC;
-  padding: 24px;
-  border-radius: 20px;
+.crm-client-block-2026 {
+  background: white;
+  border-radius: 28px; /* Squircle feel */
+  box-shadow: 0 4px 24px -6px rgba(15, 23, 42, 0.04), 0 16px 48px -12px rgba(15, 23, 42, 0.08);
   border: 1px solid #F1F5F9;
-  transition: all 0.3s ease;
 }
 
-.selection-card:hover {
-  background: #fff;
-  border-color: #6366F1;
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.05);
+/* Interior Depth: Soft inner shadows for inputs */
+.input-card-premium {
+  @apply flex flex-col gap-1.5 p-3 rounded-2xl transition-all duration-300;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFF 100%);
+  border: 1px solid #F1F5F9;
 }
 
-.premium-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  margin-bottom: 12px;
+.input-card-premium label {
+  @apply flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 px-1;
 }
 
-.premium-label .el-icon {
-  color: #6366F1;
-  font-size: 16px;
+.input-card-premium label .el-icon {
+  @apply text-indigo-400 text-xs;
 }
 
-.client-info-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
+.input-card-premium:focus-within {
+  @apply border-indigo-200 ring-4 ring-indigo-50/50 bg-white;
 }
 
-.info-card {
-  display: flex;
-  flex-direction: column;
+/* Logic for Read-only (Client selected) */
+.input-card-premium.is-selected {
+  background: #F8FAFF;
+  border-color: #E0E7FF;
 }
 
-.client-details-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
-}
-
-.details-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.channel-pills-premium {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pill-choice {
-  padding: 8px 16px;
-  border-radius: 12px;
-  border: 1.5px solid #E2E8F0;
-  background: #fff;
-  color: #475569;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pill-choice:hover {
-  border-color: #6366F1;
-  color: #4F46E5;
-}
-
-.pill-choice.active {
-  background: #6366F1;
-  color: #fff;
-  border-color: #6366F1;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-}
-
-.color-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.delivery-combined-premium {
-  display: flex;
-  gap: 12px;
-}
-
-.delivery-combined-premium .city-input { flex: 1.5; }
-.delivery-combined-premium .delivery-select { flex: 1; }
-.delivery-combined-premium .branch-input { flex: 1.2; }
-
-.cp-option {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 0;
-}
-
-.cp-option small {
-  color: #94A3B8;
-  font-size: 11px;
-}
-
+/* Customizing Element Plus to fit 2026 Premium Style */
 :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
-  border-radius: 14px !important;
-  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
-  padding: 8px 14px !important;
-  height: 42px !important;
-  transition: all 0.2s;
+  @apply shadow-none bg-transparent border-none p-0 h-8 !important;
+  box-shadow: none !important;
 }
 
-:deep(.el-input__wrapper.is-focus), :deep(.el-select__wrapper.is-focused) {
-  box-shadow: 0 0 0 1px #6366F1 inset !important;
-  background: #F5F7FF !important;
+:deep(.el-input__inner) {
+  @apply font-bold text-slate-700 text-[14px] !important;
 }
 
-.field-error :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #EF4444 inset !important;
+:deep(.el-select__placeholder) {
+  @apply font-semibold text-slate-400 text-[13px] !important;
 }
 
-@media (max-width: 1024px) {
-  .client-info-grid, .client-details-row, .delivery-combined-premium {
-    grid-template-columns: 1fr;
-    flex-direction: column;
-  }
+/* Specific Shadowing for Search Select */
+.premium-search-select :deep(.el-select__wrapper) {
+  @apply h-11 !important;
+}
+
+/* Remove default ID/UUID visualization */
+:deep(.el-select__tags) {
+  display: none !important;
 }
 </style>
