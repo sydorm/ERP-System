@@ -53,39 +53,43 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
 
 <style scoped>
 .crm-header-modern {
-  border-radius: 0 !important;
+  border-radius: 0;
   margin-bottom: 0;
-  padding: 12px 32px;
+  padding: 16px 32px;
   position: sticky;
   top: 0;
   z-index: 1001;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  background: rgba(255, 255, 255, 0.9) !important;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .back-pill {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   background: #fff;
   color: #64748B;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
 }
 
 .back-pill:hover {
-  background: #F8FAFC;
-  color: #0F172A;
-  border-color: #CBD5E1;
+  background: #fff;
+  color: #4F46E5;
+  border-color: #6366F1;
+  transform: translateX(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
 }
 
 .header-center {
@@ -101,18 +105,25 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
 }
 
 .icon-btn-modern {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 12px !important;
-  border-color: #E2E8F0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 14px !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
   color: #64748B !important;
+  transition: all 0.2s !important;
+}
+
+.icon-btn-modern:hover {
+  border-color: #6366F1 !important;
+  color: #6366F1 !important;
+  background: #F5F7FF !important;
 }
 
 .btn-draft-modern {
-  padding: 0 20px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
+  padding: 0 22px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   background: #fff;
   color: #475569;
   font-size: 13px;
@@ -124,32 +135,40 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
 .btn-draft-modern:hover {
   background: #F8FAFC;
   border-color: #CBD5E1;
+  color: #1E293B;
 }
 
 .btn-primary-modern {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 24px;
-  height: 40px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 0 28px;
+  height: 44px;
+  border-radius: 14px;
   border: none;
-  background: linear-gradient(135deg, #1463FF 0%, #0047D1 100%);
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   color: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(20, 99, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+  letter-spacing: -0.01em;
 }
 
-.btn-primary-modern:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(20, 99, 255, 0.3);
+.btn-primary-modern:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+}
+
+.btn-primary-modern:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-primary-modern:disabled, .btn-draft-modern:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  filter: grayscale(1);
 }
 </style>

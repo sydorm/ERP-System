@@ -1,137 +1,138 @@
 <template>
   <div class="crm-editor-page">
+    <div class="crm-editor-page-inner">
+      <CrmOrderHeader
+        :stages="stages"
+        :active-stage="form.crm_stage"
+        :is-passed-stage="isPassedStage"
+        :order-id="orderId"
+        :saving="saving"
+        @back="router.back()"
+        @set-stage="setStage"
+        @print="printModalVisible = true"
+        @save-draft="save('draft')"
+        @save-production="save('production')"
+      />
 
-    <CrmOrderHeader
-      :stages="stages"
-      :active-stage="form.crm_stage"
-      :is-passed-stage="isPassedStage"
-      :order-id="orderId"
-      :saving="saving"
-      @back="router.back()"
-      @set-stage="setStage"
-      @print="printModalVisible = true"
-      @save-draft="save('draft')"
-      @save-production="save('production')"
-    />
+      <!-- ===== BODY ===== -->
+      <div class="crm-body" v-loading="loading">
+        <div class="crm-left-col">
 
-    <!-- ===== BODY ===== -->
-    <div class="crm-body" v-loading="loading">
-      <div class="crm-left-col">
+          <CrmClientBlock
+            :form="form"
+            :v-errors="vErrors"
+            :counterparties="counterparties"
+            :lead-sources="leadSources"
+            :delivery-methods="deliveryMethods"
+            :manager-options="managerOptions"
+            :can-reassign-manager="canReassignManager"
+            v-model:client-name="clientName"
+            v-model:client-phone="clientPhone"
+            @counterparty-change="onCounterpartyChange"
+            @new-client="showNewClientDialog = true"
+          />
 
-        <CrmClientBlock
-          :form="form"
-          :v-errors="vErrors"
-          :counterparties="counterparties"
-          :lead-sources="leadSources"
-          :delivery-methods="deliveryMethods"
-          :manager-options="managerOptions"
-          :can-reassign-manager="canReassignManager"
-          v-model:client-name="clientName"
-          v-model:client-phone="clientPhone"
-          @counterparty-change="onCounterpartyChange"
-          @new-client="showNewClientDialog = true"
-        />
+          <CrmProductBlock
+            :form="form"
+            :products="products"
+            :selected-product="selectedProduct"
+            :product-attributes="productAttributes"
+            @product-change="onProductChange"
+            @set-attr-value="setAttrValue"
+            @set-attr-dim="setAttrDim"
+            @upload-photo="uploadPhoto"
+          />
 
-        <CrmProductBlock
-          :form="form"
-          :products="products"
-          :selected-product="selectedProduct"
-          :product-attributes="productAttributes"
-          @product-change="onProductChange"
-          @set-attr-value="setAttrValue"
-          @set-attr-dim="setAttrDim"
-          @upload-photo="uploadPhoto"
-        />
+          <CrmMaterialsCheckBlock
+            :form="form"
+            :material-check="materialCheck"
+            :materials-loading="materialsLoading"
+            :format-qty="formatQty"
+            @go-to-purchases="goToPurchases"
+          />
 
-        <CrmMaterialsCheckBlock
-          :form="form"
-          :material-check="materialCheck"
-          :materials-loading="materialsLoading"
-          :format-qty="formatQty"
-          @go-to-purchases="goToPurchases"
-        />
+          <CrmFinanceBlock
+            :form="form"
+            :bank-accounts="bankAccounts"
+            :auto-payment-status="autoPaymentStatus"
+            :format-currency="formatCurrency"
+            @calc-prepayment="calcPrepayment"
+            @prepayment-input="onPrepaymentInput"
+            @set-prepay-pct="setPrepayPct"
+          />
 
-        <CrmFinanceBlock
-          :form="form"
-          :bank-accounts="bankAccounts"
-          :auto-payment-status="autoPaymentStatus"
-          :format-currency="formatCurrency"
-          @calc-prepayment="calcPrepayment"
-          @prepayment-input="onPrepaymentInput"
-          @set-prepay-pct="setPrepayPct"
-        />
+          <CrmDeadlinesBlock
+            :form="form"
+            :priorities="priorities"
+            :format-date="formatDate"
+          />
 
-        <CrmDeadlinesBlock
-          :form="form"
-          :priorities="priorities"
-          :format-date="formatDate"
-        />
+        </div><!-- /left col -->
 
-      </div><!-- /left col -->
+        <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
+        <div class="crm-right-col">
 
-      <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-      <div class="crm-right-col">
+          <CrmReadinessChecklist
+            class="saas-glass-card saas-premium-shadow"
+            :progress="readinessProgress"
+            :items="readinessItems"
+          />
 
-        <CrmReadinessChecklist
-          class="saas-glass-card saas-premium-shadow"
-          :progress="readinessProgress"
-          :items="readinessItems"
-        />
+          <CrmContactPanel
+            class="saas-glass-card"
+            :form="form"
+            :order-id="orderId"
+            :communication-types="communicationTypes"
+            :contact-results="contactResults"
+            :contact-result="contactResult"
+            v-model:contact-comm-type="contactCommType"
+            v-model:contact-plan-reason="contactPlanReason"
+            v-model:contact-next-at="contactNextAt"
+            v-model:contact-note="contactNote"
+            :next-touch-summary="nextTouchSummary"
+            :saving-contact="savingContact"
+            :getResultHint="getResultHint"
+            @set-next-contact-preset="setNextContactPreset"
+            @open-communication="commDrawerVisible = true"
+            @apply-contact-result="applyContactResult"
+            @log-contact="logContact"
+          />
 
-        <CrmContactPanel
-          class="saas-glass-card"
-          :form="form"
-          :order-id="orderId"
-          :communication-types="communicationTypes"
-          :contact-results="contactResults"
-          :contact-result="contactResult"
-          v-model:contact-comm-type="contactCommType"
-          v-model:contact-plan-reason="contactPlanReason"
-          v-model:contact-next-at="contactNextAt"
-          v-model:contact-note="contactNote"
-          :next-touch-summary="nextTouchSummary"
-          :saving-contact="savingContact"
-          :getResultHint="getResultHint"
-          @set-next-contact-preset="setNextContactPreset"
-          @open-communication="commDrawerVisible = true"
-          @apply-contact-result="applyContactResult"
-          @log-contact="logContact"
-        />
+          <CrmAiAssistant
+            class="saas-glass-card"
+            :form="form"
+            :readiness-progress="readinessProgress"
+            @check="ElMessage.success('AI Аналіз завершено')"
+          />
 
-        <CrmAiAssistant
-          class="saas-glass-card"
-          :form="form"
-          :readiness-progress="readinessProgress"
-          @check="ElMessage.success('AI Аналіз завершено')"
-        />
+          <CrmCommunicationHistory
+            class="saas-glass-card"
+            v-if="orderId"
+            :contacts="contacts"
+            :get-contact-result-color="getContactResultColor"
+            :get-comm-icon="getCommIcon"
+            :get-comm-name="getCommName"
+            :format-date-time="formatDateTime"
+            :contact-result-label="contactResultLabel"
+          />
 
-        <CrmCommunicationHistory
-          class="saas-glass-card"
-          v-if="orderId"
-          :contacts="contacts"
-          :get-contact-result-color="getContactResultColor"
-          :get-comm-icon="getCommIcon"
-          :get-comm-name="getCommName"
-          :format-date-time="formatDateTime"
-          :contact-result-label="contactResultLabel"
-        />
+          <CrmOrderHistoryNotes
+            class="saas-glass-card"
+            v-if="orderId"
+            :form="form"
+            :history="history"
+          />
 
-        <CrmOrderHistoryNotes
-          class="saas-glass-card"
-          v-if="orderId"
-          :form="form"
-          :history="history"
-        />
+          <CrmRelatedDocuments
+            class="saas-glass-card"
+            v-if="orderId"
+            ref="relatedDocsRef"
+            :order-id="orderId"
+          />
 
-        <CrmRelatedDocuments
-          class="saas-glass-card"
-          v-if="orderId"
-          ref="relatedDocsRef"
-          :order-id="orderId"
-        />
-
-      </div><!-- /right col -->
-    </div><!-- /body -->
+        </div><!-- /right col -->
+      </div><!-- /body -->
+    </div><!-- /inner -->
 
     <!-- ===== DIALOGS ===== -->
     <AutomationConfirmModal
