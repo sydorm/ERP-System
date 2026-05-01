@@ -414,9 +414,8 @@
 
         </div>
       </div>
-        </div>
-      </div>
     </div>
+  </div>
 
     <!-- CLIENT DRAWER (HISTORY & PROFILE) -->
     <el-drawer
