@@ -22,7 +22,7 @@
         <span class="card-order-no">#{{ order.order_number }}</span>
         <el-tooltip :content="managerName || 'Не призначено'" placement="top">
           <div class="mini-manager-avatar">
-            {{ getManagerInitials(order) || '?' }}
+            {{ managerInitials || '?' }}
           </div>
         </el-tooltip>
       </div>
