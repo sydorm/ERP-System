@@ -1,33 +1,6 @@
 <template>
   <div class="crm-board-page-wrapper">
-    <!-- Vertical Side Nav -->
-    <div class="crm-vertical-nav">
-      <div 
-        class="nav-item" 
-        :class="{ active: viewMode === 'board' }"
-        @click="viewMode = 'board'"
-        title="Замовлення"
-      >
-        <el-icon><Grid /></el-icon>
-        <span class="nav-label">Замовлення</span>
-      </div>
-      <div
-        v-if="userStore.hasPermission('crm.analytics')"
-        class="nav-item"
-        :class="{ active: viewMode === 'analytics' }"
-        @click="viewMode = 'analytics'"
-        title="Аналітика"
-      >
-        <el-icon><TrendCharts /></el-icon>
-        <span class="nav-label">Розгорнути</span>
-      </div>
-      <div class="nav-spacer"></div>
-      <div class="nav-item-secondary">
-        <el-icon><QuestionFilled /></el-icon>
-      </div>
-    </div>
-
-    <div class="crm-board-page" v-show="viewMode === 'board'">
+    <div class="crm-board-page">
       <!-- STICKY TOP ZONE -->
       <div class="sticky-top-zone">
         <div class="crm-top-compact-line">

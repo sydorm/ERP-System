@@ -2,74 +2,76 @@
   <div class="crm-order-page min-h-screen bg-[#F4F6F9] font-inter text-[#1F2937] antialiased">
 
     <!-- ─── 1. TOP STICKY HEADER ─── -->
-    <header class="sticky top-0 z-[1050] bg-white border-b border-[#EAECF4] shadow-sm">
-      <div class="flex items-center h-[56px] px-6 justify-between">
-        
-        <!-- Left: Back & Breadcrumbs -->
-        <div class="flex items-center gap-4">
-          <button @click="router.back()" class="text-gray-400 hover:text-gray-700 transition-colors">
-            <el-icon class="text-lg"><ArrowLeft /></el-icon>
-          </button>
-          <div class="flex flex-col leading-tight">
-            <span class="text-[13px] font-bold text-gray-900">{{ orderId ? 'Редагування' : 'Створення' }}</span>
-            <span class="text-[10px] text-gray-400 font-medium">CRM · Угоди</span>
+    <div class="order-topbar-wrapper">
+      <header class="order-topbar">
+        <div class="flex items-center h-[56px] px-6 justify-between">
+          
+          <!-- Left: Back & Breadcrumbs -->
+          <div class="flex items-center gap-4">
+            <button @click="router.back()" class="text-gray-400 hover:text-gray-700 transition-colors">
+              <el-icon class="text-lg"><ArrowLeft /></el-icon>
+            </button>
+            <div class="flex flex-col leading-tight">
+              <span class="text-[13px] font-bold text-gray-900">{{ orderId ? 'Редагування' : 'Створення' }}</span>
+              <span class="text-[10px] text-gray-400 font-medium">CRM · Угоди</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Center: CRM Stages -->
-        <div class="hidden lg:flex items-center gap-0">
-          <template v-for="(s, idx) in stages" :key="s.key">
-            <div 
-              class="flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-all"
-              @click="setStage(s.key)"
-            >
+          <!-- Center: CRM Stages -->
+          <div class="hidden lg:flex items-center gap-0">
+            <template v-for="(s, idx) in stages" :key="s.key">
               <div 
-                class="w-2 h-2 rounded-full"
-                :class="form.crm_stage === s.key ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' : 'bg-gray-200'"
-              ></div>
-              <span 
-                class="text-[11px] font-black tracking-wider uppercase"
-                :class="form.crm_stage === s.key ? 'text-blue-600' : 'text-gray-400'"
+                class="flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-all"
+                @click="setStage(s.key)"
               >
-                {{ s.label }}
-              </span>
-            </div>
-            <div v-if="idx < stages.length - 1" class="w-8 h-px bg-gray-100"></div>
-          </template>
-        </div>
-
-        <!-- Right: Progress & Actions -->
-        <div class="flex items-center gap-6">
-          <!-- Readiness % -->
-          <div class="flex items-center gap-3">
-            <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                class="h-full bg-blue-500 transition-all duration-700"
-                :style="`width:${readinessData.progress}%`"
-              ></div>
-            </div>
-            <span class="text-[11px] font-black text-blue-600">{{ readinessData.progress }}%</span>
+                <div 
+                  class="w-2 h-2 rounded-full"
+                  :class="form.crm_stage === s.key ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' : 'bg-gray-200'"
+                ></div>
+                <span 
+                  class="text-[11px] font-black tracking-wider uppercase"
+                  :class="form.crm_stage === s.key ? 'text-blue-600' : 'text-gray-400'"
+                >
+                  {{ s.label }}
+                </span>
+              </div>
+              <div v-if="idx < stages.length - 1" class="w-8 h-px bg-gray-100"></div>
+            </template>
           </div>
 
-          <!-- Buttons -->
-          <div class="flex items-center gap-2.5">
-            <button 
-              @click="save('draft')"
-              class="px-4 py-[7px] rounded-lg border border-[#E5E7EB] text-gray-600 font-bold text-[12px] hover:bg-gray-50 transition-all"
-            >
-              Чернетка
-            </button>
-            <button 
-              @click="save('production')" 
-              :disabled="saving"
-              class="px-6 py-[7px] rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-bold text-[12px] shadow-lg shadow-blue-100 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
-            >
-              {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
-            </button>
+          <!-- Right: Progress & Actions -->
+          <div class="flex items-center gap-6">
+            <!-- Readiness % -->
+            <div class="flex items-center gap-3">
+              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  class="h-full bg-blue-500 transition-all duration-700"
+                  :style="`width:${readinessData.progress}%`"
+                ></div>
+              </div>
+              <span class="text-[11px] font-black text-blue-600">{{ readinessData.progress }}%</span>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center gap-2.5">
+              <button 
+                @click="save('draft')"
+                class="px-4 py-[7px] rounded-lg border border-[#E5E7EB] text-gray-600 font-bold text-[12px] hover:bg-gray-50 transition-all"
+              >
+                Чернетка
+              </button>
+              <button 
+                @click="save('production')" 
+                :disabled="saving"
+                class="px-6 py-[7px] rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-bold text-[12px] shadow-lg shadow-blue-100 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
+              >
+                {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </div>
 
     <!-- ─── 3. MAIN WORKSPACE ─── -->
     <main class="pt-6 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6 px-3">
@@ -438,6 +440,28 @@ onMounted(loadData)
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 .font-inter { font-family: 'Inter', sans-serif; }
+
+.order-topbar-wrapper {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.order-topbar {
+  position: sticky;
+  top: 64px; /* Висота головного хедера DashboardLayout.vue */
+  z-index: 1050;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: 1px solid #EAECF4;
+  background: #fff;
+  padding: 0; /* Внутрішній контент має власні падінги */
+}
 
 .crm-order-page {
   padding-bottom: 64px;
