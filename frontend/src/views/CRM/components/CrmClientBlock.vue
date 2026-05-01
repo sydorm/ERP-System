@@ -140,7 +140,7 @@ import { computed } from 'vue'
 import { 
   Plus, User, Search, Phone, MagicStick, Avatar, Location, Check, Van, 
   Camera, Collection, DataLine, Link, ChatRound, ShoppingBag, Refresh, Star, Shop,
-  Box, Bicycle, Walking
+  Box, Bicycle
 } from '@element-plus/icons-vue'
 import CrmManagerBlock from './CrmManagerBlock.vue'
 
@@ -188,7 +188,7 @@ const getSourceIcon = (name) => {
 
 const getDeliveryIcon = (name) => {
   const n = name.toLowerCase()
-  if (n.includes('сам')) return Walking
+  if (n.includes('сам')) return User
   if (n.includes('кур')) return Bicycle
   return Box
 }
