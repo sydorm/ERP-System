@@ -3,7 +3,7 @@
     <!-- ─── HEADER: Premium Layer ─── -->
     <div class="flex items-center justify-between px-6 py-4 bg-white/40 backdrop-blur-md border-b border-slate-100/50">
       <div class="flex items-center gap-4">
-        <div class="flex items-center justify-center px-3 py-1 bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-indigo-200/50">
+        <div class="flex items-center justify-center px-3 py-1 bg-indigo-600 text-white text-[11px] font-bold rounded-full shadow-sm">
           Крок 1
         </div>
         <div>
@@ -15,8 +15,8 @@
       <div class="flex items-center gap-3">
         <!-- Subtle Glow Badge -->
         <transition name="el-fade-in-linear">
-          <div v-if="form.counterparty_id" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/80 border border-emerald-100 rounded-full group cursor-default">
-            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+          <div v-if="form.counterparty_id" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full group cursor-default">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_4px_rgba(16,185,129,0.4)]"></div>
             <span class="text-[11px] font-bold text-emerald-700">Клієнта обрано</span>
           </div>
         </transition>
@@ -144,21 +144,21 @@ const clientPhoneModel = computed({
 
 <style scoped>
 .crm-client-block-2026 {
-  background: white;
-  border-radius: 28px; /* Squircle feel */
-  box-shadow: 0 4px 24px -6px rgba(15, 23, 42, 0.04), 0 16px 48px -12px rgba(15, 23, 42, 0.08);
-  border: 1px solid #F1F5F9;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.045);
+  border: 1px solid #EAF0F7;
 }
 
 /* Interior Depth: Soft inner shadows for inputs */
 .input-card-premium {
-  @apply flex flex-col gap-1.5 p-3 rounded-2xl transition-all duration-300;
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFF 100%);
-  border: 1px solid #F1F5F9;
+  @apply flex flex-col gap-1.5 p-3 rounded-2xl transition-all duration-200;
+  background: #FFFFFF;
+  border: 1px solid #E5EAF2;
 }
 
 .input-card-premium label {
-  @apply flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 px-1;
+  @apply flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 px-1;
 }
 
 .input-card-premium label .el-icon {
@@ -166,7 +166,7 @@ const clientPhoneModel = computed({
 }
 
 .input-card-premium:focus-within {
-  @apply border-indigo-200 ring-4 ring-indigo-50/50 bg-white;
+  @apply border-indigo-300 ring-4 ring-indigo-50 bg-white;
 }
 
 /* Logic for Read-only (Client selected) */
