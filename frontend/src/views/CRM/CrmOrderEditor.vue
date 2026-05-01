@@ -1,88 +1,90 @@
 <template>
   <div class="crm-order-page min-h-screen bg-[#F4F6F9] font-inter text-[#1F2937] antialiased">
 
-    <!-- ─── COMPACT STICKY HEADER ─── -->
-    <header class="sticky top-0 z-[1020] bg-white border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-      <div class="flex items-center h-[50px] px-8 gap-5">
-
-        <!-- Left: back + title -->
-        <div class="flex items-center gap-2.5 flex-shrink-0">
-          <button @click="router.back()"
-                  class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0">
-            <el-icon class="text-sm"><ArrowLeft /></el-icon>
+    <!-- ─── 1. TOP STICKY HEADER ─── -->
+    <header class="sticky top-0 z-[1050] bg-white border-b border-[#EAECF4] shadow-sm">
+      <div class="flex items-center h-[56px] px-6 justify-between">
+        
+        <!-- Left: Back & Breadcrumbs -->
+        <div class="flex items-center gap-4">
+          <button @click="router.back()" class="text-gray-400 hover:text-gray-700 transition-colors">
+            <el-icon class="text-lg"><ArrowLeft /></el-icon>
           </button>
-          <div class="leading-none">
-            <div class="text-[13px] font-bold text-gray-800 leading-tight">
-              {{ orderId ? 'Редагування' : 'Нове замовлення' }}
-            </div>
-            <div class="text-[10px] text-gray-400 leading-none mt-0.5">CRM · Угоди</div>
+          <div class="flex flex-col leading-tight">
+            <span class="text-[13px] font-bold text-gray-900">{{ orderId ? 'Редагування' : 'Створення' }}</span>
+            <span class="text-[10px] text-gray-400 font-medium">CRM · Угоди</span>
           </div>
         </div>
 
-        <div class="w-px h-5 bg-gray-200 flex-shrink-0"></div>
-
-        <!-- Center: stepper -->
-        <div class="hidden md:flex items-center flex-1 justify-center gap-0">
-          <template v-for="(step, idx) in ['Клієнт', 'Товар', 'Логістика', 'Підтвердження']" :key="idx">
-            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg select-none"
-                 :class="currentStep >= idx ? 'text-blue-600' : 'text-gray-400'">
-              <div class="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 transition-all"
-                   :class="{
-                     'bg-emerald-500 text-white': currentStep > idx,
-                     'bg-blue-600 text-white shadow-[0_2px_6px_rgba(37,99,235,0.4)]': currentStep === idx,
-                     'bg-gray-100 text-gray-400': currentStep < idx
-                   }">
-                <el-icon v-if="currentStep > idx" style="font-size:9px"><Check /></el-icon>
-                <span v-else>{{ idx + 1 }}</span>
-              </div>
-              <span class="text-[11.5px] font-semibold leading-none">{{ step }}</span>
+        <!-- Center: CRM Stages -->
+        <div class="hidden lg:flex items-center gap-0">
+          <template v-for="(s, idx) in stages" :key="s.key">
+            <div 
+              class="flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-all"
+              @click="setStage(s.key)"
+            >
+              <div 
+                class="w-2 h-2 rounded-full"
+                :class="form.crm_stage === s.key ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' : 'bg-gray-200'"
+              ></div>
+              <span 
+                class="text-[11px] font-black tracking-wider uppercase"
+                :class="form.crm_stage === s.key ? 'text-blue-600' : 'text-gray-400'"
+              >
+                {{ s.label }}
+              </span>
             </div>
-            <div v-if="idx < 3"
-                 class="w-8 h-px flex-shrink-0 transition-colors rounded-full"
-                 :class="currentStep > idx ? 'bg-emerald-300' : 'bg-gray-200'"></div>
+            <div v-if="idx < stages.length - 1" class="w-8 h-px bg-gray-100"></div>
           </template>
         </div>
 
-        <!-- Right: progress ring + order id -->
-        <div class="flex items-center gap-3 flex-shrink-0 ml-auto">
-          <div class="flex items-center gap-2">
-            <div class="w-[72px] h-[3px] bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-500 rounded-full transition-all duration-700"
-                   :style="`width:${readinessData.progress}%`"></div>
+        <!-- Right: Progress & Actions -->
+        <div class="flex items-center gap-6">
+          <!-- Readiness % -->
+          <div class="flex items-center gap-3">
+            <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                class="h-full bg-blue-500 transition-all duration-700"
+                :style="`width:${readinessData.progress}%`"
+              ></div>
             </div>
-            <span class="text-[11px] font-bold text-gray-400 w-8 text-right">{{ readinessData.progress }}%</span>
+            <span class="text-[11px] font-black text-blue-600">{{ readinessData.progress }}%</span>
           </div>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-50 border border-gray-200 text-[10px] font-black text-gray-400 tracking-widest">
-            #{{ orderId ? String(orderId).slice(-6).toUpperCase() : 'NEW' }}
-          </span>
-        </div>
 
+          <!-- Buttons -->
+          <div class="flex items-center gap-2.5">
+            <button 
+              @click="save('draft')"
+              class="px-4 py-[7px] rounded-lg border border-[#E5E7EB] text-gray-600 font-bold text-[12px] hover:bg-gray-50 transition-all"
+            >
+              Чернетка
+            </button>
+            <button 
+              @click="save('production')" 
+              :disabled="saving"
+              class="px-6 py-[7px] rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-bold text-[12px] shadow-lg shadow-blue-100 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
+            >
+              {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
-    <!-- ─── MAIN WORKSPACE ─── -->
-    <main class="px-8 pt-5 pb-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-      <!-- LEFT: forms (9/12) -->
-      <div class="lg:col-span-9 space-y-4">
-
-        <!-- CARD 1: Client & Logistics -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
-          <div class="absolute left-0 top-0 w-[3px] h-full transition-colors duration-500 rounded-l-xl"
-               :class="readinessData.items[0].done ? 'bg-blue-500' : 'bg-gray-200'"></div>
-          <div class="pl-5 pr-5 pt-4 pb-5">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-[13.5px] font-bold flex items-center gap-2 text-gray-800">
-                <el-icon class="text-blue-500 text-sm"><User /></el-icon>
+    <!-- ─── 3. MAIN WORKSPACE ─── -->
+    <main class="pt-6 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6 px-3">
+      
+      <!-- LEFT COLUMN: Primary Data (9/12) -->
+      <div class="lg:col-span-9 ml-3 space-y-6">
+        
+        <!-- CARD 1: Customer & Logistics -->
+        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-[14px] font-bold flex items-center gap-2 text-gray-800">
+                <el-icon class="text-blue-500 text-base"><User /></el-icon>
                 Замовник та логістика
               </h2>
-              <transition name="el-fade-in">
-                <span v-if="form.counterparty_id"
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-600">
-                  <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                  Контакт обрано
-                </span>
-              </transition>
             </div>
             <CrmClientBlock
               :form="form"
@@ -98,17 +100,14 @@
           </div>
         </div>
 
-        <!-- CARD 2: Product -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
-          <div class="absolute left-0 top-0 w-[3px] h-full transition-colors duration-500 rounded-l-xl"
-               :class="readinessData.items[1].done ? 'bg-blue-500' : 'bg-gray-200'"></div>
-          <div class="pl-5 pr-5 pt-4 pb-5">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-[13.5px] font-bold flex items-center gap-2 text-gray-800">
-                <el-icon class="text-blue-500 text-sm"><Box /></el-icon>
+        <!-- CARD 2: Product Configuration -->
+        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-[14px] font-bold flex items-center gap-2 text-gray-800">
+                <el-icon class="text-blue-500 text-base"><Box /></el-icon>
                 Конфігурація замовлення
               </h2>
-              <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Крок 2</span>
             </div>
             <CrmProductBlock
               :form="form"
@@ -122,7 +121,7 @@
           </div>
         </div>
 
-        <!-- Finalization -->
+        <!-- 2. Finalization block stays (Calculated cost) -->
         <CrmFinalizationBlock
           :form="form"
           :base-price="selectedProductPrice"
@@ -132,40 +131,20 @@
           @set-prepay-pct="setPrepayPercent"
           @update-total="val => form.total_amount = val"
         />
-
       </div>
 
-      <!-- RIGHT: sidebar (3/12) -->
+      <!-- RIGHT COLUMN: Readiness & AI (3/12) -->
       <div class="lg:col-span-3">
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sticky top-[62px]">
+        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm p-5 sticky top-[76px]">
           <CrmReadinessChecklist
             :progress="readinessData.progress"
             :items="readinessData.items"
           />
         </div>
       </div>
-
     </main>
 
-    <!-- ─── STICKY FOOTER ─── -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-8 py-2.5 z-[1030] shadow-[0_-1px_6px_rgba(0,0,0,0.06)]">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Сума:</span>
-          <span class="text-[15px] font-black text-blue-600">{{ formatCurrency(form.total_amount) }} ₴</span>
-        </div>
-        <div class="flex items-center gap-2.5">
-          <button @click="save('draft')"
-                  class="px-5 py-[7px] rounded-lg border border-gray-200 text-gray-600 font-semibold text-[12px] hover:bg-gray-50 transition-colors">
-            Чернетка
-          </button>
-          <button @click="save('production')" :disabled="saving"
-                  class="px-7 py-[7px] rounded-lg bg-blue-600 text-white font-bold text-[12px] shadow-md shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95">
-            {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
-          </button>
-        </div>
-      </div>
-    </footer>
+    <!-- ─── 2. BOTTOM SUM BAR REMOVED ─── -->
 
     <CrmNewClientDialog
       v-model="cpDialogVisible"
