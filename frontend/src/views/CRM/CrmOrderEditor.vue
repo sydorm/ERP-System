@@ -1,5 +1,5 @@
 <template>
-  <div class="crm-editor-unified-page bg-[#F8FAFC] min-h-screen font-inter antialiased">
+  <div class="crm-editor-premium-page bg-[#F8FAFC] min-h-screen font-inter antialiased">
     
     <!-- ─── MODULAR HEADER ─── -->
     <CrmOrderHeader
@@ -15,110 +15,136 @@
       @print="handlePrint"
     />
 
-    <!-- ─── MAIN WORKSPACE ─── -->
-    <main class="max-w-[1600px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-8">
+    <!-- ─── MULTI-COLUMN WORKSPACE (70/30 Split) ─── -->
+    <main class="max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start pt-8">
       
-      <!-- LEFT: DATA INPUTS (Col 7) -->
-      <div class="lg:col-span-7 space-y-8">
+      <!-- LEFT: CORE WORKFLOW (70% - Col 8) -->
+      <div class="lg:col-span-8 space-y-12">
         
-        <!-- COMPONENT: Client Management -->
-        <CrmClientBlock
-          :form="form"
-          :v-errors="vErrors"
-          :counterparties="counterparties"
-          :lead-sources="leadSources"
-          :delivery-methods="deliveryMethods"
-          :manager-options="users"
-          :can-reassign-manager="true"
-          :client-name="form.client_name"
-          :client-phone="form.client_phone"
-          @update:clientName="form.client_name = $event"
-          @update:clientPhone="form.client_phone = $event"
-          @counterparty-change="onClientChange"
-          @new-client="openCreateCounterparty"
-        />
+        <!-- STEP 1: Client Management -->
+        <section class="step-card-premium">
+          <CrmClientBlock
+            :form="form"
+            :v-errors="vErrors"
+            :counterparties="counterparties"
+            :lead-sources="leadSources"
+            :delivery-methods="deliveryMethods"
+            :manager-options="users"
+            :can-reassign-manager="true"
+            :client-name="form.client_name"
+            :client-phone="form.client_phone"
+            @update:clientName="form.client_name = $event"
+            @update:clientPhone="form.client_phone = $event"
+            @counterparty-change="onClientChange"
+            @new-client="openCreateCounterparty"
+          />
+        </section>
 
-        <!-- COMPONENT: Product Configuration -->
-        <CrmProductBlock
-          :form="form"
-          :products="products"
-          :product-attributes="productAttributes"
-          @product-change="onProductChange"
-          @set-attr-value="setAttrValue"
-          @set-attr-dim="setAttrDim"
-          @upload-photo="handlePhotoUpload"
-        />
+        <!-- STEP 2: Product Configuration -->
+        <section class="step-card-premium">
+          <CrmProductBlock
+            :form="form"
+            :products="products"
+            :product-attributes="productAttributes"
+            @product-change="onProductChange"
+            @set-attr-value="setAttrValue"
+            @set-attr-dim="setAttrDim"
+            @upload-photo="handlePhotoUpload"
+          />
+        </section>
 
-        <!-- COMPONENT: Materials Analysis -->
-        <CrmMaterialsCheckBlock
-          v-if="form.product_id"
-          :form="form"
-          :material-check="materialCheck"
-          :materials-loading="checkingMaterials"
-          :format-qty="formatQty"
-          @go-to-purchases="router.push('/purchases/new')"
-        />
+        <!-- STEP 3: Financial Calculations -->
+        <section class="step-card-premium">
+          <CrmFinanceBlock
+            :form="form"
+            :bank-accounts="bankAccounts"
+            :auto-payment-status="autoPaymentStatus"
+            :format-currency="formatCurrency"
+            @set-prepay-pct="setPrepayPercent"
+            @calc-prepayment="handleCalcPrepayment"
+            @prepayment-input="handlePrepaymentInput"
+          />
+        </section>
+
+        <!-- STEP 4: Deadlines & Priorities -->
+        <section class="step-card-premium">
+          <CrmDeadlinesBlock
+            :form="form"
+            :priorities="priorities"
+            :format-date="formatDate"
+          />
+        </section>
       </div>
 
-      <!-- RIGHT: ACTIONS & FEED (Col 5) -->
-      <div class="lg:col-span-5 space-y-8">
+      <!-- RIGHT: INTELLIGENCE & INTERACTION (30% - Col 4) -->
+      <div class="lg:col-span-4 space-y-10 sticky top-24">
         
-        <!-- COMPONENT: Financial Block -->
-        <CrmFinanceBlock
-          :form="form"
-          :bank-accounts="bankAccounts"
-          :auto-payment-status="autoPaymentStatus"
-          :format-currency="formatCurrency"
-          @set-prepay-pct="setPrepayPercent"
-          @calc-prepayment="handleCalcPrepayment"
-          @prepayment-input="handlePrepaymentInput"
-        />
+        <!-- COMPONENT: Readiness Checklist (Top Status) -->
+        <div class="side-widget-premium readiness-box">
+          <CrmReadinessChecklist
+            :progress="readinessData.progress"
+            :items="readinessData.items"
+          />
+        </div>
 
         <!-- COMPONENT: Interaction Hub -->
-        <CrmContactPanel
-          :form="form"
-          :order-id="orderId"
-          :communication-types="commTypes"
-          :contact-results="contactResults"
-          :contact-result="contactResult"
-          :contact-comm-type="contactCommType"
-          :contact-plan-reason="contactPlanReason"
-          :contact-next-at="contactNextAt"
-          :contact-note="contactNote"
-          :next-touch-summary="nextTouchSummary"
-          :saving-contact="savingContact"
-          :get-result-hint="getResultHint"
-          @update:contact-comm-type="contactCommType = $event"
-          @update:contact-plan-reason="contactPlanReason = $event"
-          @update:contact-next-at="contactNextAt = $event"
-          @update:contact-note="contactNote = $event"
-          @set-next-contact-preset="handleContactPreset"
-          @apply-contact-result="contactResult = $event"
-          @log-contact="logContact"
-        />
+        <div class="side-widget-premium">
+          <CrmContactPanel
+            :form="form"
+            :order-id="orderId"
+            :communication-types="commTypes"
+            :contact-results="contactResults"
+            :contact-result="contactResult"
+            :contact-comm-type="contactCommType"
+            :contact-plan-reason="contactPlanReason"
+            :contact-next-at="contactNextAt"
+            :contact-note="contactNote"
+            :next-touch-summary="nextTouchSummary"
+            :saving-contact="savingContact"
+            :get-result-hint="getResultHint"
+            @update:contact-comm-type="contactCommType = $event"
+            @update:contact-plan-reason="contactPlanReason = $event"
+            @update:contact-next-at="contactNextAt = $event"
+            @update:contact-note="contactNote = $event"
+            @set-next-contact-preset="handleContactPreset"
+            @apply-contact-result="contactResult = $event"
+            @log-contact="logContact"
+          />
 
-        <!-- COMPONENT: Deadlines & Priority -->
-        <CrmDeadlinesBlock
-          :form="form"
-          :priorities="priorities"
-          :format-date="formatDate"
-        />
+          <!-- Integrated Communication History -->
+          <CrmCommunicationHistory
+            v-if="contactHistory.length"
+            :contacts="contactHistory"
+            :get-contact-result-color="getContactResultColor"
+            :get-comm-icon="getCommIcon"
+            :get-comm-name="getCommName"
+            :format-date-time="formatDateTime"
+            :contact-result-label="contactResultLabel"
+          />
+        </div>
 
-        <!-- COMPONENT: Readiness Checklist -->
-        <CrmReadinessChecklist
-          :progress="readinessData.progress"
-          :items="readinessData.items"
-        />
+        <!-- COMPONENT: Warehouse Sync (Analysis) -->
+        <div class="side-widget-premium" v-if="form.product_id">
+          <CrmMaterialsCheckBlock
+            :form="form"
+            :material-check="materialCheck"
+            :materials-loading="checkingMaterials"
+            :format-qty="formatQty"
+            @go-to-purchases="router.push('/purchases/new')"
+          />
+        </div>
+
+        <!-- COMPONENT: Smart Assistant Tips -->
+        <div class="side-widget-premium ai-widget">
+          <CrmAiAssistant 
+            v-if="orderId"
+            :form="form"
+            :readiness-progress="readinessData.progress"
+            @check="loadData"
+          />
+        </div>
       </div>
     </main>
-
-    <!-- FLOATING AI ASSISTANT -->
-    <CrmAiAssistant 
-      v-if="orderId"
-      :form="form"
-      :readiness-progress="readinessData.progress"
-      @check="loadData"
-    />
 
     <!-- Create Client Dialog -->
     <CrmNewClientDialog
@@ -135,12 +161,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 
-// Import the massive component library
+// Modular components
 import CrmOrderHeader from './components/CrmOrderHeader.vue'
 import CrmClientBlock from './components/CrmClientBlock.vue'
 import CrmProductBlock from './components/CrmProductBlock.vue'
 import CrmFinanceBlock from './components/CrmFinanceBlock.vue'
 import CrmContactPanel from './components/CrmContactPanel.vue'
+import CrmCommunicationHistory from './components/CrmCommunicationHistory.vue'
 import CrmMaterialsCheckBlock from './components/CrmMaterialsCheckBlock.vue'
 import CrmDeadlinesBlock from './components/CrmDeadlinesBlock.vue'
 import CrmReadinessChecklist from './components/CrmReadinessChecklist.vue'
@@ -155,7 +182,7 @@ const orderId = computed(() => {
   return (id && id !== 'new') ? id : null
 })
 
-// MASTER STATE (The Data Model)
+// MASTER STATE
 const loading = ref(true)
 const saving = ref(false)
 const vErrors = reactive({ client: false })
@@ -180,7 +207,7 @@ const form = reactive({
   priority: 'normal'
 })
 
-// Dictionaries & Data
+// Data sets
 const products = ref([])
 const counterparties = ref([])
 const leadSources = ref([])
@@ -188,6 +215,7 @@ const deliveryMethods = ref([])
 const users = ref([])
 const productAttributes = ref([])
 const materials = ref([])
+const bankAccounts = ref([])
 const contactHistory = ref([])
 const checkingMaterials = ref(false)
 
@@ -201,7 +229,14 @@ const stages = [
   { key: 'done', label: 'Виконано' }
 ]
 
-// Interaction Logic State
+const priorities = ref([
+  { value: 'low', label: 'Низький', color: '#94A3B8' },
+  { value: 'normal', label: 'Нормальний', color: '#6366F1' },
+  { value: 'high', label: 'Високий', color: '#F59E0B' },
+  { value: 'critical', label: 'Критичний', color: '#EF4444' }
+])
+
+// Contact Logic
 const commTypes = ref([{ code: 'CALL', name: 'Дзвінок', icon: '📞' }, { code: 'CHAT', name: 'Месенджер', icon: '💬' }])
 const contactResults = ref([{ code: 'CONFIRMED', name: 'Підтвердив' }, { code: 'THINKING', name: 'Думає' }, { code: 'NO_ANSWER', name: 'Не взяв' }, { code: 'REFUSED', name: 'Відмова' }])
 const contactResult = ref(null)
@@ -211,9 +246,34 @@ const contactNextAt = ref(null)
 const contactNote = ref('')
 const savingContact = ref(false)
 
+// Computed
+const autoPaymentStatus = computed(() => {
+  if (form.prepayment_amount >= form.total_amount && form.total_amount > 0) return { key: 'paid', label: 'Оплачено' }
+  if (form.prepayment_amount > 0) return { key: 'partial', label: 'Часткова оплата' }
+  return { key: 'unpaid', label: 'Очікує оплати' }
+})
+
 const nextTouchSummary = computed(() => form.next_contact_at ? `Наступний контакт: ${new Date(form.next_contact_at).toLocaleString()}` : 'Не заплановано')
 
-// ACTIONS & HANDLERS
+const readinessData = computed(() => {
+  const items = [
+    { key: 'client', label: 'Дані замовника', done: !!form.counterparty_id },
+    { key: 'product', label: 'Виріб обрано', done: !!form.product_id },
+    { key: 'specs', label: 'Характеристики', done: Object.keys(form.attributes_values || {}).length > 0 },
+    { key: 'prepayment', label: 'Передоплата', done: form.prepayment_amount > 0 },
+    { key: 'deadline', label: 'Дедлайн встановлено', done: !!form.deadline_date }
+  ]
+  const doneCount = items.filter(i => i.done).length
+  const progress = Math.round((doneCount / items.length) * 100)
+  return { items, progress }
+})
+
+const materialCheck = computed(() => ({
+  items: materials.value || [],
+  has_issues: (materials.value || []).some(m => m.status !== 'ok')
+}))
+
+// Methods
 const isStagePast = (stageKey) => {
   const idx = stages.findIndex(s => s.key === stageKey)
   const currentIdx = stages.findIndex(s => s.key === form.crm_stage)
@@ -222,21 +282,23 @@ const isStagePast = (stageKey) => {
 
 const setStage = (stage) => form.crm_stage = stage
 
+const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
+const formatDate = (val) => val ? new Date(val).toLocaleDateString('uk-UA') : '—'
+const formatDateTime = (val) => val ? new Date(val).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
+const formatQty = (val) => Number(val || 0).toLocaleString('uk-UA', { maximumFractionDigits: 3 })
+
 const onClientChange = async (id) => {
   if (!id) return
   const res = await api.get(`/api/v1/counterparties/${id}`)
   const c = res.data
-  form.city = c.city || ''
-  form.client_phone = c.phone || ''
-  form.client_name = c.name || ''
+  form.city = c.city || ''; form.client_phone = c.phone || ''; form.client_name = c.name || ''
   if (c.lead_source_id) form.lead_source_id = c.lead_source_id
 }
 
 const onProductChange = async (id) => {
   if (!id) return
   const res = await api.get(`/api/v1/products/${id}/attributes`)
-  productAttributes.value = res.data
-  checkMaterials()
+  productAttributes.value = res.data; checkMaterials()
 }
 
 const checkMaterials = async () => {
@@ -262,6 +324,20 @@ const setPrepayPercent = (pct) => {
   form.prepayment_amount = Math.round(form.total_amount * (pct / 100))
 }
 
+const handleCalcPrepayment = () => {}
+const handlePrepaymentInput = () => {}
+const handlePrint = () => window.print()
+
+const getResultHint = (code) => {
+  const map = { CONFIRMED: 'Заявку підтверджено', THINKING: 'Потрібен повторний дотик', NO_ANSWER: 'Не взяв трубку', REFUSED: 'Клієнт відмовився' }
+  return map[code] || ''
+}
+
+const handlePhotoUpload = (photo) => {
+  if (!form.photos) form.photos = []
+  form.photos.push(photo)
+}
+
 const handleContactPreset = (opts) => {
   const d = new Date()
   if (opts.minutes) d.setMinutes(d.getMinutes() + opts.minutes)
@@ -275,59 +351,21 @@ const logContact = async () => {
   savingContact.value = true
   try {
     await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, {
-      note: contactNote.value,
-      result: contactResult.value,
-      communication_type: contactCommType.value,
-      next_contact_at: contactNextAt.value
+      note: contactNote.value, result: contactResult.value,
+      communication_type: contactCommType.value, next_contact_at: contactNextAt.value
     })
     contactNote.value = ''; contactResult.value = null; loadContacts()
   } finally { savingContact.value = false }
 }
 
-const bankAccounts = ref([])
-
-const autoPaymentStatus = computed(() => {
-  if (form.prepayment_amount >= form.total_amount && form.total_amount > 0) return { key: 'paid', label: 'Оплачено' }
-  if (form.prepayment_amount > 0) return { key: 'partial', label: 'Часткова оплата' }
-  return { key: 'unpaid', label: 'Очікує оплати' }
-})
-
-const formatCurrency = (val) => {
-  return new Intl.NumberFormat('uk-UA').format(val || 0)
+// Comm History Helpers
+const getContactResultColor = (res) => {
+  const map = { CONFIRMED: '#10B981', THINKING: '#F59E0B', NO_ANSWER: '#64748B', REFUSED: '#EF4444' }
+  return map[res] || '#64748B'
 }
-
-const formatQty = (val) => {
-  if (val === undefined || val === null) return '0'
-  return Number(val).toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
-
-const materialCheck = computed(() => {
-  return {
-    items: materials.value || [],
-    has_issues: (materials.value || []).some(m => m.status !== 'ok')
-  }
-})
-
-const readinessData = computed(() => {
-  const items = [
-    { key: 'client', label: 'Дані замовника', done: !!form.counterparty_id },
-    { key: 'product', label: 'Виріб обрано', done: !!form.product_id },
-    { key: 'specs', label: 'Характеристики', done: Object.keys(form.attributes_values || {}).length > 0 },
-    { key: 'prepayment', label: 'Передоплата', done: form.prepayment_amount > 0 },
-    { key: 'deadline', label: 'Дедлайн встановлено', done: !!form.deadline_date }
-  ]
-  const doneCount = items.filter(i => i.done).length
-  const progress = Math.round((doneCount / items.length) * 100)
-  return { items, progress }
-})
-
-const handleCalcPrepayment = () => {
-  // Logic to recalc based on percentage if needed
-}
-
-const handlePrepaymentInput = () => {
-  // Logic to handle manual prepay input
-}
+const getCommIcon = (type) => type === 'CALL' ? '📞' : '💬'
+const getCommName = (type) => type === 'CALL' ? 'Дзвінок' : 'Месенджер'
+const contactResultLabel = (res) => contactResults.value.find(r => r.code === res)?.name || res
 
 const save = async (action) => {
   saving.value = true
@@ -340,44 +378,14 @@ const save = async (action) => {
   } finally { saving.value = false }
 }
 
-const handlePrint = () => {
-  window.print()
-}
-
-const getResultHint = (code) => {
-  const map = { CONFIRMED: 'Заявку підтверджено', THINKING: 'Потрібен повторний дотик', NO_ANSWER: 'Не взяв трубку', REFUSED: 'Клієнт відмовився' }
-  return map[code] || ''
-}
-
-const handlePhotoUpload = (photo) => {
-  if (!form.photos) form.photos = []
-  form.photos.push(photo)
-}
-
-// Client Dialog
-const cpDialogVisible = ref(false)
-const creatingCp = ref(false)
+const cpDialogVisible = ref(false); const creatingCp = ref(false)
 const openCreateCounterparty = () => cpDialogVisible.value = true
 const createCounterparty = async (data) => {
   creatingCp.value = true
   try {
     const res = await api.post('/api/v1/counterparties', { ...data, is_customer: true })
-    counterparties.value.push(res.data)
-    form.counterparty_id = res.data.id
-    cpDialogVisible.value = false
+    counterparties.value.push(res.data); form.counterparty_id = res.data.id; cpDialogVisible.value = false
   } finally { creatingCp.value = false }
-}
-
-const priorities = ref([
-  { value: 'low', label: 'Низький', color: '#94A3B8' },
-  { value: 'normal', label: 'Нормальний', color: '#6366F1' },
-  { value: 'high', label: 'Високий', color: '#F59E0B' },
-  { value: 'critical', label: 'Критичний', color: '#EF4444' }
-])
-
-const formatDate = (val) => {
-  if (!val) return '—'
-  return new Date(val).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const loadData = async () => {
@@ -419,8 +427,113 @@ onMounted(loadData)
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 .font-inter { font-family: 'Inter', sans-serif; }
 
-.crm-editor-unified-page {
+.crm-editor-premium-page {
   padding-bottom: 100px;
+}
+
+.step-card-premium {
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
+  border: 1px solid #F1F5F9;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-card-premium:hover {
+  box-shadow: 0 20px 60px -15px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+}
+
+.side-widget-premium {
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  padding: 4px;
+  border: 1px solid #F8FAFC;
+}
+
+.readiness-box {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F7FF 100%);
+  border-color: #EEF2FF;
+}
+
+.ai-widget {
+  background: linear-gradient(135deg, #F0FDFA 0%, #FFFFFF 100%);
+  border-color: #CCFBF1;
+}
+
+/* Timeline Custom Styles */
+:deep(.comm-timeline) {
+  margin-top: 16px;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+:deep(.timeline-item) {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+:deep(.timeline-dot) {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px #fff;
+  z-index: 2;
+}
+:deep(.timeline-content) {
+  flex: 1;
+  background: #F8FAFC;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid #F1F5F9;
+}
+:deep(.timeline-header) {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+:deep(.timeline-channel) {
+  font-weight: 800;
+  font-size: 13px;
+  color: #1E293B;
+}
+:deep(.timeline-time) {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+:deep(.timeline-res-badge) {
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-right: 12px;
+}
+:deep(.timeline-note) {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+:deep(.timeline-manager) {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 600;
+}
+:deep(.timeline-reminder) {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #E2E8F0;
+  font-size: 12px;
+  color: #6366F1;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
