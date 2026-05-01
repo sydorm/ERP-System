@@ -248,37 +248,37 @@ const router = createRouter({
                     path: '/personnel/employees',
                     name: 'employees-list',
                     component: () => import('@/views/Personnel/EmployeesList.vue'),
-                    meta: { title: 'Співробітники' }
+                    meta: { title: 'Співробітники', permission: 'personnel.view' }
                 },
                 {
                     path: '/personnel/employees/new',
                     name: 'employee-new',
                     component: () => import('@/views/Personnel/EmployeeEditor.vue'),
-                    meta: { title: 'Новий співробітник' }
+                    meta: { title: 'Новий співробітник', permission: 'personnel.create' }
                 },
                 {
                     path: '/personnel/employees/:id',
                     name: 'employee-edit',
                     component: () => import('@/views/Personnel/EmployeeEditor.vue'),
-                    meta: { title: 'Картка співробітника' }
+                    meta: { title: 'Картка співробітника', permission: 'personnel.view' }
                 },
                 {
                     path: '/personnel/departments',
                     name: 'departments-list',
                     component: () => import('@/views/Personnel/DepartmentsList.vue'),
-                    meta: { title: 'Підрозділи' }
+                    meta: { title: 'Підрозділи', permission: 'personnel.view' }
                 },
                 {
                     path: '/personnel/payroll',
                     name: 'payroll-manager',
                     component: () => import('@/views/Personnel/PayrollManager.vue'),
-                    meta: { title: 'Нарахування ЗП' }
+                    meta: { title: 'Нарахування ЗП', permission: 'personnel.view' }
                 },
                 {
                     path: '/personnel/attendance',
                     name: 'attendance-board',
                     component: () => import('@/views/Personnel/AttendanceBoard.vue'),
-                    meta: { title: 'Табель' }
+                    meta: { title: 'Табель', permission: 'personnel.view' }
                 },
                 {
                     path: '/personnel/hr-reports',

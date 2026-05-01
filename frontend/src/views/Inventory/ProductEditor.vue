@@ -509,12 +509,14 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  --product-editor-header-height: 52px;
-  --product-editor-tabs-height: 40px;
+  --product-editor-header-height: 60px;
+  --product-editor-tabs-height: 44px;
   display: flex;
   flex-direction: column;
   background-color: #f8fafc;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
+  margin: -24px -24px 0 -24px; /* Eliminating DashboardLayout padding */
+  position: relative;
 }
 
 /* === STICKY WRAPPER === */
@@ -522,10 +524,10 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(12px) saturate(180%);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .sticky-header {
@@ -712,7 +714,7 @@ onMounted(() => {
   height: var(--product-editor-tabs-height);
   gap: 4px;
   overflow-x: auto;
-  border-top: 1px solid rgba(226, 232, 240, 0.4);
+  border-top: 1px solid #f1f5f9;
 }
 
 .tabs-nav-row::-webkit-scrollbar {
@@ -754,9 +756,9 @@ onMounted(() => {
 }
 
 .editor-content {
-  padding: 20px;
-  background: #f1f5f9;
-  min-height: calc(100vh - var(--product-editor-header-height) - var(--product-editor-tabs-height));
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px - var(--product-editor-header-height) - var(--product-editor-tabs-height));
 }
 
 .empty-tab {

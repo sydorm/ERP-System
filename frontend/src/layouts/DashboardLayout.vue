@@ -75,15 +75,15 @@
             <el-menu-item index="/finance/payments" v-if="userStore.hasPermission('finance.payments.view')">Платежі</el-menu-item>
           </el-sub-menu>
 
-          <el-sub-menu index="personnel">
+          <el-sub-menu index="personnel" v-if="userStore.hasPermission('personnel.view')">
             <template #title>
               <el-icon><User /></el-icon>
               <span>Персонал</span>
             </template>
-            <el-menu-item index="/personnel/employees">Співробітники</el-menu-item>
-            <el-menu-item index="/personnel/departments">Підрозділи</el-menu-item>
-            <el-menu-item index="/personnel/payroll">Нарахування ЗП</el-menu-item>
-            <el-menu-item index="/personnel/attendance">Табель</el-menu-item>
+            <el-menu-item index="/personnel/employees" v-if="userStore.hasPermission('personnel.view')">Співробітники</el-menu-item>
+            <el-menu-item index="/personnel/departments" v-if="userStore.hasPermission('personnel.view')">Підрозділи</el-menu-item>
+            <el-menu-item index="/personnel/payroll" v-if="userStore.hasPermission('personnel.view')">Нарахування ЗП</el-menu-item>
+            <el-menu-item index="/personnel/attendance" v-if="userStore.hasPermission('personnel.view')">Табель</el-menu-item>
           </el-sub-menu>
 
           <el-menu-item index="/reports" v-if="userStore.hasPermission('reports.view')">
