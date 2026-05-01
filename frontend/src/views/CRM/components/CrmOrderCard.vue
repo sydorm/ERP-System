@@ -18,7 +18,14 @@
     </div>
 
     <div class="card-row-1">
-      <span class="card-order-no">#{{ order.order_number }}</span>
+      <div class="card-id-manager">
+        <span class="card-order-no">#{{ order.order_number }}</span>
+        <el-tooltip :content="managerName || 'Не призначено'" placement="top">
+          <div class="mini-manager-avatar">
+            {{ getManagerInitials(order) || '?' }}
+          </div>
+        </el-tooltip>
+      </div>
       <div class="priority-wrapper" :class="order.priority">
         <span class="priority-dot" :style="{ background: getPriorityColor(order.priority) }" />
         <span class="priority-text" :style="{ color: getPriorityColor(order.priority) }">

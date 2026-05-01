@@ -28,8 +28,7 @@
     </div>
 
     <div class="crm-board-page" v-show="viewMode === 'board'">
-      <div class="crm-sticky-workbar">
-        <CrmSummaryCards
+      <CrmSummaryCards
         :orders-count="orders.length"
         :total-pipeline-amount="totalPipelineAmount"
         :hot-sla-count="hotSlaCount"
@@ -58,7 +57,6 @@
           @new-order="openNewOrder"
         />
       </div>
-      </div><!-- /crm-sticky-workbar -->
 
       <div class="crm-board-body">
 
