@@ -57,7 +57,7 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
 .crm-header-modern {
   border-radius: 0;
   margin-bottom: 0;
-  padding: 12px 32px;
+  padding: 12px 28px;
   position: sticky;
   top: 0;
   z-index: 1100;
@@ -65,11 +65,11 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid #E2E8F0 !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
   border-top: none !important;
-  box-shadow: 0 4px 25px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04) !important;
 }
 
 .back-pill {
@@ -117,7 +117,7 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   background: #fff;
   color: #6366F1;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 650;
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 2px 10px rgba(99, 102, 241, 0.05);
@@ -134,10 +134,10 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   height: 44px;
   border-radius: 14px;
   border: 1px solid rgba(226, 232, 240, 0.8);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
   color: #475569;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 650;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -159,16 +159,16 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.24);
   letter-spacing: -0.01em;
 }
 
 .btn-primary-modern:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(99, 102, 241, 0.3);
   background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
 }
 

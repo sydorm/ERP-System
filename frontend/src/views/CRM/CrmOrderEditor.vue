@@ -432,23 +432,22 @@ onMounted(loadData)
 
 .step-card-premium {
   background: #fff;
-  border-radius: 32px;
-  box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
   border: 1px solid #F1F5F9;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
 
 .step-card-premium:hover {
-  box-shadow: 0 20px 60px -15px rgba(15, 23, 42, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 .side-widget-premium {
   background: #fff;
-  border-radius: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border-radius: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   padding: 4px;
-  border: 1px solid #F8FAFC;
+  border: 1px solid #F1F5F9;
 }
 
 .readiness-box {
