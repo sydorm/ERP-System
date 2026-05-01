@@ -245,7 +245,7 @@ import {
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
-import { useCrmOrderValidation } from './composables/useCrmOrderValidation'
+import { validateCrmOrderRequiredFields, collectMissingProductionFields } from './composables/useCrmOrderValidation'
 
 // Components
 import CrmOrderHeader from './components/CrmOrderHeader.vue'
@@ -352,7 +352,7 @@ const checkingMaterials = ref(false)
 const contactHistory = ref([])
 const loadingContacts = ref(false)
 
-const { vErrors, validateCrmOrderRequiredFields, collectMissingProductionFields } = useCrmOrderValidation()
+const vErrors = reactive({ counterparty_id: false, total_amount: false })
 
 // ─── Methods ─────────────────────────────────────────────────────────────────
 const isPassedStage = (stageCode) => {
