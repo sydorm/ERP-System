@@ -220,8 +220,8 @@
                 <div class="field-block">
                   <span class="field-label">Джерело:</span>
                   <el-radio-group v-model="form.source_type" @change="onSourceTypeChange" :disabled="isEditMode">
-                    <el-radio label="crm">Замовлення CRM</el-radio>
-                    <el-radio label="quick">Швидке (вручну)</el-radio>
+                    <el-radio value="crm">Замовлення CRM</el-radio>
+                    <el-radio value="quick">Швидке (вручну)</el-radio>
                   </el-radio-group>
                 </div>
               </el-col>

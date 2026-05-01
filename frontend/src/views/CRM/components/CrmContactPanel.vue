@@ -1,4 +1,5 @@
 ﻿<template>
+  <div class="crm-contact-panel-root">
     <div class="crm-section control-card next-touch-card">
       <div class="side-card-title">
         <span>НАСТУПНИЙ КОНТАКТ</span>
@@ -107,6 +108,7 @@
         {{ orderId ? 'Зафіксувати контакт' : 'Збережіть заявку спочатку' }}
       </button>
     </div>
+  </div>
 </template>
 
 <script setup>

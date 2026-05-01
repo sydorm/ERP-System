@@ -1,830 +1,519 @@
 <template>
-  <div class="crm-editor-page">
-    <div class="crm-editor-page-inner">
-      <CrmOrderHeader
-        :stages="stages"
-        :active-stage="form.crm_stage"
-        :is-passed-stage="isPassedStage"
-        :order-id="orderId"
-        :saving="saving"
-        @back="router.back()"
-        @set-stage="setStage"
-        @print="printModalVisible = true"
-        @save-draft="save('draft')"
-        @save-production="save('production')"
-      />
-
-      <!-- ===== BODY ===== -->
-      <div class="crm-body" v-loading="loading">
-        <div class="crm-left-col">
-
-          <CrmClientBlock
-            :form="form"
-            :v-errors="vErrors"
-            :counterparties="counterparties"
-            :lead-sources="leadSources"
-            :delivery-methods="deliveryMethods"
-            :manager-options="managerOptions"
-            :can-reassign-manager="canReassignManager"
-            v-model:client-name="clientName"
-            v-model:client-phone="clientPhone"
-            @counterparty-change="onCounterpartyChange"
-            @new-client="showNewClientDialog = true"
-          />
-
-          <CrmProductBlock
-            :form="form"
-            :products="products"
-            :selected-product="selectedProduct"
-            :product-attributes="productAttributes"
-            @product-change="onProductChange"
-            @set-attr-value="setAttrValue"
-            @set-attr-dim="setAttrDim"
-            @upload-photo="uploadPhoto"
-          />
-
-          <CrmMaterialsCheckBlock
-            :form="form"
-            :material-check="materialCheck"
-            :materials-loading="materialsLoading"
-            :format-qty="formatQty"
-            @go-to-purchases="goToPurchases"
-          />
-
-          <CrmFinanceBlock
-            :form="form"
-            :bank-accounts="bankAccounts"
-            :auto-payment-status="autoPaymentStatus"
-            :format-currency="formatCurrency"
-            @calc-prepayment="calcPrepayment"
-            @prepayment-input="onPrepaymentInput"
-            @set-prepay-pct="setPrepayPct"
-          />
-
-          <CrmDeadlinesBlock
-            :form="form"
-            :priorities="priorities"
-            :format-date="formatDate"
-          />
-
-        </div><!-- /left col -->
-
-        <!-- ─── RIGHT SIDEBAR ─────────────────────────────────────── -->
-        <div class="crm-right-col">
-
-          <CrmReadinessChecklist
-            class="saas-glass-card saas-premium-shadow"
-            :progress="readinessProgress"
-            :items="readinessItems"
-          />
-
-          <CrmContactPanel
-            v-if="stageIndex <= 1"
-            class="saas-glass-card"
-            :form="form"
-            :order-id="orderId"
-            :communication-types="communicationTypes"
-            :contact-results="contactResults"
-            :contact-result="contactResult"
-            v-model:contact-comm-type="contactCommType"
-            v-model:contact-plan-reason="contactPlanReason"
-            v-model:contact-next-at="contactNextAt"
-            v-model:contact-note="contactNote"
-            :next-touch-summary="nextTouchSummary"
-            :saving-contact="savingContact"
-            :getResultHint="getResultHint"
-            @set-next-contact-preset="setNextContactPreset"
-            @open-communication="commDrawerVisible = true"
-            @apply-contact-result="applyContactResult"
-            @log-contact="logContact"
-          />
-
-          <CrmAiAssistant
-            class="saas-glass-card"
-            :form="form"
-            :readiness-progress="readinessProgress"
-            @check="ElMessage.success('AI Аналіз завершено')"
-          />
-
-          <CrmCommunicationHistory
-            class="saas-glass-card"
-            v-if="orderId"
-            :contacts="contacts"
-            :get-contact-result-color="getContactResultColor"
-            :get-comm-icon="getCommIcon"
-            :get-comm-name="getCommName"
-            :format-date-time="formatDateTime"
-            :contact-result-label="contactResultLabel"
-          />
-
-          <CrmOrderHistoryNotes
-            class="saas-glass-card"
-            v-if="orderId"
-            :form="form"
-            :history="history"
-          />
-
-          <CrmRelatedDocuments
-            class="saas-glass-card"
-            v-if="orderId"
-            ref="relatedDocsRef"
-            :order-id="orderId"
-          />
-
-        </div><!-- /right col -->
-      </div><!-- /body -->
-    </div><!-- /inner -->
-
-    <!-- ===== DIALOGS ===== -->
-    <AutomationConfirmModal
-      v-model="automationModal.visible"
-      :rule="automationModal.rule"
-      source-type="crm_lead"
-      :source-id="orderId"
-      @confirmed="relatedDocsRef?.refresh()"
-      @skipped="automationModal.rule = null"
+  <div class="crm-editor-page" v-loading="loading">
+    <CrmOrderHeader
+      :stages="stages"
+      :active-stage="form.crm_stage"
+      :is-passed-stage="isPassedStage"
+      :order-id="orderId"
+      :saving="saving"
+      @back="router.push('/crm')"
+      @set-stage="setStage"
+      @print="printOrder"
+      @save-draft="save('draft')"
+      @save-production="save('production')"
     />
 
-    <CrmNewClientDialog
-      v-model="showNewClientDialog"
-      :new-client="newClient"
-      :saving="savingClient"
-      @create="createNewClient"
-    />
+    <div class="crm-body">
+      <div class="crm-left-col">
+        <!-- Main Form Section -->
+        <div class="crm-section">
+          <div class="crm-section-head">
+            <h3 class="crm-section-title">Основна інформація</h3>
+            <span class="crm-attr-hint" v-if="orderId">Замовлення #{{ form.order_number }}</span>
+          </div>
+          
+          <div class="crm-field">
+            <label class="crm-label">Клієнт</label>
+            <div style="display: flex; gap: 8px;">
+              <el-select
+                v-model="form.counterparty_id"
+                filterable
+                remote
+                :remote-method="searchCounterparties"
+                placeholder="Виберіть або знайдіть клієнта"
+                class="cp-select modern-select"
+                :class="{ 'field-error': vErrors.counterparty_id }"
+              >
+                <el-option
+                  v-for="cp in counterparties"
+                  :key="cp.id"
+                  :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
+                  :value="cp.id"
+                />
+              </el-select>
+              <el-button @click="openCreateCounterparty" :icon="Plus" circle title="Додати клієнта" />
+            </div>
+          </div>
 
-    <CrmCommunicationDrawer
-      v-model="commDrawerVisible"
-      v-model:contact-comm-type="contactCommType"
-      :communication-types="communicationTypes"
-      :message-templates="messageTemplates"
-      @apply-template="contactNote = $event"
-    />
+          <div class="crm-grid-2">
+            <div class="crm-field">
+              <label class="crm-label">Джерело</label>
+              <el-select v-model="form.lead_source_id" placeholder="Звідки прийшов" class="modern-select">
+                <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">Місто / Доставка</label>
+              <el-input v-model="form.city" placeholder="Населений пункт" />
+            </div>
+          </div>
+          
+          <div class="crm-field" style="margin-top: 12px;">
+            <label class="crm-label">Канал зв'язку</label>
+            <div class="channel-pills">
+              <div 
+                v-for="ch in channels" 
+                :key="ch.code"
+                class="channel-pill"
+                :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
+                @click="form.channel = ch.code"
+              >
+                {{ ch.icon }} {{ ch.name }}
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <PrintPreviewModal
-      v-if="orderId"
-      v-model="printModalVisible"
-      :document-id="orderId"
-      document-type="invoice"
-    />
+        <!-- Product Attributes Section -->
+        <div class="crm-section">
+          <div class="crm-section-head">
+            <h3 class="crm-section-title">Параметри виробу</h3>
+            <span class="crm-attr-hint"><el-icon><MagicStick /></el-icon> Адаптивно</span>
+          </div>
+
+          <div class="crm-field">
+            <label class="crm-label">Виріб</label>
+            <el-select 
+              v-model="form.product_id" 
+              filterable 
+              placeholder="Виберіть модель" 
+              class="modern-select"
+              @change="onProductChange"
+            >
+              <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+            </el-select>
+          </div>
+
+          <div class="attributes-block" v-if="productAttributes.length">
+            <div v-for="attr in productAttributes" :key="attr.id" class="attr-group">
+              <label class="crm-label">{{ attr.name }}</label>
+              
+              <!-- Color/Options Selection -->
+              <div class="attr-pills" v-if="attr.type !== 'dimensions'">
+                <div 
+                  v-for="opt in attr.options" 
+                  :key="opt.id"
+                  class="attr-pill"
+                  :class="{ active: form.attributes_values[attr.id] === opt.id }"
+                  @click="form.attributes_values[attr.id] = opt.id"
+                >
+                  <span v-if="opt.color" class="attr-color-dot" :style="{ background: opt.color }"></span>
+                  {{ opt.name }}
+                </div>
+              </div>
+
+              <!-- Dimensions Input -->
+              <div class="attr-dims" v-else>
+                <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" placeholder="Ширина" />
+                <span class="dims-sep">×</span>
+                <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" placeholder="Висота" />
+                <span class="dims-unit">мм</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crm-field">
+            <label class="crm-label">Коментар до виробу</label>
+            <el-input type="textarea" v-model="form.comment" :rows="3" placeholder="Особливості конструкції, фурнітура тощо..." />
+          </div>
+          
+          <!-- Image Upload Placeholder -->
+          <div class="crm-field" style="margin-top: 12px;">
+            <label class="crm-label">Фото/Ескіз</label>
+            <div class="photo-upload-zone" @click="triggerPhotoUpload">
+              <img v-if="form.reference_photo" :src="form.reference_photo" class="photo-preview" />
+              <div v-else class="photo-placeholder">
+                <el-icon><Picture /></el-icon>
+                <span>Натисніть або перетягніть фото</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fulfillment & Internal -->
+        <div class="crm-section">
+          <div class="crm-section-head">
+            <h3 class="crm-section-title">Виконання</h3>
+          </div>
+          
+          <div class="crm-grid-2">
+            <div class="crm-field">
+              <label class="crm-label">Склад відвантаження</label>
+              <el-select v-model="form.warehouse_id" class="modern-select">
+                <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+              </el-select>
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">Тип оплати</label>
+              <el-select v-model="form.payment_status_id" class="modern-select">
+                <el-option v-for="s in paymentStatuses" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
+            </div>
+          </div>
+
+          <div class="crm-field" style="margin-top: 12px;">
+            <label class="crm-label">Внутрішні нотатки (не бачить клієнт)</label>
+            <el-input type="textarea" v-model="form.internal_notes" :rows="2" />
+          </div>
+        </div>
+      </div>
+
+      <div class="crm-right-col">
+        <!-- Order Summary Card -->
+        <CrmOrderSummary
+          :form="form"
+          :saving="saving"
+          :payment-statuses="paymentStatuses"
+          :priorities="priorities"
+          :managers="users"
+          @update-amount="updateTotalAmount"
+        />
+
+        <!-- Contact Management Card -->
+        <CrmContactPanel
+          v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)"
+          :order-id="orderId"
+          :attempts="form.contact_attempts"
+          :next-contact-at="form.next_contact_at"
+          :comm-types="communicationTypes"
+          :contact-results="contactResults"
+          :history="contactHistory"
+          :loading-history="loadingContacts"
+          @log="logContact"
+        />
+
+        <!-- Material Availability (Placeholder) -->
+        <div class="crm-section" v-if="form.product_id">
+          <div class="crm-section-head">
+            <h3 class="crm-section-title">Матеріали</h3>
+            <span v-if="checkingMaterials" class="mat-loading">
+              <el-icon class="is-loading"><Loading /></el-icon>
+            </span>
+            <span v-else class="mat-status-badge" :class="matStatusClass">
+              {{ matStatusLabel }}
+            </span>
+          </div>
+          
+          <div class="mat-list" v-if="materials.length">
+            <div v-for="m in materials" :key="m.id" class="mat-row" :class="`mat-${m.status}`">
+              <span class="mat-name">{{ m.component_name }}</span>
+              <span class="mat-req">{{ m.required_qty }} {{ m.unit_of_measure }}</span>
+              <span class="mat-stock-badge">{{ m.available_qty }}</span>
+            </div>
+          </div>
+          <div class="mat-empty" v-else>
+            {{ checkingMaterials ? 'Перевірка...' : 'Специфікація не завантажена' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Counterparty Dialog -->
+    <el-dialog v-model="cpDialogVisible" title="Новий клієнт" width="500px" class="saas-dialog">
+      <el-form label-position="top">
+        <el-form-item label="Ім'я / Назва" required>
+          <el-input v-model="newCp.name" placeholder="Петро Петренко" />
+        </el-form-item>
+        <el-form-item label="Телефон">
+          <el-input v-model="newCp.phone" v-maska data-maska="+38 (0##) ###-##-##" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="cpDialogVisible = false">Скасувати</el-button>
+        <el-button type="primary" @click="createCounterparty" :loading="creatingCp">Створити</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import './styles/CrmOrderEditor.css'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-import PrintPreviewModal from '@/components/PrintPreviewModal.vue'
-import AutomationConfirmModal from '@/components/AutomationConfirmModal.vue'
-import CrmOrderHeader from './components/CrmOrderHeader.vue'
-import CrmClientBlock from './components/CrmClientBlock.vue'
-import CrmProductBlock from './components/CrmProductBlock.vue'
-import CrmFinanceBlock from './components/CrmFinanceBlock.vue'
-import CrmDeadlinesBlock from './components/CrmDeadlinesBlock.vue'
-import CrmReadinessChecklist from './components/CrmReadinessChecklist.vue'
-import CrmContactPanel from './components/CrmContactPanel.vue'
-import CrmCommunicationHistory from './components/CrmCommunicationHistory.vue'
-import CrmAiAssistant from './components/CrmAiAssistant.vue'
-import CrmRelatedDocuments from './components/CrmRelatedDocuments.vue'
-import CrmMaterialsCheckBlock from './components/CrmMaterialsCheckBlock.vue'
-import CrmOrderHistoryNotes from './components/CrmOrderHistoryNotes.vue'
-import CrmNewClientDialog from './components/CrmNewClientDialog.vue'
-import CrmCommunicationDrawer from './components/CrmCommunicationDrawer.vue'
-import { createInitialCrmOrderForm, createMaterialCheckState, createNewClientForm } from './composables/useCrmOrderForm'
-import { collectMissingProductionFields, createCrmOrderValidationErrors, validateCrmOrderRequiredFields } from './composables/useCrmOrderValidation'
-import { defaultCommTypes, defaultContactResults, getCommShort, getResultHint, messageTemplates, toLocalDateTimeValue } from './composables/useCrmContactLogic'
-import { buildReadinessItems, calculateReadinessProgress } from './composables/useCrmReadiness'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  Plus, Picture, MagicStick, Loading, Printer, Promotion 
+} from '@element-plus/icons-vue'
+import { vMaska } from 'maska'
 import api from '@/api'
+import { useUserStore } from '@/stores/user'
+import { useCrmOrderValidation } from './composables/useCrmOrderValidation'
 
-const printModalVisible = ref(false)
-const commDrawerVisible = ref(false)
+// Components
+import CrmOrderHeader from './components/CrmOrderHeader.vue'
+import CrmOrderSummary from './components/CrmOrderSummary.vue'
+import CrmContactPanel from './components/CrmContactPanel.vue'
 
 const router    = useRouter()
 const route     = useRoute()
 const userStore = useUserStore()
-const orderId   = computed(() => route.params.id !== 'new' ? route.params.id : null)
+
+// UUID validation regex
+const isUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)
+
+const orderId   = computed(() => {
+  const id = route.params.id
+  if (id === 'new') return null
+  if (!isUuid(id)) {
+    console.warn(`[CRM] Invalid Order ID in route: "${id}"`)
+    return null
+  }
+  return id
+})
+
 const currentUser = computed(() => userStore.user || {})
 const currentUserId = computed(() => currentUser.value?.id || null)
-const getUserDisplayName = (u) => {
-  if (!u) return 'Поточний користувач'
-  return (
-    u.name
-    || u.full_name
-    || [u.firstName || u.first_name, u.lastName || u.last_name].filter(Boolean).join(' ')
-    || u.email
-    || u.username
-    || 'Поточний користувач'
-  )
-}
-const currentUserName = computed(() => {
-  return getUserDisplayName(currentUser.value)
-})
-const canReassignManager = computed(() => {
-  const u = currentUser.value
-  return Boolean(
-    u?.is_superuser
-    || u?.role === 'admin'
-  )
+
+// ─── State ──────────────────────────────────────────────────────────────────
+const loading = ref(true)
+const saving  = ref(false)
+const stages = [
+  { code: 'new',        name: 'Нова заявка', color: '#6366f1' },
+  { code: 'processing', name: 'Уточнення',   color: '#f59e0b' },
+  { code: 'confirmed',  name: 'Підтверджено', color: '#10b981' },
+  { code: 'payment',    name: 'Очікує оплату', color: '#8b5cf6' },
+  { code: 'production', name: 'У виробництві', color: '#ec4899' },
+  { code: 'done',       name: 'Виконано',     color: '#22c55e' },
+]
+
+const channels = [
+  { code: 'instagram', name: 'Instagram', icon: '📸' },
+  { code: 'website',   name: 'Сайт',      icon: '🌐' },
+  { code: 'referral',  name: 'Рекомендація', icon: '🤝' },
+  { code: 'telegram',  name: 'Telegram',  icon: '✈️' },
+  { code: 'olx',       name: 'OLX',       icon: '📦' },
+  { code: 'phone',     name: 'Телефон',   icon: '📞' },
+]
+
+const form = reactive({
+  counterparty_id: null,
+  lead_source_id:  null,
+  order_number:    '',
+  order_date:      new Date().toISOString().split('T')[0],
+  warehouse_id:    null,
+  product_id:      null,
+  crm_stage:       'new',
+  channel:         'instagram',
+  city:            '',
+  delivery_type:   'NP',
+  attributes_values: {},
+  np_branch:        null,
+  next_contact_channel: 'CALL',
+  next_contact_comment: '',
+  next_contact_at:  null,
+  contact_attempts: 0,
+  total_amount:     0,
+  paid_amount:     0,
+  payment_status:  'unpaid',
+  payment_status_id: null,
+  prepayment_percent: null,
+  prepayment_amount:  null,
+  deadline_date:   null,
+  next_contact_date: null,
+  priority:        'normal',
+  priority_id:     null,
+  manager_id:      null,
+  comment:         '',
+  internal_notes:  '',
+  reference_photo: null,
+  discount_percent: 0,
 })
 
-// ─── State ────────────────────────────────────────────────────────────────────
-const loading        = ref(false)
-const saving         = ref(false)
-const savingClient   = ref(false)
-const automationModal = reactive({ visible: false, rule: null })
-const relatedDocsRef = ref(null)
-const materialsLoading = ref(false)
+// Dictionaries
 const products       = ref([])
 const counterparties = ref([])
-const users          = ref([])
-const productAttributes = ref([])
-const showNewClientDialog = ref(false)
-
-const leadSources = ref([])
+const warehouses     = ref([])
+const leadSources    = ref([])
 const paymentStatusesRes = ref([])
-const prioritiesRes = ref([])
-const bankAccounts = ref([])
-const deliveryMethods = ref([])
+const prioritiesRes      = ref([])
+const deliveryMethods    = ref([])
+const communicationTypes = ref([])
+const contactResults     = ref([])
+const bankAccounts       = ref([])
+const users              = ref([])
 
+const paymentStatuses = computed(() => paymentStatusesRes.value)
+const priorities      = computed(() => prioritiesRes.value)
 
-const communicationTypes = ref([...defaultCommTypes])
+// Attributes Logic
+const productAttributes = ref([])
+const materials         = ref([])
+const checkingMaterials = ref(false)
 
-const contactResults = ref([...defaultContactResults])
+// Contacts logic
+const contactHistory = ref([])
+const loadingContacts = ref(false)
 
+const { vErrors, validateCrmOrderRequiredFields, collectMissingProductionFields } = useCrmOrderValidation()
 
-const materialCheck = reactive(createMaterialCheckState())
-
-const newClient = reactive(createNewClientForm())
-
-const managerOptions = computed(() => {
-  const list = users.value.map(u => ({ ...u, name: getUserDisplayName(u) }))
-  if (currentUserId.value && !list.some(u => String(u.id) === String(currentUserId.value))) {
-    list.unshift({ id: currentUserId.value, name: currentUserName.value })
-  }
-  return list
-})
-
-
-// Communication
-const contacts      = ref([])
-const contactResult = ref(null)
-const contactCommType = ref('CALL')
-const contactNote   = ref('')
-const contactNextAt = ref(null)
-const contactPlanReason = ref('first_touch')
-const savingContact = ref(false)
-
-const vErrors = reactive(createCrmOrderValidationErrors())
-
-// Watch contact result to auto-set reminder
-watch(() => contactResult.value, (newVal) => {
-  if (newVal === 'NO_ANSWER') setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })
-  if (newVal === 'THINKING') setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })
-  if (newVal === 'CONFIRMED') contactPlanReason.value = 'payment'
-})
-
-// Sync comm type with lead source for new orders
-watch(() => contactCommType.value, (newVal) => {
-  if (!orderId.value && newVal) {
-    // Try to find matching lead source by name or code
-    const found = leadSources.value.find(ls => ls.id === newVal || ls.name === newVal)
-    if (found) form.lead_source_id = found.id
-  }
-})
-
-const form = reactive(createInitialCrmOrderForm(route.query.stage || 'new'))
-
-// Client quick-edit fields (synced to counterparty)
-const clientName  = ref('')
-const clientPhone = ref('')
-
-// Config fetched during loadData
-const stages = [
-  { key: 'new',        label: 'Нова заявка' },
-  { key: 'payment',    label: 'Оплата' },
-  { key: 'processing', label: 'В роботі' },
-  { key: 'production', label: 'Виробництво' },
-  { key: 'done',       label: 'Виконано' },
-]
-const stageIndex = computed(() => stages.findIndex(s => s.key === form.crm_stage))
-const isPassedStage = (idx) => idx < stageIndex.value
-
-// Dictionaries fetched in onMounted
-const priorities = computed(() => prioritiesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
-const paymentStatuses = computed(() => paymentStatusesRes.value.map(i => ({ value: i.id, label: i.name, color: i.color })))
-
-
-// ─── Computed ─────────────────────────────────────────────────────────────────
-const selectedProduct = computed(() => products.value.find(p => p.id === form.product_id) || null)
-
-const requiredAttributesFilled = computed(() => {
-  if (!productAttributes.value.length) return true
-  return productAttributes.value.every(attr => {
-    const value = form.attributes_values?.[attr.id]
-    if (attr.type === 'DIMENSIONS') return Boolean(value?.w && value?.h)
-    return value !== undefined && value !== null && value !== ''
-  })
-})
-
-const readinessItems = computed(() => buildReadinessItems({
-  form,
-  clientPhone: clientPhone.value,
-  requiredAttributesFilled: requiredAttributesFilled.value,
-}))
-
-const readinessProgress = computed(() => calculateReadinessProgress(readinessItems.value))
-
-const nextTouchSummary = computed(() => {
-  if (!form.next_contact_at) return 'Додайте дату наступного контакту, щоб менеджер не загубив клієнта.'
-  const channel = getCommName(contactCommType.value)
-  const reasonMap = {
-    first_touch: 'перший контакт',
-    retry_no_answer: 'повтор після не відповів',
-    clarify: 'уточнити деталі',
-    payment: 'нагадати про оплату',
-    production: 'погодити виробництво'
-  }
-  return `${channel}: ${reasonMap[contactPlanReason.value] || 'контакт'} · ${formatDateTime(form.next_contact_at)}`
-})
-
-
-const history = computed(() => {
-  const items = []
-  if (orderId.value) {
-    items.push({ text: 'Заявка створена', time: formatDate(form.order_date) })
-    if (form.crm_stage !== 'new') {
-      items.push({ text: `Переведено у «${stages.find(s => s.key === form.crm_stage)?.label}»`, time: 'раніше' })
-    }
-  } else {
-    items.push({ text: 'Заявка створена', time: 'щойно' })
-  }
-  return items
-})
-
-const autoPaymentStatus = computed(() => {
-  const total = Number(form.total_amount) || 0
-  const paid = Number(form.prepayment_amount) || 0
-  
-  if (paid === 0) return { label: 'Не оплачено', color: '#94a3b8', key: 'unpaid' }
-  if (paid >= total && total > 0) return { label: 'Оплачено повністю', color: '#22c55e', key: 'paid' }
-  return { label: 'Часткова оплата', color: '#eab308', key: 'partial' }
-})
-
-watch(() => autoPaymentStatus.value, (newVal) => {
-  form.payment_status = newVal.key
-}, { immediate: true })
-
-watch(() => contactCommType.value, (newVal) => {
-  form.next_contact_channel = newVal
-}, { immediate: true })
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const formatCurrency = (v) => Number(v || 0).toLocaleString('uk-UA', { minimumFractionDigits: 0 })
-const formatQty = (v) => Number(v || 0).toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-const formatDate = (d) => {
-  if (!d) return ''
-  const [y, m, day] = (d || '').split('-')
-  return `${day}.${m}.${y}`
+// ─── Methods ─────────────────────────────────────────────────────────────────
+const isPassedStage = (stageCode) => {
+  const currentIdx = stages.findIndex(s => s.code === form.crm_stage)
+  const targetIdx  = stages.findIndex(s => s.code === stageCode)
+  return targetIdx < currentIdx
 }
 
-// ─── Attribute helpers ────────────────────────────────────────────────────────
-const setAttrValue = (attrId, value) => {
-  form.attributes_values = { ...form.attributes_values, [attrId]: value }
-}
-const setAttrDim = (attrId, axis, value) => {
-  const cur = form.attributes_values?.[attrId] || {}
-  form.attributes_values = { ...form.attributes_values, [attrId]: { ...cur, [axis]: value } }
+const setStage = (stageCode) => {
+  form.crm_stage = stageCode
 }
 
-// ─── Prepayment calc ──────────────────────────────────────────────────────────
-const setPrepayPct = (pct) => {
-  form.prepayment_percent = pct
-  calcPrepayment()
-}
-const calcPrepayment = () => {
-  if (form.prepayment_percent > 0) {
-    form.prepayment_amount = Math.round(form.total_amount * form.prepayment_percent / 100)
-  } else if (form.prepayment_percent === 0) {
-    form.prepayment_amount = 0
-  }
-}
-const onPrepaymentInput = () => {
-  if (form.total_amount > 0) {
-    form.prepayment_percent = Math.round((form.prepayment_amount || 0) / form.total_amount * 100)
-  } else {
-    form.prepayment_percent = 0
-  }
-}
-
-// ─── Stage ────────────────────────────────────────────────────────────────────
-const setStage = async (key) => {
-  // Rule 1: Payment Stage
-  if (key === 'payment') {
-    const hasClient = form.counterparty_id || clientName.value || clientPhone.value
-    const hasProduct = form.product_id
-    const hasAmount = Number(form.total_amount || 0) > 0
-    if (!hasClient || !hasProduct || !hasAmount) {
-      ElMessage.warning('Для переходу в "Оплата" вкажіть клієнта або телефон, виріб та суму замовлення.')
-      return
-    }
-  }
-
-  // Rule 2: Processing (В роботі) Stage
-  if (key === 'processing') {
-    const hasClient = form.counterparty_id || clientName.value
-    const hasPhone = clientPhone.value
-    const hasProduct = form.product_id
-    const hasAttrs = requiredAttributesFilled.value
-    const hasAmount = Number(form.total_amount || 0) > 0
-    const hasDeadline = form.deadline_date
-    const hasTerms = form.prepayment_percent !== null || form.prepayment_amount !== null || form.payment_status
-
-    if (!hasDeadline) {
-      ElMessage.warning('Вкажіть дату готовності перед передачею заявки в роботу.')
-      return
-    }
-    if (!hasClient || !hasPhone || !hasProduct || !hasAttrs || !hasAmount || !hasTerms) {
-      ElMessage.warning('Для переходу "В роботу" заповніть клієнта, телефон, виріб, характеристики, суму та умови оплати.')
-      return
-    }
-  }
-
-  // Rule 3: Production (Виробництво) Stage
-  if (key === 'production') {
-    if (form.crm_stage !== 'processing') {
-      ElMessage.warning('Перехід у "Виробництво" дозволений тільки зі статусу "В роботі".')
-      return
-    }
-    const hasDeadline = form.deadline_date
-    const hasAttrs = requiredAttributesFilled.value
-    const hasComment = form.comment || form.internal_notes
-    if (!hasDeadline || !hasAttrs || !hasComment) {
-      ElMessage.warning('Для переходу у "Виробництво" вкажіть дату готовності, характеристики та коментар для виробництва.')
-      return
-    }
-  }
-
-  if (key === 'processing' && orderId.value) {
-    try {
-      const res = await api.post('/api/v1/business-process/event', {
-        source_type: 'crm_lead',
-        source_id: orderId.value,
-        event_type: 'status_changed',
-        to_status: 'processing',
-      })
-      const { can_proceed, validation_error, rules } = res.data
-      if (!can_proceed) {
-        ElMessage.warning(validation_error || 'Не можна змінити статус')
-        return
-      }
-      form.crm_stage = key
-      const askRule = rules?.find(r => r.mode === 'ask_confirmation')
-      if (askRule) {
-        automationModal.rule = askRule
-        automationModal.visible = true
-      } else {
-        const autoRule = rules?.find(r => r.mode === 'automatic')
-        if (autoRule) {
-          try {
-            await api.post('/api/v1/business-process/execute', {
-              rule_id: autoRule.rule_id,
-              source_type: 'crm_lead',
-              source_id: orderId.value,
-            })
-          } catch { /* non-critical */ }
-        }
-      }
-    } catch (err) {
-      ElMessage.error(err.response?.data?.detail || 'Помилка перевірки статусу')
-      return
-    }
-  } else {
-    form.crm_stage = key
-  }
-}
-
-// ─── Counterparty change ──────────────────────────────────────────────────────
-const onCounterpartyChange = (id) => {
-  const cp = counterparties.value.find(c => c.id === id)
-  if (cp) {
-    clientName.value  = cp.name
-    clientPhone.value = cp.phone || ''
-  }
-}
-
-// ─── Product change ───────────────────────────────────────────────────────────
-const onProductChange = async (productId) => {
-  productAttributes.value = []
-  form.attributes_values = {}
-  materialCheck.items = []
-  materialCheck.has_issues = false
-
-  if (!productId) return
-
+const searchCounterparties = async (query) => {
+  if (!query || query.length < 2) return
   try {
-    // Fetch category attributes for this product
-    const product = products.value.find(p => p.id === productId)
-    if (product?.category) {
-      const res = await api.get(`/api/v1/attributes/category/${product.category}`)
-      productAttributes.value = res.data
-        ?.map(ca => ca.attribute)
-        .filter(a => a && !a.is_archived) || []
-    }
-    // Auto-fill total amount from product price if available and not already set
-    if (product?.price && Number(product.price) > 0) {
-      form.total_amount = Number(product.price)
-      calcPrepayment()
-    }
-  } catch { /* no attributes */ }
-
-  // Check materials if we already have an order ID
-  await checkMaterials(productId)
-}
-
-const checkMaterials = async (productId) => {
-  if (!productId) return
-  materialsLoading.value = true
-  try {
-    const pid = orderId.value || 'new'
-    if (orderId.value) {
-      const res = await api.get(`/api/v1/orders/${orderId.value}/material-check?product_id=${productId}`)
-      Object.assign(materialCheck, res.data)
-    } else {
-      // For new orders, fetch spec directly
-      const specRes = await api.get(`/api/v1/products/${productId}/specifications`)
-      const specs = specRes.data || []
-      const defaultSpec = specs.find(s => s.is_default && s.is_active) || specs[0]
-      if (!defaultSpec?.items?.length) { materialsLoading.value = false; return }
-
-      // Get stock for each component
-      const items = []
-      let hasIssues = false
-      for (const item of defaultSpec.items) {
-        const stockRes = await api.get(`/api/v1/products/${item.component_id}/stock`)
-        const avail = stockRes.data?.total_quantity || 0
-        const req = Number(item.quantity)
-        const st = avail >= req ? 'ok' : avail > 0 ? 'low' : 'missing'
-        if (st !== 'ok') hasIssues = true
-        items.push({
-          component_id: item.component_id,
-          component_name: item.component?.name || item.component_id,
-          component_sku: item.component?.sku || '',
-          unit_of_measure: item.unit_of_measure || item.component?.unit_of_measure || 'шт',
-          required_qty: req,
-          available_qty: avail,
-          status: st,
-        })
-      }
-      materialCheck.items = items
-      materialCheck.has_issues = hasIssues
-    }
-  } catch { /* silent */ } finally {
-    materialsLoading.value = false
+    const res = await api.get(`/api/v1/counterparties?search=${query}&is_customer=true&limit=20`)
+    counterparties.value = res.data
+  } catch (err) {
+    console.error('Search failed', err)
   }
 }
 
-// ─── Photo upload ─────────────────────────────────────────────────────────────
-const uploadPhoto = async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  const fd = new FormData()
-  fd.append('file', file)
+const onProductChange = async (val) => {
+  if (!val) {
+    productAttributes.value = []
+    materials.value = []
+    return
+  }
   try {
-    const res = await api.post('/api/v1/upload/image', fd)
-    form.reference_photo = res.data.url
-  } catch {
-    ElMessage.error('Помилка завантаження фото')
+    // Load attributes for this product
+    const attrRes = await api.get(`/api/v1/products/${val}/attributes`)
+    productAttributes.value = attrRes.data
+    
+    // Check materials
+    checkMaterials()
+  } catch (err) {
+    console.error('Product change failed', err)
   }
 }
 
-// ─── New client ───────────────────────────────────────────────────────────────
-const createNewClient = async () => {
-  if (!newClient.name) { ElMessage.warning('Вкажіть ім\'я'); return }
-  savingClient.value = true
+const checkMaterials = async () => {
+  if (!form.product_id) return
+  checkingMaterials.value = true
   try {
-    const res = await api.post('/api/v1/counterparties', {
-      name: newClient.name,
-      phone: newClient.phone,
-      email: newClient.email,
-      is_customer: true,
-      is_supplier: false,
-    })
-    counterparties.value.push(res.data)
-    form.counterparty_id = res.data.id
-    clientName.value  = res.data.name
-    clientPhone.value = res.data.phone || ''
-    showNewClientDialog.value = false
-    Object.assign(newClient, { name: '', phone: '', email: '' })
-    ElMessage.success('Клієнта створено')
-  } catch {
-    ElMessage.error('Помилка створення клієнта')
+    const res = await api.get(`/api/v1/crm/orders/check-materials?product_id=${form.product_id}`)
+    materials.value = res.data.items || []
+  } catch (e) {
+    console.warn('Material check failed', e)
   } finally {
-    savingClient.value = false
+    checkingMaterials.value = false
   }
 }
 
-// ─── Go to purchases ──────────────────────────────────────────────────────────
-const goToPurchases = () => router.push('/purchases/orders/new')
+const matStatusClass = computed(() => {
+  if (!materials.value.length) return ''
+  const hasMissing = materials.value.some(m => m.status === 'missing')
+  const hasLow     = materials.value.some(m => m.status === 'low')
+  return hasMissing ? 'mat-missing' : (hasLow ? 'mat-warn' : 'mat-ok')
+})
 
-// ─── Communication helpers ────────────────────────────────────────────────────
-const formatDateTime = (d) => {
-  if (!d) return ''
-  return new Date(d).toLocaleString('uk-UA', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
-
-const setNextContactPreset = (opts = {}) => {
-  const d = new Date()
-  if (opts.minutes) d.setMinutes(d.getMinutes() + opts.minutes)
-  if (opts.hours) d.setHours(d.getHours() + opts.hours)
-  if (opts.tomorrow) {
-    d.setDate(d.getDate() + 1)
-    d.setHours(opts.h || 10, 0, 0, 0)
-  }
-  if (opts.days) {
-    d.setDate(d.getDate() + opts.days)
-    d.setHours(opts.h || 10, 0, 0, 0)
-  }
-
-  const value = toLocalDateTimeValue(d)
-  form.next_contact_at = value
-  if (opts.syncContactLog) contactNextAt.value = value
-  if (opts.reason) contactPlanReason.value = opts.reason
-}
-
-const applyContactResult = (code) => {
-  const nextValue = contactResult.value === code ? null : code
-  contactResult.value = nextValue
-  if (!nextValue) return
-  if (code === 'NO_ANSWER') setNextContactPreset({ hours: 2, reason: 'retry_no_answer', syncContactLog: true })
-  if (code === 'THINKING') setNextContactPreset({ tomorrow: true, h: 10, reason: 'clarify', syncContactLog: true })
-  if (code === 'CONFIRMED') {
-    contactPlanReason.value = 'payment'
-    if (!form.next_contact_at) setNextContactPreset({ days: 1, h: 10, reason: 'payment' })
-  }
-}
+const matStatusLabel = computed(() => {
+  if (!materials.value.length) return 'Немає даних'
+  const hasMissing = materials.value.some(m => m.status === 'missing')
+  return hasMissing ? 'Дефіцит' : 'В наявності'
+})
 
 const loadContacts = async () => {
   if (!orderId.value) return
+  loadingContacts.value = true
   try {
     const res = await api.get(`/api/v1/crm/orders/${orderId.value}/contacts`)
-    contacts.value = res.data
-  } catch { /* silent */ }
+    contactHistory.value = res.data
+  } catch (err) {
+    console.warn('History failed', err)
+  } finally {
+    loadingContacts.value = false
+  }
 }
 
-const getCommName = (code) => {
-  const ct = communicationTypes.value.find(i => i.code === code)
-  return ct ? ct.name : 'Контакт'
-}
-const getCommIcon = (code) => {
-  const ct = communicationTypes.value.find(i => i.code === code)
-  return ct ? ct.icon : '📞'
-}
-const contactResultIcon = (code) => {
-  const cr = contactResults.value.find(i => i.code === code)
-  return cr ? cr.icon : '📞'
-}
-const contactResultLabel = (code) => {
-  const cr = contactResults.value.find(i => i.code === code)
-  return cr ? cr.name : code
-}
-const getContactResultColor = (code) => {
-  const cr = contactResults.value.find(i => i.code === code)
-  return cr ? cr.color : '#e2e8f0'
-}
-
-const logContact = async () => {
-  if (!contactResult.value) return
-  savingContact.value = true
+const logContact = async (data) => {
+  if (!orderId.value) return
   try {
-    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, {
-      result: contactResult.value,
-      communication_type: contactCommType.value,
-      note: contactNote.value || null,
-      next_contact_at: contactNextAt.value || null,
-    })
+    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, data)
     ElMessage.success('Контакт записано')
-    contactResult.value = null
-    contactNote.value = ''
-    contactNextAt.value = null
-    await loadContacts()  // only reload history, NOT the whole form to avoid resetting unsaved changes
+    loadContacts()
     form.contact_attempts = (form.contact_attempts || 0) + 1
   } catch (err) {
     ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
-  } finally {
-    savingContact.value = false
   }
+}
+
+const updateTotalAmount = (val) => {
+  form.total_amount = val
+}
+
+const triggerPhotoUpload = () => {
+  // Placeholder for file input
+  ElMessage.info('Завантаження фото буде доступне після підключення FileStorage')
 }
 
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const save = async (action) => {
-  Object.assign(vErrors, validateCrmOrderRequiredFields({ form, clientName: clientName.value }))
+  const isProduction = action === 'production'
+  
+  // 1. Validation
+  const errors = validateCrmOrderRequiredFields({ form, clientName: clientName.value })
+  Object.assign(vErrors, errors)
+  
+  if (Object.keys(errors).length > 0) {
+    ElMessage.warning('Будь ласка, заповніть обов\'язкові поля')
+    return
+  }
 
-  if (action === 'production') {
+  if (isProduction) {
     const missing = collectMissingProductionFields({
       form,
       clientName: clientName.value,
-      clientPhone: clientPhone.value,
-      requiredAttributesFilled: requiredAttributesFilled.value,
-      contactResult: contactResult.value,
+      clientPhone: clientPhone.value
     })
-
-    if (missing.length > 0) {
-      ElMessage.warning({
-        message: `Для передачі у виробництво не вистачає даних:\n- ${missing.join('\n- ')}`,
-        duration: 5000
-      })
+    if (missing.length) {
+      ElMessage.warning(`Для передачі у виробництво не вистачає: ${missing.join(', ')}`)
       return
     }
   }
 
-  if (vErrors.client || vErrors.amount) {
-    ElMessage.warning('Заповніть обов\'язкові поля: Клієнт, Сума')
-    return
-  }
-
-  // Auto-pick warehouse if not set
-  if (!form.warehouse_id) {
-    try {
-      const wRes = await api.get('/api/v1/warehouses?limit=1')
-      if (wRes.data?.[0]) form.warehouse_id = wRes.data[0].id
-      else { ElMessage.warning('Не знайдено жодного складу'); return }
-    } catch { ElMessage.warning('Не вдалося отримати склад'); return }
-  }
-
   saving.value = true
   try {
-    // Merge NP branch into attributes_values (JSONB)
-    const mergedAttrs = { ...form.attributes_values }
-    if (form.np_branch) mergedAttrs._np_branch = form.np_branch
-    else                delete mergedAttrs._np_branch
-    if (form.next_contact_channel) mergedAttrs._next_contact_channel = form.next_contact_channel
-    else                           delete mergedAttrs._next_contact_channel
-    if (form.next_contact_comment) mergedAttrs._next_contact_comment = form.next_contact_comment
-    else                           delete mergedAttrs._next_contact_comment
+    // Stage update
+    if (isProduction) form.crm_stage = 'production'
+    else if (action === 'draft' && form.crm_stage === 'new') form.crm_stage = 'processing'
 
-    if (!form.manager_id && currentUserId.value) form.manager_id = currentUserId.value
-
-    // Helper: convert empty-string / undefined inputs to null (prevents Pydantic 422 on Decimal fields)
-    const n0  = (v) => (v === '' || v == null) ? 0      : Number(v)
-    const num = (v) => (v === '' || v == null) ? null   : Number(v)
-    const str = (v) => (v === '' || v == null) ? null   : String(v)
-
-    const payload = {
-      order_number:       form.order_number || 'Авто',
-      order_date:         form.order_date,
-      counterparty_id:    form.counterparty_id,
-      warehouse_id:       form.warehouse_id,
-      total_amount:       n0(form.total_amount),
-      discount_percent:   n0(form.discount_percent),
-      crm_stage:          form.crm_stage,
-      channel:            str(form.channel),
-      lead_source_id:     form.lead_source_id || null,
-      city:               str(form.city),
-      delivery_type:      str(form.delivery_type),
-      delivery_method_id: form.delivery_method_id || null,
-      attributes_values:  mergedAttrs,
-      paid_amount:        n0(form.paid_amount),
-      payment_status:     form.payment_status || 'unpaid',
-      payment_status_id:  form.payment_status_id || null,
-      prepayment_percent: num(form.prepayment_percent),
-      prepayment_amount:  num(form.prepayment_amount),
-      deadline_date:      form.deadline_date || null,
-      next_contact_at:    form.next_contact_at || null,
-      priority:           form.priority || 'normal',
-      priority_id:        form.priority_id || null,
-      manager_id:         form.manager_id || null,
-      cancel_reason_id:   form.cancel_reason_id || null,
-      client_type_id:     form.client_type_id || null,
-      comment:            str(form.comment),
-      internal_notes:     str(form.internal_notes),
-      reference_photo:    str(form.reference_photo),
-
-      lines: form.product_id ? [{
-        product_id: form.product_id,
-        quantity:   1,
-        price:      n0(form.total_amount),
-        total:      n0(form.total_amount),
-      }] : null,
-    }
-
-    // 1. Save / update the order
     let savedOrder
     if (orderId.value) {
-      const res = await api.put(`/api/v1/orders/${orderId.value}`, payload)
+      const res = await api.patch(`/api/v1/orders/${orderId.value}`, {
+        ...form,
+        attributes_values: {
+          ...form.attributes_values,
+          _np_branch: form.np_branch,
+          _next_contact_channel: form.next_contact_channel,
+          _next_contact_comment: form.next_contact_comment,
+        }
+      })
       savedOrder = res.data
     } else {
-      const res = await api.post('/api/v1/orders', payload)
+      const res = await api.post('/api/v1/orders', {
+        ...form,
+        lines: form.product_id ? [{
+          product_id: form.product_id,
+          quantity: 1,
+          price: form.total_amount,
+          total: form.total_amount
+        }] : []
+      })
       savedOrder = res.data
     }
 
-    // 2. If "send to production" — call dedicated endpoint that sets stage + creates ProductionOrder
-    if (action === 'production') {
+    // 2. Production task creation if needed
+    if (isProduction) {
       try {
-        const prodRes = await api.post(`/api/v1/orders/${savedOrder.id}/send-to-production`)
+        const prodRes = await api.post(`/api/v1/orders/${savedOrder.id}/transfer-to-production`)
         ElMessage.success(`Передано у виробництво! Завдання ${prodRes.data.production_order_number} створено`)
         router.push(`/production/orders/${prodRes.data.production_order_id}`)
         return
@@ -835,19 +524,50 @@ const save = async (action) => {
       }
     }
 
-    ElMessage.success('Збережено як чернетку')
-    router.push(`/crm/orders/${savedOrder.id}`)
+    ElMessage.success(orderId.value ? 'Оновлено' : 'Створено')
+    if (!orderId.value) router.push(`/crm/orders/${savedOrder.id}`)
   } catch (err) {
-    const detail = err.response?.data?.detail
-    if (Array.isArray(detail)) {
-      const msg = detail.map(e => `${(e.loc || []).slice(1).join('.')}: ${e.msg}`).join('\n')
-      ElMessage({ type: 'error', message: msg || 'Помилка валідації', duration: 8000 })
-    } else {
-      ElMessage.error(detail || 'Помилка збереження')
-    }
+    ElMessage.error(err.response?.data?.detail || 'Помилка збереження')
   } finally {
     saving.value = false
   }
+}
+
+// ─── Create Counterparty ───
+const cpDialogVisible = ref(false)
+const creatingCp = ref(false)
+const newCp = reactive({ name: '', phone: '' })
+const clientName = computed(() => counterparties.value.find(c => c.id === form.counterparty_id)?.name || '')
+const clientPhone = computed(() => counterparties.value.find(c => c.id === form.counterparty_id)?.phone || '')
+
+const openCreateCounterparty = () => {
+  newCp.name = ''
+  newCp.phone = ''
+  cpDialogVisible.value = true
+}
+
+const createCounterparty = async () => {
+  if (!newCp.name) return
+  creatingCp.value = true
+  try {
+    const res = await api.post('/api/v1/counterparties', {
+      ...newCp,
+      is_customer: true,
+      company_id: 'default'
+    })
+    counterparties.value.push(res.data)
+    form.counterparty_id = res.data.id
+    cpDialogVisible.value = false
+    ElMessage.success('Клієнта створено')
+  } catch (e) {
+    ElMessage.error('Не вдалося створити клієнта')
+  } finally {
+    creatingCp.value = false
+  }
+}
+
+const printOrder = () => {
+  window.open(`${api.defaults.baseURL}/api/v1/orders/${orderId.value}/print`, '_blank')
 }
 
 // ─── Load ─────────────────────────────────────────────────────────────────────
@@ -856,19 +576,27 @@ const loadData = async () => {
   try {
     if (!userStore.user) await userStore.fetchUser().catch(() => {})
 
-    const [pRes, cpRes, usersRes] = await Promise.allSettled([
+    // Load initial data in parallel
+    const [pRes, cpRes, usersRes, whRes] = await Promise.allSettled([
       api.get('/api/v1/products?limit=500'),
       api.get('/api/v1/counterparties?limit=500&is_customer=true'),
       api.get('/api/v1/users/colleagues'),
+      api.get('/api/v1/warehouses'),
     ])
-    products.value       = pRes.status       === 'fulfilled' ? pRes.value.data       : []
-    counterparties.value = cpRes.status      === 'fulfilled' ? cpRes.value.data      : []
-    users.value          = usersRes.status   === 'fulfilled' ? usersRes.value.data   : []
+    
+    products.value       = pRes.status === 'fulfilled' ? pRes.value.data : []
+    counterparties.value = cpRes.status === 'fulfilled' ? cpRes.value.data : []
+    users.value          = usersRes.status === 'fulfilled' ? usersRes.value.data : []
+    warehouses.value     = whRes.status === 'fulfilled' ? whRes.value.data : []
+
     if (!orderId.value && !form.manager_id && currentUserId.value) {
       form.manager_id = currentUserId.value
     }
+    if (!form.warehouse_id && warehouses.value.length) {
+      form.warehouse_id = warehouses.value.find(w => w.is_default)?.id || warehouses.value[0].id
+    }
 
-    // 1. Load Dictionaries (always needed, even for new orders)
+    // Load Dictionaries
     try {
       const [ls, ps, pr, dm, ct, cr, accs] = await Promise.all([
         api.get('/api/v1/dictionaries/LEAD_SOURCE'),
@@ -887,84 +615,46 @@ const loadData = async () => {
       contactResults.value = cr.data
       bankAccounts.value = accs.data
     } catch (e) {
-      console.warn('Non-critical dictionaries failed to load', e)
+      console.warn('Dictionaries failed to load', e)
     }
 
-    // Ensure dictionaries have fallback data if API returns empty
-    if (!communicationTypes.value || communicationTypes.value.length === 0) {
-      communicationTypes.value = [...defaultCommTypes]
-    }
-    if (!contactResults.value || contactResults.value.length === 0) {
-      contactResults.value = [...defaultContactResults]
-    }
-    if (!leadSources.value || leadSources.value.length === 0) {
-      // Use comm types as fallback for lead sources if empty
-      leadSources.value = communicationTypes.value.map(ct => ({ id: ct.code, name: ct.name, color: '#6366f1' }))
-    }
-
-    // 2. Load existing Order data
+    // Load actual order if ID exists
     if (orderId.value) {
-      const res = await api.get(`/api/v1/orders/${orderId.value}`)
-      const o = res.data
-      Object.assign(form, o)
-      // Map new fields
-      form.lead_source_id = o.lead_source_id
-      form.delivery_method_id = o.delivery_method_id
-      form.payment_status_id = o.payment_status_id
-      form.priority_id = o.priority_id
-      form.cancel_reason_id = o.cancel_reason_id
-      form.client_type_id = o.client_type_id
-      Object.assign(form, {
-        order_number:    o.order_number,
-        order_date:      o.order_date,
-        counterparty_id: o.counterparty_id,
-        warehouse_id:    o.warehouse_id,
-        product_id:      o.lines?.[0]?.product_id || null,
-        crm_stage:       o.crm_stage || 'new',
-        channel:         o.channel,
-        city:            o.city,
-        delivery_type:   o.delivery_type,
-        attributes_values: (() => {
-          const av = { ...(o.attributes_values || {}) }
-          delete av._np_branch; delete av._client_status
-          return av
-        })(),
-        np_branch:        o.attributes_values?._np_branch || null,
-        next_contact_channel: o.attributes_values?._next_contact_channel || 'CALL',
-        next_contact_comment: o.attributes_values?._next_contact_comment || null,
-        next_contact_at:  o.next_contact_at || null,
-        contact_attempts: o.contact_attempts || 0,
-        total_amount:     Number(o.total_amount),
-        paid_amount:     Number(o.paid_amount || 0),
-        payment_status:  o.payment_status || 'unpaid',
-        prepayment_percent: o.prepayment_percent ? Number(o.prepayment_percent) : null,
-        prepayment_amount:  o.prepayment_amount ? Number(o.prepayment_amount) : null,
-        deadline_date:   o.deadline_date,
-        next_contact_date: o.next_contact_date,
-        priority:        o.priority || 'normal',
-        manager_id:      o.manager_id,
-        comment:         o.comment,
-        internal_notes:  o.internal_notes,
-        reference_photo: o.reference_photo,
-        discount_percent: Number(o.discount_percent || 0),
-      })
-      contactCommType.value = form.next_contact_channel || contactCommType.value
-      if (form.product_id) await onProductChange(form.product_id)
-
-      const cp = counterparties.value.find(c => c.id === form.counterparty_id)
-      if (cp) {
-        clientName.value = cp.name
-        clientPhone.value = cp.phone || ''
+      try {
+        const res = await api.get(`/api/v1/orders/${orderId.value}`)
+        const o = res.data
+        
+        // Sync form with data
+        Object.assign(form, o)
+        
+        // Ensure numeric fields are cast
+        form.total_amount = Number(o.total_amount)
+        form.paid_amount = Number(o.paid_amount || 0)
+        
+        // Load additional order info
+        loadContacts()
+        if (form.product_id) onProductChange(form.product_id)
+      } catch (err) {
+        ElMessage.error('Помилка завантаження замовлення')
+        console.error('[CRM] Load Order Error:', err)
       }
-
-      await loadContacts()
+    } else if (route.params.id !== 'new') {
+      ElMessage.warning('Некоректний ідентифікатор замовлення. Повернення до списку.')
+      router.push('/crm')
     }
-  } catch (err) {
-    ElMessage.error('Помилка завантаження: ' + (err.response?.data?.detail || err.message))
   } finally {
     loading.value = false
   }
 }
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+})
+
+// Watchers
+watch(() => form.product_id, (newVal) => {
+  if (newVal) checkMaterials()
+})
 </script>
+
+<style src="./styles/CrmOrderEditor.css"></style>

@@ -140,7 +140,7 @@
 
       <el-table-column prop="is_primary" label="Основний" width="100" align="center">
         <template #default="{ row }">
-          <el-radio v-model="primarySku" :label="row.sku" @change="setPrimary(row)">&nbsp;</el-radio>
+          <el-radio v-model="primarySku" :value="row.sku" @change="setPrimary(row)">&nbsp;</el-radio>
         </template>
       </el-table-column>
 

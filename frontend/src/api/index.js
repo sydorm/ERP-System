@@ -46,6 +46,12 @@ api.interceptors.response.use(
                 localStorage.removeItem('token')
                 window.location.href = '/login'
             }
+        } else if (error.response) {
+            // Log other errors with details for debugging
+            console.error(`API Error [${error.config.method.toUpperCase()} ${error.config.url}]:`, {
+                status: error.response.status,
+                data: error.response.data
+            })
         }
         return Promise.reject(error)
     }

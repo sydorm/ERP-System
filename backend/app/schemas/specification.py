@@ -87,7 +87,7 @@ class SpecificationItemCreate(SpecificationItemBase):
 class ComponentBasicInfo(BaseModel):
     id: UUID
     name: str
-    sku: str
+    sku: Optional[str] = None
     unit_of_measure: Optional[str] = None
     
     class Config:
