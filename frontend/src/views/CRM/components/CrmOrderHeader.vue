@@ -55,18 +55,19 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
 .crm-header-modern {
   border-radius: 0;
   margin-bottom: 0;
-  padding: 16px 32px;
+  padding: 12px 32px;
   position: sticky;
-  top: -24px;
-  z-index: 1001;
+  top: 0;
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid #E2E8F0 !important;
   border-top: none !important;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 4px 25px rgba(15, 23, 42, 0.08) !important;
 }
 
 .back-pill {

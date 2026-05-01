@@ -225,7 +225,6 @@ const stages = [
   { key: 'payment', label: 'Оплата' },
   { key: 'processing', label: 'В роботі' },
   { key: 'production', label: 'Виробництво' },
-  { key: 'delivery', label: 'Доставка' },
   { key: 'done', label: 'Виконано' }
 ]
 
