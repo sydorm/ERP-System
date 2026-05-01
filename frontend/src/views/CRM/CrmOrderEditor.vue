@@ -115,8 +115,9 @@
     <!-- FLOATING AI ASSISTANT -->
     <CrmAiAssistant 
       v-if="orderId"
-      :order-data="form"
-      :history="contactHistory"
+      :form="form"
+      :readiness-progress="readinessData.progress"
+      @check="loadData"
     />
 
     <!-- Create Client Dialog -->
