@@ -162,8 +162,8 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 72px;
-  border-bottom: 5px solid #F8FAFC;
+  height: 86px;
+  border-bottom: 4px solid #F8FAFC;
   cursor: pointer;
   transition: background 0.14s ease;
   background: #ffffff;
@@ -201,12 +201,12 @@ const getAiWarningReason = (row) => {
   padding: 0;
 }
 .nom-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 1px solid #E6ECF3;
-  background: #F8F9FC;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
   flex-shrink: 0;
 }
 .nom-thumb--icon {
@@ -231,17 +231,17 @@ const getAiWarningReason = (row) => {
   width: 100%;
 }
 .nom-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 750;
   color: #0F172A;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #94A3B8;
+  color: #64748B;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -259,9 +259,9 @@ const getAiWarningReason = (row) => {
   align-items: center;
   max-width: 100%;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 750;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
