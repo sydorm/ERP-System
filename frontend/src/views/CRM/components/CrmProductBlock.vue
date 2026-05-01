@@ -1,14 +1,30 @@
 <template>
   <div class="crm-section crm-product-block-premium">
-    <div class="product-header-compact">
-      <div class="header-main">
-        <div class="step-badge-mini">Крок 2</div>
-        <h3 class="text-base font-extrabold text-slate-800">Конфігурація виробу</h3>
+    <div class="block-header-premium">
+      <div class="flex items-center gap-4">
+        <!-- Modern Step Pill -->
+        <div class="step-pill-modern variant-2">
+          <span class="label">Крок</span>
+          <span class="number">02</span>
+        </div>
+        
+        <!-- Icon & Titles -->
+        <div class="flex items-center gap-3">
+          <div class="header-icon-box variant-2">
+            <el-icon><Operation /></el-icon>
+          </div>
+          <div>
+            <h3 class="title">Конфігурація виробу</h3>
+            <p class="subtitle">Оберіть модель та налаштуйте індивідуальні параметри</p>
+          </div>
+        </div>
       </div>
-      <div class="header-status" v-if="productAttributes.length">
-        <div class="status-pill-mini success">
-          <el-icon><Check /></el-icon>
-          <span>{{ productAttributes.length }} параметрів</span>
+
+      <div class="flex items-center gap-4">
+        <!-- Completion Status -->
+        <div class="status-badge-premium" :class="{ 'is-complete': isBlockComplete }">
+          <el-icon><CircleCheck v-if="isBlockComplete" /><InfoFilled v-else /></el-icon>
+          <span>{{ isBlockComplete ? 'Конфігуровано' : 'Оберіть виріб' }}</span>
         </div>
       </div>
     </div>
@@ -89,22 +105,23 @@
       </div>
     </transition>
 
-    <div class="product-footer-compact">
+    <div class="product-footer-premium">
       <div class="input-card-premium comment-card">
-        <label><el-icon class="text-slate-400"><EditPen /></el-icon> Коментар</label>
+        <label><el-icon class="text-slate-400"><EditPen /></el-icon> Коментар до замовлення</label>
         <el-input
           v-model="form.comment"
           type="textarea"
-          :rows="2"
-          placeholder="Особливі побажання..."
+          :rows="4"
+          placeholder="Особливі побажання клієнта..."
           class="compact-textarea"
         />
       </div>
 
-      <div class="media-card">
-        <label class="text-[11px] font-semibold text-slate-500 mb-1.5 block px-1">
-          <el-icon class="text-slate-400 mr-1"><Picture /></el-icon> Референси
-        </label>
+      <div class="media-card-premium">
+        <div class="card-head">
+          <el-icon><Picture /></el-icon>
+          <span>Візуальні референси</span>
+        </div>
         <CrmReferencePhotosBlock :form="form" @upload-photo="$emit('upload-photo', $event)" />
       </div>
     </div>
@@ -112,78 +129,98 @@
 </template>
 
 <script setup>
-import { Check, Box, EditPen, Picture } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { Check, Box, EditPen, Picture, Operation, CircleCheck, InfoFilled } from '@element-plus/icons-vue'
 import CrmReferencePhotosBlock from './CrmReferencePhotosBlock.vue'
 
-defineProps({
+const props = defineProps({
   form: { type: Object, required: true },
   products: { type: Array, required: true },
   productAttributes: { type: Array, required: true },
 })
 
 defineEmits(['product-change', 'set-attr-value', 'set-attr-dim', 'upload-photo'])
+
+const isBlockComplete = computed(() => {
+  return props.form.product_id && (Object.keys(props.form.attributes_values || {}).length > 0)
+})
 </script>
 
 <style scoped>
 .crm-product-block-premium {
-  padding: 20px;
   background: #fff;
   border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
 }
 
-.product-header-compact {
+/* --- HEADER PREMIUM --- */
+.block-header-premium {
+  padding: 16px 24px;
+  background: linear-gradient(90deg, #F0FDF4 0%, #FFFFFF 100%);
+  border-bottom: 1px solid #F1F5F9;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.header-main {
+.step-pill-modern {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #10B981;
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+.step-pill-modern .label { font-size: 8px; font-weight: 800; text-transform: uppercase; opacity: 0.8; line-height: 1; }
+.step-pill-modern .number { font-size: 16px; font-weight: 900; line-height: 1.1; }
+
+.header-icon-box {
+  width: 32px;
+  height: 32px;
+  background: white;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #10B981;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border: 1px solid #DCFCE7;
 }
 
-.step-badge-mini {
-  background: #15B97A;
-  color: #fff;
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 800;
-}
+.block-header-premium .title { font-size: 16px; font-weight: 800; color: #1E293B; margin: 0; }
+.block-header-premium .subtitle { font-size: 11px; color: #94A3B8; margin: 0; font-weight: 500; }
 
-.status-pill-mini {
+.status-badge-premium {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 6px 14px;
+  background: #F1F5F9;
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
-  background: #F1F5F9;
-  color: #475569;
+  color: #64748B;
+  transition: all 0.3s ease;
 }
-
-.status-pill-mini.success {
-  background: #ECFDF5;
-  color: #059669;
-}
+.status-badge-premium.is-complete { background: #ECFDF5; color: #059669; }
 
 .product-selection-zone {
   margin-bottom: 16px;
 }
 
 .input-card-premium {
-  @apply flex flex-col gap-1 p-2.5 rounded-xl transition-all duration-200;
+  @apply flex flex-col gap-1 p-3 rounded-xl transition-all duration-200;
   background: #FFFFFF;
   border: 1px solid #E5EAF2;
-  min-height: 64px;
+  min-height: 68px;
 }
-
-.input-card-premium label {
-  @apply flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 px-0.5;
-}
+.input-card-premium label { @apply flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1; }
+.input-card-premium label .el-icon { @apply text-emerald-400/80 text-[12px]; }
+.input-card-premium:focus-within { border-color: #10B981; background: #fff; }
 
 .attributes-compact-zone {
   background: #F8FAFC;
@@ -223,11 +260,7 @@ defineEmits(['product-change', 'set-attr-value', 'set-attr-dim', 'upload-photo']
   color: #10B981;
 }
 
-.compact-pill.active {
-  background: #10B981;
-  color: #fff;
-  border-color: #10B981;
-}
+.compact-pill.active { background: #10B981; color: #fff; border-color: #10B981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
 
 .color-dot {
   display: inline-block;
@@ -257,31 +290,34 @@ defineEmits(['product-change', 'set-attr-value', 'set-attr-dim', 'upload-photo']
 .compact-dims .sep { color: #CBD5E1; font-weight: 800; font-size: 12px; }
 .compact-dims .unit { color: #94A3B8; font-size: 10px; font-weight: 700; }
 
-.product-footer-compact {
+/* Footer Composition */
+.product-footer-premium {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 16px;
+  gap: 20px;
 }
 
-.comment-card {
-  min-height: 100px;
-}
+.comment-card { min-height: 140px; }
 
-:deep(.el-input__wrapper), :deep(.el-textarea__inner) {
-  @apply shadow-none bg-transparent border-none p-0 h-7 !important;
-  box-shadow: none !important;
+.media-card-premium {
+  background: #fff;
+  border: 1px solid #E5EAF2;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+.media-card-premium .card-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.media-card-premium .card-head .el-icon { color: #10B981; }
 
-:deep(.el-input__inner), :deep(.el-textarea__inner) {
-  @apply font-bold text-slate-700 text-[13px] !important;
-}
-
-:deep(.compact-select .el-select__wrapper) {
-  @apply h-8 !important;
-  min-height: 32px !important;
-}
+:deep(.el-input__wrapper), :deep(.el-textarea__inner) { @apply shadow-none bg-transparent border-none p-0 h-8 !important; }
+:deep(.el-input__inner), :deep(.el-textarea__inner) { @apply font-bold text-slate-700 text-[14px] !important; }
 
 @media (max-width: 992px) {
-  .product-footer-compact { grid-template-columns: 1fr; }
+  .product-footer-premium { grid-template-columns: 1fr; }
 }
 </style>

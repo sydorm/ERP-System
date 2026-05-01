@@ -80,22 +80,27 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
 .manager-display-only {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 32px;
+  gap: 12px;
+  height: 38px;
+  padding: 4px 12px;
+  background: #F8FAFF;
+  border: 1px solid #E0E7FF;
+  border-radius: 12px;
 }
 
 .manager-avatar-mini {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #6366F1;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   color: white;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
 }
 
 .manager-text {
@@ -106,14 +111,16 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
 
 .manager-text .name {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: #1E293B;
 }
 
 .manager-text .role {
-  font-size: 10px;
-  color: #94A3B8;
-  font-weight: 500;
+  font-size: 9px;
+  color: #6366F1;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .premium-manager-select {

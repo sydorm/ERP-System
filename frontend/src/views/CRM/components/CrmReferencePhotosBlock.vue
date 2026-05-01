@@ -50,22 +50,23 @@ const photoInput = ref(null)
 .upload-zone-wrapper {
   position: relative;
   width: 100%;
-  min-height: 140px;
-  background: #F8FAFC;
-  border: 2px dashed #E2E8F0;
-  border-radius: 20px;
+  min-height: 160px;
+  background: #fff;
+  border: 1.5px dashed #E2E8F0;
+  border-radius: 24px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .upload-zone-wrapper:hover {
   border-color: #10B981;
   background: #F0FDF4;
-  transform: translateY(-2px);
+  border-style: solid;
 }
 
 .upload-zone-wrapper.has-photo {
@@ -84,15 +85,22 @@ const photoInput = ref(null)
 }
 
 .icon-circle {
-  width: 48px;
-  height: 48px;
-  background: #fff;
-  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  background: white;
+  border-radius: 16px;
   display: grid;
   place-items: center;
-  font-size: 24px;
+  font-size: 26px;
   color: #10B981;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.upload-zone-wrapper:hover .icon-circle {
+  transform: scale(1.1) rotate(5deg);
+  background: #10B981;
+  color: white;
 }
 
 .text-group {
@@ -102,14 +110,14 @@ const photoInput = ref(null)
 }
 
 .main-text {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   color: #1E293B;
 }
 
 .sub-text {
   font-size: 11px;
-  color: #64748B;
+  color: #94A3B8;
   font-weight: 600;
 }
 
