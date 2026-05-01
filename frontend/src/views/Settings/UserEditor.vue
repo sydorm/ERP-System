@@ -198,6 +198,7 @@ import { Plus, Loading, InfoFilled, Edit, Key, Check } from '@element-plus/icons
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import {
   ROLE_OPTIONS,
   buildPermissionGroups,

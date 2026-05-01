@@ -163,10 +163,11 @@ const getAiWarningReason = (row) => {
 
 .nom-body-row {
   height: 56px;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 6px solid #F8FAFC;
   cursor: pointer;
   transition: background 0.14s ease;
   background: #ffffff;
+  border-radius: 8px;
 }
 .nom-body-row:last-child {
   border-bottom: none;
