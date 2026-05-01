@@ -132,6 +132,8 @@ class OrderResponse(OrderBase):
     status: str
     company_id: UUID
     created_by: Optional[UUID] = None
+    created_by_name: Optional[str] = None
+    manager_name: Optional[str] = None
     contact_attempts: int = 0
     lines: List[OrderLineResponse]
     product_summary: Optional[str] = None

@@ -663,31 +663,31 @@ const handleBulkCancel = () => {
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 
 const getManagerName = (order) => {
-  // 1. Try to get from nested object or direct name fields (most reliable)
+  // 1. Prioritize pre-calculated names from backend
+  if (order.manager_name && order.manager_name !== "—") return order.manager_name
+  if (order.created_by_name && order.created_by_name !== "—") return order.created_by_name
+  
+  // 2. Try nested object if available
   const m = order.manager
   if (m?.full_name) return m.full_name
   if (m?.name) return m.name
   if (m?.firstName || m?.lastName) return [m.firstName, m.lastName].filter(Boolean).join(' ')
   
-  if (order.manager_name) return order.manager_name
-  if (order.created_by_name) return order.created_by_name
-  
   const id = getOrderManagerId(order)
   if (!id) return 'Без менеджера'
   
-  // 2. Check if it's the current user (fastest)
+  // 3. Fallback to current user
   const u = userStore.user
   if (u && String(u.id) === String(id)) {
     const name = [u.firstName || u.first_name, u.lastName || u.last_name].filter(Boolean).join(' ')
     return name || u.name || u.username || 'Ви'
   }
   
-  // 3. Try to find in the loaded colleagues list
+  // 4. Fallback to colleagues list
   const user = users.value.find(u => String(u.id) === String(id))
   if (user) return user.name || user.full_name || 'Без менеджера'
   
-  // 4. Final fallback - show truncated ID for debugging
-  return `ID: ${String(id).slice(0, 6)}...`
+  return 'Без менеджера'
 }
 const getManagerInitials = (order) => {
   const name = getManagerName(order)

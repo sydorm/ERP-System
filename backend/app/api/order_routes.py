@@ -52,6 +52,36 @@ def populate_product_summary(orders: List[Order], db: Session) -> None:
             order.product_summary = f"{product_names[0]} (+{len(product_names)-1})"
 
 
+def populate_user_names(orders: List[Order], db: Session) -> None:
+    """Populate manager_name and created_by_name for a list of orders."""
+    user_ids = set()
+    for o in orders:
+        if o.manager_id:
+            user_ids.add(o.manager_id)
+        if o.created_by:
+            user_ids.add(o.created_by)
+    
+    if not user_ids:
+        return
+        
+    users = db.query(User).filter(User.id.in_(user_ids)).all()
+    user_map = {}
+    for u in users:
+        full_name = f"{u.first_name} {u.last_name}".strip()
+        user_map[u.id] = full_name if full_name else (u.name or u.email)
+    
+    for o in orders:
+        if o.manager_id:
+            o.manager_name = user_map.get(o.manager_id, "—")
+        else:
+            o.manager_name = "—"
+            
+        if o.created_by:
+            o.created_by_name = user_map.get(o.created_by, "—")
+        else:
+            o.created_by_name = "—"
+
+
 @router.get("/orders", response_model=List[OrderResponse])
 async def list_orders(
     skip: int = 0,
@@ -85,6 +115,7 @@ async def list_orders(
 
     orders = query.order_by(Order.order_date.desc()).offset(skip).limit(limit).all()
     populate_product_summary(orders, db)
+    populate_user_names(orders, db)
     return orders
 
 
@@ -188,6 +219,7 @@ async def get_order(
         raise HTTPException(status_code=404, detail="Order not found")
     
     populate_product_summary([order], db)
+    populate_user_names([order], db)
     return order
 
 
@@ -270,6 +302,7 @@ async def update_order(
     db.commit()
     db.refresh(order)
     populate_product_summary([order], db)
+    populate_user_names([order], db)
 
     new_obj = AuditService.get_dict(order, relationships=["lines"])
     AuditService.compare_and_log(
@@ -374,6 +407,7 @@ async def update_order_stage(
 
     db.commit()
     db.refresh(order)
+    populate_user_names([order], db)
     return order
 
 
