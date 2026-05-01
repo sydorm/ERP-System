@@ -7,7 +7,7 @@
 
     <el-tabs v-model="activeTab" class="user-card-tabs">
       <el-tab-pane label="Основне" name="main" />
-      <el-tab-pane label="Доступи" name="permissions" />
+      <el-tab-pane label="Доступи" name="permissions" v-if="isAdmin" />
       <el-tab-pane label="Активність" name="activity" />
       <el-tab-pane label="Безпека" name="security" v-if="isAdmin" />
       <el-tab-pane label="Історія змін" name="history" v-if="isAdmin" />
@@ -145,7 +145,7 @@
         </el-col>
 
         <!-- Right Block: Permissions (40%) -->
-        <el-col :xs="24" :md="10">
+        <el-col :xs="24" :md="10" v-if="isAdmin">
           <div v-show="activeTab === 'permissions' || activeTab === 'main'" class="premium-card right-card">
             <h3 class="section-title kimi-mb-4">Доступи</h3>
             
