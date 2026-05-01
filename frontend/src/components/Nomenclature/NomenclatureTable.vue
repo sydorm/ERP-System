@@ -162,8 +162,8 @@ const isAllSelected = computed(() => {
 }
 
 .nom-header .nom-cell {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #64748B;

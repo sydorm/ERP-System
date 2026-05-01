@@ -231,17 +231,17 @@ const getAiWarningReason = (row) => {
   width: 100%;
 }
 .nom-name {
-  font-size: 14.5px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   color: #0F172A;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #64748B;
+  color: #94A3B8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
