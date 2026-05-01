@@ -162,8 +162,8 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 100px;
-  border-bottom: 12px solid #F8FAFC;
+  height: 56px;
+  border-bottom: 1px solid #F1F5F9;
   cursor: pointer;
   transition: background 0.14s ease;
   background: #ffffff;
@@ -201,9 +201,9 @@ const getAiWarningReason = (row) => {
   padding: 0;
 }
 .nom-thumb {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   object-fit: cover;
   border: 1px solid #E2E8F0;
   background: #F8FAFC;
@@ -221,7 +221,7 @@ const getAiWarningReason = (row) => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 6px;
+  gap: 2px;
   padding-right: 12px;
 }
 .nom-name-row {
@@ -239,7 +239,7 @@ const getAiWarningReason = (row) => {
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #94A3B8;
   white-space: nowrap;
@@ -273,7 +273,7 @@ const getAiWarningReason = (row) => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 5px;
+  gap: 3px;
 }
 .nom-stock-qty {
   font-size: 13px;
