@@ -11,8 +11,9 @@
         <el-icon><Grid /></el-icon>
         <span class="nav-label">Замовлення</span>
       </div>
-      <div 
-        class="nav-item" 
+      <div
+        v-if="userStore.hasPermission('crm.analytics')"
+        class="nav-item"
         :class="{ active: viewMode === 'analytics' }"
         @click="viewMode = 'analytics'"
         title="Аналітика"
@@ -46,6 +47,7 @@
           :sort-option="sortOption"
           :active-controls-count="activeControlsCount"
           :is-any-filter-active="isAnyFilterActive"
+          :can-view-analytics="userStore.hasPermission('crm.analytics')"
           @update:search-query="searchQuery = $event"
           @update:sort-option="sortOption = $event"
           @analytics="viewMode = 'analytics'"

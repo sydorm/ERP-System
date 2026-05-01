@@ -36,7 +36,7 @@
             <button class="view-tab active">
               <el-icon><Grid /></el-icon> Kanban
             </button>
-            <button class="view-tab" @click="$emit('analytics'); controlsOpen = false">
+            <button v-if="canViewAnalytics" class="view-tab" @click="$emit('analytics'); controlsOpen = false">
               <el-icon><TrendCharts /></el-icon> Аналітика
             </button>
           </div>
@@ -158,7 +158,8 @@ defineProps({
   searchQuery: { type: String, default: '' },
   sortOption: { type: String, default: 'created_desc' },
   activeControlsCount: { type: Number, default: 0 },
-  isAnyFilterActive: { type: Boolean, default: false }
+  isAnyFilterActive: { type: Boolean, default: false },
+  canViewAnalytics: { type: Boolean, default: false }
 })
 
 defineEmits([

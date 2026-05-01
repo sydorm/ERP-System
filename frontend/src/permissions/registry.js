@@ -7,6 +7,7 @@ export const PERMISSION_ACTIONS = [
   { key: 'export', label: 'Експорт' },
   { key: 'import', label: 'Імпорт' },
   { key: 'manage', label: 'Керування' },
+  { key: 'analytics', label: 'Аналітика' },
 ]
 
 export const PERMISSION_MODULES = [
@@ -41,7 +42,7 @@ export const ROLE_PRESETS = {
   },
   manager: {
     modules: {
-      crm: ['view', 'create', 'edit', 'print', 'export'],
+      crm: ['view', 'create', 'edit', 'print', 'export', 'analytics'],
       sales: ['view', 'create', 'edit', 'print', 'export'],
       inventory: ['view'],
       reports: ['view', 'export'],
