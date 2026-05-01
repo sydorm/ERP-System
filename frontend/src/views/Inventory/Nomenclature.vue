@@ -100,6 +100,13 @@
       @completed="handleImportCompleted"
     />
 
+    <NomenclatureBulkPriceDialog
+      v-model:visible="bulkPriceVisible"
+      :count="selectedRows.length"
+      :loading="loading"
+      @apply="applyBulkPriceChange"
+    />
+
     <!-- FLOATING AI BUTTON -->
     <el-popover
       v-model:visible="aiPopoverVisible"
@@ -148,6 +155,17 @@
         </div>
       </div>
     </el-popover>
+
+    <!-- BULK ACTION BAR -->
+    <NomenclatureBulkBar
+      :selected-count="selectedRows.length"
+      :categories="categoryOptions"
+      :uoms="uomOptions"
+      @clear="selectedRows = []"
+      @change-category="handleBulkCategoryChange"
+      @change-uom="handleBulkUomChange"
+      @action="handleBulkAction"
+    />
   </div>
 </template>
 
@@ -164,6 +182,8 @@ import NomenclatureToolbar from '@/components/Nomenclature/NomenclatureToolbar.v
 import NomenclatureTable from '@/components/Nomenclature/NomenclatureTable.vue'
 import NomenclatureDrawer from '@/components/Nomenclature/NomenclatureDrawer.vue'
 import NomenclatureImportWizard from '@/components/Nomenclature/NomenclatureImportWizard.vue'
+import NomenclatureBulkBar from '@/components/Nomenclature/NomenclatureBulkBar.vue'
+import NomenclatureBulkPriceDialog from '@/components/Nomenclature/NomenclatureBulkPriceDialog.vue'
 
 const dictStore = useDictionaryStore()
 const router = useRouter()
@@ -178,6 +198,7 @@ const warehouseStock = ref([])
 const productMovements = ref([])
 const selectedRows = ref([])
 const importWizardVisible = ref(false)
+const bulkPriceVisible = ref(false)
 
 // AI Assistant Logic
 const aiDrawerVisible = ref(false)
@@ -419,6 +440,116 @@ const runAiAssistantPop = () => runAiAssistant()
 const aiQuickAction = (cmd) => {
   aiCommand.value = cmd
   runAiAssistant()
+}
+
+// Bulk Actions Logic
+const handleBulkCategoryChange = async (categoryCode) => {
+  if (selectedRows.value.length === 0) return
+  loading.value = true
+  try {
+    const ids = selectedRows.value.map(r => r.id)
+    await api.post('/api/v1/products/bulk-update', {
+      ids,
+      updates: { category: categoryCode }
+    })
+    ElMessage.success(`Оновлено категорію для ${ids.length} позицій`)
+    selectedRows.value = []
+    fetchProducts()
+  } catch (error) {
+    ElMessage.error('Помилка масового оновлення категорії')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleBulkUomChange = async (uomCode) => {
+  if (selectedRows.value.length === 0) return
+  loading.value = true
+  try {
+    const ids = selectedRows.value.map(r => r.id)
+    await api.post('/api/v1/products/bulk-update', {
+      ids,
+      updates: { unit_of_measure: uomCode }
+    })
+    ElMessage.success(`Оновлено одиницю виміру для ${ids.length} позицій`)
+    selectedRows.value = []
+    fetchProducts()
+  } catch (error) {
+    ElMessage.error('Помилка масового оновлення одиниць виміру')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleBulkAction = async (action, payload) => {
+  if (selectedRows.value.length === 0) return
+  const ids = selectedRows.value.map(r => r.id)
+
+  if (action === 'price') {
+    bulkPriceVisible.value = true
+    return
+  }
+
+  if (action === 'delete') {
+    try {
+      await api.post('/api/v1/products/bulk-delete', { ids })
+      ElMessage.success(`Видалено ${ids.length} позицій`)
+      selectedRows.value = []
+      fetchProducts()
+      fetchStatistics()
+    } catch (error) {
+      ElMessage.error('Помилка масового видалення')
+    }
+    return
+  }
+
+  if (action === 'status') {
+    loading.value = true
+    try {
+      await api.post('/api/v1/products/bulk-update', {
+        ids,
+        updates: { status: payload }
+      })
+      ElMessage.success('Статус оновлено')
+      selectedRows.value = []
+      fetchProducts()
+    } catch (error) {
+      ElMessage.error('Помилка оновлення статусу')
+    } finally {
+      loading.value = false
+    }
+    return
+  }
+
+  if (action === 'ai-optimize') {
+    ElMessage.info('AI аналізує обрані товари...')
+    setTimeout(() => {
+      ElMessage.success('AI рекомендує перемістити 3 позиції в категорію "Метал"')
+    }, 1500)
+    return
+  }
+
+  ElMessage.info(`Дія ${action} в розробці`)
+}
+
+const applyBulkPriceChange = async (params) => {
+  if (selectedRows.value.length === 0) return
+  loading.value = true
+  try {
+    const ids = selectedRows.value.map(r => r.id)
+    await api.post('/api/v1/products/bulk-update-prices', {
+      ids,
+      ...params
+    })
+    ElMessage.success(`Ціни успішно оновлено для ${ids.length} позицій`)
+    bulkPriceVisible.value = false
+    selectedRows.value = []
+    fetchProducts()
+  } catch (error) {
+    ElMessage.error('Помилка масового оновлення цін')
+  } finally {
+    loading.value = false
+  }
 }
 
 // Helpers

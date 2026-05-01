@@ -8,6 +8,9 @@
         <div class="crm-view-switch">
           <button class="view-btn" @click="router.push('/crm')">Kanban</button>
           <button class="view-btn active">Аналітика</button>
+          <button class="view-btn premium-insights" @click="router.push('/crm/insights')">
+            ✨ Premium Insights
+          </button>
         </div>
         <el-button type="primary" plain @click="fetchData" style="margin-left: 16px;">
           <el-icon><Refresh /></el-icon> Оновити
@@ -217,6 +220,8 @@ onMounted(fetchData)
 .crm-view-switch { background: #e2e8f0; padding: 2px; border-radius: 8px; display: flex; }
 .view-btn { padding: 4px 10px; border: none; background: transparent; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b; }
 .view-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.view-btn.premium-insights { color: #1463FF; border-left: 1px solid #cbd5e1; border-radius: 0 6px 6px 0; margin-left: 2px; }
+.view-btn.premium-insights:hover { background: #EFF6FF; }
 
 .analytics-card {
   border-radius: 12px;
