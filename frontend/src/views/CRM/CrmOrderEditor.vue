@@ -461,10 +461,11 @@ onMounted(loadData)
 }
 
 .order-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  width: 100%;
+  position: fixed;
+  top: 64px; /* Висота головного хедера */
+  left: 260px; /* Ширина сайдбару DashboardLayout.vue */
+  right: 0;
+  z-index: 1050;
   border-radius: 0;
   border-left: none;
   border-right: none;
@@ -473,7 +474,7 @@ onMounted(loadData)
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   padding: 0 24px;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .stage-glow {
@@ -490,7 +491,7 @@ onMounted(loadData)
 }
 
 .crm-order-page {
-  padding-top: 0 !important;
+  padding-top: 60px !important; /* Висота фіксованого хедера (58px + 2px лінія) */
   padding-bottom: 64px;
 }
 
