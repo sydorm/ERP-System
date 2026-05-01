@@ -738,6 +738,97 @@ async def find_or_create_variant(
         "created": True
     }
 
+@router.post("/products/bulk-update")
+@router.post("/products/bulk_update")
+async def bulk_update_products(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    ids = body.get("ids", [])
+    updates = body.get("updates", {})
+    if not ids or not updates:
+        return {"updated": 0}
+    
+    # Allowed fields for bulk update
+    allowed_fields = {"category", "unit_of_measure", "is_active"}
+    clean_updates = {k: v for k, v in updates.items() if k in allowed_fields}
+    
+    # Map status to is_active if present
+    if "status" in updates:
+        clean_updates["is_active"] = updates["status"] == "active"
+
+    if not clean_updates:
+        return {"updated": 0}
+
+    query = db.query(Product).filter(
+        Product.id.in_(ids),
+        Product.company_id == current_user.company_id
+    )
+    
+    count = query.update(clean_updates, synchronize_session=False)
+    db.commit()
+    return {"updated": count}
+
+@router.post("/products/bulk-delete")
+@router.post("/products/bulk_delete")
+async def bulk_delete_products(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    ids = body.get("ids", [])
+    if not ids:
+        return {"deleted": 0}
+    
+    query = db.query(Product).filter(
+        Product.id.in_(ids),
+        Product.company_id == current_user.company_id
+    )
+    
+    count = query.update({"is_deleted": True}, synchronize_session=False)
+    db.commit()
+    return {"deleted": count}
+
+@router.post("/products/bulk-update-prices")
+@router.post("/products/bulk_update_prices")
+async def bulk_update_prices(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    ids = body.get("ids", [])
+    adj_type = body.get("type") # 'percentage' or 'fixed'
+    operation = body.get("operation") # 'increase' or 'decrease'
+    value = body.get("value", 0)
+    
+    if not ids or value <= 0:
+        return {"updated": 0}
+    
+    products = db.query(Product).filter(
+        Product.id.in_(ids),
+        Product.company_id == current_user.company_id
+    ).all()
+    
+    count = 0
+    for p in products:
+        current_price = p.price or Decimal("0.00")
+        adjustment = Decimal(str(value))
+        
+        if adj_type == 'percentage':
+            change = (current_price * adjustment) / Decimal("100")
+        else:
+            change = adjustment
+            
+        if operation == 'increase':
+            p.price = current_price + change
+        else:
+            p.price = max(Decimal("0.00"), current_price - change)
+        count += 1
+        
+    db.commit()
+    return {"updated": count}
+
 @router.get("/products", response_model=List[ProductResponse])
 async def list_products(
     skip: int = 0,
