@@ -300,7 +300,7 @@
           <div class="bg-white rounded-[40px] border border-gray-100 p-8 shadow-[0_15px_50px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.02]">
             <div class="flex items-center justify-between mb-8">
               <div class="flex items-center gap-2">
-                <el-icon class="text-slate-400"><History /></el-icon>
+                <el-icon class="text-slate-400"><Timer /></el-icon>
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Activity Timeline</span>
               </div>
               <div class="flex gap-1">
@@ -388,7 +388,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
-  User, Box, MagicStick, Truck, Calendar, Wallet, History, Clock, 
+  User, Box, MagicStick, Truck, Calendar, Wallet, Timer, Clock, 
   Promotion, Loading, Bell, ChatDotRound, Camera, Phone, MoreFilled, Star, Position, Refresh, ShoppingBag, More
 } from '@element-plus/icons-vue'
 import api from '@/api'
