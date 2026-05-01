@@ -209,9 +209,13 @@
             <div class="user-profile">
               <div class="user-meta">
                 <div class="user-name">{{ userStore.user?.firstName }} {{ userStore.user?.lastName }}</div>
-                <div class="user-role">Директор</div>
+                <div class="user-role">{{ getRoleLabel(userStore.user?.role) }}</div>
               </div>
-              <el-avatar :size="36" src="https://i.pravatar.cc/150?u=a042581f4e29026704d" />
+              <el-avatar :size="36" :src="userStore.user?.avatarUrl || userStore.user?.avatar_url">
+                <template v-if="!userStore.user?.avatarUrl && !userStore.user?.avatar_url">
+                   {{ getInitials(userStore.user) }}
+                </template>
+              </el-avatar>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -325,6 +329,15 @@ import {
   WarningFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { getRoleName } from '@/permissions/registry'
+
+const getRoleLabel = (role) => getRoleName(role)
+const getInitials = (u) => {
+  if (!u) return '?'
+  const f = u.firstName || u.first_name || ''
+  const l = u.lastName || u.last_name || ''
+  return (f[0] || '') + (l[0] || '')
+}
 
 const route = useRoute()
 const router = useRouter()
