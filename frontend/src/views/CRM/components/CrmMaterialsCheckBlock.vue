@@ -1,21 +1,28 @@
 <template>
-  <div class="crm-section crm-materials-section" v-if="form.product_id">
-    <div class="materials-block-head">
-      <div class="materials-title-block">
-        <span class="materials-kicker">Склад · Аналіз</span>
-        <h3>Наявність матеріалів</h3>
+  <div class="crm-section crm-materials-section-premium" v-if="form.product_id">
+    <div class="materials-block-header">
+      <div class="header-main">
+        <div class="analysis-badge">Аналіз</div>
+        <div class="title-group">
+          <h3>Складські запаси</h3>
+          <p>Перевірка наявності сировини для виконання замовлення</p>
+        </div>
       </div>
-      <div class="materials-status-badge">
-        <span class="status-badge-modern" :class="materialCheck.has_issues ? 'warning' : 'success'">
+      <div class="header-status">
+        <div class="glass-pill" :class="materialCheck.has_issues ? 'warning' : 'success'">
           <el-icon><Check v-if="!materialCheck.has_issues" /><Warning v-else /></el-icon>
-          {{ materialCheck.has_issues ? 'Потрібне дозамовлення' : 'Матеріалів достатньо' }}
-        </span>
+          <span>{{ materialCheck.has_issues ? 'Потрібна закупівля' : 'Запаси в нормі' }}</span>
+        </div>
       </div>
     </div>
 
-    <div v-if="materialsLoading" class="materials-loading-state">
-      <el-icon class="is-loading"><Loading /></el-icon>
-      <span>Аналізуємо запаси на складі...</span>
+    <div v-if="materialsLoading" class="materials-loading-premium">
+      <div class="loading-animation">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <span>Синхронізація із залишками на складі...</span>
     </div>
 
     <div v-else-if="materialCheck.items.length" class="materials-list-container">
@@ -23,34 +30,52 @@
         <div
           v-for="item in materialCheck.items"
           :key="item.component_id"
-          class="material-card-modern"
+          class="material-card-premium"
           :class="item.status"
         >
-          <div class="m-main">
-            <span class="m-name">{{ item.component_name }}</span>
-            <span class="m-req">Потрібно: {{ formatQty(item.required_qty) }} {{ item.unit_of_measure }}</span>
-          </div>
-          <div class="m-stock">
-            <span class="m-stock-val">{{ formatQty(item.available_qty) }}</span>
-            <span class="m-stock-label">в наявності</span>
+          <div class="card-glow"></div>
+          <div class="m-content">
+            <div class="m-header">
+              <span class="m-name">{{ item.component_name }}</span>
+              <div class="status-indicator"></div>
+            </div>
+            <div class="m-details">
+              <div class="detail-item">
+                <span class="label">Потрібно:</span>
+                <span class="val">{{ formatQty(item.required_qty) }} {{ item.unit_of_measure }}</span>
+              </div>
+              <div class="detail-item stock">
+                <span class="label">В наявності:</span>
+                <span class="val highlight">{{ formatQty(item.available_qty) }} {{ item.unit_of_measure }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-if="materialCheck.has_issues" class="materials-order-banner">
-        <div class="banner-text">
-          <el-icon><InfoFilled /></el-icon>
-          <span>Виявлено дефіцит деяких позицій. Рекомендуємо створити замовлення постачальнику.</span>
+      <div v-if="materialCheck.has_issues" class="materials-action-banner-premium">
+        <div class="banner-left">
+          <div class="alert-icon">
+            <el-icon><InfoFilled /></el-icon>
+          </div>
+          <div class="banner-text">
+            <h4>Виявлено дефіцит матеріалів</h4>
+            <p>Рекомендуємо сформувати замовлення постачальнику для уникнення затримок.</p>
+          </div>
         </div>
-        <button class="banner-btn" @click="$emit('go-to-purchases')">
+        <button class="premium-action-btn" @click="$emit('go-to-purchases')">
+          <span>Створити закупку</span>
           <el-icon><Promotion /></el-icon>
-          Створити закупку
         </button>
       </div>
     </div>
-    <div v-else class="materials-empty-state">
-      <el-icon><DocumentDelete /></el-icon>
-      <p>Для обраного виробу не знайдено активної специфікації.</p>
+
+    <div v-else class="materials-empty-premium">
+      <div class="empty-icon-wrapper">
+        <el-icon><DocumentDelete /></el-icon>
+      </div>
+      <h4>Специфікація відсутня</h4>
+      <p>Для цього виробу не налаштовано склад компонентів.</p>
     </div>
   </div>
 </template>
@@ -69,135 +94,287 @@ defineEmits(['go-to-purchases'])
 </script>
 
 <style scoped>
-.crm-materials-section {
-  padding: 24px;
+.crm-materials-section-premium {
+  padding: 32px;
+  background: #fff;
+  border-radius: 24px;
 }
 
-.materials-block-head {
+.materials-block-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  margin-bottom: 32px;
 }
 
-.materials-kicker {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: #64748B;
+.header-main {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.analysis-badge {
+  background: #F1F5F9;
+  color: #475569;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.materials-title-block h3 {
+.title-group h3 {
   margin: 0;
+  font-size: 22px;
+  font-weight: 850;
   color: #0F172A;
-  font-size: 20px;
-  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.status-badge-modern {
-  display: inline-flex;
+.title-group p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.glass-pill {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap: 8px;
+  padding: 6px 16px;
   border-radius: 99px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
+  border: 1px solid transparent;
 }
 
-.status-badge-modern.success { background: #ECFDF5; color: #059669; }
-.status-badge-modern.warning { background: #FFFBEB; color: #D97706; }
+.glass-pill.success {
+  background: #ECFDF5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
 
-.materials-loading-state {
+.glass-pill.warning {
+  background: #FFFBEB;
+  color: #D97706;
+  border-color: #FDE68A;
+}
+
+.materials-loading-premium {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 40px;
+  gap: 16px;
+  padding: 48px;
   color: #64748B;
-  font-size: 14px;
 }
 
-.materials-loading-state .el-icon { font-size: 32px; color: #6366F1; }
+.loading-animation {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: #6366F1;
+  border-radius: 50%;
+  animation: bounce 0.6s infinite alternate;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  to { transform: translateY(-10px); opacity: 0.5; }
+}
 
 .materials-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.material-card-modern {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  background: #F8FAFC;
-  border-radius: 14px;
-  border: 1px solid #F1F5F9;
-  transition: all 0.2s;
-}
-
-.material-card-modern:hover { transform: translateY(-1px); border-color: #E2E8F0; }
-
-.material-card-modern.ok { border-left: 4px solid #10B981; }
-.material-card-modern.low { border-left: 4px solid #F59E0B; }
-.material-card-modern.missing { border-left: 4px solid #EF4444; background: #FFF1F2; }
-
-.m-main { display: flex; flex-direction: column; gap: 4px; }
-.m-name { font-size: 13px; font-weight: 700; color: #1E293B; }
-.m-req { font-size: 11px; color: #64748B; font-weight: 600; }
-
-.m-stock { text-align: right; }
-.m-stock-val { display: block; font-size: 16px; font-weight: 800; color: #0F172A; }
-.m-stock-label { font-size: 9px; color: #94A3B8; text-transform: uppercase; font-weight: 800; }
-
-.material-card-modern.missing .m-stock-val { color: #EF4444; }
-
-.materials-order-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: #FFFBEB;
-  border: 1px solid #FEF3C7;
-  border-radius: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+  margin-bottom: 32px;
 }
 
-.banner-text { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #92400E; font-weight: 600; }
-.banner-text .el-icon { font-size: 20px; }
+.material-card-premium {
+  position: relative;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 20px;
+  padding: 24px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-.banner-btn {
-  display: inline-flex;
+.material-card-premium:hover {
+  transform: translateY(-4px);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.ok .card-glow { background: #10B981; }
+.low .card-glow { background: #F59E0B; }
+.missing .card-glow { background: #EF4444; }
+
+.m-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
+}
+
+.m-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1E293B;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ok .status-indicator { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.low .status-indicator { background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+.missing .status-indicator { background: #EF4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+
+.m-details {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.detail-item .label { color: #64748B; font-weight: 600; }
+.detail-item .val { color: #1E293B; font-weight: 750; }
+
+.detail-item.stock .val.highlight {
+  color: #10B981;
+}
+
+.missing .detail-item.stock .val.highlight {
+  color: #EF4444;
+}
+
+.materials-action-banner-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FFF8E1 100%);
+  border: 1px solid #FEF3C7;
+  border-radius: 24px;
+  gap: 24px;
+}
+
+.banner-left {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.alert-icon {
+  width: 48px;
+  height: 48px;
+  background: #FEF3C7;
+  color: #D97706;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+.banner-text h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #92400E;
+}
+
+.banner-text p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #B45309;
+  font-weight: 600;
+}
+
+.premium-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
   background: #D97706;
   color: #fff;
-  font-size: 12px;
-  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: all 0.3s;
+  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.2);
 }
 
-.banner-btn:hover { background: #B45309; transform: translateY(-1px); }
+.premium-action-btn:hover {
+  background: #B45309;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(217, 119, 6, 0.3);
+}
 
-.materials-empty-state {
+.materials-empty-premium {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
-  color: #94A3B8;
+  padding: 64px;
   text-align: center;
 }
 
-.materials-empty-state .el-icon { font-size: 40px; margin-bottom: 12px; }
-.materials-empty-state p { font-size: 14px; margin: 0; }
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: #F1F5F9;
+  color: #94A3B8;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.materials-empty-premium h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1E293B;
+}
+
+.materials-empty-premium p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+@media (max-width: 992px) {
+  .materials-action-banner-premium {
+    flex-direction: column;
+    text-align: center;
+  }
+  .banner-left { flex-direction: column; }
+  .premium-action-btn { width: 100%; justify-content: center; }
+}
 </style>
