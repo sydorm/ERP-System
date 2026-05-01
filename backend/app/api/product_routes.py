@@ -987,7 +987,7 @@ async def update_product(
             detail="Product not found"
         )
         
-    # If updating SKU, check uniqueness (only if SKU is provided)
+    # If updating SKU, check uniqueness
     if product_in.sku and product_in.sku != product.sku:
         existing_sku = db.query(Product).filter(
             Product.company_id == current_user.company_id,
@@ -1004,41 +1004,57 @@ async def update_product(
         setattr(product, field, value)
         
     if product_in.variants is not None:
-        # Simple sync: remove old variants and add new ones
-        # In production, we'd match by ID to preserve history
-        db.query(ProductVariant).filter(ProductVariant.product_id == product.id).delete()
+        # Smart sync variants
+        existing_vars = {str(v.id): v for v in product.variants}
+        incoming_vars = product_in.variants
+        updated_ids = set()
         
-        for var_in in product_in.variants:
-            var_data = var_in.dict(exclude={"values", "product_id"})
-            db_variant = ProductVariant(**var_data, product_id=product.id)
-            db.add(db_variant)
-            db.flush()
+        for var_in in incoming_vars:
+            var_id = str(getattr(var_in, 'id', None) or '')
+            var_data = var_in.dict(exclude={"values", "id", "product_id"})
             
-            for val_in in var_in.values:
-                val_data = val_in.dict()
-                db_val = VariantValue(**val_data, variant_id=db_variant.id)
-                db.add(db_val)
+            if var_id in existing_vars:
+                db_var = existing_vars[var_id]
+                for field, val in var_data.items():
+                    setattr(db_var, field, val)
+                updated_ids.add(var_id)
+                
+                # Sync values for this variant
+                db.query(VariantValue).filter(VariantValue.variant_id == db_var.id).delete()
+                for val_in in var_in.values:
+                    db.add(VariantValue(**val_in.dict(), variant_id=db_var.id))
+            else:
+                db_var = ProductVariant(**var_data, product_id=product.id)
+                db.add(db_var)
+                db.flush()
+                for val_in in var_in.values:
+                    db.add(VariantValue(**val_in.dict(), variant_id=db_var.id))
+        
+        for vid, vobj in existing_vars.items():
+            if vid not in updated_ids:
+                # Check if safe to delete
+                is_used = db.query(sa.text("EXISTS(SELECT 1 FROM order_lines WHERE variant_id = :vid)")).params(vid=vobj.id).scalar() or \
+                          db.query(sa.text("EXISTS(SELECT 1 FROM accumulation_registers WHERE variant_id = :vid)")).params(vid=vobj.id).scalar()
+                if not is_used:
+                    db.delete(vobj)
+                else:
+                    vobj.is_active = False # Deactivate instead of delete
 
     if product_in.price_rule is not None:
         from app.models.variant import ProductPriceRule, ProductPriceMarkup
-        # Remove old rule and markups
         db.query(ProductPriceRule).filter(ProductPriceRule.product_id == product.id).delete()
-        
         rule_data = product_in.price_rule.dict(exclude={"markups"})
         db_rule = ProductPriceRule(**rule_data, product_id=product.id)
         db.add(db_rule)
         db.flush()
-        
-        for markup_in in product_in.price_rule.markups:
-            db_markup = ProductPriceMarkup(**markup_in.dict(), rule_id=db_rule.id)
-            db.add(db_markup)
+        for m_in in product_in.price_rule.markups:
+            db.add(ProductPriceMarkup(**m_in.dict(), rule_id=db_rule.id))
 
     if product_in.product_attributes is not None:
         from app.models.product import ProductAttribute
         db.query(ProductAttribute).filter(ProductAttribute.product_id == product.id).delete()
         for attr_in in product_in.product_attributes:
-            db_attr = ProductAttribute(**attr_in.dict(), product_id=product.id)
-            db.add(db_attr)
+            db.add(ProductAttribute(**attr_in.dict(), product_id=product.id))
 
     db.commit()
     db.refresh(product)
