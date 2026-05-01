@@ -83,7 +83,7 @@
           :get-attention-class="getAttentionClass"
           :get-order-hints="getOrderHints"
           :get-manager-name="getManagerName"
-          :get-manager-initials="getManagerInitials"
+          :get-manager-initials="(o) => getManagerInitials(o)"
           :get-order-manager-id="getOrderManagerId"
           :get-priority-color="getPriorityColor"
           :get-priority-label="getPriorityLabel"
@@ -428,7 +428,9 @@ const getOrderHealthClass = (order) => {
 }
 
 const getOrderDeadline = (order) => order.deadline || order.deadline_date || null
-const getOrderManagerId = (order) => order.responsible_manager_id || order.manager_id || order.created_by || null
+const getOrderManagerId = (order) => {
+  return order.manager_id || order.responsible_manager_id || order.responsible_id || order.created_by_id || order.created_by || null
+}
 
 const getLeadSourceLabel = (order) => {
   if (order.lead_source?.name) return order.lead_source.name
@@ -660,14 +662,22 @@ const handleBulkCancel = () => {
 
 const getCounterpartyName = (id) => counterparties.value.find(c => c.id === id)?.name || ''
 
-const getManagerName = (id) => {
+const getManagerName = (order) => {
+  // Try to get from nested object first (most reliable)
+  if (order.manager?.full_name) return order.manager.full_name
+  if (order.manager?.name) return order.manager.name
+  if (order.manager_name) return order.manager_name
+  
+  const id = getOrderManagerId(order)
   if (!id) return 'Без менеджера'
-  const user = users.value.find(u => u.id === id)
+  
+  const user = users.value.find(u => String(u.id) === String(id))
   if (user) return user.name || user.full_name || 'Без менеджера'
+  
   return 'Без менеджера'
 }
-const getManagerInitials = (id) => {
-  const name = getManagerName(id)
+const getManagerInitials = (order) => {
+  const name = getManagerName(order)
   if (name === 'Без менеджера') return '?'
   return name
     .split(' ')
