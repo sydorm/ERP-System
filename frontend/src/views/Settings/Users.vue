@@ -142,7 +142,7 @@
     <!-- ===== PREMIUM DIALOG ===== -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEditing ? 'Налаштування профілю' : 'Реєстрація користувача'"
+      title="Налаштування профілю"
       width="800px"
       class="premium-glass-dialog"
       destroy-on-close
@@ -404,15 +404,7 @@ const fetchUsers = async () => {
 const getRoleName = (role) => getRegistryRoleName(role)
 
 const openCreateModal = () => {
-  isEditing.value = false
-  Object.assign(form, {
-    id: null, first_name: '', last_name: '', email: '', phone: '',
-    role: 'manager', password: '', confirmPassword: '', avatar_url: '', permissions: {}
-  })
-  permissionGroups.value.forEach(g => g.all = false)
-  handleRoleChange('manager')
-  dialogTab.value = 'main'
-  dialogVisible.value = true
+  router.push('/settings/users/create')
 }
 
 const openEditModal = (row) => {

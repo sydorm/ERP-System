@@ -3,7 +3,7 @@
     <!-- Grid Table -->
     <div class="nom-table">
       <!-- HEADER ROW -->
-      <div class="nom-header-row">
+      <div class="nom-row nom-header">
         <div class="nom-cell nom-cell--check">
           <input 
             type="checkbox" 
@@ -151,19 +151,7 @@ const isAllSelected = computed(() => {
   min-width: 900px;
 }
 
-.nom-header-row {
-  display: grid;
-  grid-template-columns:
-    32px    /* checkbox */
-    64px    /* photo */
-    minmax(240px, 2.2fr) /* name */
-    180px   /* category */
-    170px   /* stock */
-    150px   /* status */
-    120px   /* price */
-    96px;   /* actions */
-  align-items: center;
-  min-width: 900px;
+.nom-header {
   background: #ffffff !important;
   border-bottom: 2px solid #F1F5F9;
   height: 92px !important;
@@ -175,7 +163,7 @@ const isAllSelected = computed(() => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.nom-header-row .nom-cell {
+.nom-header .nom-cell {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
