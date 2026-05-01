@@ -18,9 +18,12 @@ class CalculationDimension(str, Enum):
 class CalculationType(str, Enum):
     FIXED = "fixed"
     INTERPOLATION = "interpolation"
+    PROPORTIONAL = "proportional"
     AREA = "area"
     VOLUME = "volume"
     FORMULA = "formula"
+    FABRIC_CUTTING = "fabric_cutting"
+    CHARACTERISTIC_MAPPING = "characteristic_mapping"
 
 class CalculationPoint(BaseModel):
     input: float
