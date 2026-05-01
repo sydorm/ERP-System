@@ -1,4 +1,4 @@
-﻿export const createCrmOrderValidationErrors = () => ({
+export const createCrmOrderValidationErrors = () => ({
   client: false,
   amount: false,
 })
@@ -15,9 +15,7 @@ export const collectMissingProductionFields = ({ form, clientName, clientPhone, 
   const deliveryNeeded = form.delivery_type && form.delivery_type !== 'none'
   if (deliveryNeeded && !form.delivery_method_id) missing.push('Спосіб доставки не обраний')
 
-  const contactReady = form.next_contact_at || contactResult
-  if (!contactReady) missing.push('Наступний контакт або результат спілкування не зафіксовано')
-
+  // Contact result is not required for production stages anymore
   return missing
 }
 

@@ -79,6 +79,7 @@
           />
 
           <CrmContactPanel
+            v-if="stageIndex <= 1"
             class="saas-glass-card"
             :form="form"
             :order-id="orderId"
@@ -709,7 +710,8 @@ const logContact = async () => {
     contactResult.value = null
     contactNote.value = ''
     contactNextAt.value = null
-    await loadData()  // reload to reflect updated stage / attempts / next_contact_at
+    await loadContacts()  // only reload history, NOT the whole form to avoid resetting unsaved changes
+    form.contact_attempts = (form.contact_attempts || 0) + 1
   } catch (err) {
     ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
   } finally {
