@@ -552,33 +552,20 @@ const fetchStage = async (stage, reset = false) => {
       `/api/v1/orders?crm_stage=${stage}&limit=20&skip=${stageSkip.value[stage]}`
     )
     
-    const ordersWithContacts = await Promise.all(
-      res.data.map(async (order) => {
-        try {
-          const contactsRes = await api.get(`/api/v1/crm/orders/${order.id}/contacts`)
-          if (contactsRes.data && contactsRes.data.length > 0) {
-            order.last_contact = contactsRes.data[0]
-          } else {
-            order.last_contact = null
-          }
-        } catch (err) {
-          order.last_contact = null
-        }
-        return order
-      })
-    )
+    // REMOVED: Sequential contact fetching for every order (The "Hundreds of checks" bug)
+    const newOrders = res.data
 
     if (reset) {
       orders.value = orders.value
         .filter(o => o.crm_stage !== stage)
-        .concat(ordersWithContacts)
+        .concat(newOrders)
     } else {
-      const newIds = new Set(ordersWithContacts.map(o => o.id))
-      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(ordersWithContacts)
+      const newIds = new Set(newOrders.map(o => o.id))
+      orders.value = orders.value.filter(o => !newIds.has(o.id)).concat(newOrders)
     }
     stageHasMore.value[stage] = res.data.length === 20
   } catch (e) {
-    ElMessage.error(`Помилка завантаження стадії ${stage}`)
+    console.error(`[CRM] Stage ${stage} failed`, e)
   }
 }
 
