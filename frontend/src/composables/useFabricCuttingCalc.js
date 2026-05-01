@@ -163,8 +163,8 @@ export function computeFabricCuttingMulti(config, dims = {}, ignoreWaste = false
       if (canNormal || canRotated) {
         let placedW = p.cutW, placedL = p.cutL
         if (canNormal && canRotated) {
-          // Both fit — pick orientation with smaller height contribution
-          if (p.cutW > p.cutL) { placedW = p.cutL; placedL = p.cutW }
+          // Both fit — rotate if normal height (cutL) > rotated height (cutW)
+          if (p.cutL > p.cutW) { placedW = p.cutL; placedL = p.cutW }
         } else if (canRotated) {
           placedW = p.cutL; placedL = p.cutW
         }

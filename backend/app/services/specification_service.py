@@ -364,7 +364,7 @@ class SpecificationService:
                                    and used_width + p['cutL'] <= roll_width_mm)
                     if can_normal or can_rotated:
                         placed = dict(p)
-                        if can_normal and can_rotated and p['cutW'] > p['cutL']:
+                        if can_normal and can_rotated and p['cutL'] > p['cutW']:
                             placed = {'cutW': p['cutL'], 'cutL': p['cutW']}
                         elif can_rotated and not can_normal:
                             placed = {'cutW': p['cutL'], 'cutL': p['cutW']}
