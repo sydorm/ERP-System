@@ -14,236 +14,272 @@
     />
 
     <div class="crm-body">
-      <div class="crm-editor-grid-4">
-        <!-- 1. Дані клієнта -->
-        <div class="crm-card client-data premium-card-clean">
-          <div class="crm-card-title">
-            <el-icon><User /></el-icon>
-            Дані клієнта
-          </div>
-          
-          <div class="client-selection-row">
-            <el-select
-              v-model="form.counterparty_id"
-              filterable
-              remote
-              :remote-method="searchCounterparties"
-              placeholder="Виберіть клієнта..."
-              class="cp-select-large"
-              :class="{ 'field-error': vErrors.counterparty_id }"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-              <el-option
-                v-for="cp in counterparties"
-                :key="cp.id"
-                :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
-                :value="cp.id"
-              />
-            </el-select>
-            <el-button type="primary" class="add-cp-btn" @click="openCreateCounterparty">
-              <el-icon><Plus /></el-icon>
-              Новий клієнт
-            </el-button>
-          </div>
-
-          <div class="crm-grid-3">
+      <div class="crm-modern-layout">
+        
+        <!-- COLUMN 1: DATA & OPERATIONS -->
+        <div class="crm-col-main">
+          <!-- 1. Дані клієнта -->
+          <div class="crm-glass-card">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><User /></el-icon>
+                Дані клієнта
+              </div>
+            </div>
+            
             <div class="crm-field">
-              <label class="crm-label">Джерело ліда</label>
-              <el-select v-model="form.lead_source_id" placeholder="Звідки дізналися?" class="modern-select">
-                <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
+              <el-select
+                v-model="form.counterparty_id"
+                filterable
+                remote
+                :remote-method="searchCounterparties"
+                placeholder="Пошук клієнта..."
+                class="modern-select-large"
+              >
+                <template #prefix><el-icon><Search /></el-icon></template>
+                <el-option
+                  v-for="cp in counterparties"
+                  :key="cp.id"
+                  :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
+                  :value="cp.id"
+                />
               </el-select>
+              <div class="quick-actions-row">
+                <el-button @click="openCreateCounterparty" size="small" :icon="Plus" plain>Новий клієнт</el-button>
+                <el-button v-if="form.counterparty_id" size="small" :icon="Promotion" plain>Профіль</el-button>
+              </div>
             </div>
-            <div class="crm-field">
-              <label class="crm-label">Місто / Відділення</label>
-              <el-input v-model="form.city" placeholder="Куди відправляти?" />
+
+            <div class="compact-grid" style="margin-top: 16px;">
+              <div class="crm-field">
+                <span class="mini-label">Джерело</span>
+                <el-select v-model="form.lead_source_id" placeholder="Джерело" class="modern-select">
+                  <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
+                </el-select>
+              </div>
+              <div class="crm-field">
+                <span class="mini-label">Місто</span>
+                <el-input v-model="form.city" placeholder="Місто" />
+              </div>
             </div>
-            <div class="crm-field">
-              <label class="crm-label">Канал комунікації</label>
+            
+            <div class="crm-field" style="margin-top: 12px;">
+              <span class="mini-label">Канал</span>
               <div class="channel-pills-mini">
-                <div 
-                  v-for="ch in channels" 
-                  :key="ch.code"
-                  class="ch-mini-pill"
-                  :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
-                  @click="form.channel = ch.code"
-                  :title="ch.name"
-                >
+                <div v-for="ch in channels" :key="ch.code" class="ch-mini-pill" 
+                     :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
+                     @click="form.channel = ch.code">
                   {{ ch.icon }}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 2. Номенклатура -->
-        <div class="crm-card nomenclature-data">
-          <div class="crm-card-title">
-            <el-icon><Box /></el-icon>
-            Номенклатура
-          </div>
-
-          <div class="crm-field">
-            <label class="crm-label">Виріб</label>
-            <el-select 
-              v-model="form.product_id" 
-              filterable 
-              placeholder="Виберіть модель" 
-              class="modern-select"
-              @change="onProductChange"
-            >
-              <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
-            </el-select>
-          </div>
-
-          <div class="attributes-block" v-if="productAttributes.length">
-            <div v-for="attr in productAttributes" :key="attr.id" class="attr-group">
-              <label class="crm-label">{{ attr.name }}</label>
-              <div class="attr-pills" v-if="attr.type !== 'dimensions'">
-                <div 
-                  v-for="opt in attr.options" 
-                  :key="opt.id"
-                  class="attr-pill"
-                  :class="{ active: form.attributes_values[attr.id] === opt.id }"
-                  @click="form.attributes_values[attr.id] = opt.id"
-                >
-                  <span v-if="opt.color" class="attr-color-dot" :style="{ background: opt.color }"></span>
-                  {{ opt.name }}
-                </div>
-              </div>
-              <div class="attr-dims" v-else>
-                <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" />
-                <span class="dims-sep">×</span>
-                <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" />
-                <span class="dims-unit">мм</span>
+          <!-- 2. Номенклатура -->
+          <div class="crm-glass-card">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><Box /></el-icon>
+                Номенклатура
               </div>
             </div>
-          </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Коментар до виробу</label>
-            <el-input type="textarea" v-model="form.comment" :rows="2" placeholder="Особливості конструкції..." />
+            <div class="crm-field">
+              <span class="mini-label">Виріб</span>
+              <el-select v-model="form.product_id" filterable placeholder="Оберіть модель" class="modern-select" @change="onProductChange">
+                <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+              </el-select>
+            </div>
+
+            <div class="attributes-block" v-if="productAttributes.length">
+              <div v-for="attr in productAttributes" :key="attr.id" class="attr-group">
+                <span class="mini-label">{{ attr.name }}</span>
+                <div class="attr-pills" v-if="attr.type !== 'dimensions'">
+                  <div v-for="opt in attr.options" :key="opt.id" class="attr-pill"
+                       :class="{ active: form.attributes_values[attr.id] === opt.id }"
+                       @click="form.attributes_values[attr.id] = opt.id">
+                    <span v-if="opt.color" class="attr-color-dot" :style="{ background: opt.color }"></span>
+                    {{ opt.name }}
+                  </div>
+                </div>
+                <div class="attr-dims" v-else>
+                  <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" />
+                  <span class="dims-sep">×</span>
+                  <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" />
+                </div>
+              </div>
+            </div>
+
+            <div class="crm-field" style="margin-top: 12px;">
+              <span class="mini-label">Коментар</span>
+              <el-input type="textarea" v-model="form.comment" :rows="2" placeholder="Деталі виробу..." />
+            </div>
           </div>
           
-          <div class="crm-field">
-            <label class="crm-label">Фото/Ескіз</label>
-            <div class="photo-upload-zone-compact" @click="triggerPhotoUpload">
-              <img v-if="form.reference_photo" :src="form.reference_photo" class="photo-preview" />
-              <div v-else class="photo-placeholder">
-                <el-icon><Picture /></el-icon>
-                <span>Завантажити</span>
+          <!-- 3. Аналіз та Логістика -->
+          <div class="crm-glass-card">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><DataAnalysis /></el-icon>
+                Аналіз та Логістика
+              </div>
+            </div>
+
+            <div class="analysis-section" v-if="form.product_id">
+              <div class="crm-section-head">
+                <span class="mini-label">Матеріали</span>
+                <span v-if="checkingMaterials" class="mat-loading"><el-icon class="is-loading"><Loading /></el-icon></span>
+                <span v-else class="mat-status-badge" :class="matStatusClass">{{ matStatusLabel }}</span>
+              </div>
+              <div class="mat-list-compact" v-if="materials.length">
+                <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
+                  <div class="mat-info">
+                    <span class="mat-name">{{ m.component_name }}</span>
+                  </div>
+                  <div class="mat-status-val">
+                    <span v-if="m.status === 'ok'" class="status-ok">ОК</span>
+                    <span v-else class="status-need">{{ Math.max(0, m.required_qty - m.available_qty) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="compact-grid" style="margin-top: 16px;">
+              <div class="crm-field">
+                <span class="mini-label">Склад</span>
+                <el-select v-model="form.warehouse_id" class="modern-select">
+                  <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+                </el-select>
+              </div>
+              <div class="crm-field">
+                <span class="mini-label">Тип оплати</span>
+                <el-select v-model="form.payment_status_id" class="modern-select">
+                  <el-option v-for="s in paymentStatuses" :key="s.id" :label="s.name" :value="s.id" />
+                </el-select>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. Аналіз -->
-        <div class="crm-card analysis-data">
-          <div class="crm-card-title">
-            <el-icon><DataAnalysis /></el-icon>
-            Аналіз та Приорітет
-          </div>
-
-          <div class="crm-field">
-            <label class="crm-label">Приорітет замовлення</label>
-            <div class="priority-pills">
-              <div 
-                v-for="p in priorities" 
-                :key="p.id"
-                class="priority-pill"
-                :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
-                @click="form.priority_id = p.id; form.priority = p.code"
-              >
-                {{ p.name }}
+        <!-- COLUMN 2: COMMUNICATIONS & REMINDERS -->
+        <div class="crm-col-center">
+          <!-- 4. Комунікаційний Хаб -->
+          <div class="crm-glass-card comm-hub">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><Promotion /></el-icon>
+                Комунікації
               </div>
             </div>
-          </div>
 
-          <div class="analysis-section" v-if="form.product_id">
-            <div class="crm-section-head">
-              <span class="crm-label">Матеріали</span>
-              <span v-if="checkingMaterials" class="mat-loading">
-                <el-icon class="is-loading"><Loading /></el-icon>
-              </span>
-              <span v-else class="mat-status-badge" :class="matStatusClass">
-                {{ matStatusLabel }}
-              </span>
-            </div>
-            
-            <div class="mat-list-compact" v-if="materials.length">
-              <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
-                <div class="mat-info">
-                  <span class="mat-name">{{ m.component_name }}</span>
-                  <span class="mat-hint" v-if="m.status !== 'ok'">
-                    Потрібно: {{ m.required_qty }} | Є: {{ m.available_qty }}
-                  </span>
+            <!-- Reminders Block (Restored) -->
+            <div class="reminders-block" v-if="missedTasks.length">
+              <span class="mini-label" style="color: #9A3412;">Пропущені нагадування</span>
+              <div v-for="task in missedTasks" :key="task.id" class="reminder-item">
+                <el-icon class="reminder-icon"><Bell /></el-icon>
+                <div class="reminder-body">
+                  <div style="font-size: 12px; font-weight: 700; color: #7C2D12;">Зателефонувати клієнту</div>
+                  <div style="font-size: 10px; color: #9A3412;">Мало відбутися: {{ formatDate(task.scheduled_at) }}</div>
                 </div>
-                <div class="mat-status-val">
-                  <span v-if="m.status === 'ok'" class="status-ok">В наявності</span>
-                  <span v-else class="status-need">Замовити: {{ Math.max(0, m.required_qty - m.available_qty) }}</span>
-                </div>
+                <el-button type="warning" size="small" circle :icon="Check" @click="completeTask(task.id)" />
               </div>
             </div>
-          </div>
 
-          <div class="crm-grid-2">
-            <div class="crm-field">
-              <label class="crm-label">Склад відвантаження</label>
-              <el-select v-model="form.warehouse_id" class="modern-select">
-                <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-              </el-select>
+            <!-- Interaction History -->
+            <div class="interaction-panel">
+              <span class="mini-label">Історія взаємодії</span>
+              <div class="history-scroll" style="max-height: 350px;">
+                <div v-if="contactHistory.length">
+                  <div v-for="log in contactHistory" :key="log.id" class="mini-log-item">
+                    <div class="ml-icon">
+                      {{ channels.find(c => c.code === log.communication_type.toLowerCase())?.icon || '📞' }}
+                    </div>
+                    <div class="ml-body">
+                      <span class="ml-res">{{ getResultHint(log.result) }}</span>
+                      <p class="ml-note" v-if="log.note">{{ log.note }}</p>
+                      <span class="ml-time">{{ formatDate(log.contacted_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="mat-empty">Історія поки що порожня</div>
+              </div>
             </div>
-            <div class="crm-field">
-              <label class="crm-label">Тип оплати</label>
-              <el-select v-model="form.payment_status_id" class="modern-select">
-                <el-option v-for="s in paymentStatuses" :key="s.id" :label="s.name" :value="s.id" />
-              </el-select>
-            </div>
-          </div>
 
-          <div class="crm-field">
-            <label class="crm-label">Внутрішні нотатки</label>
-            <el-input type="textarea" v-model="form.internal_notes" :rows="2" />
+            <!-- Contact Panel -->
+            <div class="contact-action-box" v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)">
+              <CrmContactPanel
+                v-model:contact-comm-type="contactCommType"
+                v-model:contact-plan-reason="contactPlanReason"
+                v-model:contact-next-at="contactNextAt"
+                v-model:contact-note="contactNote"
+                :form="form"
+                :order-id="orderId"
+                :communication-types="communicationTypes"
+                :contact-results="contactResults"
+                :contact-result="contactResult"
+                :next-touch-summary="nextTouchSummary"
+                :saving-contact="savingContact"
+                :get-result-hint="getResultHint"
+                @set-next-contact-preset="setNextContactPreset"
+                @apply-contact-result="contactResult = $event"
+                @log-contact="onLogContact"
+              />
+            </div>
           </div>
         </div>
 
-        <!-- 4. Фінанси -->
-        <div class="crm-card finance-data">
-          <div class="crm-card-title">
-            <el-icon><Wallet /></el-icon>
-            Фінанси
-          </div>
+        <!-- COLUMN 3: FINANCE & STRATEGY -->
+        <div class="crm-col-side">
+          <div class="crm-glass-card finance-premium-card">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><Wallet /></el-icon>
+                Фінанси
+              </div>
+            </div>
 
-          <CrmOrderSummary
-            :form="form"
-            :priorities="priorities"
-            :managers="users"
-            :format-currency="formatCurrency"
-            @update-amount="updateTotalAmount"
-          />
+            <div class="finance-amount-display">
+              <div class="main-total">{{ formatCurrency(form.total_amount) }} <span class="total-currency">₴</span></div>
+              <div class="mini-label" style="margin-top: 4px;">Сума замовлення</div>
+            </div>
 
-          <div class="contact-action-box" v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)" style="margin-top: 16px;">
-            <label class="crm-label" style="display: block; margin-bottom: 8px;">Комунікація</label>
-            <CrmContactPanel
-              v-model:contact-comm-type="contactCommType"
-              v-model:contact-plan-reason="contactPlanReason"
-              v-model:contact-next-at="contactNextAt"
-              v-model:contact-note="contactNote"
+            <CrmOrderSummary
               :form="form"
-              :order-id="orderId"
-              :communication-types="communicationTypes"
-              :contact-results="contactResults"
-              :contact-result="contactResult"
-              :next-touch-summary="nextTouchSummary"
-              :saving-contact="savingContact"
-              :get-result-hint="getResultHint"
-              @set-next-contact-preset="setNextContactPreset"
-              @apply-contact-result="contactResult = $event"
-              @log-contact="onLogContact"
+              :priorities="priorities"
+              :managers="users"
+              :format-currency="formatCurrency"
+              @update-amount="updateTotalAmount"
             />
           </div>
+
+          <div class="crm-glass-card">
+            <div class="card-head-premium">
+              <div class="card-title-premium">
+                <el-icon><Collection /></el-icon>
+                Пріоритет та Менеджер
+              </div>
+            </div>
+            
+            <div class="crm-field">
+              <span class="mini-label">Приорітет</span>
+              <div class="priority-pills">
+                <div v-for="p in priorities" :key="p.id" class="priority-pill"
+                     :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
+                     @click="form.priority_id = p.id; form.priority = p.code">
+                  {{ p.name }}
+                </div>
+              </div>
+            </div>
+
+            <div class="crm-field" style="margin-top: 16px;">
+              <span class="mini-label">Відповідальний менеджер</span>
+              <el-select v-model="form.manager_id" placeholder="Оберіть менеджера" class="modern-select">
+                <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
+              </el-select>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
 
@@ -271,7 +307,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Picture, MagicStick, Loading, Printer, Promotion,
-  User, Box, DataAnalysis, Wallet, Search
+  User, Box, DataAnalysis, Wallet, Search, Bell, Check, Collection
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
@@ -391,6 +427,28 @@ const contactNote = ref('')
 const savingContact = ref(false)
 
 const vErrors = reactive({ counterparty_id: false, total_amount: false })
+
+const missedTasks = ref([])
+const loadMissedTasks = async () => {
+  if (!orderId.value) return
+  try {
+    const res = await api.get('/api/v1/crm/tasks/today')
+    // Only show pending tasks for THIS specific order
+    missedTasks.value = res.data.filter(t => t.order_id === orderId.value && t.status === 'pending')
+  } catch (e) {
+    console.warn('[CRM] Tasks failed', e)
+  }
+}
+
+const completeTask = async (taskId) => {
+  try {
+    await api.put(`/api/v1/crm/tasks/${taskId}/complete`)
+    missedTasks.value = missedTasks.value.filter(t => t.id !== taskId)
+    ElMessage.success('Завдання виконано')
+  } catch (err) {
+    ElMessage.error('Помилка виконання')
+  }
+}
 
 const clientProfile = ref(null)
 
@@ -771,6 +829,7 @@ const loadData = async () => {
         
         // Load additional order info
         loadContacts()
+        loadMissedTasks()
         if (form.product_id) onProductChange(form.product_id)
       } catch (err) {
         ElMessage.error('Помилка завантаження замовлення')
