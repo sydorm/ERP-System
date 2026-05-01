@@ -311,23 +311,21 @@ const fetchUserData = async () => {
   if (!userId) return
 
   try {
-    const response = await api.get(`/api/v1/users`)
-    const user = response.data.find(u => u.id === userId)
-    if (user) {
-      Object.assign(form, {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        phone: user.phone || '',
-        role: user.role,
-        avatar_url: user.avatar_url || '',
-        permissions: { ...(user.permissions || {}) },
-        blocked_at: user.blocked_at
-      })
-      syncPermissionGroups(permissionGroups.value, form.permissions)
-      fetchUserActivity(userId)
-    }
+    const response = await api.get(`/api/v1/users/${userId}`)
+    const user = response.data
+    Object.assign(form, {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+      avatar_url: user.avatar_url || '',
+      permissions: { ...(user.permissions || {}) },
+      blocked_at: user.blocked_at
+    })
+    syncPermissionGroups(permissionGroups.value, form.permissions)
+    fetchUserActivity(userId)
   } catch (error) {
     ElMessage.error('Не вдалося завантажити дані користувача')
   }

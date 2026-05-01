@@ -52,6 +52,35 @@ async def read_colleagues(
     return db.query(User).filter(User.company_id == current_user.company_id).all()
 
 
+@router.get("/users/me", response_model=UserResponse)
+async def read_current_user(
+    current_user: User = Depends(get_current_active_user)
+):
+    """Return the currently authenticated user's profile."""
+    return current_user
+
+
+@router.get("/users/{user_id}", response_model=UserResponse)
+async def read_user(
+    user_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Return a user by ID. Users can only access their own profile; admins can access any."""
+    if str(current_user.id) != str(user_id) and not (
+        current_user.is_superuser or current_user.role == "admin" or
+        (current_user.permissions or {}).get("users.view")
+    ):
+        raise HTTPException(status_code=403, detail="Недостатньо прав")
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.company_id == current_user.company_id
+    ).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Користувача не знайдено")
+    return user
+
+
 @router.get("/users", response_model=List[UserResponse])
 async def read_users(
     skip: int = 0,
