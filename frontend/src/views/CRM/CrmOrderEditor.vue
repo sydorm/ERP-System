@@ -223,9 +223,8 @@ const canReassignManager = computed(() => {
   const u = currentUser.value
   return Boolean(
     u?.is_superuser
-    || ['admin', 'director'].includes(u?.role)
+    || u?.role === 'admin'
     || userStore.hasPermission?.('crm.order.reassign')
-    || userStore.hasPermission?.('crm.manage')
   )
 })
 

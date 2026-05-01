@@ -5,7 +5,6 @@
       <span class="manager-avatar">{{ managerInitials }}</span>
       <span class="manager-info">
         <b>{{ selectedManagerName }}</b>
-        <small>Призначено автоматично</small>
       </span>
     </div>
     <el-select
