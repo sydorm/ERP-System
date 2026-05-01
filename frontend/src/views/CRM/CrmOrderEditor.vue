@@ -220,12 +220,11 @@ const contactHistory = ref([])
 const checkingMaterials = ref(false)
 
 const stages = [
-  { key: 'new', label: 'Заявка' },
-  { key: 'negotiation', label: 'Перемовини' },
-  { key: 'payment', label: 'Оплата' },
-  { key: 'processing', label: 'В роботі' },
-  { key: 'production', label: 'Виробництво' },
-  { key: 'done', label: 'Виконано' }
+  { key: 'new', label: 'НОВІ' },
+  { key: 'payment', label: 'ОПЛАТА' },
+  { key: 'processing', label: 'В РОБОТІ' },
+  { key: 'production', label: 'ВИРОБНИЦТВО' },
+  { key: 'done', label: 'ВИКОНАНО' }
 ]
 
 const priorities = ref([
