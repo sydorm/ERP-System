@@ -766,41 +766,46 @@ const save = async (action) => {
 
     if (!form.manager_id && currentUserId.value) form.manager_id = currentUserId.value
 
+    // Helper: convert empty-string / undefined inputs to null (prevents Pydantic 422 on Decimal fields)
+    const n0  = (v) => (v === '' || v == null) ? 0      : Number(v)
+    const num = (v) => (v === '' || v == null) ? null   : Number(v)
+    const str = (v) => (v === '' || v == null) ? null   : String(v)
+
     const payload = {
-      order_number:       form.order_number,
+      order_number:       form.order_number || 'Авто',
       order_date:         form.order_date,
       counterparty_id:    form.counterparty_id,
       warehouse_id:       form.warehouse_id,
-      total_amount:       form.total_amount,
-      discount_percent:   form.discount_percent,
+      total_amount:       n0(form.total_amount),
+      discount_percent:   n0(form.discount_percent),
       crm_stage:          form.crm_stage,
-      channel:            form.channel,
-      lead_source_id:     form.lead_source_id,
-      city:               form.city,
-      delivery_type:      form.delivery_type,
-      delivery_method_id: form.delivery_method_id,
+      channel:            str(form.channel),
+      lead_source_id:     form.lead_source_id || null,
+      city:               str(form.city),
+      delivery_type:      str(form.delivery_type),
+      delivery_method_id: form.delivery_method_id || null,
       attributes_values:  mergedAttrs,
-      paid_amount:        form.paid_amount,
-      payment_status:     form.payment_status,
-      payment_status_id:  form.payment_status_id,
-      prepayment_percent: form.prepayment_percent,
-      prepayment_amount:  form.prepayment_amount,
-      deadline_date:      form.deadline_date,
-      next_contact_at:    form.next_contact_at,
-      priority:           form.priority,
-      priority_id:        form.priority_id,
-      manager_id:         form.manager_id,
-      cancel_reason_id:   form.cancel_reason_id,
-      client_type_id:     form.client_type_id,
-      comment:            form.comment,
-      internal_notes:     form.internal_notes,
-      reference_photo:    form.reference_photo,
+      paid_amount:        n0(form.paid_amount),
+      payment_status:     form.payment_status || 'unpaid',
+      payment_status_id:  form.payment_status_id || null,
+      prepayment_percent: num(form.prepayment_percent),
+      prepayment_amount:  num(form.prepayment_amount),
+      deadline_date:      form.deadline_date || null,
+      next_contact_at:    form.next_contact_at || null,
+      priority:           form.priority || 'normal',
+      priority_id:        form.priority_id || null,
+      manager_id:         form.manager_id || null,
+      cancel_reason_id:   form.cancel_reason_id || null,
+      client_type_id:     form.client_type_id || null,
+      comment:            str(form.comment),
+      internal_notes:     str(form.internal_notes),
+      reference_photo:    str(form.reference_photo),
 
       lines: form.product_id ? [{
         product_id: form.product_id,
         quantity:   1,
-        price:      Number(form.total_amount) || 0,
-        total:      Number(form.total_amount) || 0,
+        price:      n0(form.total_amount),
+        total:      n0(form.total_amount),
       }] : null,
     }
 
@@ -831,7 +836,13 @@ const save = async (action) => {
     ElMessage.success('Збережено як чернетку')
     router.push(`/crm/orders/${savedOrder.id}`)
   } catch (err) {
-    ElMessage.error(err.response?.data?.detail || 'Помилка збереження')
+    const detail = err.response?.data?.detail
+    if (Array.isArray(detail)) {
+      const msg = detail.map(e => `${(e.loc || []).slice(1).join('.')}: ${e.msg}`).join('\n')
+      ElMessage({ type: 'error', message: msg || 'Помилка валідації', duration: 8000 })
+    } else {
+      ElMessage.error(detail || 'Помилка збереження')
+    }
   } finally {
     saving.value = false
   }

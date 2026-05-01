@@ -2,12 +2,13 @@
 .crm-editor-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100%;
   background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
   font-family: 'Inter', sans-serif;
-  padding: 0 12px 12px 12px;
-  margin-top: -24px; /* Compensate for DashboardLayout .view-container padding */
+  padding: 0;
+  margin-top: -24px;
+  margin-left: -24px;
+  margin-right: -24px;
 }
 
 .crm-editor-page-inner {
@@ -15,11 +16,7 @@
   flex-direction: column;
   flex: 1;
   background: #fff;
-  border-radius: 0 0 32px 32px; /* Attached to top, rounded bottom */
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-top: none; /* No border where it touches the tabs bar */
+  border-radius: 0;
   position: relative;
 }
 
@@ -177,9 +174,8 @@
   display: flex;
   gap: 32px;
   padding: 32px;
-  overflow-y: auto;
-  flex: 1;
   background: #F8FAFC;
+  flex: 1;
 }
 .crm-left-col  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
 .crm-right-col { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 24px; }

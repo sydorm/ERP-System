@@ -64,9 +64,9 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   justify-content: space-between;
   gap: 24px;
   background: #fff !important;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
   border-top: none !important;
-  box-shadow: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .back-pill {
