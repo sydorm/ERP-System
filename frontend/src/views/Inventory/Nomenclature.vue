@@ -224,7 +224,7 @@ const categoryOptions = computed(() => dictStore.getCategory('PRODUCT_CATEGORY')
 const uomOptions = computed(() => dictStore.getCategory('UOM'))
 
 // Watchers for immediate filtering
-watch([filterCategory, filterType, filterStock, activeTab], () => {
+watch([filterCategory, filterType, filterStock, activeTab, limit], () => {
   handleFilterChange()
 })
 

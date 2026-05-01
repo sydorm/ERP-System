@@ -51,14 +51,17 @@
 
     <!-- Pagination -->
     <div class="pagination-dense">
-      <el-select 
-        :model-value="limit" 
-        size="small" 
-        style="width: 70px;" 
-        @change="$emit('update:limit', $event)"
-      >
-        <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
-      </el-select>
+      <div class="pagination-left">
+        <span>Показувати по:</span>
+        <el-select 
+          :model-value="limit" 
+          size="small" 
+          class="limit-select"
+          @change="$emit('update:limit', $event)"
+        >
+          <el-option v-for="size in [10, 20, 50, 100]" :key="size" :label="size" :value="size" />
+        </el-select>
+      </div>
       <el-pagination
         :current-page="currentPage"
         :page-size="limit"
@@ -209,7 +212,25 @@ const isAllSelected = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  border-top: 1px solid #eef2f7;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  background: #F8FAFC;
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.limit-select {
+  width: 80px;
+}
+
+:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
+  background-color: #1463FF;
 }
 </style>
