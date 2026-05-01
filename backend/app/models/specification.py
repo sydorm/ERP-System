@@ -19,6 +19,7 @@ class CalculationType(str, enum.Enum):
     AREA = "area"
     VOLUME = "volume"
     FORMULA = "formula"
+    FABRIC_CUTTING = "fabric_cutting"
 
 class ProductSpecification(BaseModel):
     """

@@ -82,7 +82,12 @@ class SpecificationService:
             result = SpecificationService._evaluate_formula(item.calc_formula, w, h, l, kg, custom_attrs)
             waste_factor = float(item.calc_waste_factor or 0)
             result *= (1.0 + waste_factor)
-        
+        elif item.calc_type == CalculationType.FABRIC_CUTTING:
+            result = SpecificationService._calc_fabric_cutting(
+                item.calc_dim_config or {},
+                parent_dimensions,
+            )
+
         return Decimal(str(round(result, 4)))
 
     @staticmethod

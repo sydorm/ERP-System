@@ -13,18 +13,35 @@
       @save-production="save('production')"
     />
 
+    <!-- BREADCRUMB PROGRESS -->
+    <div class="crm-breadcrumb-progress">
+      <div class="bc-item" :class="{ active: currentStep >= 1 }">
+        <div class="bc-dot"></div> Клієнт
+      </div>
+      <div class="bc-sep"></div>
+      <div class="bc-item" :class="{ active: currentStep >= 2 }">
+        <div class="bc-dot"></div> Виріб
+      </div>
+      <div class="bc-sep"></div>
+      <div class="bc-item" :class="{ active: currentStep >= 3 }">
+        <div class="bc-dot"></div> Логістика
+      </div>
+      <div class="bc-sep"></div>
+      <div class="bc-item" :class="{ active: currentStep >= 4 }">
+        <div class="bc-dot"></div> Фінанси
+      </div>
+    </div>
+
     <div class="crm-body">
-      <div class="crm-modern-layout">
+      <div class="crm-layout-2col">
         
-        <!-- COLUMN 1: DATA & OPERATIONS -->
-        <div class="crm-col-main">
-          <!-- 1. Дані клієнта -->
-          <div class="crm-glass-card">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><User /></el-icon>
-                Дані клієнта
-              </div>
+        <!-- LEFT COLUMN (65%) -->
+        <div class="crm-content-left">
+          
+          <!-- Block 1: Клієнт -->
+          <div class="crm-block-card card-client">
+            <div class="block-title">
+              <el-icon><User /></el-icon> Клієнт
             </div>
             
             <div class="crm-field">
@@ -44,13 +61,9 @@
                   :value="cp.id"
                 />
               </el-select>
-              <div class="quick-actions-row">
-                <el-button @click="openCreateCounterparty" size="small" :icon="Plus" plain>Новий клієнт</el-button>
-                <el-button v-if="form.counterparty_id" size="small" :icon="Promotion" plain>Профіль</el-button>
-              </div>
             </div>
 
-            <div class="compact-grid" style="margin-top: 16px;">
+            <div class="crm-grid-3" style="margin-top: 16px;">
               <div class="crm-field">
                 <span class="mini-label">Джерело</span>
                 <el-select v-model="form.lead_source_id" placeholder="Джерело" class="modern-select">
@@ -61,31 +74,28 @@
                 <span class="mini-label">Місто</span>
                 <el-input v-model="form.city" placeholder="Місто" />
               </div>
+              <div class="crm-field">
+                <span class="mini-label">Канал</span>
+                <el-select v-model="form.channel" placeholder="Канал" class="modern-select">
+                  <el-option v-for="ch in channels" :key="ch.code" :label="ch.name" :value="ch.code" />
+                </el-select>
+              </div>
             </div>
             
-            <div class="crm-field" style="margin-top: 12px;">
-              <span class="mini-label">Канал</span>
-              <div class="channel-pills-mini">
-                <div v-for="ch in channels" :key="ch.code" class="ch-mini-pill" 
-                     :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
-                     @click="form.channel = ch.code">
-                  {{ ch.icon }}
-                </div>
-              </div>
+            <div class="quick-actions-row" style="margin-top: 16px;">
+              <el-button @click="openCreateCounterparty" size="small" :icon="Plus">Новий клієнт</el-button>
+              <el-button v-if="form.counterparty_id" @click="showClientDrawer = true" size="small" :icon="User" type="primary" plain>Профіль та Історія</el-button>
             </div>
           </div>
 
-          <!-- 2. Номенклатура -->
-          <div class="crm-glass-card">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><Box /></el-icon>
-                Номенклатура
-              </div>
+          <!-- Block 2: Виріб / Номенклатура -->
+          <div class="crm-block-card card-product">
+            <div class="block-title">
+              <el-icon><Box /></el-icon> Виріб / Номенклатура
             </div>
 
             <div class="crm-field">
-              <span class="mini-label">Виріб</span>
+              <span class="mini-label">Модель</span>
               <el-select v-model="form.product_id" filterable placeholder="Оберіть модель" class="modern-select" @change="onProductChange">
                 <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
               </el-select>
@@ -103,48 +113,38 @@
                   </div>
                 </div>
                 <div class="attr-dims" v-else>
-                  <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" :step="100" />
+                  <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" placeholder="Ширина" />
                   <span class="dims-sep">×</span>
-                  <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" :step="100" />
+                  <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" placeholder="Висота" />
                 </div>
               </div>
             </div>
 
-            <div class="crm-field" style="margin-top: 12px;">
-              <span class="mini-label">Коментар</span>
-              <el-input type="textarea" v-model="form.comment" :rows="2" placeholder="Деталі виробу..." />
+            <div class="crm-grid-2" style="margin-top: 16px;">
+              <div class="crm-field">
+                <span class="mini-label">Коментар до виробу</span>
+                <el-input type="textarea" v-model="form.comment" :rows="3" placeholder="Деталі..." />
+              </div>
+              <div class="crm-field">
+                <span class="mini-label">Фото референс</span>
+                <div class="photo-upload-zone-compact" @click="triggerPhotoUpload" style="height: 84px;">
+                  <img v-if="form.reference_photo" :src="form.reference_photo" class="photo-preview" />
+                  <div v-else class="photo-placeholder">
+                    <el-icon><Picture /></el-icon>
+                    <span>Завантажити</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <!-- 3. Аналіз та Логістика -->
-          <div class="crm-glass-card">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><DataAnalysis /></el-icon>
-                Аналіз та Логістика
-              </div>
+
+          <!-- Block 3: Аналіз та логістика -->
+          <div class="crm-block-card card-logistics">
+            <div class="block-title">
+              <el-icon><Promotion /></el-icon> Аналіз та логістика
             </div>
 
-            <div class="analysis-section" v-if="form.product_id">
-              <div class="crm-section-head">
-                <span class="mini-label">Матеріали</span>
-                <span v-if="checkingMaterials" class="mat-loading"><el-icon class="is-loading"><Loading /></el-icon></span>
-                <span v-else class="mat-status-badge" :class="matStatusClass">{{ matStatusLabel }}</span>
-              </div>
-              <div class="mat-list-compact" v-if="materials.length">
-                <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
-                  <div class="mat-info">
-                    <span class="mat-name">{{ m.component_name }}</span>
-                  </div>
-                  <div class="mat-status-val">
-                    <span v-if="m.status === 'ok'" class="status-ok">ОК</span>
-                    <span v-else class="status-need">{{ Math.max(0, m.required_qty - m.available_qty) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="compact-grid" style="margin-top: 16px;">
+            <div class="crm-grid-2">
               <div class="crm-field">
                 <span class="mini-label">Склад</span>
                 <el-select v-model="form.warehouse_id" class="modern-select">
@@ -158,110 +158,60 @@
                 </el-select>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- COLUMN 2: COMMUNICATIONS & REMINDERS -->
-        <div class="crm-col-center">
-          <!-- 4. Комунікаційний Хаб -->
-          <div class="crm-glass-card comm-hub">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><Promotion /></el-icon>
-                Комунікації
-              </div>
+            <div class="crm-field" style="margin-top: 16px;">
+              <span class="mini-label">Доставка</span>
+              <el-input v-model="form.delivery_address" placeholder="Адреса або номер відділення" />
             </div>
 
-            <!-- Reminders Block (Restored) -->
-            <div class="reminders-block" v-if="missedTasks.length">
-              <span class="mini-label" style="color: #9A3412;">Пропущені нагадування</span>
-              <div v-for="task in missedTasks" :key="task.id" class="reminder-item">
-                <el-icon class="reminder-icon"><Bell /></el-icon>
-                <div class="reminder-body">
-                  <div style="font-size: 12px; font-weight: 700; color: #7C2D12;">Зателефонувати клієнту</div>
-                  <div style="font-size: 10px; color: #9A3412;">Мало відбутися: {{ formatDate(task.scheduled_at) }}</div>
-                </div>
-                <el-button type="warning" size="small" circle :icon="Check" @click="completeTask(task.id)" />
-              </div>
-            </div>
-
-            <!-- Interaction History -->
-            <div class="interaction-panel">
-              <span class="mini-label">Історія взаємодії</span>
-              <div class="history-scroll" style="max-height: 350px;">
-                <div v-if="contactHistory.length">
-                  <div v-for="log in contactHistory" :key="log.id" class="mini-log-item">
-                    <div class="ml-icon">
-                      {{ channels.find(c => c.code === log.communication_type.toLowerCase())?.icon || '📞' }}
-                    </div>
-                    <div class="ml-body">
-                      <span class="ml-res">{{ getResultHint(log.result) }}</span>
-                      <p class="ml-note" v-if="log.note">{{ log.note }}</p>
-                      <span class="ml-time">{{ formatDate(log.contacted_at) }}</span>
-                    </div>
+            <div class="analysis-section" v-if="form.product_id" style="margin-top: 20px;">
+              <span class="mini-label">Аналіз матеріалів</span>
+              <div class="mat-list-compact">
+                <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
+                  <span class="mat-name">{{ m.component_name }}</span>
+                  <div class="mat-status-val">
+                    <span v-if="m.status === 'ok'" class="status-ok">ОК</span>
+                    <span v-else class="status-need">Замовити: {{ Math.max(0, m.required_qty - m.available_qty) }}</span>
                   </div>
                 </div>
-                <div v-else class="mat-empty">Історія поки що порожня</div>
               </div>
-            </div>
-
-            <!-- Contact Panel -->
-            <div class="contact-action-box" v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)">
-              <CrmContactPanel
-                v-model:contact-comm-type="contactCommType"
-                v-model:contact-plan-reason="contactPlanReason"
-                v-model:contact-next-at="contactNextAt"
-                v-model:contact-note="contactNote"
-                :form="form"
-                :order-id="orderId"
-                :communication-types="communicationTypes"
-                :contact-results="contactResults"
-                :contact-result="contactResult"
-                :next-touch-summary="nextTouchSummary"
-                :saving-contact="savingContact"
-                :get-result-hint="getResultHint"
-                @set-next-contact-preset="setNextContactPreset"
-                @apply-contact-result="contactResult = $event"
-                @log-contact="onLogContact"
-              />
             </div>
           </div>
         </div>
 
-        <!-- COLUMN 3: FINANCE & STRATEGY -->
-        <div class="crm-col-side">
-          <div class="crm-glass-card finance-premium-card">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><Wallet /></el-icon>
-                Фінанси
-              </div>
+        <!-- RIGHT COLUMN (35% - Sticky) -->
+        <div class="crm-sidebar-right">
+          <div class="crm-block-card card-summary">
+            <div class="block-title">
+              <el-icon><Wallet /></el-icon> Підсумок замовлення
             </div>
 
-            <div class="finance-amount-display">
-              <div class="main-total">{{ formatCurrency(form.total_amount) }} <span class="total-currency">₴</span></div>
-              <div class="mini-label" style="margin-top: 4px;">Сума замовлення</div>
+            <div class="summary-total-large">
+              <el-input-number v-model="form.total_amount" :controls="false" class="large-total-input" />
+              <span style="font-size: 20px; color: #94A3B8; margin-left: 8px;">₴</span>
             </div>
 
-            <CrmOrderSummary
-              :form="form"
-              :priorities="priorities"
-              :managers="users"
-              :format-currency="formatCurrency"
-              @update-amount="updateTotalAmount"
-            />
-          </div>
-
-          <div class="crm-glass-card">
-            <div class="card-head-premium">
-              <div class="card-title-premium">
-                <el-icon><Collection /></el-icon>
-                Пріоритет та Менеджер
-              </div>
-            </div>
-            
             <div class="crm-field">
-              <span class="mini-label">Приорітет</span>
+              <span class="mini-label">Передоплата</span>
+              <div class="prepay-grid">
+                <button v-for="pct in [0, 30, 50, 100]" :key="pct"
+                        class="prepay-btn" :class="{ active: isPrepayActive(pct) }"
+                        @click="setPrepayPercent(pct)">
+                  {{ pct === 0 ? 'Без' : pct + '%' }}
+                </button>
+              </div>
+              <el-input-number v-model="form.prepayment_amount" :controls="false" style="width: 100%" />
+            </div>
+
+            <div class="crm-field" style="margin-top: 16px;">
+              <span class="mini-label">Менеджер</span>
+              <el-select v-model="form.manager_id" class="modern-select">
+                <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
+              </el-select>
+            </div>
+
+            <div class="crm-field" style="margin-top: 16px;">
+              <span class="mini-label">Пріоритет</span>
               <div class="priority-pills">
                 <div v-for="p in priorities" :key="p.id" class="priority-pill"
                      :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
@@ -272,16 +222,96 @@
             </div>
 
             <div class="crm-field" style="margin-top: 16px;">
-              <span class="mini-label">Відповідальний менеджер</span>
-              <el-select v-model="form.manager_id" placeholder="Оберіть менеджера" class="modern-select">
-                <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
-              </el-select>
+              <span class="mini-label">Дедлайн</span>
+              <el-date-picker v-model="form.deadline_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
             </div>
+
+            <div class="action-buttons-stack">
+              <el-button class="btn-draft" @click="saveDraft">Записати чернетку</el-button>
+              <el-button class="btn-save-main" @click="saveAndClose">Зберегти та передати</el-button>
+            </div>
+          </div>
+          
+          <!-- Missed Reminders (Small card) -->
+          <div class="crm-block-card" v-if="missedTasks.length" style="border-left-color: #EF4444;">
+             <div class="block-title" style="color: #EF4444;">
+                <el-icon><Bell /></el-icon> Нагадування
+             </div>
+             <div v-for="task in missedTasks" :key="task.id" class="reminder-item">
+                <div class="reminder-body">
+                  <div style="font-size: 11px; font-weight: 700;">Передзвонити клієнту</div>
+                  <div style="font-size: 9px; color: #94A3B8;">{{ formatDate(task.scheduled_at) }}</div>
+                </div>
+                <el-button type="danger" size="small" circle :icon="Check" @click="completeTask(task.id)" />
+             </div>
           </div>
         </div>
 
       </div>
     </div>
+
+    <!-- CLIENT DRAWER (HISTORY & PROFILE) -->
+    <el-drawer
+      v-model="showClientDrawer"
+      title="Профіль клієнта та історія"
+      direction="rtl"
+      size="450px"
+    >
+      <div v-if="clientProfile" class="client-drawer-content">
+        <div class="drawer-section">
+          <span class="mini-label">Основна інформація</span>
+          <div class="profile-main">
+            <h3>{{ clientProfile.name }}</h3>
+            <p>{{ clientProfile.phone }}</p>
+            <div class="profile-stats">
+              <div class="stat-box">
+                <b>{{ formatCurrency(clientProfile.ltv) }} ₴</b>
+                <span>LTV</span>
+              </div>
+              <div class="stat-box">
+                <b>{{ clientProfile.orders_count }}</b>
+                <span>Замовлень</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section" style="margin-top: 24px;">
+          <span class="mini-label">Історія взаємодії</span>
+          <div class="drawer-history-list">
+            <div v-for="log in contactHistory" :key="log.id" class="mini-log-item">
+               <div class="ml-icon">{{ channels.find(c => c.code === log.communication_type.toLowerCase())?.icon || '📞' }}</div>
+               <div class="ml-body">
+                  <span class="ml-res">{{ getResultHint(log.result) }}</span>
+                  <p class="ml-note" v-if="log.note">{{ log.note }}</p>
+                  <span class="ml-time">{{ formatDate(log.contacted_at) }}</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section" style="margin-top: 24px;">
+          <span class="mini-label">Новий контакт</span>
+          <CrmContactPanel
+            v-model:contact-comm-type="contactCommType"
+            v-model:contact-plan-reason="contactPlanReason"
+            v-model:contact-next-at="contactNextAt"
+            v-model:contact-note="contactNote"
+            :form="form"
+            :order-id="orderId"
+            :communication-types="communicationTypes"
+            :contact-results="contactResults"
+            :contact-result="contactResult"
+            :next-touch-summary="nextTouchSummary"
+            :saving-contact="savingContact"
+            :get-result-hint="getResultHint"
+            @set-next-contact-preset="setNextContactPreset"
+            @apply-contact-result="contactResult = $event"
+            @log-contact="onLogContact"
+          />
+        </div>
+      </div>
+    </el-drawer>
 
     <!-- Create Counterparty Dialog -->
     <el-dialog v-model="cpDialogVisible" title="Новий клієнт" width="500px" class="saas-dialog">
@@ -451,6 +481,25 @@ const completeTask = async (taskId) => {
 }
 
 const clientProfile = ref(null)
+const showClientDrawer = ref(false)
+
+const currentStep = computed(() => {
+  if (!form.counterparty_id) return 1
+  if (!form.product_id) return 2
+  if (!form.warehouse_id) return 3
+  return 4
+})
+
+const isPrepayActive = (pct) => {
+  if (!form.total_amount) return false
+  return Math.round((form.prepayment_amount || 0) / form.total_amount * 100) === pct
+}
+
+const setPrepayPercent = (pct) => {
+  if (form.total_amount > 0) {
+    form.prepayment_amount = Math.round(form.total_amount * (pct / 100))
+  }
+}
 
 const loadClientProfile = async (id) => {
   if (!id) {
@@ -849,6 +898,12 @@ onMounted(() => {
 })
 
 // Watchers
+watch(() => form.counterparty_id, (newVal) => {
+  if (newVal) {
+    loadClientProfile(newVal)
+    loadContacts()
+  }
+})
 watch(() => form.product_id, (newVal) => {
   if (newVal) checkMaterials()
 })
