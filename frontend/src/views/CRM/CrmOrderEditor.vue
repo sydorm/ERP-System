@@ -16,123 +16,62 @@
     <div class="crm-body">
       <div class="crm-editor-grid-4">
         <!-- 1. Дані клієнта -->
-        <div class="crm-card client-data premium-card">
-          <div class="client-data-header">
-            <div class="crm-card-title">
-              <el-icon><User /></el-icon>
-              Дані клієнта
-            </div>
-            <div class="client-badges" v-if="clientProfile">
-              <el-tag type="success" effect="dark" size="small" round>
-                LTV: {{ formatCurrency(clientProfile.ltv) }} ₴
-              </el-tag>
-              <el-tag type="info" size="small" round style="margin-left: 8px;">
-                Замовлень: {{ clientProfile.orders_count }}
-              </el-tag>
-            </div>
+        <div class="crm-card client-data premium-card-clean">
+          <div class="crm-card-title">
+            <el-icon><User /></el-icon>
+            Дані клієнта
           </div>
           
-          <div class="card-inner-split">
-            <!-- Left Sub-block: Main Info -->
-            <div class="split-left">
-              <div class="crm-field">
-                <label class="crm-label">Клієнт</label>
-                <div style="display: flex; gap: 8px;">
-                  <el-select
-                    v-model="form.counterparty_id"
-                    filterable
-                    remote
-                    :remote-method="searchCounterparties"
-                    placeholder="Пошук клієнта..."
-                    class="cp-select modern-select"
-                    :class="{ 'field-error': vErrors.counterparty_id }"
-                  >
-                    <el-option
-                      v-for="cp in counterparties"
-                      :key="cp.id"
-                      :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
-                      :value="cp.id"
-                    />
-                  </el-select>
-                  <el-button @click="openCreateCounterparty" :icon="Plus" circle />
-                </div>
-              </div>
+          <div class="client-selection-row">
+            <el-select
+              v-model="form.counterparty_id"
+              filterable
+              remote
+              :remote-method="searchCounterparties"
+              placeholder="Виберіть клієнта..."
+              class="cp-select-large"
+              :class="{ 'field-error': vErrors.counterparty_id }"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+              <el-option
+                v-for="cp in counterparties"
+                :key="cp.id"
+                :label="cp.name + (cp.phone ? ' (' + cp.phone + ')' : '')"
+                :value="cp.id"
+              />
+            </el-select>
+            <el-button type="primary" class="add-cp-btn" @click="openCreateCounterparty">
+              <el-icon><Plus /></el-icon>
+              Новий клієнт
+            </el-button>
+          </div>
 
-              <div class="crm-grid-2">
-                <div class="crm-field">
-                  <label class="crm-label">Джерело</label>
-                  <el-select v-model="form.lead_source_id" placeholder="Джерело" class="modern-select">
-                    <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
-                  </el-select>
-                </div>
-                <div class="crm-field">
-                  <label class="crm-label">Місто / Доставка</label>
-                  <el-input v-model="form.city" placeholder="Населений пункт" />
-                </div>
-              </div>
-              
-              <div class="crm-grid-2">
-                <div class="crm-field">
-                  <label class="crm-label">Приорітет</label>
-                  <div class="priority-pills">
-                    <div 
-                      v-for="p in priorities" 
-                      :key="p.id"
-                      class="priority-pill"
-                      :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
-                      @click="form.priority_id = p.id; form.priority = p.code"
-                    >
-                      {{ p.name }}
-                    </div>
-                  </div>
-                </div>
-                <div class="crm-field">
-                  <label class="crm-label">Канал зв'язку</label>
-                  <div class="channel-pills">
-                    <div 
-                      v-for="ch in channels" 
-                      :key="ch.code"
-                      class="channel-pill"
-                      :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
-                      @click="form.channel = ch.code"
-                    >
-                      {{ ch.icon }} {{ ch.name }}
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div class="crm-grid-3">
+            <div class="crm-field">
+              <label class="crm-label">Джерело ліда</label>
+              <el-select v-model="form.lead_source_id" placeholder="Звідки дізналися?" class="modern-select">
+                <el-option v-for="s in leadSources" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
             </div>
-
-            <!-- Right Sub-block: Interaction History -->
-            <div class="split-right">
-              <div class="history-title crm-label">Історія зв'язку</div>
-              
-              <div v-if="clientProfile" class="history-scroll">
-                <div v-if="contactHistory.length">
-                  <div v-for="log in contactHistory" :key="log.id" class="mini-log-item">
-                    <div class="ml-icon">
-                      {{ channels.find(c => c.code === log.communication_type.toLowerCase())?.icon || '📞' }}
-                    </div>
-                    <div class="ml-body">
-                      <span class="ml-res">{{ getResultHint(log.result) }}</span>
-                      <p class="ml-note" v-if="log.note">{{ log.note }}</p>
-                      <span class="ml-time">{{ formatDate(log.contacted_at) }}</span>
-                    </div>
-                  </div>
+            <div class="crm-field">
+              <label class="crm-label">Місто / Відділення</label>
+              <el-input v-model="form.city" placeholder="Куди відправляти?" />
+            </div>
+            <div class="crm-field">
+              <label class="crm-label">Канал комунікації</label>
+              <div class="channel-pills-mini">
+                <div 
+                  v-for="ch in channels" 
+                  :key="ch.code"
+                  class="ch-mini-pill"
+                  :class="[`ch-${ch.code}`, { active: form.channel === ch.code }]"
+                  @click="form.channel = ch.code"
+                  :title="ch.name"
+                >
+                  {{ ch.icon }}
                 </div>
-                <div v-else class="mat-empty" style="padding: 20px;">
-                  Історія замовлення порожня
-                </div>
-
-                <div class="mini-history" v-if="clientProfile.orders.length > 1">
-                  <label class="crm-label" style="font-size: 9px; margin-bottom: 4px; display: block;">Інші замовлення</label>
-                  <div v-for="o in clientProfile.orders.filter(ord => ord.id !== orderId)" :key="o.id" class="mini-history-item">
-                    #{{ o.order_number }} — {{ formatCurrency(o.total_amount) }} ₴ ({{ o.crm_stage }})
-                  </div>
-                </div>
-              </div>
-              <div v-else class="mat-empty" style="text-align: center; margin-top: 40px;">
-                Виберіть клієнта для перегляду історії
               </div>
             </div>
           </div>
@@ -203,7 +142,22 @@
         <div class="crm-card analysis-data">
           <div class="crm-card-title">
             <el-icon><DataAnalysis /></el-icon>
-            Аналіз
+            Аналіз та Приорітет
+          </div>
+
+          <div class="crm-field">
+            <label class="crm-label">Приорітет замовлення</label>
+            <div class="priority-pills">
+              <div 
+                v-for="p in priorities" 
+                :key="p.id"
+                class="priority-pill"
+                :class="[`pp-${p.id}`, { active: form.priority_id === p.id }]"
+                @click="form.priority_id = p.id; form.priority = p.code"
+              >
+                {{ p.name }}
+              </div>
+            </div>
           </div>
 
           <div class="analysis-section" v-if="form.product_id">
@@ -317,7 +271,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Picture, MagicStick, Loading, Printer, Promotion,
-  User, Box, DataAnalysis, Wallet
+  User, Box, DataAnalysis, Wallet, Search
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'

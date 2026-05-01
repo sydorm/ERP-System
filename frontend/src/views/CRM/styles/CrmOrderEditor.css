@@ -144,6 +144,85 @@
   font-size: 12px; font-weight: 500; color: #475569; cursor: pointer;
 }
 .crm-draft-btn:hover { background: #f8fafc; }
+/* ─── CLEAN PREMIUM CLIENT CARD ─── */
+.premium-card-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.client-selection-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cp-select-large {
+  flex: 1;
+}
+
+.cp-select-large :deep(.el-input__wrapper) {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.add-cp-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 16px;
+}
+
+.channel-pills-mini {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.ch-mini-pill {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  background: transparent;
+}
+
+.ch-mini-pill:hover {
+  background: #fff;
+  transform: translateY(-2px);
+}
+
+.ch-mini-pill.active {
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transform: scale(1.1);
+}
+
+.ch-mini-pill.active.ch-instagram { color: #d946ef; }
+.ch-mini-pill.active.ch-website   { color: #3b82f6; }
+.ch-mini-pill.active.ch-telegram  { color: #0ea5e9; }
+.ch-mini-pill.active.ch-olx       { color: #f59e0b; }
+.ch-mini-pill.active.ch-phone     { color: #10b981; }
+
 .crm-save-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 16px; border-radius: 8px; border: none;
