@@ -2,37 +2,39 @@
   <div class="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans antialiased text-slate-900">
     <div class="max-w-[1600px] mx-auto">
       
-      <!-- ─── HEADER (Premium Action Bar) ─── -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 px-2">
-        <div class="space-y-1">
-          <nav class="flex gap-2 text-[10px] font-bold text-indigo-500/50 uppercase tracking-[2px] mb-2">
-            <span>CRM</span>
-            <span>/</span>
-            <span>Заявка</span>
-            <span v-if="orderId" class="text-indigo-600/30">#{{ form.order_number }}</span>
-          </nav>
-          <h1 class="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-4">
-            {{ orderId ? 'Редагування заявки' : 'Нова заявка' }}
-            <span v-if="orderId" class="px-3 py-1 bg-white border border-gray-100 rounded-lg text-sm font-medium text-slate-400 shadow-sm">
-              {{ form.order_number }}
-            </span>
-          </h1>
-        </div>
-        <div class="flex items-center gap-3">
-          <button 
-            @click="save('draft')"
-            class="px-6 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm active:scale-95"
-          >
-            Записати чернетку
-          </button>
-          <button 
-            @click="save('production')"
-            :disabled="saving"
-            class="px-8 py-3 bg-indigo-600 rounded-2xl text-xs font-bold text-white hover:bg-indigo-700 shadow-[0_10px_20px_rgba(79,70,229,0.2)] hover:shadow-[0_15px_30px_rgba(79,70,229,0.3)] transition-all active:scale-95 flex items-center gap-2"
-          >
-            <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
-            Зберегти та передати
-          </button>
+      <div class="sticky top-0 z-[100] -mx-4 px-4 py-4 mb-10 bg-[#F8FAFC]/80 backdrop-blur-xl border-b border-gray-100/50">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-1">
+            <h1 class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-3">
+              {{ orderId ? 'Заявка' : 'Нова заявка' }}
+              <span v-if="orderId" class="px-2 py-0.5 bg-white border border-gray-100 rounded-lg text-xs font-bold text-indigo-600 shadow-sm">
+                {{ form.order_number }}
+              </span>
+            </h1>
+            <!-- Mini Stage Stepper -->
+            <div class="flex items-center gap-1.5 pt-1">
+              <div v-for="(s, idx) in ['new', 'negotiation', 'payment', 'production', 'delivery', 'done']" :key="s" class="flex items-center gap-1">
+                <div 
+                  :class="[
+                    'w-6 h-1 rounded-full transition-all', 
+                    form.crm_stage === s ? 'bg-indigo-600 w-10' : 'bg-gray-200'
+                  ]"
+                />
+              </div>
+              <span class="text-[9px] font-black uppercase text-indigo-400 ml-2 tracking-widest">{{ form.crm_stage }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button @click="save('draft')" class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-[11px] font-black text-gray-500 hover:bg-gray-50 transition-all shadow-sm">ЧЕРНЕТКА</button>
+            <button 
+              @click="save('production')" 
+              :disabled="saving"
+              class="px-7 py-2.5 bg-indigo-600 rounded-xl text-[11px] font-black text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
+            >
+              <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
+              {{ orderId ? 'ОНОВИТИ' : 'СТВОРІТИ' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -54,20 +56,20 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
               <!-- Autocomplete Client Search -->
               <div class="md:col-span-2 space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Пошук або створення</label>
-                <div class="relative group">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Пошук клієнта</label>
+                <div class="flex gap-2">
                   <el-select
                     v-model="form.counterparty_id"
                     filterable
                     remote
                     clearable
-                    placeholder="Введіть ПІБ або номер телефону..."
+                    placeholder="ПІБ або телефон..."
                     :remote-method="searchCounterparties"
                     @change="onClientChange"
-                    class="saas-select-premium w-full"
+                    class="saas-select-premium flex-1"
                   >
                     <el-option
                       v-for="item in counterparties"
@@ -76,38 +78,40 @@
                       :value="item.id"
                     />
                   </el-select>
-                </div>
-              </div>
-
-              <!-- Source Chips -->
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Джерело клієнта</label>
-                <div class="flex flex-wrap gap-2">
-                  <button 
-                    v-for="src in leadSourceIcons" 
-                    :key="src.id"
-                    @click="form.lead_source_id = src.id"
-                    :class="[
-                      'flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-bold transition-all shadow-sm',
-                      form.lead_source_id === src.id 
-                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200' 
-                        : 'bg-white border-gray-100 text-slate-500 hover:border-indigo-300'
-                    ]"
-                  >
-                    <el-icon :size="14"><component :is="src.icon" /></el-icon>
-                    <span>{{ src.name }}</span>
+                  <button @click="openCreateCounterparty" class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all shadow-sm">
+                    <el-icon :size="18"><Plus /></el-icon>
                   </button>
                 </div>
               </div>
 
-              <!-- Additional Client Fields -->
               <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Місто</label>
                 <input v-model="form.city" class="saas-input-premium" placeholder="Київ" />
               </div>
               <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Телефон (для швидкого зв'язку)</label>
-                <input v-model="form.phone" class="saas-input-premium" placeholder="+38 (0XX) XXX-XX-XX" />
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Телефон</label>
+                <input v-model="form.phone" class="saas-input-premium" placeholder="+380..." />
+              </div>
+            </div>
+
+            <!-- Source Chips (Full Width) -->
+            <div class="mt-8 space-y-3">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Джерело</label>
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  v-for="src in leadSourceIcons" 
+                  :key="src.id"
+                  @click="form.lead_source_id = src.id"
+                  :class="[
+                    'flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold transition-all shadow-sm',
+                    form.lead_source_id === src.id 
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-100' 
+                      : 'bg-white border-gray-100 text-slate-500 hover:border-indigo-200'
+                  ]"
+                >
+                  <el-icon :size="14"><component :is="src.icon" /></el-icon>
+                  <span>{{ src.name }}</span>
+                </button>
               </div>
             </div>
           </section>
@@ -284,10 +288,9 @@
                 </div>
               </div>
 
-              <!-- Prepayment Presets -->
               <div class="flex gap-2">
                 <button 
-                  v-for="pct in [30, 50, 100]" 
+                  v-for="pct in [20, 30, 50, 100]" 
                   :key="pct"
                   @click="setPrepayPercent(pct)"
                   class="flex-1 py-2 rounded-xl border border-white/10 text-[10px] font-black uppercase hover:bg-white/5 transition-all"
@@ -474,6 +477,19 @@ const getResultHint = (res) => {
 const setPrepayPercent = (pct) => {
   form.prepayment_amount = Math.round(form.total_amount * (pct / 100))
 }
+
+// Watch for payment status automation
+watch(() => form.prepayment_amount, (val) => {
+  if (val >= form.total_amount && form.total_amount > 0) {
+    form.payment_status = 'paid'
+  } else if (val > 0) {
+    form.payment_status = 'partial'
+  } else {
+    form.payment_status = 'unpaid'
+  }
+})
+
+import { Plus } from '@element-plus/icons-vue'
 
 const searchCounterparties = async (query) => {
   if (!query || query.length < 2) return
