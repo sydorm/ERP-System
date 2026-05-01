@@ -297,12 +297,11 @@ const productAttributes = ref([])
 const contactHistory = ref([])
 
 const stages = [
-  { key: 'new', label: 'Заявка' },
-  { key: 'negotiation', label: 'Перемовини' },
-  { key: 'payment', label: 'Оплата' },
-  { key: 'processing', label: 'В роботі' },
-  { key: 'delivery', label: 'Доставка' },
-  { key: 'done', label: 'Завершено' }
+  { key: 'new', label: 'НОВІ' },
+  { key: 'payment', label: 'ОПЛАТА' },
+  { key: 'processing', label: 'В РОБОТІ' },
+  { key: 'production', label: 'ВИРОБНИЦТВО' },
+  { key: 'done', label: 'ВИКОНАНО' }
 ]
 
 // Contact Panel State
