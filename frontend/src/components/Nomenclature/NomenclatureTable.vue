@@ -154,12 +154,12 @@ const isAllSelected = computed(() => {
 .nom-header {
   background: #ffffff !important;
   border-bottom: 2px solid #F1F5F9;
-  height: 92px !important;
-  min-height: 92px !important;
+  height: 64px !important;
+  min-height: 64px !important;
   position: sticky;
   top: 0;
   z-index: 20;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
@@ -170,7 +170,7 @@ const isAllSelected = computed(() => {
   letter-spacing: 0.14em;
   color: #475569;
   padding: 0 16px;
-  height: 92px;
+  height: 64px;
   display: flex;
   align-items: center;
   white-space: nowrap;
