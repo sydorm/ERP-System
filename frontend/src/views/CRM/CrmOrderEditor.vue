@@ -454,16 +454,16 @@ onMounted(loadData)
 .order-topbar-wrapper {
   margin: 0 !important;
   padding: 0 !important;
-  width: 100% !important;
+  width: calc(100% + 48px) !important;
+  margin-left: -24px !important;
+  margin-right: -24px !important;
 }
 
 .order-topbar {
   position: sticky;
-  top: 64px; /* Висота головного хедера DashboardLayout.vue */
-  z-index: 1050;
+  top: 0;
+  z-index: 99;
   width: 100%;
-  margin-left: 0;
-  margin-right: 0;
   border-radius: 0;
   border-left: none;
   border-right: none;
@@ -471,7 +471,7 @@ onMounted(loadData)
   border-bottom: 1px solid #EAECF4;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
-  padding: 0;
+  padding: 0 24px;
   transition: background 0.3s ease;
 }
 

@@ -24,10 +24,8 @@
               :sort-option="sortOption"
               :active-controls-count="activeControlsCount"
               :is-any-filter-active="isAnyFilterActive"
-              :can-view-analytics="userStore.hasPermission('crm.analytics')"
               @update:search-query="searchQuery = $event"
               @update:sort-option="sortOption = $event"
-              @analytics="viewMode = 'analytics'"
               @reset-all="resetAll"
               @reset-filters="resetFilters"
               @apply-filters="applyFilters"
@@ -185,12 +183,7 @@
       />
 
       </div><!-- /crm-board-body -->
-    </div><!-- /crm-board-page (Board View) -->
-
-    <!-- Analytics View -->
-    <div class="crm-analytics-view fade-in" v-show="viewMode === 'analytics'">
-      <CrmInsights />
-    </div>
+    </div><!-- /crm-board-page -->
   </div><!-- /crm-board-page-wrapper -->
 </template>
 
@@ -208,9 +201,7 @@ import CrmBoardToolbar from './components/CrmBoardToolbar.vue'
 import CrmSummaryCards from './components/CrmSummaryCards.vue'
 import CrmAttentionPanel from './components/CrmAttentionPanel.vue'
 import CrmKanbanColumn from './components/CrmKanbanColumn.vue'
-import CrmInsights from './CrmInsights.vue'
 
-const viewMode = ref('board') // 'board' or 'analytics'
 const clientProfileVisible = ref(false)
 const selectedClientId = ref(null)
 const attentionExpanded = ref(false)
