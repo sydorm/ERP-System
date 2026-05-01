@@ -433,6 +433,7 @@
                 <el-option label="Об'єм (W * H * L)" value="volume" />
                 <el-option label="Своя формула" value="formula" />
                 <el-option label="Характеристики виробу" value="characteristic_mapping" />
+                <el-option label="Тканина / розкрій" value="fabric_cutting" />
               </el-select>
             </el-form-item>
             
@@ -594,8 +595,15 @@
                   Параметричний розрахунок ігнорує поле "Кількість" в таблиці. Його буде розраховано динамічно.
                 </el-alert>
             </div>
-            
 
+            <FabricCuttingCalculator
+                v-if="activeCalcItem.calc_type === 'fabric_cutting'"
+                :config="activeCalcItem.calc_dim_config"
+                :component-id="activeCalcItem.component_id"
+                :product-dimensions="isSimulationMode ? simulationDims : props.productDimensions"
+                :product-attributes="productAttributes"
+                class="mt-4"
+            />
 
         </el-form>
       </div>
@@ -620,6 +628,8 @@ import {
 } from '@/api/specifications'
 import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
+import { computeFabricCutting, FABRIC_CUTTING_DEFAULTS } from '@/composables/useFabricCuttingCalc.js'
+import FabricCuttingCalculator from '@/views/Inventory/ProductTabs/components/FabricCuttingCalculator.vue'
 
 const dictStore = useDictionaryStore()
 
@@ -1073,6 +1083,25 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
             return returnDetails ? { result: 'Помилка', details: ['Помилка у формулі'] } : 'Помилка'
         }
     }
+    else if (item.calc_type === 'fabric_cutting') {
+        const fcCfg = (item.calc_dim_config || {}).fabric_cutting || {}
+        const dims = {
+            width_mm:  parseFloat(activeDims.width_mm)  || 0,
+            height_mm: parseFloat(activeDims.height_mm) || 0,
+            length_mm: parseFloat(activeDims.length_mm) || 0,
+        }
+        // merge resolved characteristic values into dims
+        const customAttrs = {}
+        productAttributes.value.forEach(a => {
+            const v = getAttrValue(a.name)
+            if (v !== null) customAttrs[a.name] = v
+        })
+        const fcResult = computeFabricCutting(fcCfg, { ...dims, ...customAttrs }, !includeWaste)
+        result = fcResult.valid ? fcResult.finalQty : 0
+        details = fcResult.breakdownLines || []
+        if (returnDetails) return { result, details }
+        return result
+    }
 
     if (returnDetails) return { result, details }
     return result
@@ -1430,6 +1459,14 @@ const openCalcDialog = (item) => {
         if (!item.calc_dim_config.l.default && props.productDimensions.length_mm) item.calc_dim_config.l.default = props.productDimensions.length_mm
     }
 
+    // Ensure fabric_cutting sub-key exists when type is set
+    if (item.calc_type === 'fabric_cutting') {
+        if (!item.calc_dim_config) item.calc_dim_config = {}
+        if (!item.calc_dim_config.fabric_cutting) {
+            item.calc_dim_config = { ...item.calc_dim_config, fabric_cutting: { ...FABRIC_CUTTING_DEFAULTS } }
+        }
+    }
+
     // NEW: Auto-sync characteristic names from global variant_config
     if (props.productDimensions.variant_config) {
         const vCfg = props.productDimensions.variant_config
@@ -1453,6 +1490,12 @@ const handleTypeChange = (item) => {
     if (item.calc_type === 'characteristic_mapping') {
         if (!item.characteristic_mappings) item.characteristic_mappings = []
         loadAttributesForMapping(props.productId, item.component_id)
+    }
+    if (item.calc_type === 'fabric_cutting') {
+        if (!item.calc_dim_config) item.calc_dim_config = {}
+        if (!item.calc_dim_config.fabric_cutting) {
+            item.calc_dim_config = { ...item.calc_dim_config, fabric_cutting: { ...FABRIC_CUTTING_DEFAULTS } }
+        }
     }
 }
 

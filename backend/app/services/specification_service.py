@@ -307,3 +307,77 @@ class SpecificationService:
             return float(eval(cleaned))
         except:
             return 0.0
+
+    @staticmethod
+    def _calc_fabric_cutting(calc_dim_config: Dict[str, Any], parent_dimensions: Dict[str, Any]) -> float:
+        """
+        Mirror of useFabricCuttingCalc.js → computeFabricCutting().
+        Formula:
+          cutWidthMm  = baseWidthMm  + allowanceLeft  + allowanceRight
+          cutLengthMm = baseLengthMm + allowanceTop   + allowanceBottom
+          itemsPerRow = floor(rollWidthMm / cutWidthMm)
+          rowsNeeded  = ceil(pieceCount / itemsPerRow)
+          linearMeters = (rowsNeeded * cutLengthMm) / 1000
+          finalQty    = linearMeters * (1 + wastePercent / 100)
+        """
+        import math
+        cfg = calc_dim_config.get('fabric_cutting') or {}
+        custom_attrs = parent_dimensions.get('custom_attributes') or {}
+
+        def resolve_dim(source, char_name, manual_value):
+            if source == 'width_mm':      return float(parent_dimensions.get('width_mm') or 0)
+            if source == 'length_mm':     return float(parent_dimensions.get('length_mm') or 0)
+            if source == 'height_mm':     return float(parent_dimensions.get('height_mm') or 0)
+            if source == 'characteristic': return float(custom_attrs.get(char_name) or 0)
+            return float(manual_value or 0)
+
+        base_width_mm  = resolve_dim(cfg.get('baseWidthSource', 'width_mm'),  cfg.get('baseWidthCharName', ''),  cfg.get('manualBaseWidthMm', 0))
+        base_length_mm = resolve_dim(cfg.get('baseLengthSource', 'length_mm'), cfg.get('baseLengthCharName', ''), cfg.get('manualBaseLengthMm', 0))
+
+        if base_width_mm <= 0 or base_length_mm <= 0:
+            return 0.0
+
+        a_l = float(cfg.get('allowanceLeftMm') or 0)
+        a_r = float(cfg.get('allowanceRightMm') or 0)
+        a_t = float(cfg.get('allowanceTopMm') or 0)
+        a_b = float(cfg.get('allowanceBottomMm') or 0)
+
+        cut_width_mm  = base_width_mm  + a_l + a_r
+        cut_length_mm = base_length_mm + a_t + a_b
+
+        roll_width_mm = float(cfg.get('rollWidthMm') or 0)
+        if roll_width_mm <= 0:
+            return 0.0
+
+        piece_count   = max(1, round(float(cfg.get('pieceCount') or 1)))
+        waste_percent = max(0.0, float(cfg.get('wastePercent') or 0))
+        allow_rotation  = bool(cfg.get('allowRotation', False))
+        respect_nap     = bool(cfg.get('respectNapDirection', False))
+
+        def try_orientation(cut_w, cut_l):
+            if roll_width_mm < cut_w or cut_w <= 0:
+                return None
+            items_per_row = math.floor(roll_width_mm / cut_w)
+            if items_per_row < 1:
+                return None
+            rows_needed = math.ceil(piece_count / items_per_row)
+            return rows_needed * cut_l / 1000.0
+
+        var_a = try_orientation(cut_width_mm, cut_length_mm)
+        chosen_meters = None
+
+        if allow_rotation and not respect_nap:
+            var_b = try_orientation(cut_length_mm, cut_width_mm)
+            if var_a is not None and var_b is not None:
+                chosen_meters = min(var_a, var_b)
+            elif var_a is not None:
+                chosen_meters = var_a
+            elif var_b is not None:
+                chosen_meters = var_b
+        else:
+            chosen_meters = var_a
+
+        if chosen_meters is None:
+            return 0.0
+
+        return chosen_meters * (1.0 + waste_percent / 100.0)
