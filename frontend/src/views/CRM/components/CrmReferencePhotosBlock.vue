@@ -1,8 +1,16 @@
 <template>
   <div class="reference-photos-container-premium">
-    <div class="upload-zone-wrapper" :class="{ 'has-photo': form.reference_photo }" @click="photoInput?.click()">
-      <div v-if="form.reference_photo" class="preview-overlay">
-        <img :src="form.reference_photo" class="photo-preview-image" />
+    <div
+      class="upload-zone-wrapper"
+      :class="{ 'has-photo': displayPhoto, 'is-dragging': isDragging }"
+      @click="photoInput?.click()"
+      @dragenter.prevent="isDragging = true"
+      @dragover.prevent="isDragging = true"
+      @dragleave.prevent="isDragging = false"
+      @drop.prevent="handleDrop"
+    >
+      <div v-if="displayPhoto" class="preview-overlay">
+        <img :src="displayPhoto" class="photo-preview-image" />
         <div class="overlay-actions">
           <div class="action-badge">
             <el-icon><Refresh /></el-icon>
@@ -16,7 +24,11 @@
         </div>
         <div class="text-group">
           <span class="main-text">Завантажити референс</span>
-          <span class="sub-text">Перетягніть файл або натисніть сюди</span>
+          <span class="sub-text">JPG, PNG або WEBP. Перетягніть файл сюди</span>
+        </div>
+        <div class="upload-hint-row">
+          <span>Drag & drop</span>
+          <span>Preview одразу</span>
         </div>
       </div>
     </div>
@@ -25,21 +37,61 @@
       type="file"
       accept="image/*"
       style="display:none"
-      @change="$emit('upload-photo', $event)"
+      @change="handleFileInput"
     />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { Picture, Refresh } from '@element-plus/icons-vue'
 
-defineProps({
+const props = defineProps({
   form: { type: Object, required: true },
 })
 
-defineEmits(['upload-photo'])
+const emit = defineEmits(['upload-photo'])
 const photoInput = ref(null)
+const localPreview = ref('')
+const isDragging = ref(false)
+
+const displayPhoto = computed(() => (
+  localPreview.value
+  || props.form.reference_photo
+  || props.form.photos?.find(photo => typeof photo === 'string')
+  || props.form.photos?.find(photo => photo?.preview_url)?.preview_url
+  || ''
+))
+
+const setPreview = (file) => {
+  if (!file) return
+  if (localPreview.value && localPreview.value.startsWith('blob:')) {
+    URL.revokeObjectURL(localPreview.value)
+  }
+  localPreview.value = URL.createObjectURL(file)
+  emit('upload-photo', {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    preview_url: localPreview.value,
+  })
+}
+
+const handleFileInput = (event) => {
+  setPreview(event.target.files?.[0])
+  event.target.value = ''
+}
+
+const handleDrop = (event) => {
+  isDragging.value = false
+  setPreview(event.dataTransfer?.files?.[0])
+}
+
+onBeforeUnmount(() => {
+  if (localPreview.value && localPreview.value.startsWith('blob:')) {
+    URL.revokeObjectURL(localPreview.value)
+  }
+})
 </script>
 
 <style scoped>
@@ -50,8 +102,10 @@ const photoInput = ref(null)
 .upload-zone-wrapper {
   position: relative;
   width: 100%;
-  min-height: 160px;
-  background: #fff;
+  min-height: 172px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(21, 185, 122, .08), transparent 34%),
+    #fff;
   border: 1.5px dashed #E2E8F0;
   border-radius: 24px;
   cursor: pointer;
@@ -67,6 +121,14 @@ const photoInput = ref(null)
   border-color: #10B981;
   background: #F0FDF4;
   border-style: solid;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 12px 28px rgba(21,185,122,.10);
+  transform: translateY(-1px);
+}
+
+.upload-zone-wrapper.is-dragging {
+  border-color: #15B97A;
+  background: #ECFDF5;
+  box-shadow: 0 0 0 4px rgba(21,185,122,.08), 0 16px 30px rgba(21,185,122,.14);
 }
 
 .upload-zone-wrapper.has-photo {
@@ -87,13 +149,15 @@ const photoInput = ref(null)
 .icon-circle {
   width: 54px;
   height: 54px;
-  background: white;
+  background:
+    linear-gradient(180deg, #FFFFFF, #F8FAFC);
   border-radius: 16px;
   display: grid;
   place-items: center;
   font-size: 26px;
   color: #10B981;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #DDF7EA;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
   transition: all 0.3s ease;
 }
 
@@ -121,6 +185,23 @@ const photoInput = ref(null)
   font-weight: 600;
 }
 
+.upload-hint-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.upload-hint-row span {
+  padding: 4px 8px;
+  border: 1px solid #DDF7EA;
+  border-radius: 999px;
+  color: #047857;
+  background: #ECFDF5;
+  font-size: 10px;
+  font-weight: 850;
+}
+
 .preview-overlay {
   width: 100%;
   height: 100%;
@@ -134,6 +215,10 @@ const photoInput = ref(null)
   height: 100%;
   object-fit: cover;
   transition: filter 0.3s ease;
+}
+
+.upload-zone-wrapper:hover .photo-preview-image {
+  filter: saturate(1.05) contrast(.96);
 }
 
 .overlay-actions {

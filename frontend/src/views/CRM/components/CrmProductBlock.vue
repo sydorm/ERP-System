@@ -24,14 +24,18 @@
         <!-- Completion Status -->
         <div class="status-badge-premium" :class="{ 'is-complete': isBlockComplete }">
           <el-icon><CircleCheck v-if="isBlockComplete" /><InfoFilled v-else /></el-icon>
-          <span>{{ isBlockComplete ? 'Конфігуровано' : 'Оберіть виріб' }}</span>
+          <span>{{ productStatusLabel }}</span>
+          <b>{{ productCompletionPct }}%</b>
         </div>
       </div>
     </div>
 
     <div class="product-selection-zone">
       <div class="input-card-premium full-width">
-        <label><el-icon class="text-emerald-500"><Box /></el-icon> Базова номенклатура</label>
+        <div class="field-headline">
+          <label><el-icon class="text-emerald-500"><Box /></el-icon> Базова номенклатура</label>
+          <span v-if="selectedProduct" class="selected-product-pill">{{ selectedProduct.sku || 'SKU не задано' }}</span>
+        </div>
         <el-select
           v-model="form.product_id"
           filterable
@@ -51,11 +55,27 @@
             </div>
           </el-option>
         </el-select>
+        <div v-if="selectedProduct" class="product-glance">
+          <div class="product-mark">
+            <el-icon><Box /></el-icon>
+          </div>
+          <div class="product-glance-copy">
+            <strong>{{ selectedProduct.name }}</strong>
+            <span>{{ productAttributes.length ? `${productAttributes.length} параметрів для налаштування` : 'Модель обрана, параметри не задані' }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <transition name="el-zoom-in-top">
       <div v-if="productAttributes.length" class="attributes-compact-zone">
+        <div class="attributes-zone-head">
+          <div>
+            <span class="zone-kicker">Параметри виробу</span>
+            <strong>Налаштування під клієнта</strong>
+          </div>
+          <em>{{ filledAttributes }} / {{ productAttributes.length }} заповнено</em>
+        </div>
         <div class="attributes-grid">
           <div v-for="attr in productAttributes" :key="attr.id" class="input-card-premium">
             <label>{{ attr.name }}</label>
@@ -107,7 +127,10 @@
 
     <div class="product-footer-premium">
       <div class="input-card-premium comment-card">
-        <label><el-icon class="text-slate-400"><EditPen /></el-icon> Коментар до замовлення</label>
+        <div class="functional-card-title">
+          <label><el-icon class="text-slate-400"><EditPen /></el-icon> Коментар до замовлення</label>
+          <span>Для виробництва</span>
+        </div>
         <el-input
           v-model="form.comment"
           type="textarea"
@@ -119,8 +142,11 @@
 
       <div class="media-card-premium">
         <div class="card-head">
-          <el-icon><Picture /></el-icon>
-          <span>Візуальні референси</span>
+          <div class="card-head-main">
+            <el-icon><Picture /></el-icon>
+            <span>Візуальні референси</span>
+          </div>
+          <em>{{ form.reference_photo ? '1 файл' : 'очікує файл' }}</em>
         </div>
         <CrmReferencePhotosBlock :form="form" @upload-photo="$emit('upload-photo', $event)" />
       </div>
@@ -144,24 +170,58 @@ defineEmits(['product-change', 'set-attr-value', 'set-attr-dim', 'upload-photo']
 const isBlockComplete = computed(() => {
   return props.form.product_id && (Object.keys(props.form.attributes_values || {}).length > 0)
 })
+
+const selectedProduct = computed(() => props.products.find(p => String(p.id) === String(props.form.product_id)))
+const filledAttributes = computed(() => (
+  Object.values(props.form.attributes_values || {}).filter(value => {
+    if (value == null || value === '') return false
+    if (typeof value === 'object') return Object.values(value).some(Boolean)
+    return true
+  }).length
+))
+const productCompletionPct = computed(() => {
+  const checks = [props.form.product_id, filledAttributes.value > 0, props.form.comment]
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+})
+const productStatusLabel = computed(() => {
+  if (isBlockComplete.value) return 'Конфігуровано'
+  if (props.form.product_id) return 'Потрібні параметри'
+  return 'Оберіть виріб'
+})
 </script>
 
 <style scoped>
 .crm-product-block-premium {
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(226, 232, 240, .9);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07), 0 1px 0 rgba(255, 255, 255, .9) inset;
   overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+.crm-product-block-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #15B97A, #0E905F);
+  opacity: .95;
+  z-index: 1;
 }
 
 /* --- HEADER PREMIUM --- */
 .block-header-premium {
-  padding: 16px 24px;
-  background: linear-gradient(90deg, #F0FDF4 0%, #FFFFFF 100%);
+  padding: 18px 24px 16px 28px;
+  background:
+    radial-gradient(circle at 11% 0%, rgba(21, 185, 122, .15), transparent 29%),
+    linear-gradient(90deg, #F0FDF4 0%, #FFFFFF 100%);
   border-bottom: 1px solid #F1F5F9;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 18px;
 }
 
 .step-pill-modern {
@@ -171,10 +231,21 @@ const isBlockComplete = computed(() => {
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: #10B981;
+  background: linear-gradient(135deg, #15B97A 0%, #0E905F 100%);
   color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 12px 24px rgba(21, 185, 122, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+.step-pill-modern::after {
+  content: '';
+  position: absolute;
+  inset: -40% -20% auto auto;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, .25);
+  border-radius: 999px;
 }
 .step-pill-modern .label { font-size: 8px; font-weight: 800; text-transform: uppercase; opacity: 0.8; line-height: 1; }
 .step-pill-modern .number { font-size: 16px; font-weight: 900; line-height: 1.1; }
@@ -182,16 +253,16 @@ const isBlockComplete = computed(() => {
 .header-icon-box {
   width: 32px;
   height: 32px;
-  background: white;
+  background: rgba(255, 255, 255, .9);
   border-radius: 8px;
   display: grid;
   place-items: center;
   color: #10B981;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 18px rgba(21,185,122,.11);
   border: 1px solid #DCFCE7;
 }
 
-.block-header-premium .title { font-size: 16px; font-weight: 800; color: #1E293B; margin: 0; }
+.block-header-premium .title { font-size: 17px; font-weight: 850; color: #0F172A; margin: 0; letter-spacing: -0.02em; }
 .block-header-premium .subtitle { font-size: 11px; color: #94A3B8; margin: 0; font-weight: 500; }
 
 .status-badge-premium {
@@ -199,35 +270,166 @@ const isBlockComplete = computed(() => {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: #F1F5F9;
+  background: rgba(241, 245, 249, .82);
+  border: 1px solid rgba(226, 232, 240, .9);
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
   color: #64748B;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
-.status-badge-premium.is-complete { background: #ECFDF5; color: #059669; }
+.status-badge-premium b {
+  color: #065F46;
+  font-size: 10px;
+  font-weight: 900;
+}
+.status-badge-premium.is-complete { background: #ECFDF5; border-color: #BBF7D0; color: #059669; }
 
 .product-selection-zone {
-  margin-bottom: 16px;
+  padding: 16px 16px 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FFFB 100%);
+}
+
+.field-headline,
+.functional-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selected-product-pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #BBF7D0;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.product-glance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid #DDF7EA;
+  background: linear-gradient(90deg, rgba(236, 253, 245, .9), rgba(255,255,255,.95));
+}
+
+.product-mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #15B97A, #0E905F);
+  box-shadow: 0 8px 14px rgba(21,185,122,.20);
+}
+
+.product-glance-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.18;
+}
+
+.product-glance-copy strong {
+  overflow: hidden;
+  color: #0F172A;
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-glance-copy span {
+  color: #64748B;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .input-card-premium {
-  @apply flex flex-col gap-1 p-3 rounded-xl transition-all duration-200;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
   background: #FFFFFF;
   border: 1px solid #E5EAF2;
   min-height: 68px;
 }
-.input-card-premium label { @apply flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1; }
-.input-card-premium label .el-icon { @apply text-emerald-400/80 text-[12px]; }
-.input-card-premium:focus-within { border-color: #10B981; background: #fff; }
+.input-card-premium:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 24px rgba(15,23,42,.045);
+  transform: translateY(-1px);
+}
+.input-card-premium label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.input-card-premium label .el-icon { color: rgba(21,185,122,.82); font-size: 12px; }
+.input-card-premium:focus-within { border-color: #10B981; background: #fff; box-shadow: 0 0 0 4px rgba(21,185,122,.06); }
 
 .attributes-compact-zone {
-  background: #F8FAFC;
-  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(248,250,252,.9), #FFFFFF);
+  border-radius: 18px;
   padding: 16px;
-  margin-bottom: 16px;
+  margin: 16px;
   border: 1px solid #F1F5F9;
+}
+
+.attributes-zone-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.attributes-zone-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.zone-kicker {
+  color: #10B981;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.attributes-zone-head strong {
+  color: #0F172A;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.attributes-zone-head em {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #BBF7D0;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .attributes-grid {
@@ -258,6 +460,7 @@ const isBlockComplete = computed(() => {
 .compact-pill:hover {
   border-color: #10B981;
   color: #10B981;
+  transform: translateY(-1px);
 }
 
 .compact-pill.active { background: #10B981; color: #fff; border-color: #10B981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
@@ -295,9 +498,23 @@ const isBlockComplete = computed(() => {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   gap: 20px;
+  padding: 0 16px 16px;
 }
 
-.comment-card { min-height: 140px; }
+.comment-card {
+  min-height: 172px;
+  background:
+    linear-gradient(180deg, #FFFFFF, #F8FAFC);
+}
+
+.functional-card-title span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #64748B;
+  background: #F1F5F9;
+  font-size: 10px;
+  font-weight: 800;
+}
 
 .media-card-premium {
   background: #fff;
@@ -307,17 +524,48 @@ const isBlockComplete = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.media-card-premium:hover {
+  border-color: #BBF7D0;
+  box-shadow: 0 12px 28px rgba(15,23,42,.055);
+  transform: translateY(-1px);
 }
 .media-card-premium .card-head {
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;
 }
+.card-head-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .media-card-premium .card-head .el-icon { color: #10B981; }
+.media-card-premium .card-head em {
+  color: #94A3B8;
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+}
 
-:deep(.el-input__wrapper), :deep(.el-textarea__inner) { @apply shadow-none bg-transparent border-none p-0 h-8 !important; }
-:deep(.el-input__inner), :deep(.el-textarea__inner) { @apply font-bold text-slate-700 text-[14px] !important; }
+:deep(.el-input__wrapper), :deep(.el-textarea__inner) {
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  min-height: 34px !important;
+}
+:deep(.el-input__inner), :deep(.el-textarea__inner) { color: #334155 !important; font-size: 14px !important; font-weight: 750 !important; }
 
 @media (max-width: 992px) {
   .product-footer-premium { grid-template-columns: 1fr; }
+  .block-header-premium {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>

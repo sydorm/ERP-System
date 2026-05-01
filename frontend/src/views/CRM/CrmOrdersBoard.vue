@@ -48,6 +48,22 @@
         />
       </div>
 
+      <!-- NEW: Stage Summary Bar (Moved up as requested) -->
+      <div class="crm-stage-summary-bar">
+        <div 
+          v-for="s in stages" 
+          :key="s.key" 
+          class="stage-summary-item"
+        >
+          <div class="stage-info">
+            <span class="stage-dot" :style="{ background: s.color }" />
+            <span class="stage-label">{{ s.label }}</span>
+            <span class="stage-count">{{ filteredOrdersInStage(s.key).length }}</span>
+          </div>
+          <div class="stage-amount">{{ formatCurrency(stageTotal(s.key)) }} ₴</div>
+        </div>
+      </div>
+
       <div class="crm-summary-cards">
         <CrmSummaryCards
           :orders-count="orders.length"
@@ -284,17 +300,14 @@ const getChannelIcon = (type) => {
   return map[type] || 'ChatDotRound'
 }
 const getContactResultLabel = (res) => {
+  if (!res) return '—'
   const map = {
     thinking: 'Думає',
     no_answer: 'Не відповів',
     confirmed: 'Підтвердив',
-    refused: 'Відмовився',
-    THINKING: 'Думає',
-    NO_ANSWER: 'Не відповів',
-    CONFIRMED: 'Підтвердив',
-    REFUSED: 'Відмовився'
+    refused: 'Відмовився'
   }
-  return map[res] || res
+  return map[String(res).toLowerCase()] || res
 }
 const getPaymentLabel = (status) => {
   const map = {

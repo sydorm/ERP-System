@@ -6,6 +6,7 @@
         <span class="name">{{ selectedManagerName }}</span>
         <span class="role">Відповідальний</span>
       </div>
+      <span class="manager-live-dot" />
     </div>
     <el-select
       v-else
