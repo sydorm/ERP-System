@@ -361,7 +361,9 @@ router.beforeEach(async (to, from, next) => {
         } else {
             // Check granular permissions
             const requiredPermission = to.meta.permission
-            if (requiredPermission && !userStore.hasPermission(requiredPermission)) {
+            const isEditingSelf = to.name === 'user-edit' && String(to.params.id) === String(userStore.user?.id)
+
+            if (requiredPermission && !userStore.hasPermission(requiredPermission) && !isEditingSelf) {
                 ElMessage.error('Доступ заборонено')
                 next('/dashboard')
             } else {

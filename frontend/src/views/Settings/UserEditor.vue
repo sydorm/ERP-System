@@ -9,8 +9,8 @@
       <el-tab-pane label="Основне" name="main" />
       <el-tab-pane label="Доступи" name="permissions" />
       <el-tab-pane label="Активність" name="activity" />
-      <el-tab-pane label="Безпека" name="security" />
-      <el-tab-pane label="Історія змін" name="history" />
+      <el-tab-pane label="Безпека" name="security" v-if="isAdmin" />
+      <el-tab-pane label="Історія змін" name="history" v-if="isAdmin" />
     </el-tabs>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
@@ -67,7 +67,7 @@
 
             <!-- Role -->
             <el-form-item label="Роль" prop="role">
-              <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange">
+              <el-select v-model="form.role" style="width: 100%" @change="handleRoleChange" :disabled="!isAdmin">
                 <el-option
                   v-for="role in ROLE_OPTIONS"
                   :key="role.value"
@@ -92,7 +92,7 @@
             </el-row>
 
             <!-- Status (only for edit) -->
-            <div v-if="isEditing" class="kimi-mt-6">
+            <div v-if="isEditing && isAdmin" class="kimi-mt-6">
               <el-form-item label="Статус акаунта">
                 <el-tag :type="form.blocked_at ? 'danger' : 'success'" size="large">
                   {{ form.blocked_at ? 'Заблокований' : 'Активний' }}
@@ -156,6 +156,7 @@
                     <el-checkbox 
                       v-model="group.all" 
                       @change="(val) => handleGroupAllChange(group, val)"
+                      :disabled="!isAdmin"
                     >
                       <strong class="kimi-text-slate-700">{{ group.label }}</strong>
                     </el-checkbox>
@@ -165,6 +166,7 @@
                       v-for="perm in group.items" 
                       :key="perm.key"
                       v-model="form.permissions[perm.key]"
+                      :disabled="!isAdmin"
                     >
                       {{ perm.label }}
                     </el-checkbox>
@@ -210,6 +212,9 @@ const formRef = ref()
 const submitting = ref(false)
 const activeTab = ref('main')
 const isEditing = computed(() => !!route.params.id)
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.is_superuser)
 
 const loadingActivity = ref(false)
 const userActivity = ref([])
@@ -296,7 +301,12 @@ const submitForm = async () => {
            ElMessage.success('Користувача успішно створено!')
         }
         
-        router.push('/settings/users')
+        if (isAdmin.value) {
+          router.push('/settings/users')
+        } else {
+          // Just stay on page or go to dashboard
+          ElMessage.info('Профіль оновлено')
+        }
       } catch (error) {
         ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
       } finally {
