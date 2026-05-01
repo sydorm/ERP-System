@@ -1,74 +1,82 @@
 <template>
   <div class="crm-order-page min-h-screen bg-[#F4F6F9] font-inter text-[#1F2937] antialiased">
 
-    <!-- ─── 1. TOP STICKY HEADER ─── -->
+    <!-- ─── 1. TOP STICKY HEADER (PREMIUM STYLE) ─── -->
     <div class="order-topbar-wrapper">
       <header class="order-topbar">
-        <div class="flex items-center h-[56px] px-6 justify-between">
+        <div class="flex items-center h-[58px] px-6 justify-between">
           
           <!-- Left: Back & Breadcrumbs -->
           <div class="flex items-center gap-4">
-            <button @click="router.back()" class="text-gray-400 hover:text-gray-700 transition-colors">
+            <button @click="router.back()" class="text-gray-400 hover:text-[#6C63FF] transition-all transform hover:scale-110">
               <el-icon class="text-lg"><ArrowLeft /></el-icon>
             </button>
             <div class="flex flex-col leading-tight">
-              <span class="text-[13px] font-bold text-gray-900">{{ orderId ? 'Редагування' : 'Створення' }}</span>
-              <span class="text-[10px] text-gray-400 font-medium">CRM · Угоди</span>
+              <span class="text-[13px] font-bold text-gray-900 tracking-tight">{{ orderId ? 'Редагування' : 'Створення' }}</span>
+              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">CRM · Угоди</span>
             </div>
           </div>
 
-          <!-- Center: CRM Stages -->
+          <!-- Center: CRM Stages (Premium) -->
           <div class="hidden lg:flex items-center gap-0">
             <template v-for="(s, idx) in stages" :key="s.key">
               <div 
-                class="flex items-center gap-2 px-3 py-1.5 cursor-pointer transition-all"
+                class="flex items-center gap-2.5 px-4 py-2 cursor-pointer transition-all group"
                 @click="setStage(s.key)"
               >
                 <div 
-                  class="w-2 h-2 rounded-full"
-                  :class="form.crm_stage === s.key ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' : 'bg-gray-200'"
+                  class="w-2 h-2 rounded-full transition-all duration-500"
+                  :class="[
+                    form.crm_stage === s.key ? 'bg-[#6C63FF] stage-glow' : '',
+                    isStagePast(s.key) && form.crm_stage !== s.key ? 'bg-emerald-500' : 'bg-gray-200'
+                  ]"
                 ></div>
                 <span 
-                  class="text-[11px] font-black tracking-wider uppercase"
-                  :class="form.crm_stage === s.key ? 'text-blue-600' : 'text-gray-400'"
+                  class="text-[11px] font-black tracking-widest uppercase transition-colors"
+                  :class="[
+                    form.crm_stage === s.key ? 'text-[#6C63FF]' : 'text-gray-400 group-hover:text-gray-600',
+                    isStagePast(s.key) && form.crm_stage !== s.key ? 'text-emerald-600' : ''
+                  ]"
                 >
                   {{ s.label }}
                 </span>
               </div>
-              <div v-if="idx < stages.length - 1" class="w-8 h-px bg-gray-100"></div>
+              <!-- Connector line -->
+              <div v-if="idx < stages.length - 1" 
+                   class="w-6 h-[2px] transition-colors duration-500"
+                   :class="isStagePast(stages[idx+1].key) ? 'bg-emerald-500' : 'bg-gray-100'"></div>
             </template>
           </div>
 
           <!-- Right: Progress & Actions -->
           <div class="flex items-center gap-6">
-            <!-- Readiness % -->
-            <div class="flex items-center gap-3">
-              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  class="h-full bg-blue-500 transition-all duration-700"
-                  :style="`width:${readinessData.progress}%`"
-                ></div>
-              </div>
-              <span class="text-[11px] font-black text-blue-600">{{ readinessData.progress }}%</span>
+            <!-- Readiness Pill Badge -->
+            <div class="flex items-center px-3 py-1.5 rounded-full bg-[rgba(108,99,255,0.08)] border border-[rgba(108,99,255,0.2)]">
+              <span class="text-[11px] font-black text-[#6C63FF] uppercase tracking-tighter">Готовність {{ readinessData.progress }}%</span>
             </div>
 
             <!-- Buttons -->
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-3">
               <button 
                 @click="save('draft')"
-                class="px-4 py-[7px] rounded-lg border border-[#E5E7EB] text-gray-600 font-bold text-[12px] hover:bg-gray-50 transition-all"
+                class="px-5 py-2 rounded-lg border border-[#E5E7EB] text-gray-500 font-bold text-[12px] hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95"
               >
                 Чернетка
               </button>
               <button 
                 @click="save('production')" 
                 :disabled="saving"
-                class="px-6 py-[7px] rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-bold text-[12px] shadow-lg shadow-blue-100 hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
+                class="btn-premium px-7 py-2 rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-black text-[12px] uppercase tracking-wider disabled:opacity-50 transition-all active:scale-95"
               >
                 {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
               </button>
             </div>
           </div>
+        </div>
+        <!-- 1. Bottom Progress Line (2px) -->
+        <div class="h-[2px] w-full bg-gray-50 overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(108,99,255,0.5)]"
+               :style="`width: ${readinessData.progress}%`"></div>
         </div>
       </header>
     </div>
@@ -80,11 +88,12 @@
       <div class="lg:col-span-9 ml-3 space-y-6">
         
         <!-- CARD 1: Customer & Logistics -->
-        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative">
-          <div class="p-6">
+        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative group hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300">
+          <div class="absolute left-0 top-0 w-full h-[40px] bg-gradient-to-r from-[rgba(108,99,255,0.03)] to-transparent pointer-events-none"></div>
+          <div class="p-6 relative">
             <div class="flex items-center justify-between mb-5">
               <h2 class="text-[14px] font-bold flex items-center gap-2 text-gray-800">
-                <el-icon class="text-blue-500 text-base"><User /></el-icon>
+                <el-icon class="text-[#6C63FF] text-base"><User /></el-icon>
                 Замовник та логістика
               </h2>
             </div>
@@ -103,11 +112,12 @@
         </div>
 
         <!-- CARD 2: Product Configuration -->
-        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative">
-          <div class="p-6">
+        <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden relative group hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300">
+          <div class="absolute left-0 top-0 w-full h-[40px] bg-gradient-to-r from-[rgba(108,99,255,0.03)] to-transparent pointer-events-none"></div>
+          <div class="p-6 relative">
             <div class="flex items-center justify-between mb-5">
               <h2 class="text-[14px] font-bold flex items-center gap-2 text-gray-800">
-                <el-icon class="text-blue-500 text-base"><Box /></el-icon>
+                <el-icon class="text-[#6C63FF] text-base"><Box /></el-icon>
                 Конфігурація замовлення
               </h2>
             </div>
@@ -459,8 +469,23 @@ onMounted(loadData)
   border-right: none;
   border-top: none;
   border-bottom: 1px solid #EAECF4;
-  background: #fff;
-  padding: 0; /* Внутрішній контент має власні падінги */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  padding: 0;
+  transition: background 0.3s ease;
+}
+
+.stage-glow {
+  box-shadow: 0 0 12px rgba(108, 99, 255, 0.6);
+}
+
+.btn-premium {
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.25);
+}
+
+.btn-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(108, 99, 255, 0.35);
 }
 
 .crm-order-page {
