@@ -415,7 +415,6 @@
         </div>
       </div>
     </div>
-  </div>
 
     <!-- CLIENT DRAWER (HISTORY & PROFILE) -->
     <el-drawer
@@ -669,14 +668,6 @@ const completeTask = async (taskId) => {
 const clientProfile = ref(null)
 const showClientDrawer = ref(false)
 
-const scrollToSection = (sectionId) => {
-  const el = document.getElementById(sectionId)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    currentSection.value = sectionId
-  }
-}
-
 const isStepCompleted = (stepId) => {
   switch (stepId) {
     case 'client': return !!form.counterparty_id && !!form.lead_source_id
@@ -720,7 +711,6 @@ const loadClientProfile = async (id) => {
   }
 }
 
-// ─── Methods ─────────────────────────────────────────────────────────────────
 const isPassedStage = (stageCode) => {
   const currentIdx = stages.findIndex(s => s.code === form.crm_stage)
   const targetIdx  = stages.findIndex(s => s.code === stageCode)
@@ -748,11 +738,8 @@ const onProductChange = async (val) => {
     return
   }
   try {
-    // Load attributes for this product
     const attrRes = await api.get(`/api/v1/products/${val}/attributes`)
     productAttributes.value = attrRes.data
-    
-    // Check materials
     checkMaterials()
   } catch (err) {
     console.error('Product change failed', err)
@@ -798,22 +785,12 @@ const loadContacts = async () => {
   }
 }
 
-const scrollToSection = (id) => {
-  currentSection.value = id
-  const el = document.getElementById(`section-${id}`)
+const scrollToSection = (sectionId) => {
+  const el = document.getElementById(sectionId)
   if (el) {
-    const yOffset = -140
-    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset
-    window.scrollTo({ top: y, behavior: 'smooth' })
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    currentSection.value = sectionId
   }
-}
-
-const isStepCompleted = (stepId) => {
-  if (stepId === 'client') return !!form.counterparty_id
-  if (stepId === 'product') return !!form.product_id
-  if (stepId === 'finance') return form.total_amount > 0
-  if (stepId === 'deadline') return !!form.deadline_date
-  return false
 }
 
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
@@ -1127,19 +1104,14 @@ watch(() => form.counterparty_id, (newVal) => {
   if (newVal) {
     loadClientProfile(newVal)
     loadContacts()
-  }
-})
-watch(() => form.product_id, (newVal) => {
-  if (newVal) checkMaterials()
-})
-
-watch(() => form.counterparty_id, (newVal) => {
-  if (newVal) {
-    loadClientProfile(newVal)
   } else {
     clientProfile.value = null
   }
 }, { immediate: true })
+
+watch(() => form.product_id, (newVal) => {
+  if (newVal) checkMaterials()
+})
 
 watch(currentUserId, (newId) => {
   if (!orderId.value && !form.manager_id && newId) {
