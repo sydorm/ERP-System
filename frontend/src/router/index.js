@@ -308,14 +308,8 @@ const router = createRouter({
                 {
                     path: '/crm/analytics',
                     name: 'crm-analytics',
-                    component: () => import('@/views/CRM/CrmAnalytics.vue'),
-                    meta: { title: 'Аналітика CRM' }
-                },
-                {
-                    path: '/crm/insights',
-                    name: 'crm-insights',
                     component: () => import('@/views/CRM/CrmInsights.vue'),
-                    meta: { title: 'CRM Insights 2026' }
+                    meta: { title: 'Аналітика CRM 2026' }
                 },
                 // Settings
                 {
