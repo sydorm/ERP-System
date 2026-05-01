@@ -181,14 +181,21 @@
         <!-- Contact Management Card -->
         <CrmContactPanel
           v-if="orderId && (stages.findIndex(s => s.code === form.crm_stage) <= 1)"
+          v-model:contact-comm-type="contactCommType"
+          v-model:contact-plan-reason="contactPlanReason"
+          v-model:contact-next-at="contactNextAt"
+          v-model:contact-note="contactNote"
+          :form="form"
           :order-id="orderId"
-          :attempts="form.contact_attempts"
-          :next-contact-at="form.next_contact_at"
-          :comm-types="communicationTypes"
+          :communication-types="communicationTypes"
           :contact-results="contactResults"
-          :history="contactHistory"
-          :loading-history="loadingContacts"
-          @log="logContact"
+          :contact-result="contactResult"
+          :next-touch-summary="nextTouchSummary"
+          :saving-contact="savingContact"
+          :get-result-hint="getResultHint"
+          @set-next-contact-preset="setNextContactPreset"
+          @apply-contact-result="contactResult = $event"
+          @log-contact="onLogContact"
         />
 
         <!-- Material Availability (Placeholder) -->
@@ -324,6 +331,7 @@ const form = reactive({
   internal_notes:  '',
   reference_photo: null,
   discount_percent: 0,
+  next_contact_plan_reason: 'first_touch',
 })
 
 // Dictionaries
@@ -347,9 +355,16 @@ const productAttributes = ref([])
 const materials         = ref([])
 const checkingMaterials = ref(false)
 
-// Contacts logic
 const contactHistory = ref([])
 const loadingContacts = ref(false)
+
+// Contact Log State
+const contactResult = ref(null)
+const contactCommType = ref('CALL')
+const contactPlanReason = ref('first_touch')
+const contactNextAt = ref(null)
+const contactNote = ref('')
+const savingContact = ref(false)
 
 const vErrors = reactive({ counterparty_id: false, total_amount: false })
 
@@ -431,22 +446,103 @@ const loadContacts = async () => {
   }
 }
 
-const logContact = async (data) => {
-  if (!orderId.value) return
-  try {
-    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, data)
-    ElMessage.success('Контакт записано')
-    loadContacts()
-    form.contact_attempts = (form.contact_attempts || 0) + 1
-  } catch (err) {
-    ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
-  }
-}
-
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 
 const updateTotalAmount = (val) => {
   form.total_amount = val
+}
+
+const getResultHint = (code) => {
+  const hints = {
+    'NO_ANSWER': 'Перенести на пізніше',
+    'THINKING': 'Клієнт думає',
+    'REFUSED': 'Відмова / Архів',
+    'CONFIRMED': 'Успішно / В роботу'
+  }
+  return hints[code] || ''
+}
+
+const nextTouchSummary = computed(() => {
+  if (!form.next_contact_at) return 'Немає запланованих дій'
+  
+  const date = new Date(form.next_contact_at).toLocaleString('uk-UA', { 
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+  })
+  
+  const reasons = {
+    'first_touch': 'Перший контакт',
+    'retry_no_answer': 'Повтор після не відповів',
+    'clarify': 'Уточнити деталі',
+    'payment': 'Нагадати про оплату',
+    'production': 'Погодити виробництво'
+  }
+  
+  const reason = reasons[form.next_contact_plan_reason] || 'Контакт'
+  return `${reason} (${date})`
+})
+
+const setNextContactPreset = (preset) => {
+  const now = new Date()
+  let target = new Date(now)
+  
+  if (preset.minutes) target.setMinutes(now.getMinutes() + preset.minutes)
+  if (preset.hours) target.setHours(now.getHours() + preset.hours)
+  if (preset.tomorrow) {
+    target.setDate(now.getDate() + 1)
+    if (preset.h) target.setHours(preset.h, 0, 0, 0)
+  }
+  if (preset.days) {
+    target.setDate(now.getDate() + preset.days)
+    if (preset.h) target.setHours(preset.h, 0, 0, 0)
+  }
+  
+  // Format to local ISO (ignoring TZ for simple DB storage if needed, or use proper ISO)
+  // Here we use a simple YYYY-MM-DDTHH:mm:ss format
+  const pad = (n) => n.toString().padStart(2, '0')
+  const iso = `${target.getFullYear()}-${pad(target.getMonth()+1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}:${pad(target.getSeconds())}`
+  
+  if (preset.syncContactLog) {
+    contactNextAt.value = iso
+  } else {
+    form.next_contact_at = iso
+    if (preset.reason) form.next_contact_plan_reason = preset.reason
+  }
+}
+
+const logContact = async (data) => {
+  if (!orderId.value) return
+  try {
+    await api.post(`/api/v1/crm/orders/${orderId.value}/contacts`, data)
+    loadContacts()
+    form.contact_attempts = (form.contact_attempts || 0) + 1
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
+    throw err
+  }
+}
+
+const onLogContact = async () => {
+  if (!contactResult.value) return
+  savingContact.value = true
+  try {
+    await logContact({
+      result: contactResult.value,
+      comm_type: contactCommType.value,
+      note: contactNote.value,
+      next_contact_at: contactNextAt.value
+    })
+    
+    // Clear log form
+    contactResult.value = null
+    contactNote.value = ''
+    contactNextAt.value = null
+    
+    ElMessage.success('Зафіксовано')
+  } catch (err) {
+    // Error handled in logContact
+  } finally {
+    savingContact.value = false
+  }
 }
 
 const triggerPhotoUpload = () => {
