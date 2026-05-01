@@ -34,10 +34,7 @@ export const useUserStore = defineStore('user', () => {
         
         const parts = permission.split('.')
         const module = parts[0]
-        const action = parts.length > 1 ? parts[parts.length - 1] : 'view'
-        if (perms[`${module}.${action}`]) return true
         if (perms[`${module}.manage`]) return true
-        if (perms[`${module}.view`]) return true
         if (perms[`${module}.all`]) return true
         
         return false
