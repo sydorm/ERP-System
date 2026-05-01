@@ -63,7 +63,8 @@
                     v-model="form.counterparty_id"
                     filterable
                     remote
-                    placeholder="Введіть ім'я або телефон..."
+                    clearable
+                    placeholder="Введіть ПІБ або номер телефону..."
                     :remote-method="searchCounterparties"
                     @change="onClientChange"
                     class="saas-select-premium w-full"
@@ -71,16 +72,9 @@
                     <el-option
                       v-for="item in counterparties"
                       :key="item.id"
-                      :label="`${item.name} (${item.phone})`"
+                      :label="`${item.name} (${item.phone || ''})`"
                       :value="item.id"
                     />
-                    <template #footer>
-                      <div class="p-2 border-t border-gray-50">
-                        <button @click="openCreateCounterparty" class="w-full py-2 bg-indigo-50 text-indigo-600 text-[11px] font-bold rounded-lg hover:bg-indigo-100 transition-colors">
-                          + СТВОРИТИ НОВОГО КЛІЄНТА
-                        </button>
-                      </div>
-                    </template>
                   </el-select>
                 </div>
               </div>
@@ -270,9 +264,17 @@
               </div>
 
               <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/10 group hover:bg-white/10 transition-all">
-                  <label class="text-[10px] text-gray-500 uppercase font-black mb-1 block">Предоплата</label>
-                  <div class="text-base font-bold">{{ formatCurrency(form.prepayment_amount) }} ₴</div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10 group focus-within:border-indigo-400 transition-all">
+                  <label class="text-[10px] text-gray-500 uppercase font-black mb-1 block tracking-widest">Предоплата</label>
+                  <div class="flex items-center gap-1">
+                    <input 
+                      type="number" 
+                      v-model="form.prepayment_amount" 
+                      class="bg-transparent text-base font-bold text-white border-none focus:ring-0 w-full p-0"
+                      placeholder="0"
+                    />
+                    <span class="text-xs opacity-30">₴</span>
+                  </div>
                 </div>
                 <div :class="['p-4 rounded-2xl border transition-all', form.payment_status === 'paid' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20']">
                   <label class="text-[10px] text-gray-500 uppercase font-black mb-1 block">Статус</label>
@@ -479,8 +481,26 @@ const searchCounterparties = async (query) => {
   counterparties.value = res.data
 }
 
-const onClientChange = (id) => {
-  if (id) loadContacts()
+const onClientChange = async (id) => {
+  if (!id) return
+  
+  // Try to find in already loaded list first
+  let client = counterparties.value.find(c => c.id === id)
+  
+  // If not found or incomplete, fetch full details for hydration
+  try {
+    const res = await api.get(`/api/v1/counterparties/${id}`)
+    client = res.data
+    
+    // Hydrate form fields
+    if (client.city) form.city = client.city
+    if (client.phone) form.phone = client.phone
+    if (client.lead_source_id) form.lead_source_id = client.lead_source_id
+    
+    loadContacts()
+  } catch (e) {
+    console.error('Failed to hydrate client data', e)
+  }
 }
 
 const onProductChange = async (id) => {
