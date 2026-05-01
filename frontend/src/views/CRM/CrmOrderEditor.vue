@@ -1,67 +1,75 @@
 <template>
   <div class="crm-editor-page" v-loading="loading">
-    <CrmOrderHeader
-      :stages="stages"
-      :active-stage="form.crm_stage"
-      :is-passed-stage="isPassedStage"
-      :order-id="orderId"
-      :saving="saving"
-      @back="router.push('/crm')"
-      @set-stage="setStage"
-      @print="printOrder"
-      @save-draft="save('draft')"
-      @save-production="save('production')"
-    />
+    <!-- ─── STICKY HEADER & STEPPER ─── -->
+    <div class="crm-sticky-wrapper">
+      <div class="crm-header-premium">
+        <div class="hp-left">
+          <el-button circle class="btn-back-saas" @click="router.push('/crm')">
+            <el-icon><ArrowLeft /></el-icon>
+          </el-button>
+          <div class="hp-titles">
+            <span class="hp-pre">CRM / ЗАМОВЛЕННЯ</span>
+            <h1>{{ orderId ? 'Редагування заявки' : 'Створення нової заявки' }} <span v-if="form.order_number" class="order-id-tag">#{{ form.order_number }}</span></h1>
+          </div>
+        </div>
+        
+        <div class="hp-actions">
+          <el-tooltip content="Друк" placement="bottom">
+            <el-button class="btn-icon-saas"><el-icon><Printer /></el-icon></el-button>
+          </el-tooltip>
+          <el-button class="btn-secondary-saas" @click="save('draft')">Записати чернетку</el-button>
+          <el-button type="primary" class="btn-primary-saas" :loading="saving" @click="saveAndClose">
+            <el-icon><Promotion /></el-icon> Зберегти та передати
+          </el-button>
+        </div>
+      </div>
 
-    <!-- BREADCRUMB PROGRESS -->
-    <div class="crm-breadcrumb-progress">
-      <div class="bc-item" :class="{ active: currentStep >= 1 }">
-        <div class="bc-dot"></div> Клієнт
-      </div>
-      <div class="bc-sep"></div>
-      <div class="bc-item" :class="{ active: currentStep >= 2 }">
-        <div class="bc-dot"></div> Виріб
-      </div>
-      <div class="bc-sep"></div>
-      <div class="bc-item" :class="{ active: currentStep >= 3 }">
-        <div class="bc-dot"></div> Логістика
-      </div>
-      <div class="bc-sep"></div>
-      <div class="bc-item" :class="{ active: currentStep >= 4 }">
-        <div class="bc-dot"></div> Фінанси
+      <div class="crm-stepper-modern">
+        <div 
+          v-for="(step, idx) in editorSteps" 
+          :key="step.id"
+          class="step-node"
+          :class="{ active: currentSection === step.id, done: isStepCompleted(step.id) }"
+          @click="scrollToSection(step.id)"
+        >
+          <div class="step-marker">
+            <el-icon v-if="isStepCompleted(step.id)"><Check /></el-icon>
+            <span v-else>{{ idx + 1 }}</span>
+          </div>
+          <span class="step-text">{{ step.label }}</span>
+          <div class="step-line" v-if="idx < editorSteps.length - 1"></div>
+        </div>
       </div>
     </div>
 
-    <div class="crm-body">
-      <div class="crm-layout-2col">
-        
-        <!-- LEFT COLUMN (65%) -->
-        <div class="crm-content-left">
+    <div class="crm-editor-body">
+      <div class="crm-layout-container">
+        <!-- ─── MAIN CONTENT (70%) ─── -->
+        <div class="crm-main-content">
           
-          <!-- Block 1: Клієнт (Premium Redesign) -->
-          <div class="crm-block-card card-client-premium">
-            <div class="block-header-modern">
-              <div class="bh-title">
-                <el-icon class="icon-pulse"><User /></el-icon> 
+          <!-- SECTION 1: КЛІЄНТ -->
+          <div id="section-client" class="crm-section-card">
+            <div class="section-header">
+              <div class="sh-title">
+                <el-icon class="icon-pulse-blue"><User /></el-icon>
                 <span>Дані клієнта</span>
               </div>
-              <div class="bh-actions">
+              <div class="sh-actions">
                 <el-button v-if="form.counterparty_id" link @click="showClientDrawer = true">
-                  Повний профіль <el-icon><ArrowRight /></el-icon>
+                  Повний профіль та історія <el-icon><ArrowRight /></el-icon>
                 </el-button>
               </div>
             </div>
-            
-            <div class="client-form-body">
-              <!-- Row 1: Search -->
-              <div class="client-search-row">
+
+            <div class="section-body">
+              <div class="client-selection-row-saas">
                 <el-select
                   v-model="form.counterparty_id"
                   filterable
                   remote
                   :remote-method="searchCounterparties"
-                  placeholder="Введіть ім'я або номер телефону..."
-                  class="modern-search-bar"
+                  placeholder="Пошук клієнта за ім'ям або телефоном..."
+                  class="select-saas-large"
                   @change="onClientChange"
                 >
                   <template #prefix><el-icon><Search /></el-icon></template>
@@ -72,19 +80,18 @@
                     :value="cp.id"
                   />
                 </el-select>
-                <el-button @click="openCreateCounterparty" type="primary" class="btn-add-modern">
-                  <el-icon><Plus /></el-icon>
+                <el-button @click="openCreateCounterparty" type="primary" class="btn-new-client">
+                  <el-icon><Plus /></el-icon> Новий клієнт
                 </el-button>
               </div>
 
-              <!-- Row 2: Lead Source Tiles (Replacing Dropdown) -->
-              <div class="source-selection-container">
-                <span class="mini-label-modern">Звідки прийшов клієнт? (Джерело)</span>
-                <div class="source-tiles-grid">
+              <div class="lead-source-section">
+                <span class="mini-label-saas">Джерело клієнта (Звідки дізнався про нас?)</span>
+                <div class="source-tiles-saas">
                   <div 
                     v-for="src in leadSourceIcons" 
                     :key="src.id"
-                    class="source-tile"
+                    class="source-tile-saas"
                     :class="[src.id, { active: form.lead_source_id === src.id }]"
                     @click="form.lead_source_id = src.id"
                   >
@@ -92,273 +99,322 @@
                       <component :is="src.icon" />
                     </div>
                     <span class="st-label">{{ src.name }}</span>
-                    <el-icon v-if="form.lead_source_id === src.id" class="st-check"><Check /></el-icon>
+                    <el-icon v-if="form.lead_source_id === src.id" class="st-check"><CircleCheckFilled /></el-icon>
                   </div>
                 </div>
               </div>
 
-              <!-- Row 3: Meta (City + Communication Channel) -->
-              <div class="client-meta-row">
-                <div class="meta-field city">
-                  <span class="mini-label-modern">Місто</span>
+              <div class="client-meta-row-saas">
+                <div class="meta-field">
+                  <span class="mini-label-saas">Місто</span>
                   <el-input v-model="form.city" placeholder="Напр. Київ" />
                 </div>
-                
-                <div class="meta-field channels">
-                  <span class="mini-label-modern">Канал зв'язку</span>
-                  <div class="channel-pills-modern">
-                    <div 
-                      v-for="ch in channelPills" 
-                      :key="ch.code"
-                      class="ch-pill-modern"
-                      :class="[ch.code, { active: form.channel === ch.code }]"
-                      @click="form.channel = ch.code"
-                    >
-                      <el-icon><component :is="ch.icon" /></el-icon>
-                      <span>{{ ch.name }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Block 2: Виріб / Номенклатура -->
-          <div class="crm-block-card card-product">
-            <div class="block-title">
-              <el-icon><Box /></el-icon> Виріб / Номенклатура
-            </div>
-
-            <div class="product-config-split">
-              <div class="pc-main">
-                <div class="crm-field">
-                  <span class="mini-label">Модель</span>
-                  <el-select v-model="form.product_id" filterable placeholder="Оберіть модель" class="modern-select" @change="onProductChange" style="width: 100%">
-                    <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+                <div class="meta-field">
+                  <span class="mini-label-saas">Канал зв'язку</span>
+                  <el-select v-model="form.channel" style="width: 100%">
+                    <el-option label="Instagram" value="instagram" />
+                    <el-option label="Viber" value="viber" />
+                    <el-option label="Telegram" value="telegram" />
+                    <el-option label="Сайт" value="website" />
+                    <el-option label="Дзвінок" value="phone" />
                   </el-select>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <div class="attributes-block" v-if="productAttributes.length">
-                  <div v-for="attr in productAttributes" :key="attr.id" class="attr-group">
-                    <span class="mini-label">{{ attr.name }}</span>
-                    <div class="attr-pills" v-if="attr.type !== 'dimensions'">
-                      <div v-for="opt in attr.options" :key="opt.id" class="attr-pill"
-                           :class="{ active: form.attributes_values[attr.id] === opt.id }"
-                           @click="form.attributes_values[attr.id] = opt.id">
-                        <span v-if="opt.color" class="attr-color-dot" :style="{ background: opt.color }"></span>
-                        {{ opt.name }}
+          <!-- SECTION 2: ВИРІБ -->
+          <div id="section-product" class="crm-section-card">
+            <div class="section-header">
+              <div class="sh-title">
+                <el-icon><Box /></el-icon>
+                <span>Виріб / Номенклатура</span>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <div class="product-search-row">
+                <el-select
+                  v-model="form.product_id"
+                  filterable
+                  placeholder="Оберіть модель виробу..."
+                  class="select-saas-large"
+                  @change="onProductChange"
+                >
+                  <el-option v-for="p in products" :key="p.id" :label="p.name" :value="p.id" />
+                </el-select>
+              </div>
+
+              <!-- SECTION 3: ХАРАКТЕРИСТИКИ -->
+              <div id="section-specs" class="specs-configurator-saas" v-if="form.product_id">
+                <div class="specs-divider">
+                  <span>Конфігурація характеристик</span>
+                </div>
+                
+                <div v-if="!productAttributes.length" class="specs-empty-state">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>Для цього товару характеристики не задані.</span>
+                </div>
+                
+                <div v-else class="specs-grid-saas">
+                  <div v-for="attr in productAttributes" :key="attr.id" class="spec-field-saas">
+                    <span class="mini-label-saas">{{ attr.name }}</span>
+                    
+                    <!-- Chips for 2-6 options -->
+                    <div v-if="attr.options && attr.options.length <= 6" class="spec-chips-saas">
+                      <div 
+                        v-for="opt in attr.options" 
+                        :key="opt"
+                        class="spec-chip-saas"
+                        :class="{ active: form.attributes_values[attr.id] === opt }"
+                        @click="form.attributes_values[attr.id] = opt"
+                      >
+                        {{ opt }}
                       </div>
                     </div>
-                    <div class="attr-dims" v-else>
-                      <el-input-number v-model="form.attributes_values[attr.id + '_w']" :precision="0" placeholder="Ширина" />
-                      <span class="dims-sep">×</span>
-                      <el-input-number v-model="form.attributes_values[attr.id + '_h']" :precision="0" placeholder="Висота" />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="crm-field" style="margin-top: 16px;">
-                  <span class="mini-label">Коментар до виробу</span>
-                  <el-input type="textarea" v-model="form.comment" :rows="3" placeholder="Деталі..." />
-                </div>
-              </div>
-
-              <div class="pc-side">
-                <span class="mini-label">Фото референс</span>
-                <div class="photo-upload-zone-compact" @click="triggerPhotoUpload">
-                  <img v-if="form.reference_photo" :src="form.reference_photo" class="photo-preview" />
-                  <div v-else class="photo-placeholder">
-                    <el-icon><Picture /></el-icon>
-                    <span>Завантажити</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Block 3: Аналіз та логістика -->
-          <div class="crm-block-card card-logistics">
-            <div class="block-title">
-              <el-icon><Promotion /></el-icon> Аналіз та логістика
-            </div>
-
-            <div class="crm-grid-2">
-              <div class="crm-field">
-                <span class="mini-label">Склад</span>
-                <el-select v-model="form.warehouse_id" style="width: 100%">
-                  <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-                </el-select>
-              </div>
-              <div class="crm-field">
-                <span class="mini-label">Тип оплати</span>
-                <el-select v-model="form.payment_status_id" style="width: 100%">
-                  <el-option v-for="s in paymentStatuses" :key="s.id" :label="s.name" :value="s.id" />
-                </el-select>
-              </div>
-            </div>
-
-            <div class="crm-field" style="margin-top: 16px;">
-              <span class="mini-label">Доставка</span>
-              <el-input v-model="form.delivery_address" placeholder="Адреса або номер відділення" />
-            </div>
-
-            <div class="analysis-section" v-if="form.product_id" style="margin-top: 20px;">
-              <div class="analysis-header">
-                <span class="mini-label">Аналіз матеріалів та комплектації</span>
-                <el-tag size="small" type="info" plain>Авто-перевірка</el-tag>
-              </div>
-              <div class="mat-list-compact">
-                <div v-for="m in materials" :key="m.id" class="mat-row-compact" :class="m.status">
-                  <span class="mat-name">{{ m.component_name }}</span>
-                  <div class="mat-status-val">
-                    <span v-if="m.status === 'ok'" class="status-ok">В НАЯВНОСТІ</span>
-                    <span v-else class="status-need">ПОТРІБНО: {{ Math.max(0, m.required_qty - m.available_qty) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ─── RIGHT COLUMN (35%) - STICKY ─── -->
-        <div class="crm-sidebar-right">
-          <div class="crm-sidebar-tabs">
-            <div 
-              class="sidebar-tab" 
-              :class="{ active: activeSidebarTab === 'summary' }"
-              @click="activeSidebarTab = 'summary'"
-            >
-              <el-icon><Wallet /></el-icon> ПІДСУМОК
-            </div>
-            <div 
-              class="sidebar-tab" 
-              :class="{ active: activeSidebarTab === 'activity' }"
-              @click="activeSidebarTab = 'activity'"
-            >
-              <el-icon><List /></el-icon> АКТИВНІСТЬ
-              <span class="activity-badge" v-if="contactHistory.length">{{ contactHistory.length }}</span>
-            </div>
-          </div>
-
-          <div class="sidebar-content-scroll">
-            <!-- TAB 1: SUMMARY -->
-            <transition name="fade-slide">
-              <div v-if="activeSidebarTab === 'summary'" class="tab-pane">
-                <div class="crm-block-card card-summary saas-premium-shadow">
-                  <div class="summary-total-large">
-                    <el-input-number v-model="form.total_amount" :controls="false" class="large-total-input" />
-                    <span class="sum-currency">₴</span>
-                  </div>
-
-                  <div class="crm-field">
-                    <span class="mini-label-modern">Предоплата</span>
-                    <div class="prepay-grid">
-                      <button v-for="pct in [0, 30, 50, 100]" :key="pct"
-                              class="prepay-btn" :class="{ active: isPrepayActive(pct) }"
-                              @click="setPrepayPercent(pct)">
-                        {{ pct === 0 ? 'Без' : pct + '%' }}
-                      </button>
-                    </div>
-                    <el-input-number v-model="form.prepayment_amount" :controls="false" style="width: 100%; margin-top: 8px;" />
-                  </div>
-
-                  <div class="crm-field" style="margin-top: 20px;">
-                    <span class="mini-label-modern">Менеджер</span>
-                    <el-select v-model="form.manager_id" style="width: 100%">
-                      <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
+                    
+                    <!-- Select for more options -->
+                    <el-select 
+                      v-else 
+                      v-model="form.attributes_values[attr.id]" 
+                      filterable 
+                      placeholder="Оберіть значення..."
+                      style="width: 100%"
+                    >
+                      <el-option v-for="opt in attr.options" :key="opt" :label="opt" :value="opt" />
                     </el-select>
                   </div>
-
-                  <div class="crm-field" style="margin-top: 20px;">
-                    <span class="mini-label-modern">Пріоритет</span>
-                    <div class="priority-pills">
-                      <div v-for="p in priorities" :key="p.id" class="priority-pill"
-                           :class="[`pp-${p.code}`, { active: form.priority === p.code }]"
-                           @click="form.priority_id = p.id; form.priority = p.code">
-                        {{ p.name }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="crm-field" style="margin-top: 20px;">
-                    <span class="mini-label-modern">Дедлайн виготовлення</span>
-                    <el-date-picker v-model="form.deadline_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
-                  </div>
-
-                  <div class="action-buttons-stack">
-                    <el-button class="btn-save-main" @click="saveAndClose" :loading="saving" type="primary">ЗБЕРЕГТИ ТА ПЕРЕДАТИ</el-button>
-                    <el-button class="btn-draft" @click="saveDraft">ЗБЕРЕГТИ ЯК ЧЕРНЕТКУ</el-button>
-                    
-                    <div class="quick-comms-group">
-                       <el-button size="small" :icon="ChatDotRound">Чат</el-button>
-                       <el-button size="small" :icon="Phone">Дзвінок</el-button>
-                       <el-button size="small" :icon="ChatDotSquare">SMS</el-button>
-                    </div>
-                  </div>
                 </div>
               </div>
-            </transition>
 
-            <!-- TAB 2: ACTIVITY TIMELINE (Alternative for history) -->
-            <transition name="fade-slide">
-              <div v-if="activeSidebarTab === 'activity'" class="tab-pane">
-                <div class="crm-block-card card-activity-timeline">
-                  <div class="timeline-header">
-                    <span class="mini-label-modern">Останні події</span>
-                    <el-button link @click="loadContacts"><el-icon><Refresh /></el-icon></el-button>
-                  </div>
-
-                  <div class="activity-feed">
-                    <div v-if="!contactHistory.length" class="activity-empty-state">
-                      <el-icon><ChatLineRound /></el-icon>
-                      <p>Історія взаємодії порожня</p>
-                    </div>
-                    
-                    <div v-for="log in contactHistory" :key="log.id" class="activity-item">
-                      <div class="activity-line"></div>
-                      <div class="activity-icon-container" :class="log.communication_type.toLowerCase()">
-                        <el-icon><component :is="getChannelIcon(log.communication_type)" /></el-icon>
+              <div class="product-details-row-saas">
+                <div class="pdr-left">
+                  <span class="mini-label-saas">Коментар до виробу</span>
+                  <el-input 
+                    v-model="form.comment" 
+                    type="textarea" 
+                    :rows="3" 
+                    placeholder="Додайте важливі деталі для виробництва..." 
+                  />
+                </div>
+                <div class="pdr-right">
+                   <span class="mini-label-saas">Фото референс</span>
+                   <div class="photo-upload-saas" @click="triggerPhotoUpload">
+                      <img v-if="form.reference_photo" :src="form.reference_photo" class="preview-img" />
+                      <div v-else class="upload-hint">
+                        <el-icon><Picture /></el-icon>
+                        <span>Завантажити фото</span>
                       </div>
-                      <div class="activity-body">
-                        <div class="activity-top">
-                          <span class="activity-type">{{ getResultHint(log.result) }}</span>
-                          <span class="activity-time">{{ formatDate(log.contacted_at) }}</span>
-                        </div>
-                        <p class="activity-text" v-if="log.note">{{ log.note }}</p>
-                        <div class="activity-meta" v-if="log.manager_name">
-                          <el-avatar :size="16" class="mini-avatar">M</el-avatar>
-                          <span>Менеджер: {{ log.manager_name }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="activity-footer">
-                    <el-button type="primary" plain round size="small" @click="showClientDrawer = true">
-                      ДОДАТИ КОНТАКТ
-                    </el-button>
-                  </div>
+                   </div>
                 </div>
               </div>
-            </transition>
+            </div>
           </div>
-          
-          <!-- REMINDERS WIDGET (Secondary) -->
-          <div class="crm-block-card card-reminder-mini" v-if="missedTasks.length">
-             <div class="rem-header">
-                <el-icon class="rem-icon-anim"><Bell /></el-icon>
-                <span>Нагадування</span>
-             </div>
-             <div v-for="task in missedTasks" :key="task.id" class="reminder-item-mini">
-                <div class="rem-info">
-                  <span class="rem-time">{{ formatDate(task.scheduled_at) }}</span>
-                  <p class="rem-text">Передзвонити клієнту</p>
+
+          <!-- SECTION 4: АНАЛІЗ ТА ЛОГІСТИКА -->
+          <div id="section-analysis" class="crm-section-card">
+            <div class="section-header">
+              <div class="sh-title">
+                <el-icon><DataAnalysis /></el-icon>
+                <span>Аналіз та логістика</span>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <div class="analysis-status-card" :class="matStatusClass" v-if="form.product_id">
+                <div class="as-header">
+                  <div class="as-indicator-group">
+                    <div class="as-dot"></div>
+                    <span class="as-label">{{ matStatusLabel }}</span>
+                  </div>
+                  <el-button link size="small" :icon="Refresh" @click="checkMaterials">Оновити аналіз</el-button>
                 </div>
-                <el-button type="warning" size="small" circle :icon="Check" @click="completeTask(task.id)" />
-             </div>
+
+                <div class="materials-list-saas" v-if="materials.length">
+                  <div class="ml-head">
+                    <span class="ml-col-name">Матеріал / Компонент</span>
+                    <span class="ml-col-val">Потрібно</span>
+                    <span class="ml-col-val">Є на складі</span>
+                    <span class="ml-col-status">Статус</span>
+                  </div>
+                  <div v-for="m in materials" :key="m.id" class="ml-row" :class="m.status">
+                    <span class="ml-col-name">{{ m.component_name || m.name }}</span>
+                    <span class="ml-col-val">{{ m.required_qty || m.required }}</span>
+                    <span class="ml-col-val">{{ m.available_qty || m.available }}</span>
+                    <span class="ml-col-status">
+                      <el-icon v-if="m.status === 'ok'"><CircleCheckFilled /></el-icon>
+                      <el-icon v-else><WarningFilled /></el-icon>
+                    </span>
+                  </div>
+                </div>
+                
+                <div v-else class="analysis-no-data">
+                  Специфікація (BOM) для обраного товару не знайдена.
+                </div>
+              </div>
+              <div v-else class="analysis-placeholder-saas">
+                Будь ласка, оберіть виріб для автоматичного аналізу складських залишків.
+              </div>
+
+              <div class="logistics-config-saas">
+                 <div class="config-field">
+                   <span class="mini-label-saas">Склад відвантаження</span>
+                   <el-select v-model="form.warehouse_id" style="width: 100%">
+                      <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+                   </el-select>
+                 </div>
+                 <div class="config-field">
+                   <span class="mini-label-saas">Тип оплати</span>
+                   <el-select v-model="form.payment_status_id" style="width: 100%">
+                      <el-option v-for="ps in paymentStatuses" :key="ps.id" :label="ps.name" :value="ps.id" />
+                   </el-select>
+                 </div>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- ─── SIDEBAR RIGHT (30%) - STICKY ─── -->
+        <div class="crm-sidebar-right">
+          
+          <div class="sidebar-tabs-saas">
+            <div class="sb-tab" :class="{ active: activeSidebarTab === 'summary' }" @click="activeSidebarTab = 'summary'">
+              <el-icon><Wallet /></el-icon> ПІДСУМОК
+            </div>
+            <div class="sb-tab" :class="{ active: activeSidebarTab === 'activity' }" @click="activeSidebarTab = 'activity'">
+              <el-icon><List /></el-icon> АКТИВНІСТЬ
+              <span class="tab-badge" v-if="contactHistory.length">{{ contactHistory.length }}</span>
+            </div>
+          </div>
+
+          <!-- SECTION 5: ФІНАНСИ -->
+          <div id="section-finance" v-if="activeSidebarTab === 'summary'" class="summary-card-saas saas-premium-shadow">
+             <div class="summary-price-zone">
+                <span class="mini-label-saas">Загальна сума</span>
+                <div class="price-input-saas">
+                   <el-input-number 
+                     v-model="form.total_amount" 
+                     :controls="false" 
+                     class="total-amount-field"
+                   />
+                   <span class="currency-tag">₴</span>
+                </div>
+                <div class="price-origin-hint" :class="{ auto: isAutoPrice }">
+                   <el-icon><component :is="isAutoPrice ? 'CircleCheckFilled' : 'EditPen'" /></el-icon>
+                   {{ isAutoPrice ? 'Ціну підтягнуто з номенклатури' : 'Введіть суму вручну' }}
+                </div>
+             </div>
+
+             <div class="summary-finance-section">
+                <span class="mini-label-saas">Предоплата</span>
+                <div class="prepay-quick-buttons">
+                   <div 
+                     v-for="p in [0, 30, 50, 100]" 
+                     :key="p"
+                     class="prepay-btn-saas"
+                     :class="{ active: isPrepayActive(p) }"
+                     @click="setPrepayPercent(p)"
+                   >
+                     {{ p === 0 ? 'Без' : p + '%' }}
+                   </div>
+                </div>
+                <el-input-number 
+                  v-model="form.prepayment_amount" 
+                  :controls="false" 
+                  style="width: 100%; margin-top: 12px;"
+                  placeholder="Сума предоплати"
+                />
+             </div>
+
+             <div class="summary-manager-section">
+                <span class="mini-label-saas">Відповідальний менеджер</span>
+                <div class="manager-card-saas">
+                   <div class="manager-avatar-saas">
+                      {{ getManagerInitials(form.manager_id || currentUserId) }}
+                   </div>
+                   <el-select v-model="form.manager_id" class="manager-select-saas">
+                      <el-option v-for="u in users" :key="u.id" :label="`${u.first_name} ${u.last_name}`" :value="u.id" />
+                   </el-select>
+                </div>
+             </div>
+
+             <!-- SECTION 6: ДЕДЛАЙН -->
+             <div id="section-deadline" class="summary-deadline-section">
+                <span class="mini-label-saas">Дедлайн виготовлення <span class="required">*</span></span>
+                <el-date-picker 
+                  v-model="form.deadline_date" 
+                  type="date" 
+                  placeholder="Оберіть дату" 
+                  style="width: 100%"
+                  class="deadline-picker-saas"
+                />
+                <div v-if="!form.deadline_date" class="deadline-alert-saas">
+                   <el-icon><Warning /></el-icon> Обов'язково для виробництва
+                </div>
+             </div>
+
+             <div class="summary-priority-section">
+                <span class="mini-label-saas">Пріоритет замовлення</span>
+                <div class="priority-grid-saas">
+                   <div 
+                     v-for="p in priorities" 
+                     :key="p.id"
+                     class="priority-card-saas"
+                     :class="[p.code, { active: form.priority === p.code }]"
+                     @click="form.priority = p.code; form.priority_id = p.id"
+                   >
+                     {{ p.name }}
+                   </div>
+                </div>
+             </div>
+
+             <div class="order-checklist-saas">
+                <div class="checklist-header">Готовність заявки</div>
+                <div class="checklist-body">
+                   <div class="check-item" :class="{ done: !!form.counterparty_id }">
+                      <el-icon><component :is="form.counterparty_id ? 'CircleCheckFilled' : 'CircleCloseFilled'" /></el-icon>
+                      Клієнт обраний
+                   </div>
+                   <div class="check-item" :class="{ done: !!form.product_id }">
+                      <el-icon><component :is="form.product_id ? 'CircleCheckFilled' : 'CircleCloseFilled'" /></el-icon>
+                      Виріб обраний
+                   </div>
+                   <div class="check-item" :class="{ done: form.total_amount > 0 }">
+                      <el-icon><component :is="form.total_amount > 0 ? 'CircleCheckFilled' : 'CircleCloseFilled'" /></el-icon>
+                      Сума вказана
+                   </div>
+                   <div class="check-item" :class="{ done: !!form.deadline_date }">
+                      <el-icon><component :is="form.deadline_date ? 'CircleCheckFilled' : 'CircleCloseFilled'" /></el-icon>
+                      Дедлайн встановлено
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <!-- ACTIVITY FEED TAB -->
+          <div v-if="activeSidebarTab === 'activity'" class="activity-feed-saas">
+             <div class="af-header">
+                <span>Стрічка активності</span>
+                <el-button link :icon="Refresh" @click="loadContacts" />
+             </div>
+             <div class="af-list">
+                <div v-for="log in contactHistory" :key="log.id" class="af-item">
+                   <div class="af-line"></div>
+                   <div class="af-icon-wrap" :class="log.communication_type.toLowerCase()">
+                      <el-icon><component :is="getChannelIcon(log.communication_type)" /></el-icon>
+                   </div>
+                   <div class="af-body">
+                      <div class="af-time">{{ formatDate(log.contacted_at) }}</div>
+                      <div class="af-title">{{ getResultHint(log.result) }}</div>
+                      <div class="af-note" v-if="log.note">{{ log.note }}</div>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+        </div>
+      </div>
+        </div>
       </div>
     </div>
 
@@ -452,7 +508,8 @@ import {
   User, Box, DataAnalysis, Wallet, Search, Bell, Check, Collection,
   Camera, Share, VideoPlay, Star, More, ChatDotRound, ChatLineRound, Phone,
   ArrowRight, ArrowDown, UserFilled, Clock, Document, ChatDotSquare,
-  View, Edit, CopyDocument, Delete, TrendCharts, Grid, QuestionFilled
+  View, Edit, CopyDocument, Delete, TrendCharts, Grid, QuestionFilled,
+  Position, Refresh, ShoppingBag, MoreFilled
 } from '@element-plus/icons-vue'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
@@ -496,20 +553,27 @@ const stages = [
   { code: 'done',       name: 'Виконано',     color: '#22c55e' },
 ]
 
-const leadSourceIcons = [
-  { id: 'instagram', name: 'Instagram', icon: 'Camera' },
-  { id: 'facebook', name: 'Facebook', icon: 'Share' },
-  { id: 'google', name: 'Google', icon: 'Search' },
-  { id: 'tiktok', name: 'TikTok', icon: 'VideoPlay' },
-  { id: 'referral', name: 'Рекомендація', icon: 'Star' },
-  { id: 'other', name: 'Інше', icon: 'More' }
+const editorSteps = [
+  { id: 'client',    label: 'Клієнт',      icon: 'User' },
+  { id: 'product',   label: 'Виріб',       icon: 'Box' },
+  { id: 'specs',     label: 'Характеристики', icon: 'MagicStick' },
+  { id: 'analysis',  label: 'Аналіз та логістика', icon: 'DataAnalysis' },
+  { id: 'finance',   label: 'Фінанси',     icon: 'Wallet' },
+  { id: 'deadline',  label: 'Дедлайн',     icon: 'Clock' }
 ]
 
-const channelPills = [
-  { code: 'viber', name: 'Viber', icon: 'ChatDotRound' },
-  { code: 'telegram', name: 'Telegram', icon: 'Promotion' },
-  { code: 'whatsapp', name: 'WhatsApp', icon: 'ChatLineRound' },
-  { code: 'phone', name: 'Дзвінок', icon: 'Phone' }
+const currentSection = ref('client')
+
+const leadSourceIcons = [
+  { id: 'phone',       name: 'Дзвінок',       icon: 'Phone' },
+  { id: 'instagram',   name: 'Instagram',     icon: 'Camera' },
+  { id: 'viber',       name: 'Viber',         icon: 'ChatDotRound' },
+  { id: 'telegram',    name: 'Telegram',      icon: 'Promotion' },
+  { id: 'website',     name: 'Сайт',          icon: 'Position' },
+  { id: 'referral',    name: 'Рекомендація',  icon: 'Star' },
+  { id: 'returning',   name: 'Повторний',     icon: 'Refresh' },
+  { id: 'marketplace', name: 'Marketplace',   icon: 'ShoppingBag' },
+  { id: 'other',       name: 'Інше',          icon: 'More' }
 ]
 
 const form = reactive({
@@ -605,6 +669,26 @@ const completeTask = async (taskId) => {
 
 const clientProfile = ref(null)
 const showClientDrawer = ref(false)
+
+const scrollToSection = (sectionId) => {
+  const el = document.getElementById(sectionId)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    currentSection.value = sectionId
+  }
+}
+
+const isStepCompleted = (stepId) => {
+  switch (stepId) {
+    case 'client': return !!form.counterparty_id && !!form.lead_source_id
+    case 'product': return !!form.product_id
+    case 'specs': return Object.keys(form.attributes_values).length > 0
+    case 'analysis': return !!form.warehouse_id
+    case 'finance': return form.total_amount > 0
+    case 'deadline': return !!form.deadline_date
+    default: return false
+  }
+}
 
 const currentStep = computed(() => {
   if (!form.counterparty_id) return 1
@@ -715,12 +799,31 @@ const loadContacts = async () => {
   }
 }
 
-const formatDate = (val) => {
-  if (!val) return ''
-  return new Date(val).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+const scrollToSection = (id) => {
+  currentSection.value = id
+  const el = document.getElementById(`section-${id}`)
+  if (el) {
+    const yOffset = -140
+    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
+}
+
+const isStepCompleted = (stepId) => {
+  if (stepId === 'client') return !!form.counterparty_id
+  if (stepId === 'product') return !!form.product_id
+  if (stepId === 'finance') return form.total_amount > 0
+  if (stepId === 'deadline') return !!form.deadline_date
+  return false
 }
 
 const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
+
+const isAutoPrice = computed(() => {
+  if (!form.product_id) return false
+  const prod = products.value.find(p => p.id === form.product_id)
+  return prod && Math.abs(prod.price - form.total_amount) < 0.01
+})
 
 const updateTotalAmount = (val) => {
   form.total_amount = val
