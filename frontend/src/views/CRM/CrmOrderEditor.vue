@@ -63,8 +63,8 @@
     <!-- ─── MAIN WORKSPACE ─── -->
     <main class="px-8 pt-5 pb-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-      <!-- LEFT: forms (8/12) -->
-      <div class="lg:col-span-8 space-y-4">
+      <!-- LEFT: forms (9/12) -->
+      <div class="lg:col-span-9 space-y-4">
 
         <!-- CARD 1: Client & Logistics -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
@@ -135,8 +135,8 @@
 
       </div>
 
-      <!-- RIGHT: sidebar (4/12) -->
-      <div class="lg:col-span-4">
+      <!-- RIGHT: sidebar (3/12) -->
+      <div class="lg:col-span-3">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sticky top-[62px]">
           <CrmReadinessChecklist
             :progress="readinessData.progress"
@@ -208,6 +208,7 @@ const form = reactive({
   lead_source_id: null,
   order_number: '',
   product_id: null,
+  product_lines: [],
   crm_stage: 'new',
   city: '',
   delivery_method_id: null,

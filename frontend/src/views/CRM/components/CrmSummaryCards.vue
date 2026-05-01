@@ -1,6 +1,9 @@
 <template>
   <div class="crm-insights-row">
     <div class="crm-insight-card metric-pipeline">
+      <div class="metric-icon">
+        <el-icon><TrendCharts /></el-icon>
+      </div>
       <div class="insight-content">
         <span class="metric-label">Pipeline</span>
         <div class="insight-value-row">
@@ -15,6 +18,9 @@
       </div>
     </div>
     <div class="crm-insight-card metric-sla">
+      <div class="metric-icon">
+        <el-icon><WarningFilled /></el-icon>
+      </div>
       <div class="insight-content">
         <span class="metric-label">Гарячі SLA</span>
         <strong class="metric-value">{{ hotSlaCount }}</strong>
@@ -22,6 +28,9 @@
       </div>
     </div>
     <div class="crm-insight-card metric-payment">
+      <div class="metric-icon">
+        <el-icon><Money /></el-icon>
+      </div>
       <div class="insight-content">
         <span class="metric-label">Оплата</span>
         <strong class="metric-value">{{ paymentProgress }}%</strong>
@@ -29,6 +38,9 @@
       </div>
     </div>
     <div class="crm-insight-card metric-today">
+      <div class="metric-icon">
+        <el-icon><Calendar /></el-icon>
+      </div>
       <div class="insight-content">
         <span class="metric-label">Сьогодні</span>
         <strong class="metric-value">{{ todayTasksCount }}</strong>
@@ -39,6 +51,8 @@
 </template>
 
 <script setup>
+import { Calendar, Money, TrendCharts, WarningFilled } from '@element-plus/icons-vue'
+
 defineProps({
   ordersCount: { type: Number, default: 0 },
   totalPipelineAmount: { type: Number, default: 0 },

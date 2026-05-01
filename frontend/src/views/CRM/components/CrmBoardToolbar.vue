@@ -2,14 +2,36 @@
   <div class="crm-toolbar">
 
     <!-- Zone 1: Search -->
-    <el-input
-      :model-value="searchQuery"
-      placeholder="Пошук клієнта, тел, виробу..."
-      class="crm-search"
-      clearable
-      :prefix-icon="Search"
-      @update:model-value="$emit('update:searchQuery', $event)"
-    />
+    <el-popover
+      v-model:visible="searchOpen"
+      placement="bottom-end"
+      :width="340"
+      trigger="click"
+      popper-class="crm-search-popper"
+    >
+      <template #reference>
+        <button
+          class="crm-icon-btn"
+          :class="{ active: Boolean(searchQuery) }"
+          type="button"
+          title="Пошук по CRM"
+        >
+          <el-icon><Search /></el-icon>
+          <span v-if="searchQuery" class="search-dot" />
+        </button>
+      </template>
+
+      <div class="crm-search-panel">
+        <div class="crm-search-panel__title">Пошук по CRM</div>
+        <el-input
+          :model-value="searchQuery"
+          placeholder="Клієнт, телефон, виріб..."
+          clearable
+          :prefix-icon="Search"
+          @update:model-value="$emit('update:searchQuery', $event)"
+        />
+      </div>
+    </el-popover>
 
     <!-- Zone 2: Secondary controls grouped in one popover -->
     <el-popover
@@ -20,9 +42,14 @@
       popper-class="crm-controls-popper"
     >
       <template #reference>
-        <button class="crm-ctrl-btn" :class="{ active: activeControlsCount > 0 }">
+        <button
+          class="crm-ctrl-btn"
+          :class="{ active: activeControlsCount > 0 }"
+          type="button"
+          title="Параметри дошки"
+        >
           <el-icon><Setting /></el-icon>
-          <span>Параметри</span>
+          <span class="ctrl-text">Параметри</span>
           <span v-if="activeControlsCount" class="ctrl-badge">{{ activeControlsCount }}</span>
           <el-icon class="ctrl-chevron" :class="{ rotated: controlsOpen }"><ArrowDown /></el-icon>
         </button>
@@ -140,9 +167,9 @@
     </el-popover>
 
     <!-- Zone 3: Primary CTA -->
-    <button class="crm-new-btn" @click="$emit('newOrder')">
+    <button class="crm-new-btn" type="button" title="Нове замовлення" @click="$emit('newOrder')">
       <el-icon><Plus /></el-icon>
-      <span>Нове замовлення</span>
+      <span>Нове</span>
     </button>
 
   </div>
@@ -174,6 +201,7 @@ defineEmits([
 ])
 
 const controlsOpen = ref(false)
+const searchOpen = ref(false)
 </script>
 
 <style scoped>
@@ -181,46 +209,63 @@ const controlsOpen = ref(false)
 .crm-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-/* ── Search ────────────────────────────────────────────────── */
-.crm-search {
-  flex: 1;
-  min-width: 180px;
-  max-width: 340px;
-}
-.crm-search :deep(.el-input__wrapper) {
-  height: 38px;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(20,99,255,0.06);
+/* ── Compact search trigger ─────────────────────────────────── */
+.crm-icon-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
   border: 1px solid var(--erp-border, #E6ECF3);
-  transition: box-shadow 0.2s;
+  border-radius: 12px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  transition: all 0.18s ease;
 }
-.crm-search :deep(.el-input__wrapper):hover,
-.crm-search :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 3px rgba(21, 185, 122, 0.12);
-  border-color: var(--erp-status-success, #15B97A);
+.crm-icon-btn:hover,
+.crm-icon-btn.active {
+  border-color: rgba(20, 99, 255, 0.35);
+  color: var(--erp-primary, #1463FF);
+  background: #F8FBFF;
+  box-shadow: 0 0 0 3px rgba(20, 99, 255, 0.09);
+}
+.search-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--erp-primary, #1463FF);
+  box-shadow: 0 0 0 2px #fff;
 }
 
 /* ── Parameters button ─────────────────────────────────────── */
 .crm-ctrl-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 14px;
+  justify-content: center;
+  gap: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 1px solid rgba(21, 185, 122, 0.25);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   color: var(--erp-text-main, #1a2233);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;
   box-shadow: 0 1px 4px rgba(21, 185, 122, 0.08);
+  position: relative;
 }
 .crm-ctrl-btn:hover {
   border-color: var(--erp-status-success, #15B97A);
@@ -233,46 +278,49 @@ const controlsOpen = ref(false)
   color: var(--erp-status-success, #15B97A);
 }
 
+.ctrl-text,
+.ctrl-chevron {
+  display: none;
+}
+
 .ctrl-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
   padding: 0 5px;
   border-radius: 9px;
   background: var(--erp-status-success, #15B97A);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-}
-
-.ctrl-chevron {
-  font-size: 11px;
-  transition: transform 0.2s;
-  opacity: 0.6;
-}
-.ctrl-chevron.rotated {
-  transform: rotate(180deg);
 }
 
 /* ── Primary CTA ────────────────────────────────────────────── */
 .crm-new-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 38px;
-  padding: 0 18px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #15B97A 0%, #34D399 100%);
   color: #fff;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   box-shadow: 0 4px 14px rgba(21, 185, 122, 0.30);
   transition: all 0.18s;
+}
+.crm-new-btn span {
+  display: none;
 }
 .crm-new-btn:hover {
   transform: translateY(-1px);
@@ -295,6 +343,30 @@ const controlsOpen = ref(false)
   overflow: hidden;
 }
 .crm-controls-popper .el-popper__arrow { display: none; }
+
+.crm-search-popper {
+  padding: 12px !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--erp-border, #E6ECF3) !important;
+  box-shadow: 0 18px 46px rgba(16, 24, 40, 0.14) !important;
+}
+.crm-search-popper .el-popper__arrow { display: none; }
+
+.crm-search-panel {
+  display: grid;
+  gap: 9px;
+}
+.crm-search-panel__title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+}
+.crm-search-panel .el-input__wrapper {
+  height: 40px;
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1px solid var(--erp-border, #E6ECF3);
+}
 
 .ctrl-panel {
   padding: 16px;

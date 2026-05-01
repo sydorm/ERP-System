@@ -30,24 +30,38 @@
     <div class="crm-board-page" v-show="viewMode === 'board'">
       <!-- STICKY TOP ZONE -->
       <div class="sticky-top-zone">
-        <div class="crm-toolbar-row">
-          <CrmBoardToolbar
-            :users="users"
-            :filters="filters"
-            :search-query="searchQuery"
-            :sort-option="sortOption"
-            :active-controls-count="activeControlsCount"
-            :is-any-filter-active="isAnyFilterActive"
-            :can-view-analytics="userStore.hasPermission('crm.analytics')"
-            @update:search-query="searchQuery = $event"
-            @update:sort-option="sortOption = $event"
-            @analytics="viewMode = 'analytics'"
-            @reset-all="resetAll"
-            @reset-filters="resetFilters"
-            @apply-filters="applyFilters"
-            @export="handleExport"
-            @new-order="openNewOrder"
-          />
+        <div class="crm-top-compact-line">
+          <div class="crm-summary-cards">
+            <CrmSummaryCards
+              :orders-count="orders.length"
+              :total-pipeline-amount="totalPipelineAmount"
+              :hot-sla-count="hotSlaCount"
+              :payment-progress="paymentProgress"
+              :today-tasks-count="todayTasks.length"
+              :overdue-tasks-count="overdueTasks.length"
+              :format-currency="formatCurrency"
+            />
+          </div>
+
+          <div class="crm-toolbar-row">
+            <CrmBoardToolbar
+              :users="users"
+              :filters="filters"
+              :search-query="searchQuery"
+              :sort-option="sortOption"
+              :active-controls-count="activeControlsCount"
+              :is-any-filter-active="isAnyFilterActive"
+              :can-view-analytics="userStore.hasPermission('crm.analytics')"
+              @update:search-query="searchQuery = $event"
+              @update:sort-option="sortOption = $event"
+              @analytics="viewMode = 'analytics'"
+              @reset-all="resetAll"
+              @reset-filters="resetFilters"
+              @apply-filters="applyFilters"
+              @export="handleExport"
+              @new-order="openNewOrder"
+            />
+          </div>
         </div>
 
         <div v-if="attentionOrders.length" class="crm-attention-row">
@@ -57,18 +71,6 @@
             v-model:attention-only="filters.attentionOnly"
             :get-attention-reasons="getAttentionReasons"
             @open-order="openEditor"
-          />
-        </div>
-
-        <div class="crm-summary-cards">
-          <CrmSummaryCards
-            :orders-count="orders.length"
-            :total-pipeline-amount="totalPipelineAmount"
-            :hot-sla-count="hotSlaCount"
-            :payment-progress="paymentProgress"
-            :today-tasks-count="todayTasks.length"
-            :overdue-tasks-count="overdueTasks.length"
-            :format-currency="formatCurrency"
           />
         </div>
       </div><!-- /sticky-top-zone -->
