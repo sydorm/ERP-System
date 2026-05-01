@@ -153,7 +153,7 @@ const isAllSelected = computed(() => {
 .nom-header {
   background: #ffffff;
   border-bottom: 2px solid #F1F5F9;
-  height: 56px;
+  height: 68px;
   position: sticky;
   top: 0;
   z-index: 10;
