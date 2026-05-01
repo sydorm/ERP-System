@@ -176,6 +176,7 @@
           :payment-statuses="paymentStatuses"
           :priorities="priorities"
           :managers="users"
+          :format-currency="formatCurrency"
           @update-amount="updateTotalAmount"
         />
 
@@ -443,6 +444,8 @@ const logContact = async (data) => {
     ElMessage.error(err.response?.data?.detail || 'Помилка запису контакту')
   }
 }
+
+const formatCurrency = (val) => new Intl.NumberFormat('uk-UA').format(val || 0)
 
 const updateTotalAmount = (val) => {
   form.total_amount = val
