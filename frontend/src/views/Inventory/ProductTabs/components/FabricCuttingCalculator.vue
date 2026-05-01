@@ -7,88 +7,200 @@
 
     <el-form label-position="top" size="small" class="fc-form">
 
-      <!-- ── Dimension sources ────────────────────────────────────────────── -->
-      <div class="fc-section-title">Джерело розмірів деталі</div>
-      <div class="fc-row-2">
-
-        <el-form-item label="Ширина деталі — джерело">
-          <el-select v-model="cfg.baseWidthSource" class="w-full" @change="clearPreview">
-            <el-option label="Параметр товару: ширина (width_mm)" value="width_mm" />
-            <el-option label="Параметр товару: довжина (length_mm)" value="length_mm" />
-            <el-option label="Параметр товару: висота (height_mm)" value="height_mm" />
-            <el-option label="Характеристика замовлення" value="characteristic" />
-            <el-option label="Ручне значення" value="manual" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Довжина деталі — джерело">
-          <el-select v-model="cfg.baseLengthSource" class="w-full" @change="clearPreview">
-            <el-option label="Параметр товару: ширина (width_mm)" value="width_mm" />
-            <el-option label="Параметр товару: довжина (length_mm)" value="length_mm" />
-            <el-option label="Параметр товару: висота (height_mm)" value="height_mm" />
-            <el-option label="Характеристика замовлення" value="characteristic" />
-            <el-option label="Ручне значення" value="manual" />
-          </el-select>
-        </el-form-item>
+      <!-- ── Mode toggle ─────────────────────────────────────────────────── -->
+      <div class="fc-mode-row">
+        <el-switch
+          v-model="cfg.multiPieceMode"
+          active-text="Кілька типів деталей"
+          inactive-text="Один тип деталі"
+          @change="onModeChange"
+        />
       </div>
 
-      <!-- Char names -->
-      <div v-if="cfg.baseWidthSource === 'characteristic' || cfg.baseLengthSource === 'characteristic'" class="fc-row-2">
-        <el-form-item v-if="cfg.baseWidthSource === 'characteristic'" label="Характеристика для ширини">
-          <el-select v-model="cfg.baseWidthCharName" class="w-full" filterable allow-create @change="clearPreview">
-            <el-option v-for="a in productAttributes" :key="a.id" :label="a.name" :value="a.name" />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="cfg.baseLengthSource === 'characteristic'" label="Характеристика для довжини">
-          <el-select v-model="cfg.baseLengthCharName" class="w-full" filterable allow-create @change="clearPreview">
-            <el-option v-for="a in productAttributes" :key="a.id" :label="a.name" :value="a.name" />
-          </el-select>
-        </el-form-item>
-      </div>
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!--  SINGLE-PIECE MODE                                                -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <template v-if="!cfg.multiPieceMode">
 
-      <!-- Manual values -->
-      <div v-if="cfg.baseWidthSource === 'manual' || cfg.baseLengthSource === 'manual'" class="fc-row-2">
-        <el-form-item v-if="cfg.baseWidthSource === 'manual'" label="Ширина деталі, мм">
-          <el-input-number v-model="cfg.manualBaseWidthMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
-        <el-form-item v-if="cfg.baseLengthSource === 'manual'" label="Довжина деталі, мм">
-          <el-input-number v-model="cfg.manualBaseLengthMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
-      </div>
+        <!-- ── Dimension sources ──────────────────────────────────────────── -->
+        <div class="fc-section-title mt-3">Джерело розмірів деталі</div>
+        <div class="fc-row-2">
+          <el-form-item label="Ширина деталі — джерело">
+            <el-select v-model="cfg.baseWidthSource" class="w-full" @change="clearPreview">
+              <el-option label="Параметр товару: ширина (width_mm)" value="width_mm" />
+              <el-option label="Параметр товару: довжина (length_mm)" value="length_mm" />
+              <el-option label="Параметр товару: висота (height_mm)" value="height_mm" />
+              <el-option label="Характеристика замовлення" value="characteristic" />
+              <el-option label="Ручне значення" value="manual" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Довжина деталі — джерело">
+            <el-select v-model="cfg.baseLengthSource" class="w-full" @change="clearPreview">
+              <el-option label="Параметр товару: ширина (width_mm)" value="width_mm" />
+              <el-option label="Параметр товару: довжина (length_mm)" value="length_mm" />
+              <el-option label="Параметр товару: висота (height_mm)" value="height_mm" />
+              <el-option label="Характеристика замовлення" value="characteristic" />
+              <el-option label="Ручне значення" value="manual" />
+            </el-select>
+          </el-form-item>
+        </div>
 
-      <!-- Dimension source preview (from product dims) -->
-      <div v-if="resolvedPreviewDims" class="fc-dim-preview">
-        <span>Поточні розміри товару:</span>
-        <span class="fc-dim-badge">Ш {{ productDimensions.width_mm || 0 }} мм</span>
-        <span class="fc-dim-badge">Д {{ productDimensions.length_mm || 0 }} мм</span>
-        <span class="fc-dim-badge">В {{ productDimensions.height_mm || 0 }} мм</span>
-      </div>
+        <!-- Char names -->
+        <div v-if="cfg.baseWidthSource === 'characteristic' || cfg.baseLengthSource === 'characteristic'" class="fc-row-2">
+          <el-form-item v-if="cfg.baseWidthSource === 'characteristic'" label="Характеристика для ширини">
+            <el-select v-model="cfg.baseWidthCharName" class="w-full" filterable allow-create @change="clearPreview">
+              <el-option v-for="a in productAttributes" :key="a.id" :label="a.name" :value="a.name" />
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="cfg.baseLengthSource === 'characteristic'" label="Характеристика для довжини">
+            <el-select v-model="cfg.baseLengthCharName" class="w-full" filterable allow-create @change="clearPreview">
+              <el-option v-for="a in productAttributes" :key="a.id" :label="a.name" :value="a.name" />
+            </el-select>
+          </el-form-item>
+        </div>
 
-      <!-- ── Allowances ───────────────────────────────────────────────────── -->
-      <div class="fc-section-title mt-3">Припуски на оббивку, мм</div>
-      <div class="fc-allowances">
-        <div></div>
-        <el-form-item label="Зверху">
-          <el-input-number v-model="cfg.allowanceTopMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
-        <div></div>
+        <!-- Manual values -->
+        <div v-if="cfg.baseWidthSource === 'manual' || cfg.baseLengthSource === 'manual'" class="fc-row-2">
+          <el-form-item v-if="cfg.baseWidthSource === 'manual'" label="Ширина деталі, мм">
+            <el-input-number v-model="cfg.manualBaseWidthMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+          <el-form-item v-if="cfg.baseLengthSource === 'manual'" label="Довжина деталі, мм">
+            <el-input-number v-model="cfg.manualBaseLengthMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+        </div>
 
-        <el-form-item label="Зліва">
-          <el-input-number v-model="cfg.allowanceLeftMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
-        <div class="fc-allowances-center">деталь</div>
-        <el-form-item label="Справа">
-          <el-input-number v-model="cfg.allowanceRightMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
+        <!-- Dimension preview -->
+        <div v-if="resolvedPreviewDims" class="fc-dim-preview">
+          <span>Поточні розміри товару:</span>
+          <span class="fc-dim-badge">Ш {{ productDimensions.width_mm || 0 }} мм</span>
+          <span class="fc-dim-badge">Д {{ productDimensions.length_mm || 0 }} мм</span>
+          <span class="fc-dim-badge">В {{ productDimensions.height_mm || 0 }} мм</span>
+        </div>
 
-        <div></div>
-        <el-form-item label="Знизу">
-          <el-input-number v-model="cfg.allowanceBottomMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
-        <div></div>
-      </div>
+        <!-- ── Allowances ─────────────────────────────────────────────────── -->
+        <div class="fc-section-title mt-3">Припуски на оббивку, мм</div>
+        <div class="fc-allowances">
+          <div></div>
+          <el-form-item label="Зверху">
+            <el-input-number v-model="cfg.allowanceTopMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+          <div></div>
 
-      <!-- ── Roll & count ─────────────────────────────────────────────────── -->
+          <el-form-item label="Зліва">
+            <el-input-number v-model="cfg.allowanceLeftMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+          <div class="fc-allowances-center">деталь</div>
+          <el-form-item label="Справа">
+            <el-input-number v-model="cfg.allowanceRightMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+
+          <div></div>
+          <el-form-item label="Знизу">
+            <el-input-number v-model="cfg.allowanceBottomMm" :min="0" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+          <div></div>
+        </div>
+
+        <!-- Piece count -->
+        <div class="fc-row-2">
+          <el-form-item label="Кількість деталей">
+            <el-input-number v-model="cfg.pieceCount" :min="1" :precision="0" class="w-full" @change="clearPreview" />
+          </el-form-item>
+          <div></div>
+        </div>
+
+      </template>
+
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <!--  MULTI-PIECE MODE — таблиця деталей                              -->
+      <!-- ══════════════════════════════════════════════════════════════════ -->
+      <template v-else>
+        <div class="fc-section-title mt-3">Деталі для розкрою</div>
+
+        <div class="fc-pieces-wrap">
+          <!-- Header -->
+          <div class="fc-pieces-head">
+            <span>Назва</span>
+            <span>Ш, мм</span>
+            <span>Д, мм</span>
+            <span>Зліва</span>
+            <span>Справа</span>
+            <span>Зверху</span>
+            <span>Знизу</span>
+            <span>Шт</span>
+            <span></span>
+          </div>
+
+          <!-- Rows -->
+          <div v-for="(piece, idx) in (cfg.pieces || [])" :key="idx" class="fc-piece-row">
+            <el-input
+              v-model="piece.name"
+              placeholder="Назва"
+              size="small"
+              @input="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.baseWidthMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.baseLengthMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.allowanceLeftMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.allowanceRightMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.allowanceTopMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.allowanceBottomMm"
+              :min="0" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-input-number
+              v-model="piece.count"
+              :min="1" :precision="0"
+              size="small"
+              @change="clearPreview"
+            />
+            <el-button
+              type="danger" link size="small"
+              @click="removePiece(idx)"
+              :disabled="(cfg.pieces || []).length <= 1"
+            >✕</el-button>
+          </div>
+        </div>
+
+        <el-button size="small" type="primary" plain class="mt-2" @click="addPiece">
+          + Додати деталь
+        </el-button>
+
+        <!-- Hint about multi-piece packing -->
+        <div class="fc-multi-hint mt-2">
+          Алгоритм: First Fit Decreasing — деталі укладаються смугами, найвищі першими.
+          Деталі різних типів можуть ділити одну смугу, якщо вміщуються по ширині.
+        </div>
+      </template>
+
+      <!-- ── Roll params (shared) ───────────────────────────────────────── -->
       <div class="fc-section-title mt-3">Параметри рулону</div>
       <div class="fc-row-2">
         <el-form-item label="Ширина рулона, мм">
@@ -96,28 +208,28 @@
             placeholder="напр. 1400" @change="clearPreview" />
           <div class="fc-field-hint">Стандарт тканин: 1400 мм</div>
         </el-form-item>
-        <el-form-item label="Кількість деталей">
-          <el-input-number v-model="cfg.pieceCount" :min="1" :precision="0" class="w-full" @change="clearPreview" />
-        </el-form-item>
+        <div></div>
       </div>
 
-      <!-- ── Rotation & nap ──────────────────────────────────────────────── -->
-      <div class="fc-section-title mt-3">Поворот та ворс</div>
-      <div class="fc-row-2 fc-checkboxes">
-        <el-checkbox v-model="cfg.allowRotation" @change="clearPreview">
-          Дозволити поворот деталі
-        </el-checkbox>
-        <el-checkbox v-model="cfg.respectNapDirection" @change="clearPreview">
-          Враховувати напрямок ворсу / малюнка
-        </el-checkbox>
-      </div>
-      <el-alert
-        v-if="cfg.respectNapDirection && cfg.allowRotation"
-        title="Поворот заборонено — напрямок ворсу активовано"
-        type="warning" :closable="false" size="small" class="mt-1"
-      />
+      <!-- ── Rotation & nap (single-piece only) ────────────────────────── -->
+      <template v-if="!cfg.multiPieceMode">
+        <div class="fc-section-title mt-3">Поворот та ворс</div>
+        <div class="fc-row-2 fc-checkboxes">
+          <el-checkbox v-model="cfg.allowRotation" @change="clearPreview">
+            Дозволити поворот деталі
+          </el-checkbox>
+          <el-checkbox v-model="cfg.respectNapDirection" @change="clearPreview">
+            Враховувати напрямок ворсу / малюнка
+          </el-checkbox>
+        </div>
+        <el-alert
+          v-if="cfg.respectNapDirection && cfg.allowRotation"
+          title="Поворот заборонено — напрямок ворсу активовано"
+          type="warning" :closable="false" size="small" class="mt-1"
+        />
+      </template>
 
-      <!-- ── Waste ────────────────────────────────────────────────────────── -->
+      <!-- ── Waste (shared) ────────────────────────────────────────────── -->
       <div class="fc-row-2 mt-3">
         <el-form-item label="Відходи, %">
           <el-input-number v-model="cfg.wastePercent" :min="0" :max="100" :precision="1" class="w-full" @change="clearPreview" />
@@ -126,7 +238,7 @@
         <div></div>
       </div>
 
-      <!-- ── Material characteristic ─────────────────────────────────────── -->
+      <!-- ── Material characteristic (shared) ─────────────────────────── -->
       <div class="fc-section-title mt-3">Характеристика матеріалу (для перевірки залишку)</div>
       <div class="fc-row-2">
         <el-form-item label="Джерело кольору/варіанту">
@@ -157,7 +269,7 @@
 
       <!-- Errors -->
       <div v-if="previewResult.errors.length" class="fc-result-errors">
-        <div v-for="e in previewResult.errors" :key="e" class="fc-error-line">❌ {{ e }}</div>
+        <div v-for="e in previewResult.errors" :key="e" class="fc-error-line">{{ e }}</div>
       </div>
 
       <!-- Success -->
@@ -166,10 +278,19 @@
           <span class="fc-result-label">Потрібно тканини:</span>
           <span class="fc-result-value">{{ previewResult.finalQty.toFixed(3) }} м.п.</span>
         </div>
-        <div class="fc-result-meta">
+
+        <!-- Single-piece meta -->
+        <div v-if="!previewResult.meta.isMulti" class="fc-result-meta">
           Заготовка: <strong>{{ previewResult.meta.cutWidthMm }} × {{ previewResult.meta.cutLengthMm }} мм</strong>
           · В ряд: <strong>{{ previewResult.meta.itemsPerRow }} шт</strong>
           · Рядів: <strong>{{ previewResult.meta.rowsNeeded }}</strong>
+        </div>
+
+        <!-- Multi-piece meta -->
+        <div v-else class="fc-result-meta">
+          Смуг розкрою: <strong>{{ previewResult.meta.strips?.length }}</strong>
+          · Загальна довжина: <strong>{{ previewResult.meta.totalLengthMm }} мм</strong>
+          · Деталей: <strong>{{ (cfg.pieces || []).reduce((s, p) => s + (Number(p.count)||1), 0) }} шт</strong>
         </div>
 
         <!-- Stock availability -->
@@ -191,8 +312,8 @@
           ⚠ Залишок не перевірено: не вказаний компонент або характеристика кольору.
         </div>
 
-        <!-- Remnant forecast -->
-        <div v-if="previewResult.meta.remnantForecast" class="fc-remnant">
+        <!-- Remnant forecast (single-piece only) -->
+        <div v-if="!previewResult.meta.isMulti && previewResult.meta.remnantForecast" class="fc-remnant">
           Можливий залишок після розкрою: <strong>{{ previewResult.meta.remnantForecast }}</strong>
           <span class="fc-remnant-note">(прогноз — автоматичне списання не виконується)</span>
         </div>
@@ -217,7 +338,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { computeFabricCutting } from '@/composables/useFabricCuttingCalc'
+import { computeFabricCutting, PIECE_DEFAULTS } from '@/composables/useFabricCuttingCalc'
 import api from '@/api'
 
 const props = defineProps({
@@ -243,12 +364,34 @@ const resolvedPreviewDims = computed(() =>
   props.productDimensions.height_mm != null
 )
 
-// Build dims object for the calculator (includes product physical dims)
+// ── Multi-piece helpers ──────────────────────────────────────────────────
+
+const onModeChange = () => {
+  clearPreview()
+  if (cfg.multiPieceMode) {
+    if (!cfg.pieces) cfg.pieces = []
+    if (cfg.pieces.length === 0) cfg.pieces.push({ ...PIECE_DEFAULTS })
+  }
+}
+
+const addPiece = () => {
+  if (!cfg.pieces) cfg.pieces = []
+  cfg.pieces.push({ ...PIECE_DEFAULTS })
+  clearPreview()
+}
+
+const removePiece = (idx) => {
+  if (!cfg.pieces || cfg.pieces.length <= 1) return
+  cfg.pieces.splice(idx, 1)
+  clearPreview()
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────
+
 const buildDims = () => ({
   width_mm:  Number(props.productDimensions.width_mm)  || 0,
   length_mm: Number(props.productDimensions.length_mm) || 0,
   height_mm: Number(props.productDimensions.height_mm) || 0,
-  // characteristic values would come from order context; here we use 0 as fallback
 })
 
 const runPreview = async () => {
@@ -264,7 +407,6 @@ const runPreview = async () => {
     if (result.valid && props.componentId) {
       try {
         const res = await api.get(`/api/v1/products/${props.componentId}/stock`)
-        // stock endpoint returns { total, by_variant, ... } or number — handle both
         const data = res.data
         let available = 0
         if (typeof data === 'number') {
@@ -274,11 +416,10 @@ const runPreview = async () => {
         } else if (data && typeof data.balance !== 'undefined') {
           available = Number(data.balance) || 0
         } else if (typeof data === 'object') {
-          // sum all variant balances
           available = Object.values(data).reduce((s, v) => s + (Number(v) || 0), 0)
         }
         if (!cfg.materialCharacteristicName) {
-          stockInfo.value = { error: 'Не вибрано характеристику кольору — залишок показано загальний.' , available }
+          stockInfo.value = { error: 'Не вибрано характеристику кольору — залишок показано загальний.', available }
         } else {
           stockInfo.value = { available }
         }
@@ -303,6 +444,13 @@ const runPreview = async () => {
 }
 .fc-icon  { font-size: 20px; }
 .fc-title { font-size: 14px; font-weight: 700; color: #2e7d32; }
+
+.fc-mode-row {
+  display: flex; align-items: center;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 2px;
+}
 
 .fc-section-title {
   font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -338,6 +486,44 @@ const runPreview = async () => {
 .fc-dim-badge {
   background: #e3f2fd; color: #1565c0; border-radius: 4px;
   padding: 1px 6px; font-weight: 600;
+}
+
+/* Multi-piece table */
+.fc-pieces-wrap {
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.fc-pieces-head,
+.fc-piece-row {
+  display: grid;
+  grid-template-columns: 140px repeat(7, 80px) 32px;
+  gap: 4px;
+  padding: 4px 6px;
+  align-items: center;
+}
+.fc-pieces-head {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #78909c;
+  text-transform: uppercase;
+}
+.fc-piece-row {
+  border-bottom: 1px solid #f5f5f5;
+}
+.fc-piece-row:last-child { border-bottom: none; }
+.fc-piece-row:nth-child(even) { background: #fafafa; }
+
+.fc-multi-hint {
+  font-size: 10px;
+  color: #90a4ae;
+  line-height: 1.4;
+  padding: 4px 6px;
+  background: #f9f9f9;
+  border-radius: 4px;
 }
 
 .fc-preview-btn-row { margin: 14px 0 0; }
@@ -386,5 +572,6 @@ const runPreview = async () => {
 
 .w-full { width: 100%; }
 .mt-1   { margin-top: 4px; }
+.mt-2   { margin-top: 8px; }
 .mt-3   { margin-top: 12px; }
 </style>

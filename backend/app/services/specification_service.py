@@ -1,7 +1,7 @@
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 import re
 from decimal import Decimal
-from app.models.specification import SpecificationItem, CalculationType, CalculationDimension
+from app.models.specification import SpecificationItem, CalculationType
 
 class SpecificationService:
     @staticmethod
@@ -312,22 +312,68 @@ class SpecificationService:
     def _calc_fabric_cutting(calc_dim_config: Dict[str, Any], parent_dimensions: Dict[str, Any]) -> float:
         """
         Mirror of useFabricCuttingCalc.js → computeFabricCutting().
-        Formula:
-          cutWidthMm  = baseWidthMm  + allowanceLeft  + allowanceRight
-          cutLengthMm = baseLengthMm + allowanceTop   + allowanceBottom
-          itemsPerRow = floor(rollWidthMm / cutWidthMm)
-          rowsNeeded  = ceil(pieceCount / itemsPerRow)
-          linearMeters = (rowsNeeded * cutLengthMm) / 1000
-          finalQty    = linearMeters * (1 + wastePercent / 100)
+        Config is stored FLAT on calc_dim_config (the component mutates it directly).
+        Supports single-piece and multi-piece (strip packing) modes.
         """
         import math
-        cfg = calc_dim_config.get('fabric_cutting') or {}
+        # Config is stored FLAT on calc_dim_config (component mutates it directly)
+        cfg = calc_dim_config
         custom_attrs = parent_dimensions.get('custom_attributes') or {}
+        roll_width_mm = float(cfg.get('rollWidthMm') or 0)
+        waste_percent = max(0.0, float(cfg.get('wastePercent') or 0))
 
+        if roll_width_mm <= 0:
+            return 0.0
+
+        # ── Multi-piece strip packing (First Fit Decreasing Height) ──────────
+        if cfg.get('multiPieceMode') and cfg.get('pieces'):
+            all_pieces = []
+            for p in cfg['pieces']:
+                bW = float(p.get('baseWidthMm') or 0)
+                bL = float(p.get('baseLengthMm') or 0)
+                aL = float(p.get('allowanceLeftMm') or 0)
+                aR = float(p.get('allowanceRightMm') or 0)
+                aT = float(p.get('allowanceTopMm') or 0)
+                aB = float(p.get('allowanceBottomMm') or 0)
+                cut_w = bW + aL + aR
+                cut_l = bL + aT + aB
+                cnt = max(1, round(float(p.get('count') or 1)))
+                if cut_w <= 0 or cut_l <= 0 or cut_w > roll_width_mm:
+                    continue
+                for _ in range(cnt):
+                    all_pieces.append({'cutW': cut_w, 'cutL': cut_l})
+
+            if not all_pieces:
+                return 0.0
+
+            remaining = sorted(all_pieces, key=lambda p: (-p['cutL'], -p['cutW']))
+            total_length_mm = 0.0
+
+            while remaining:
+                used_width = 0.0
+                strip_height = 0.0
+                in_strip = []
+                i = 0
+                while i < len(remaining):
+                    p = remaining[i]
+                    if used_width + p['cutW'] <= roll_width_mm:
+                        in_strip.append(remaining.pop(i))
+                        used_width += in_strip[-1]['cutW']
+                        strip_height = max(strip_height, in_strip[-1]['cutL'])
+                    else:
+                        i += 1
+                if not in_strip:
+                    break
+                total_length_mm += strip_height
+
+            linear_meters = total_length_mm / 1000.0
+            return linear_meters * (1.0 + waste_percent / 100.0)
+
+        # ── Single-piece mode ────────────────────────────────────────────────
         def resolve_dim(source, char_name, manual_value):
-            if source == 'width_mm':      return float(parent_dimensions.get('width_mm') or 0)
-            if source == 'length_mm':     return float(parent_dimensions.get('length_mm') or 0)
-            if source == 'height_mm':     return float(parent_dimensions.get('height_mm') or 0)
+            if source == 'width_mm':       return float(parent_dimensions.get('width_mm') or 0)
+            if source == 'length_mm':      return float(parent_dimensions.get('length_mm') or 0)
+            if source == 'height_mm':      return float(parent_dimensions.get('height_mm') or 0)
             if source == 'characteristic': return float(custom_attrs.get(char_name) or 0)
             return float(manual_value or 0)
 
@@ -337,22 +383,12 @@ class SpecificationService:
         if base_width_mm <= 0 or base_length_mm <= 0:
             return 0.0
 
-        a_l = float(cfg.get('allowanceLeftMm') or 0)
-        a_r = float(cfg.get('allowanceRightMm') or 0)
-        a_t = float(cfg.get('allowanceTopMm') or 0)
-        a_b = float(cfg.get('allowanceBottomMm') or 0)
+        cut_width_mm  = base_width_mm  + float(cfg.get('allowanceLeftMm') or 0) + float(cfg.get('allowanceRightMm') or 0)
+        cut_length_mm = base_length_mm + float(cfg.get('allowanceTopMm')  or 0) + float(cfg.get('allowanceBottomMm') or 0)
 
-        cut_width_mm  = base_width_mm  + a_l + a_r
-        cut_length_mm = base_length_mm + a_t + a_b
-
-        roll_width_mm = float(cfg.get('rollWidthMm') or 0)
-        if roll_width_mm <= 0:
-            return 0.0
-
-        piece_count   = max(1, round(float(cfg.get('pieceCount') or 1)))
-        waste_percent = max(0.0, float(cfg.get('wastePercent') or 0))
-        allow_rotation  = bool(cfg.get('allowRotation', False))
-        respect_nap     = bool(cfg.get('respectNapDirection', False))
+        piece_count    = max(1, round(float(cfg.get('pieceCount') or 1)))
+        allow_rotation = bool(cfg.get('allowRotation', False))
+        respect_nap    = bool(cfg.get('respectNapDirection', False))
 
         def try_orientation(cut_w, cut_l):
             if roll_width_mm < cut_w or cut_w <= 0:
@@ -360,8 +396,7 @@ class SpecificationService:
             items_per_row = math.floor(roll_width_mm / cut_w)
             if items_per_row < 1:
                 return None
-            rows_needed = math.ceil(piece_count / items_per_row)
-            return rows_needed * cut_l / 1000.0
+            return math.ceil(piece_count / items_per_row) * cut_l / 1000.0
 
         var_a = try_orientation(cut_width_mm, cut_length_mm)
         chosen_meters = None

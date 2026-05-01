@@ -1084,7 +1084,7 @@ const calculateQuantityInternal = (item, includeWaste = true, returnDetails = fa
         }
     }
     else if (item.calc_type === 'fabric_cutting') {
-        const fcCfg = (item.calc_dim_config || {}).fabric_cutting || {}
+        const fcCfg = item.calc_dim_config || {}
         const dims = {
             width_mm:  parseFloat(activeDims.width_mm)  || 0,
             height_mm: parseFloat(activeDims.height_mm) || 0,
