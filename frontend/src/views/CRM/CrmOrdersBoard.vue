@@ -771,7 +771,7 @@ const filteredOrdersInStage = (stage) => {
 
 const stageTotal = (stage) => filteredOrdersInStage(stage).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
 
-const openEditor = (o) => router.push(`/crm/order-workspace/${o.id}`)
+const openEditor = (o) => router.push(`/crm/order-master/${o.id}`)
 const openNewOrder = () => router.push('/crm/orders/new')
 const openNewOrderInStage = (s) => router.push(`/crm/orders/new?stage=${s}`)
 

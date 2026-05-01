@@ -311,6 +311,12 @@ const router = createRouter({
                     component: () => import('@/views/CRM/CrmOrderWorkspace.vue'),
                     meta: { title: 'Робочий простір заявки' }
                 },
+                {
+                    path: '/crm/order-master/:id',
+                    name: 'crm-order-master',
+                    component: () => import('@/views/CRM/CrmOrderMaster.vue'),
+                    meta: { title: 'Master Order Manager' }
+                },
                 // Settings
                 {
                     path: '/settings/users',
