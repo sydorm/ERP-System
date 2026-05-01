@@ -258,80 +258,41 @@
 }
 
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ KPI Insight Cards в”Ђв”Ђв”Ђв”Ђв”Ђ */
-/* ───── KPI Metric Cards ───── */
+/* KPI Metric Cards (Sticky) */
+.crm-summary-cards {
+  position: sticky;
+  top: 0;
+  z-index: 1010;
+  background: rgba(245, 248, 252, 0.9);
+  backdrop-filter: blur(8px);
+  padding-bottom: 10px;
+  margin: 0 -24px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
 .crm-insights-row {
   display: grid;
   grid-template-columns: 1.25fr repeat(3, 1fr);
   gap: 10px;
   margin-top: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
-.crm-insight-card {
-  background: #FFFFFF;
-  border: 0.5px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 12px 18px;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: transform 0.18s, box-shadow 0.18s;
-}
-.crm-insight-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-}
-
-.crm-insight-card.metric-pipeline { border-left: 4px solid #6C63FF; }
-.crm-insight-card.metric-sla      { border-left: 4px solid #F59E0B; }
-.crm-insight-card.metric-payment  { border-left: 4px solid #22C55E; }
-.crm-insight-card.metric-today    { border-left: 4px solid #EF4444; }
-
-.insight-content { flex: 1; min-width: 0; }
-
-.metric-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9CA3AF;
-  margin-bottom: 2px;
-}
-
-.metric-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 24px;
-  font-weight: 500;
-  color: #111827;
-  display: block;
-  line-height: 1.1;
-  margin-bottom: 2px;
-}
-
-.insight-value-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.insight-sparkline { opacity: 0.6; }
-
-.crm-insight-card small {
-  display: block;
-  font-size: 11px;
-  color: #9CA3AF;
-}
-
-/* Toolbar row */
+/* Toolbar row (Sticky below KPI) */
 .crm-toolbar-row {
+  position: sticky;
+  top: 96px; /* Offset by approximate height of KPI cards */
+  z-index: 1009;
+  background: rgba(245, 248, 252, 0.9);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-top: 2px;
+  margin: 0 -24px;
+  padding: 10px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
 }
 
 /* Transitions */
@@ -483,6 +444,45 @@
   outline-offset: 2px;
 }
 
+.crm-insight-card {
+  background: #FFFFFF;
+  border: 0.5px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.crm-insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+.crm-insight-card.metric-pipeline { border-left: 4px solid #6C63FF; }
+.crm-insight-card.metric-sla      { border-left: 4px solid #F59E0B; }
+.crm-insight-card.metric-payment  { border-left: 4px solid #22C55E; }
+.crm-insight-card.metric-today    { border-left: 4px solid #EF4444; }
+
+.metric-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  margin-bottom: 2px;
+}
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px;
+  font-weight: 500;
+  color: #111827;
+  display: block;
+  line-height: 1.1;
+}
+
+/* Kanban Board Sticky Header */
 .kanban-column-header {
   display: flex;
   flex-direction: column;
@@ -490,10 +490,11 @@
   flex-shrink: 0;
   margin: 0 -10px 8px;
   position: sticky;
-  top: 0;
-  z-index: 10;
+  top: 154px; /* KPI (96px) + Toolbar (58px) */
+  z-index: 1008;
   padding: 9px 14px 0;
   background: inherit;
+  backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
