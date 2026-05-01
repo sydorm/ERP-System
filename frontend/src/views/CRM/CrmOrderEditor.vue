@@ -52,8 +52,11 @@
         <!-- COMPONENT: Materials Analysis -->
         <CrmMaterialsCheckBlock
           v-if="form.product_id"
-          :materials="materials"
-          :loading="checkingMaterials"
+          :form="form"
+          :material-check="materialCheck"
+          :materials-loading="checkingMaterials"
+          :format-qty="formatQty"
+          @go-to-purchases="router.push('/purchases/new')"
         />
       </div>
 
@@ -63,7 +66,12 @@
         <!-- COMPONENT: Financial Block -->
         <CrmFinanceBlock
           :form="form"
-          @set-prepayment-percent="setPrepayPercent"
+          :bank-accounts="bankAccounts"
+          :auto-payment-status="autoPaymentStatus"
+          :format-currency="formatCurrency"
+          @set-prepay-pct="setPrepayPercent"
+          @calc-prepayment="handleCalcPrepayment"
+          @prepayment-input="handlePrepaymentInput"
         />
 
         <!-- COMPONENT: Interaction Hub -->
@@ -89,15 +97,17 @@
           @log-contact="logContact"
         />
 
-        <!-- COMPONENT: Deadlines & Readiness -->
+        <!-- COMPONENT: Deadlines & Priority -->
         <CrmDeadlinesBlock
           :form="form"
+          :priorities="priorities"
+          :format-date="formatDate"
         />
 
         <!-- COMPONENT: Readiness Checklist -->
         <CrmReadinessChecklist
-          :form="form"
-          :attributes="productAttributes"
+          :progress="readinessData.progress"
+          :items="readinessData.items"
         />
       </div>
     </main>
@@ -273,6 +283,51 @@ const logContact = async () => {
   } finally { savingContact.value = false }
 }
 
+const bankAccounts = ref([])
+
+const autoPaymentStatus = computed(() => {
+  if (form.prepayment_amount >= form.total_amount && form.total_amount > 0) return { key: 'paid', label: 'Оплачено' }
+  if (form.prepayment_amount > 0) return { key: 'partial', label: 'Часткова оплата' }
+  return { key: 'unpaid', label: 'Очікує оплати' }
+})
+
+const formatCurrency = (val) => {
+  return new Intl.NumberFormat('uk-UA').format(val || 0)
+}
+
+const formatQty = (val) => {
+  if (val === undefined || val === null) return '0'
+  return Number(val).toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
+const materialCheck = computed(() => {
+  return {
+    items: materials.value || [],
+    has_issues: (materials.value || []).some(m => m.status !== 'ok')
+  }
+})
+
+const readinessData = computed(() => {
+  const items = [
+    { key: 'client', label: 'Дані замовника', done: !!form.counterparty_id },
+    { key: 'product', label: 'Виріб обрано', done: !!form.product_id },
+    { key: 'specs', label: 'Характеристики', done: Object.keys(form.attributes_values || {}).length > 0 },
+    { key: 'prepayment', label: 'Передоплата', done: form.prepayment_amount > 0 },
+    { key: 'deadline', label: 'Дедлайн встановлено', done: !!form.deadline_date }
+  ]
+  const doneCount = items.filter(i => i.done).length
+  const progress = Math.round((doneCount / items.length) * 100)
+  return { items, progress }
+})
+
+const handleCalcPrepayment = () => {
+  // Logic to recalc based on percentage if needed
+}
+
+const handlePrepaymentInput = () => {
+  // Logic to handle manual prepay input
+}
+
 const save = async (action) => {
   saving.value = true
   try {
@@ -284,9 +339,19 @@ const save = async (action) => {
   } finally { saving.value = false }
 }
 
-const handlePrint = () => { /* print logic */ }
-const getResultHint = (code) => { /* hint logic */ }
-const handlePhotoUpload = (photo) => { /* photo logic */ }
+const handlePrint = () => {
+  window.print()
+}
+
+const getResultHint = (code) => {
+  const map = { CONFIRMED: 'Заявку підтверджено', THINKING: 'Потрібен повторний дотик', NO_ANSWER: 'Не взяв трубку', REFUSED: 'Клієнт відмовився' }
+  return map[code] || ''
+}
+
+const handlePhotoUpload = (photo) => {
+  if (!form.photos) form.photos = []
+  form.photos.push(photo)
+}
 
 // Client Dialog
 const cpDialogVisible = ref(false)
@@ -302,16 +367,29 @@ const createCounterparty = async (data) => {
   } finally { creatingCp.value = false }
 }
 
+const priorities = ref([
+  { value: 'low', label: 'Низький', color: '#94A3B8' },
+  { value: 'normal', label: 'Нормальний', color: '#6366F1' },
+  { value: 'high', label: 'Високий', color: '#F59E0B' },
+  { value: 'critical', label: 'Критичний', color: '#EF4444' }
+])
+
+const formatDate = (val) => {
+  if (!val) return '—'
+  return new Date(val).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 const loadData = async () => {
   loading.value = true
   try {
-    const [p, ls, dm, u] = await Promise.all([
+    const [p, ls, dm, u, ba] = await Promise.all([
       api.get('/api/v1/products?limit=200'),
       api.get('/api/v1/dictionaries/LEAD_SOURCE').catch(() => ({ data: [] })),
       api.get('/api/v1/warehouses').catch(() => ({ data: [] })),
-      api.get('/api/v1/users/colleagues')
+      api.get('/api/v1/users/colleagues'),
+      api.get('/api/v1/bank-accounts').catch(() => ({ data: [] }))
     ])
-    products.value = p.data; leadSources.value = ls.data; deliveryMethods.value = dm.data; users.value = u.data
+    products.value = p.data; leadSources.value = ls.data; deliveryMethods.value = dm.data; users.value = u.data; bankAccounts.value = ba.data
     if (orderId.value) {
       const res = await api.get(`/api/v1/orders/${orderId.value}`)
       Object.assign(form, res.data)
