@@ -1,150 +1,178 @@
 <template>
-  <div class="crm-editor-premium-page bg-[#F8FAFC] min-h-screen font-inter antialiased">
+  <div class="crm-order-redesign min-h-screen bg-[#F9FAFB] font-inter text-[#1F2937] antialiased">
     
-    <!-- ─── MODULAR HEADER ─── -->
-    <CrmOrderHeader
-      :stages="stages"
-      :active-stage="form.crm_stage"
-      :is-passed-stage="isStagePast"
-      :order-id="orderId"
-      :saving="saving"
-      @back="router.back()"
-      @set-stage="setStage"
-      @save-draft="save('draft')"
-      @save-production="save('production')"
-      @print="handlePrint"
-    />
+    <!-- ─── TOP PROGRESS BAR ─── -->
+    <div class="sticky top-0 z-[1020] bg-white border-b border-gray-200 px-6 py-4">
+      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <el-icon><ArrowLeft /></el-icon>
+          </button>
+          <div>
+            <h1 class="text-lg font-bold">Створення замовлення</h1>
+            <p class="text-xs text-gray-500">Заповніть дані для формування нової угоди</p>
+          </div>
+        </div>
 
-    <!-- ─── MULTI-COLUMN WORKSPACE (70/30 Split) ─── -->
-    <main class="max-w-[1700px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start pt-8">
+        <!-- Progress Steps -->
+        <div class="hidden md:flex items-center gap-8">
+          <div 
+            v-for="(step, idx) in ['Клієнт', 'Товар', 'Логістика', 'Підтвердження']" 
+            :key="step"
+            class="flex items-center gap-3"
+          >
+            <div 
+              class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+              :class="currentStep >= idx ? 'bg-[#2563EB] text-white' : 'bg-gray-100 text-gray-400'"
+            >
+              {{ idx + 1 }}
+            </div>
+            <span 
+              class="text-sm font-semibold transition-colors"
+              :class="currentStep >= idx ? 'text-[#2563EB]' : 'text-gray-400'"
+            >
+              {{ step }}
+            </span>
+            <div v-if="idx < 3" class="w-8 h-[2px] bg-gray-100"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-2xl font-black text-gray-200">#NEW</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MAIN WORKSPACE (60/40 Split) ─── -->
+    <main class="max-w-[1440px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 pt-8 pb-32">
       
-      <!-- LEFT: CORE WORKFLOW (70% - Col 8) -->
-      <div class="lg:col-span-8 space-y-12">
+      <!-- LEFT COLUMN: PRIMARY DATA (60%) -->
+      <div class="lg:col-span-7 space-y-8">
         
-        <!-- STEP 1: Client Management -->
-        <section class="step-card-premium">
-          <CrmClientBlock
-            :form="form"
-            :v-errors="vErrors"
-            :counterparties="counterparties"
-            :lead-sources="leadSources"
-            :delivery-methods="deliveryMethods"
-            :manager-options="users"
-            :can-reassign-manager="true"
-            :client-name="form.client_name"
-            :client-phone="form.client_phone"
-            @update:clientName="form.client_name = $event"
-            @update:clientPhone="form.client_phone = $event"
-            @counterparty-change="onClientChange"
-            @new-client="openCreateCounterparty"
-          />
-        </section>
+        <!-- CARD 1: Customer & Logistics -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
+          <div 
+            class="absolute left-0 top-0 w-1.5 h-full transition-colors duration-500"
+            :class="readinessData.items[0].done ? 'bg-[#2563EB]' : 'bg-gray-200'"
+          ></div>
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-[16px] font-bold flex items-center gap-2">
+                <el-icon class="text-blue-600"><User /></el-icon>
+                Замовник та логістика
+              </h2>
+              <el-tag v-if="form.counterparty_id" type="success" effect="light" round size="small">Контакт обрано</el-tag>
+            </div>
+            
+            <CrmClientBlock
+              :form="form"
+              :v-errors="vErrors"
+              :counterparties="counterparties"
+              :lead-sources="leadSources"
+              :delivery-methods="deliveryMethods"
+              :manager-options="users"
+              :can-reassign-manager="true"
+              @counterparty-change="onClientChange"
+              @new-client="openCreateCounterparty"
+            />
+          </div>
+        </div>
 
-        <!-- STEP 2: Product Configuration -->
-        <section class="step-card-premium">
-          <CrmProductBlock
-            :form="form"
-            :products="products"
-            :product-attributes="productAttributes"
-            @product-change="onProductChange"
-            @set-attr-value="setAttrValue"
-            @set-attr-dim="setAttrDim"
-            @upload-photo="handlePhotoUpload"
-          />
-        </section>
+        <!-- CARD 2: Product Configuration -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
+          <div 
+            class="absolute left-0 top-0 w-1.5 h-full transition-colors duration-500"
+            :class="readinessData.items[1].done ? 'bg-[#2563EB]' : 'bg-gray-200'"
+          ></div>
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-[16px] font-bold flex items-center gap-2">
+                <el-icon class="text-blue-600"><Box /></el-icon>
+                Конфігурація замовлення
+              </h2>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Крок 2</span>
+            </div>
 
-        <!-- STEP 3: Financial Calculations -->
-        <section class="step-card-premium">
-          <CrmFinanceBlock
-            :form="form"
-            :bank-accounts="bankAccounts"
-            :auto-payment-status="autoPaymentStatus"
-            :format-currency="formatCurrency"
-            @set-prepay-pct="setPrepayPercent"
-            @calc-prepayment="handleCalcPrepayment"
-            @prepayment-input="handlePrepaymentInput"
-          />
-        </section>
-
-        <!-- STEP 4: Deadlines & Priorities -->
-        <section class="step-card-premium">
-          <CrmDeadlinesBlock
-            :form="form"
-            :priorities="priorities"
-            :format-date="formatDate"
-          />
-        </section>
+            <CrmProductBlock
+              :form="form"
+              :products="products"
+              :product-attributes="productAttributes"
+              @product-change="onProductChange"
+              @set-attr-value="setAttrValue"
+              @set-attr-dim="setAttrDim"
+              @upload-photo="handlePhotoUpload"
+            />
+          </div>
+        </div>
       </div>
 
-      <!-- RIGHT: INTELLIGENCE & INTERACTION (30% - Col 4) -->
-      <div class="lg:col-span-4 space-y-10 sticky top-24">
+      <!-- RIGHT COLUMN: ADDITIONAL (40%) -->
+      <div class="lg:col-span-5 space-y-8 sticky top-28">
         
-        <!-- COMPONENT: Readiness Checklist (Top Status) -->
-        <div class="side-widget-premium readiness-box">
-          <CrmReadinessChecklist
-            :progress="readinessData.progress"
-            :items="readinessData.items"
-          />
+        <!-- CARD 3: Financial Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
+          <div class="p-6">
+            <h2 class="text-[16px] font-bold flex items-center gap-2 mb-6">
+              <el-icon class="text-blue-600"><Money /></el-icon>
+              Фінанси та терміни
+            </h2>
+            <div class="space-y-6">
+              <CrmFinanceBlock
+                :form="form"
+                :bank-accounts="bankAccounts"
+                :auto-payment-status="autoPaymentStatus"
+                :format-currency="formatCurrency"
+                @set-prepay-pct="setPrepayPercent"
+              />
+              
+              <div class="h-px bg-gray-100"></div>
+
+              <CrmDeadlinesBlock
+                :form="form"
+                :priorities="priorities"
+                :format-date="formatDate"
+              />
+            </div>
+          </div>
         </div>
 
-        <!-- COMPONENT: Interaction Hub -->
-        <div class="side-widget-premium">
-          <CrmContactPanel
-            :form="form"
-            :order-id="orderId"
-            :communication-types="commTypes"
-            :contact-results="contactResults"
-            :contact-result="contactResult"
-            :contact-comm-type="contactCommType"
-            :contact-plan-reason="contactPlanReason"
-            :contact-next-at="contactNextAt"
-            :contact-note="contactNote"
-            :next-touch-summary="nextTouchSummary"
-            :saving-contact="savingContact"
-            :get-result-hint="getResultHint"
-            @update:contact-comm-type="contactCommType = $event"
-            @update:contact-plan-reason="contactPlanReason = $event"
-            @update:contact-next-at="contactNextAt = $event"
-            @update:contact-note="contactNote = $event"
-            @set-next-contact-preset="handleContactPreset"
-            @apply-contact-result="contactResult = $event"
-            @log-contact="logContact"
-          />
-
-          <!-- Integrated Communication History -->
-          <CrmCommunicationHistory
-            v-if="contactHistory.length"
-            :contacts="contactHistory"
-            :get-contact-result-color="getContactResultColor"
-            :get-comm-icon="getCommIcon"
-            :get-comm-name="getCommName"
-            :format-date-time="formatDateTime"
-            :contact-result-label="contactResultLabel"
-          />
-        </div>
-
-        <!-- COMPONENT: Warehouse Sync (Analysis) -->
-        <div class="side-widget-premium" v-if="form.product_id">
-          <CrmMaterialsCheckBlock
-            :form="form"
-            :material-check="materialCheck"
-            :materials-loading="checkingMaterials"
-            :format-qty="formatQty"
-            @go-to-purchases="router.push('/purchases/new')"
-          />
-        </div>
-
-        <!-- COMPONENT: Smart Assistant Tips -->
-        <div class="side-widget-premium ai-widget">
-          <CrmAiAssistant 
-            v-if="orderId"
-            :form="form"
-            :readiness-progress="readinessData.progress"
-            @check="loadData"
-          />
+        <!-- CARD 4: Manager & Tasks -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+           <CrmReadinessChecklist
+             :progress="readinessData.progress"
+             :items="readinessData.items"
+           />
         </div>
       </div>
     </main>
+
+    <!-- ─── STICKY FOOTER ACTIONS ─── -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-[1030] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <div class="flex flex-col">
+            <span class="text-[10px] font-bold text-gray-400 uppercase">Сума до сплати</span>
+            <span class="text-xl font-black text-[#2563EB]">{{ formatCurrency(form.total_amount) }} ₴</span>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <button 
+            @click="save('draft')" 
+            class="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors"
+          >
+            Зберегти чернетку
+          </button>
+          <button 
+            @click="save('production')" 
+            :disabled="saving"
+            class="px-10 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95"
+          >
+            {{ orderId ? 'Оновити замовлення' : 'Створити замовлення' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Create Client Dialog -->
     <CrmNewClientDialog
@@ -253,13 +281,19 @@ const autoPaymentStatus = computed(() => {
 
 const nextTouchSummary = computed(() => form.next_contact_at ? `Наступний контакт: ${new Date(form.next_contact_at).toLocaleString()}` : 'Не заплановано')
 
+const currentStep = computed(() => {
+  if (readinessData.value.progress < 25) return 0
+  if (readinessData.value.progress < 50) return 1
+  if (readinessData.value.progress < 75) return 2
+  return 3
+})
+
 const readinessData = computed(() => {
   const items = [
     { key: 'client', label: 'Дані замовника', done: !!form.counterparty_id },
     { key: 'product', label: 'Виріб обрано', done: !!form.product_id },
-    { key: 'specs', label: 'Характеристики', done: Object.keys(form.attributes_values || {}).length > 0 },
-    { key: 'prepayment', label: 'Передоплата', done: form.prepayment_amount > 0 },
-    { key: 'deadline', label: 'Дедлайн встановлено', done: !!form.deadline_date }
+    { key: 'finance', label: 'Фінанси', done: form.total_amount > 0 },
+    { key: 'deadline', label: 'Терміни', done: !!form.deadline_date }
   ]
   const doneCount = items.filter(i => i.done).length
   const progress = Math.round((doneCount / items.length) * 100)
@@ -458,6 +492,23 @@ onMounted(loadData)
 .ai-widget {
   background: linear-gradient(135deg, #F0FDFA 0%, #FFFFFF 100%);
   border-color: #CCFBF1;
+}
+
+:deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  border: 1px solid #E5E7EB !important;
+  background: #FFFFFF !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-input__wrapper:hover), :deep(.el-select__wrapper:hover) {
+  border-color: #2563EB !important;
+}
+
+:deep(.el-input__wrapper.is-focus), :deep(.el-select__wrapper.is-focus) {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
 }
 
 /* Timeline Custom Styles */

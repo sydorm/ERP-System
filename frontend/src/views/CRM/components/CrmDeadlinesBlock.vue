@@ -1,19 +1,6 @@
 <template>
   <div class="crm-section crm-deadlines-block-premium">
-    <div class="deadlines-header-compact">
-      <div class="header-main">
-        <div class="step-badge-mini">Крок 4</div>
-        <h3 class="text-base font-extrabold text-slate-800">Терміни та пріоритет</h3>
-      </div>
-      <div class="header-status">
-        <div class="status-pill-mini" :class="{ 'warning': !form.deadline_date }">
-          <el-icon><Calendar /></el-icon>
-          <span>{{ form.deadline_date || 'Очікує дату' }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="deadlines-grid-compact">
+    <div class="grid grid-cols-2 gap-4">
       <!-- Date Picker Zone -->
       <div class="input-card-premium">
         <label><el-icon class="text-indigo-400"><Calendar /></el-icon> Бажаний дедлайн</label>
@@ -73,9 +60,7 @@ const props = defineProps({
 
 <style scoped>
 .crm-deadlines-block-premium {
-  padding: 20px;
-  background: #fff;
-  border-radius: 24px;
+  padding: 0;
 }
 
 .deadlines-header-compact {
@@ -159,9 +144,9 @@ const props = defineProps({
 }
 
 .p-btn.active {
-  border-color: #1E293B;
-  background: #F8FAFC;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-color: #2563EB;
+  background: #EFF6FF;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
 }
 
 .p-dot {
