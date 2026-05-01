@@ -193,7 +193,7 @@
           <section id="section-analysis" class="bg-white/80 border border-gray-100 rounded-[32px] p-8 shadow-[0_8px_40px_rgba(0,0,0,0.02)] ring-1 ring-black/[0.03]">
             <div class="flex items-center gap-4 mb-8">
               <div class="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shadow-inner">
-                <el-icon :size="20"><Truck /></el-icon>
+                <el-icon :size="20"><Van /></el-icon>
               </div>
               <div class="space-y-0.5">
                 <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Логістика та Дедлайни</h2>
@@ -388,7 +388,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
-  User, Box, MagicStick, Truck, Calendar, Wallet, Timer, Clock, 
+  User, Box, MagicStick, Van, Calendar, Wallet, Timer, Clock, 
   Promotion, Loading, Bell, ChatDotRound, Camera, Phone, MoreFilled, Star, Position, Refresh, ShoppingBag, More
 } from '@element-plus/icons-vue'
 import api from '@/api'
