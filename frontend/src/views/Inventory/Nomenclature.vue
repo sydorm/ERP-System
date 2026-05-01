@@ -655,15 +655,15 @@ onActivated(() => {
 .top-section {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
   position: sticky;
   top: 0;
   z-index: 1001;
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(12px);
-  padding: 12px 24px 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  padding: 24px 24px 16px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 /* AI FLOATING BUTTON */

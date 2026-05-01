@@ -127,10 +127,10 @@ defineEmits([
 }
 
 .act-btn {
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 10px;
-  font-size: 13px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -183,11 +183,11 @@ defineEmits([
 
 .search-dense-input {
   width: 100%;
-  height: 38px;
-  border-radius: 10px;
+  height: 44px;
+  border-radius: 12px;
   border: 1px solid #E6ECF3;
-  padding: 0 12px 0 35px;
-  font-size: 13px;
+  padding: 0 12px 0 40px;
+  font-size: 14px;
   background: #ffffff;
   transition: all 0.2s ease;
   color: #0f172a;
@@ -200,11 +200,11 @@ defineEmits([
 }
 
 .pill-select :deep(.el-select__wrapper) {
-  height: 38px !important;
-  border-radius: 10px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
   border: 1px solid #E6ECF3 !important;
   background: #ffffff !important;
   box-shadow: none !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
 }
 </style>
