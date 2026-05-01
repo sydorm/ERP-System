@@ -199,6 +199,13 @@ const productStatusLabel = computed(() => {
   overflow: hidden;
   position: relative;
   isolation: isolate;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.crm-product-block-premium:hover {
+  transform: translateY(-2px);
+  border-color: rgba(187, 247, 208, .95);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.09), 0 1px 0 rgba(255, 255, 255, .9) inset;
 }
 
 .crm-product-block-premium::before {

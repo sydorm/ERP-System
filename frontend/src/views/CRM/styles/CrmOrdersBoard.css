@@ -85,12 +85,29 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 12px 24px;
+  height: calc(100vh - 40px);
+  overflow: hidden;
+  padding: 0;
+}
+
+.sticky-top-zone {
+  position: sticky;
+  top: 0;
+  z-index: 1010;
+  background: var(--erp-bg-page, #F5F8FC);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 .crm-board-body {
   flex: 1;
-  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Header (Removed) */
@@ -260,16 +277,8 @@
 /* в”Ђв”Ђв”Ђв”Ђв”Ђ KPI Insight Cards в”Ђв”Ђв”Ђв”Ђв”Ђ */
 /* KPI Metric Cards (Sticky) */
 .crm-summary-cards {
-  position: sticky;
-  top: 58px; /* Below Toolbar (58px) */
-  z-index: 1009;
-  background: rgba(245, 248, 252, 0.96);
-  backdrop-filter: blur(12px);
-  padding-bottom: 10px;
-  margin: 0 -24px;
-  padding-left: 24px;
-  padding-right: 24px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+  padding-bottom: 12px;
+  background: transparent;
 }
 
 .crm-insights-row {
@@ -282,17 +291,11 @@
 
 /* Toolbar row (Sticky below KPI) */
 .crm-toolbar-row {
-  position: sticky;
-  top: 0;
-  z-index: 1010;
-  background: rgba(245, 248, 252, 0.96);
-  backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin: 0 -24px;
-  padding: 10px 24px;
+  padding: 4px 0 12px;
 }
 
 /* Transitions */
@@ -407,12 +410,12 @@
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  overflow-y: hidden;
-  padding: 10px 24px 18px;
+  overflow-y: auto;
+  padding: 20px 24px;
   align-items: stretch;
-  scroll-snap-type: x proximity;
   height: 100%;
   box-sizing: border-box;
+  flex: 1;
 }
 
 /* Column tint per stage */
@@ -482,7 +485,7 @@
   line-height: 1.1;
 }
 
-/* Kanban Board Sticky Header */
+/* Kanban Column Header (Sticky inside scroll zone) */
 .kanban-column-header {
   display: flex;
   flex-direction: column;
@@ -490,29 +493,19 @@
   flex-shrink: 0;
   margin: 0 -10px 8px;
   position: sticky;
-  top: 194px; /* KPI (96px) + Toolbar (58px) + Attention (~40px) */
-  z-index: 1007;
-  padding: 9px 14px 0;
+  top: 0;
+  z-index: 100;
+  padding: 12px 14px 8px;
   background: inherit;
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.crm-attention-row {
-  position: sticky;
-  top: 154px;
-  z-index: 1008;
-  margin: 0 -24px 10px;
-  padding: 0 24px;
-  background: rgba(245, 248, 252, 0.96);
-  backdrop-filter: blur(12px);
 }
 
 .crm-col-title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 7px;
+  padding-bottom: 4px;
 }
 
 .crm-col-title-left {
@@ -530,7 +523,7 @@
 
 .crm-col-title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--erp-text-heading, #0F172A);
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -544,36 +537,28 @@
   line-height: 1.6;
 }
 
-/* Sum revealed on column hover */
 .crm-col-subheader {
   font-size: 11px;
-  font-weight: 600;
-  padding: 0 0 6px;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.22s ease, opacity 0.22s ease, padding 0.22s ease;
-}
-.kanban-column:hover .crm-col-subheader {
-  max-height: 22px;
-  opacity: 1;
-  padding-bottom: 6px;
+  font-weight: 700;
+  color: #64748B;
+  opacity: 0.8;
 }
 
-/* Thin progress line at very bottom of header */
-.stage-meter {
-  height: 2px;
-  background: rgba(0,0,0,0.06);
-  overflow: hidden;
-  margin: 0 -14px;
+/* Kanban Column Content */
+.kanban-column-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: visible; /* Scroll is handled by parent .crm-kanban */
+  flex: 1;
+  padding: 0 2px 6px 0;
 }
-.stage-meter span {
-  display: block;
-  height: 100%;
-  opacity: 0.7;
-  min-width: 8px;
-  transition: width 0.4s ease;
+
+.crm-attention-row {
+  margin: 0 0 10px;
+  background: transparent;
 }
+
 
 .kanban-column-content {
   display: flex;
@@ -1309,7 +1294,16 @@
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
+  border-left-width: 4px;
 }
+
+/* Rail colors */
+.stage-summary-item.metric-pipeline { border-left-color: #6366F1; }
+.stage-summary-item.metric-stage-new { border-left-color: #3D3AA8; }
+.stage-summary-item.metric-stage-payment { border-left-color: #F97316; }
+.stage-summary-item.metric-stage-processing { border-left-color: #F59E0B; }
+.stage-summary-item.metric-stage-production { border-left-color: #8B5CF6; }
+.stage-summary-item.metric-stage-done { border-left-color: #22C55E; }
 
 .stage-summary-item:hover {
   transform: translateY(-2px);

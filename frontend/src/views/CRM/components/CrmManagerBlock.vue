@@ -82,11 +82,13 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 38px;
-  padding: 4px 12px;
-  background: #F8FAFF;
+  min-height: 40px;
+  padding: 5px 10px 5px 6px;
+  background:
+    linear-gradient(90deg, #F8FAFF, #FFFFFF);
   border: 1px solid #E0E7FF;
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
 }
 
 .manager-avatar-mini {
@@ -95,13 +97,13 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #1463FF 100%);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 11px;
   font-weight: 800;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 14px rgba(99, 102, 241, 0.22);
 }
 
 .manager-text {
@@ -112,7 +114,7 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
 
 .manager-text .name {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 850;
   color: #1E293B;
 }
 
@@ -124,12 +126,33 @@ const selectedManagerName = computed(() => selectedManager.value?.name || 'По�
   letter-spacing: 0.05em;
 }
 
+.manager-live-dot {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: #15B97A;
+  box-shadow: 0 0 0 4px rgba(21, 185, 122, .12);
+}
+
 .premium-manager-select {
   width: 100%;
 }
 
 :deep(.el-select__wrapper) {
+  min-height: 40px !important;
   padding-left: 8px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(90deg, #F8FAFF, #FFFFFF) !important;
+  border: 1px solid #E0E7FF !important;
+  box-shadow: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+:deep(.el-select__wrapper:hover),
+:deep(.el-select__wrapper.is-focused) {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, .06) !important;
 }
 
 .prefix-avatar {

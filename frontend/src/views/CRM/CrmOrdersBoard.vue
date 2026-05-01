@@ -28,65 +28,52 @@
     </div>
 
     <div class="crm-board-page" v-show="viewMode === 'board'">
-      <div class="crm-toolbar-row">
-        <CrmBoardToolbar
-          :users="users"
-          :filters="filters"
-          :search-query="searchQuery"
-          :sort-option="sortOption"
-          :active-controls-count="activeControlsCount"
-          :is-any-filter-active="isAnyFilterActive"
-          :can-view-analytics="userStore.hasPermission('crm.analytics')"
-          @update:search-query="searchQuery = $event"
-          @update:sort-option="sortOption = $event"
-          @analytics="viewMode = 'analytics'"
-          @reset-all="resetAll"
-          @reset-filters="resetFilters"
-          @apply-filters="applyFilters"
-          @export="handleExport"
-          @new-order="openNewOrder"
-        />
-      </div>
-
-      <!-- NEW: Stage Summary Bar (Moved up as requested) -->
-      <div class="crm-stage-summary-bar">
-        <div 
-          v-for="s in stages" 
-          :key="s.key" 
-          class="stage-summary-item"
-        >
-          <div class="stage-info">
-            <span class="stage-dot" :style="{ background: s.color }" />
-            <span class="stage-label">{{ s.label }}</span>
-            <span class="stage-count">{{ filteredOrdersInStage(s.key).length }}</span>
-          </div>
-          <div class="stage-amount">{{ formatCurrency(stageTotal(s.key)) }} ₴</div>
+      <!-- STICKY TOP ZONE -->
+      <div class="sticky-top-zone">
+        <div class="crm-toolbar-row">
+          <CrmBoardToolbar
+            :users="users"
+            :filters="filters"
+            :search-query="searchQuery"
+            :sort-option="sortOption"
+            :active-controls-count="activeControlsCount"
+            :is-any-filter-active="isAnyFilterActive"
+            :can-view-analytics="userStore.hasPermission('crm.analytics')"
+            @update:search-query="searchQuery = $event"
+            @update:sort-option="sortOption = $event"
+            @analytics="viewMode = 'analytics'"
+            @reset-all="resetAll"
+            @reset-filters="resetFilters"
+            @apply-filters="applyFilters"
+            @export="handleExport"
+            @new-order="openNewOrder"
+          />
         </div>
-      </div>
 
-      <div class="crm-summary-cards">
-        <CrmSummaryCards
-          :orders-count="orders.length"
-          :total-pipeline-amount="totalPipelineAmount"
-          :hot-sla-count="hotSlaCount"
-          :payment-progress="paymentProgress"
-          :today-tasks-count="todayTasks.length"
-          :overdue-tasks-count="overdueTasks.length"
-          :format-currency="formatCurrency"
-        />
-      </div>
+        <div v-if="attentionOrders.length" class="crm-attention-row">
+          <CrmAttentionPanel
+            :attention-orders="attentionOrders"
+            v-model:attention-expanded="attentionExpanded"
+            v-model:attention-only="filters.attentionOnly"
+            :get-attention-reasons="getAttentionReasons"
+            @open-order="openEditor"
+          />
+        </div>
 
-      <div v-if="attentionOrders.length" class="crm-attention-row">
-        <CrmAttentionPanel
-          :attention-orders="attentionOrders"
-          v-model:attention-expanded="attentionExpanded"
-          v-model:attention-only="filters.attentionOnly"
-          :get-attention-reasons="getAttentionReasons"
-          @open-order="openEditor"
-        />
-      </div>
+        <div class="crm-summary-cards">
+          <CrmSummaryCards
+            :orders-count="orders.length"
+            :total-pipeline-amount="totalPipelineAmount"
+            :hot-sla-count="hotSlaCount"
+            :payment-progress="paymentProgress"
+            :today-tasks-count="todayTasks.length"
+            :overdue-tasks-count="overdueTasks.length"
+            :format-currency="formatCurrency"
+          />
+        </div>
+      </div><!-- /sticky-top-zone -->
 
-      <div class="crm-board-body">
+      <div class="crm-board-body scrollable-board-zone">
 
       <div class="crm-kanban" v-loading="loading">
         <CrmKanbanColumn

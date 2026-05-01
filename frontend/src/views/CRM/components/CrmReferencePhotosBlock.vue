@@ -117,12 +117,26 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
+.upload-zone-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.55) 44%, transparent 58%);
+  transform: translateX(-120%);
+  transition: transform .55s ease;
+  pointer-events: none;
+}
+
 .upload-zone-wrapper:hover {
   border-color: #10B981;
   background: #F0FDF4;
   border-style: solid;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 12px 28px rgba(21,185,122,.10);
   transform: translateY(-1px);
+}
+
+.upload-zone-wrapper:hover::after {
+  transform: translateX(120%);
 }
 
 .upload-zone-wrapper.is-dragging {
