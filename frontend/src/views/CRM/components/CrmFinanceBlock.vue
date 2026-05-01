@@ -1,89 +1,107 @@
 <template>
-  <div class="crm-section crm-finance-section">
-    <div class="finance-block-head">
-      <span class="finance-kicker">Крок 3 · Фінанси</span>
-      <h3>Розрахунок вартості</h3>
+  <div class="crm-section crm-finance-section-premium">
+    <div class="finance-block-header">
+      <div class="header-main">
+        <div class="step-badge">Крок 3</div>
+        <div class="title-group">
+          <h3>Розрахунок вартості</h3>
+          <p>Керування бюджетом та передоплатою замовлення</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="glass-pill" :class="autoPaymentStatus.key">
+          <span class="status-dot" />
+          <span>{{ autoPaymentStatus.label }}</span>
+        </div>
+      </div>
     </div>
 
-    <div class="finance-main-grid">
+    <div class="finance-interactive-grid">
       <div
-        class="finance-card amount-total"
+        class="finance-card-premium total-amount"
         :class="{ editing: editTotalAmount }"
         @click="focusTotalAmount"
       >
-        <div class="amount-display">
-          <span v-if="!editTotalAmount" class="amount-val">
-            {{ formatCurrency(form.total_amount) }}
-          </span>
-          <input
-            v-else
-            ref="totalAmountInput"
-            v-model.number="form.total_amount"
-            type="number"
-            class="amount-input"
-            @input="$emit('calc-prepayment')"
-            @blur="editTotalAmount = false"
-            @keyup.enter="editTotalAmount = false"
-          />
-          <span class="amount-unit">грн</span>
+        <div class="card-glow"></div>
+        <div class="card-content">
+          <div class="amount-wrapper">
+            <span v-if="!editTotalAmount" class="display-val">
+              {{ formatCurrency(form.total_amount) }}
+            </span>
+            <input
+              v-else
+              ref="totalAmountInput"
+              v-model.number="form.total_amount"
+              type="number"
+              class="premium-amount-input"
+              @input="$emit('calc-prepayment')"
+              @blur="editTotalAmount = false"
+              @keyup.enter="editTotalAmount = false"
+            />
+            <span class="currency-label">грн</span>
+          </div>
+          <div class="meta-label">Загальна вартість</div>
         </div>
-        <div class="amount-label">загальна сума</div>
       </div>
 
       <div
-        class="finance-card amount-prepay"
+        class="finance-card-premium prepay-amount"
         :class="{ editing: editPrepaymentAmount }"
         @click="focusPrepaymentAmount"
       >
-        <div class="amount-display">
-          <span v-if="!editPrepaymentAmount" class="amount-val">
-            {{ formatCurrency(form.prepayment_amount) }}
-          </span>
-          <input
-            v-else
-            ref="prepaymentAmountInput"
-            v-model.number="form.prepayment_amount"
-            type="number"
-            class="amount-input"
-            @input="$emit('prepayment-input')"
-            @blur="editPrepaymentAmount = false"
-            @keyup.enter="editPrepaymentAmount = false"
-          />
-          <span class="amount-unit">грн</span>
-        </div>
-        <div class="amount-label">
-          передоплата
-          <span v-if="form.total_amount > 0" class="pct-badge">
-            {{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%
-          </span>
+        <div class="card-glow"></div>
+        <div class="card-content">
+          <div class="amount-wrapper">
+            <span v-if="!editPrepaymentAmount" class="display-val">
+              {{ formatCurrency(form.prepayment_amount) }}
+            </span>
+            <input
+              v-else
+              ref="prepaymentAmountInput"
+              v-model.number="form.prepayment_amount"
+              type="number"
+              class="premium-amount-input"
+              @input="$emit('prepayment-input')"
+              @blur="editPrepaymentAmount = false"
+              @keyup.enter="editPrepaymentAmount = false"
+            />
+            <span class="currency-label">грн</span>
+          </div>
+          <div class="meta-label">
+            Сума передоплати
+            <span v-if="form.total_amount > 0" class="percent-badge">
+              {{ Math.round((form.prepayment_amount || 0) / form.total_amount * 100) }}%
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="prepay-pills-container">
-      <button
-        v-for="pct in [20, 30, 50, 100]"
-        :key="pct"
-        class="prepay-pill-modern"
-        :class="{ active: form.prepayment_percent === pct }"
-        @click="$emit('set-prepay-pct', pct)"
-      >{{ pct }}%</button>
-      <button
-        class="prepay-pill-modern"
-        :class="{ active: form.prepayment_percent === 0 }"
-        @click="$emit('set-prepay-pct', 0)"
-      >Без</button>
-    </div>
-
-    <div class="finance-status-row">
-      <div class="payment-badge-modern" :class="autoPaymentStatus.key">
-        <span class="status-dot-modern" />
-        {{ autoPaymentStatus.label }}
+    <div class="finance-controls-row">
+      <div class="quick-prepay-pills">
+        <button
+          v-for="pct in [20, 30, 50, 100]"
+          :key="pct"
+          class="pill-btn-modern"
+          :class="{ active: form.prepayment_percent === pct }"
+          @click="$emit('set-prepay-pct', pct)"
+        >
+          {{ pct }}%
+        </button>
+        <button
+          class="pill-btn-modern"
+          :class="{ active: form.prepayment_percent === 0 }"
+          @click="$emit('set-prepay-pct', 0)"
+        >
+          Без
+        </button>
       </div>
 
-      <div v-if="form.payment_status !== 'unpaid'" class="bank-select-wrapper">
-        <el-select v-model="form.bank_account_id" placeholder="Рахунок для оплати" class="bank-select-modern">
-          <template #prefix><el-icon><CreditCard /></el-icon></template>
+      <div class="bank-account-zone" v-if="form.payment_status !== 'unpaid'">
+        <el-select v-model="form.bank_account_id" placeholder="Оберіть рахунок" class="premium-bank-select">
+          <template #prefix>
+            <el-icon><Wallet /></el-icon>
+          </template>
           <el-option
             v-for="acc in bankAccounts"
             :key="acc.id"
@@ -98,7 +116,7 @@
 
 <script setup>
 import { computed, nextTick, ref } from 'vue'
-import { CreditCard } from '@element-plus/icons-vue'
+import { Wallet } from '@element-plus/icons-vue'
 
 const props = defineProps({
   form: { type: Object, required: true },
@@ -126,175 +144,224 @@ const focusPrepaymentAmount = () => {
 </script>
 
 <style scoped>
-.crm-finance-section {
-  padding: 24px;
+.crm-finance-section-premium {
+  padding: 32px;
+  background: #fff;
+  border-radius: 24px;
 }
 
-.finance-block-head {
-  margin-bottom: 24px;
+.finance-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
 }
 
-.finance-kicker {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: #3D3AA8;
+.header-main {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.step-badge {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.finance-block-head h3 {
+.title-group h3 {
   margin: 0;
+  font-size: 22px;
+  font-weight: 850;
   color: #0F172A;
-  font-size: 20px;
-  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.finance-main-grid {
+.title-group p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748B;
+}
+
+.glass-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.glass-pill.paid { background: #ECFDF5; color: #059669; }
+.glass-pill.partial { background: #FFFBEB; color: #D97706; }
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94A3B8;
+}
+.paid .status-dot { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.partial .status-dot { background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+
+.finance-interactive-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
-.finance-card {
+.finance-card-premium {
+  position: relative;
   background: #F8FAFC;
-  border-radius: 16px;
-  padding: 20px;
-  border: 2px solid transparent;
+  border: 1px solid #F1F5F9;
+  border-radius: 20px;
+  padding: 24px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
+  overflow: hidden;
 }
 
-.finance-card:hover {
-  background: #F1F5F9;
-}
-
-.finance-card.editing {
+.finance-card-premium:hover {
+  transform: translateY(-4px);
   background: #fff;
-  border-color: #3D3AA8;
-  box-shadow: 0 10px 15px -3px rgba(61, 58, 168, 0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
 }
 
-.amount-display {
+.finance-card-premium.editing {
+  background: #fff;
+  border-color: #6366F1;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.1);
+}
+
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+}
+
+.total-amount .card-glow { background: #0F172A; }
+.prepay-amount .card-glow { background: #6366F1; }
+
+.amount-wrapper {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
-.amount-val {
-  font-size: 28px;
-  font-weight: 800;
+.display-val {
+  font-size: 32px;
+  font-weight: 900;
   color: #0F172A;
+  letter-spacing: -0.02em;
 }
 
-.amount-total .amount-val { color: #0F172A; }
-.amount-prepay .amount-val { color: #3D3AA8; }
+.prepay-amount .display-val {
+  color: #6366F1;
+}
 
-.amount-input {
+.premium-amount-input {
   width: 100%;
   border: none;
   background: transparent;
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 900;
   text-align: center;
   color: inherit;
   outline: none;
 }
 
-.amount-unit {
-  font-size: 14px;
-  font-weight: 700;
+.currency-label {
+  font-size: 16px;
+  font-weight: 800;
   color: #94A3B8;
 }
 
-.amount-label {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
+.meta-label {
+  font-size: 13px;
+  font-weight: 700;
   color: #64748B;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-}
-
-.pct-badge {
-  background: #E0E0FF;
-  color: #3D3AA8;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 10px;
-}
-
-.prepay-pills-container {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 24px;
 }
 
-.prepay-pill-modern {
-  padding: 8px 16px;
-  border-radius: 20px;
+.percent-badge {
+  background: #E0E7FF;
+  color: #4338CA;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.finance-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.quick-prepay-pills {
+  display: flex;
+  gap: 10px;
+}
+
+.pill-btn-modern {
+  padding: 10px 20px;
+  border-radius: 14px;
   border: 1.5px solid #E2E8F0;
   background: #fff;
-  color: #3D3AA8;
-  font-size: 12px;
+  color: #475569;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.prepay-pill-modern:hover {
-  border-color: #3D3AA8;
+.pill-btn-modern:hover {
+  border-color: #6366F1;
+  color: #4F46E5;
 }
 
-.prepay-pill-modern.active {
-  background: #3D3AA8;
+.pill-btn-modern.active {
+  background: #6366F1;
   color: #fff;
-  border-color: #3D3AA8;
+  border-color: #6366F1;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
-.finance-status-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.payment-badge-modern {
+.bank-account-zone {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
+  max-width: 400px;
 }
 
-.payment-badge-modern.unpaid { background: #F8FAFC; color: #64748B; }
-.payment-badge-modern.partial { background: #FFFBEB; color: #92400E; }
-.payment-badge-modern.paid { background: #ECFDF5; color: #065F46; }
-
-.status-dot-modern {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.unpaid .status-dot-modern { background: #94A3B8; }
-.partial .status-dot-modern { background: #F59E0B; }
-.paid .status-dot-modern { background: #10B981; }
-
-.bank-select-wrapper {
-  flex: 1.5;
-}
-
-.bank-select-modern {
+:deep(.premium-bank-select) {
   width: 100%;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+  padding: 12px;
+}
+
+@media (max-width: 992px) {
+  .finance-interactive-grid { grid-template-columns: 1fr; }
+  .finance-controls-row { flex-direction: column; align-items: flex-start; }
+  .bank-account-zone { max-width: 100%; width: 100%; }
 }
 </style>

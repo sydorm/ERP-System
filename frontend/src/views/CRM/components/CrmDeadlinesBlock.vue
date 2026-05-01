@@ -1,56 +1,71 @@
 <template>
-  <div class="crm-section crm-deadlines-section">
-    <div class="deadlines-block-head">
-      <span class="deadlines-kicker">Крок 4 · Час</span>
-      <h3>Терміни та пріоритет</h3>
+  <div class="crm-section crm-deadlines-section-premium">
+    <div class="deadlines-block-header">
+      <div class="header-main">
+        <div class="step-badge">Крок 4</div>
+        <div class="title-group">
+          <h3>Терміни та пріоритет</h3>
+          <p>Планування дати готовності та черговості виконання</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="glass-pill" :class="{ 'warning-glow': !form.deadline_date }">
+          <el-icon><Calendar /></el-icon>
+          <span>{{ form.deadline_date || 'Очікує дату' }}</span>
+        </div>
+      </div>
     </div>
 
-    <div class="deadlines-grid">
-      <div class="crm-field">
-        <label class="crm-label">Бажаний дедлайн</label>
+    <div class="deadlines-interactive-grid">
+      <div class="deadline-input-zone">
+        <label class="premium-label">Бажаний дедлайн</label>
         <el-date-picker
           v-model="form.deadline_date"
           type="date"
-          placeholder="Оберіть дату"
+          placeholder="Оберіть дату дедлайну"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
-          class="deadline-picker-modern"
+          class="premium-date-picker"
         >
-          <template #prefix><el-icon><Calendar /></el-icon></template>
+          <template #prefix>
+            <el-icon class="picker-icon-modern"><Calendar /></el-icon>
+          </template>
         </el-date-picker>
         <transition name="fade">
-          <span v-if="!form.deadline_date" class="deadline-warning">
+          <div v-if="!form.deadline_date" class="deadline-warning-modern">
             <el-icon><Warning /></el-icon>
             Вкажіть дату готовності замовлення
-          </span>
+          </div>
         </transition>
       </div>
 
-      <div class="crm-field">
-        <label class="crm-label">Пріоритет виконання</label>
-        <el-select v-model="form.priority" placeholder="Оберіть пріоритет" class="priority-select-modern">
-          <template #prefix>
-            <span
-              v-if="selectedPriority?.color"
-              class="priority-dot"
-              :style="{ background: selectedPriority?.color }"
-            />
-            <el-icon v-else><Flag /></el-icon>
-          </template>
-          <el-option v-for="p in priorities" :key="p.value" :label="p.label" :value="p.value">
-            <div class="priority-option">
-              <span class="priority-dot" :style="{ background: p.color || '#94a3b8' }" />
-              {{ p.label }}
-            </div>
-          </el-option>
-        </el-select>
+      <div class="priority-selection-zone">
+        <label class="premium-label">Пріоритет виконання</label>
+        <div class="priority-pills-modern">
+          <button
+            v-for="p in priorities"
+            :key="p.value"
+            class="priority-pill-btn"
+            :class="{ active: form.priority === p.value }"
+            @click="form.priority = p.value"
+          >
+            <span class="p-dot" :style="{ background: p.color || '#94a3b8' }" />
+            {{ p.label }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="deadlines-footer">
-      <div class="created-at-info">
-        <el-icon><Clock /></el-icon>
-        Дата створення: <span>{{ formatDate(form.order_date) }}</span>
+    <div class="deadlines-footer-premium">
+      <div class="history-info">
+        <div class="info-item">
+          <el-icon><Clock /></el-icon>
+          Заявку створено: <span>{{ formatDate(form.order_date) }}</span>
+        </div>
+      </div>
+      <div class="footer-tip">
+        <el-icon><InfoFilled /></el-icon>
+        <span>Дедлайн впливає на чергу у виробничому календарі</span>
       </div>
     </div>
   </div>
@@ -58,7 +73,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Calendar, Flag, Warning, Clock } from '@element-plus/icons-vue'
+import { Calendar, Warning, Clock, InfoFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
   form: { type: Object, required: true },
@@ -70,91 +85,188 @@ const selectedPriority = computed(() => props.priorities.find(p => p.value === p
 </script>
 
 <style scoped>
-.crm-deadlines-section {
-  padding: 24px;
+.crm-deadlines-section-premium {
+  padding: 32px;
+  background: #fff;
+  border-radius: 24px;
 }
 
-.deadlines-block-head {
-  margin-bottom: 24px;
+.deadlines-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
 }
 
-.deadlines-kicker {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: #6366F1;
+.header-main {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.step-badge {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.deadlines-block-head h3 {
+.title-group h3 {
   margin: 0;
+  font-size: 22px;
+  font-weight: 850;
   color: #0F172A;
-  font-size: 20px;
-  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.deadlines-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
+.title-group p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748B;
 }
 
-.deadline-picker-modern, .priority-select-modern {
-  width: 100%;
-}
-
-.deadline-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #EF4444;
-  font-weight: 600;
-}
-
-.priority-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.priority-option {
+.glass-pill {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
 }
 
-.deadlines-footer {
-  padding-top: 16px;
+.warning-glow {
+  background: #FFF1F2;
+  color: #E11D48;
+  border-color: #FECDD3;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.2); }
+  70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+
+.deadlines-interactive-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  margin-bottom: 32px;
+}
+
+.premium-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+:deep(.premium-date-picker) {
+  width: 100%;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+  padding: 12px 16px;
+  transition: all 0.2s;
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #CBD5E1 inset !important;
+}
+
+.deadline-warning-modern {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #E11D48;
+  font-weight: 600;
+}
+
+.priority-pills-modern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.priority-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #F8FAFC;
+  border: 1.5px solid #F1F5F9;
+  border-radius: 16px;
+  color: #1E293B;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.priority-pill-btn:hover {
+  background: #fff;
+  border-color: #E2E8F0;
+  transform: translateY(-2px);
+}
+
+.priority-pill-btn.active {
+  background: #fff;
+  border-color: #0F172A;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.p-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.deadlines-footer-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
   border-top: 1px solid #F1F5F9;
 }
 
-.created-at-info {
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.info-item span {
+  color: #1E293B;
+  font-weight: 800;
+}
+
+.footer-tip {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #64748B;
+  color: #94A3B8;
+  font-style: italic;
 }
 
-.created-at-info span {
-  color: #0F172A;
-  font-weight: 700;
-}
-
-:deep(.el-input__wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
-}
-
-@media (max-width: 1024px) {
-  .deadlines-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 992px) {
+  .deadlines-interactive-grid { grid-template-columns: 1fr; gap: 24px; }
+  .deadlines-footer-premium { flex-direction: column; gap: 16px; text-align: center; }
 }
 </style>
