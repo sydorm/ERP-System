@@ -24,14 +24,14 @@
       <el-steps :active="activeStep" finish-status="success" class="import-steps">
         <el-step title="Файл" />
         <el-step title="Лист" />
-        <el-step title="Preview" />
-        <el-step title="Колонки" />
+        <el-step title="Зіставлення" />
         <el-step title="Перевірка" />
         <el-step title="Імпорт" />
         <el-step title="Результат" />
       </el-steps>
 
       <div class="wizard-content-scroll">
+        <!-- Step 0: Upload -->
         <section v-if="activeStep === 0" class="wizard-panel upload-panel">
           <div class="upload-card" @click="fileInput?.click()" @dragover.prevent @drop.prevent="handleDrop">
             <input ref="fileInput" type="file" accept=".xlsx,.csv" hidden @change="handleFileSelect" />
@@ -43,6 +43,7 @@
           </div>
         </section>
 
+        <!-- Step 1: Sheet Selection -->
         <section v-else-if="activeStep === 1" class="wizard-panel">
           <div class="panel-title-row">
             <div>
@@ -55,30 +56,7 @@
           </el-select>
         </section>
 
-      <div class="wizard-content-scroll">
-        <section v-if="activeStep === 0" class="wizard-panel upload-panel">
-          <div class="upload-card" @click="fileInput?.click()" @dragover.prevent @drop.prevent="handleDrop">
-            <input ref="fileInput" type="file" accept=".xlsx,.csv" hidden @change="handleFileSelect" />
-            <div class="upload-icon"><el-icon><UploadFilled /></el-icon></div>
-            <h3>Завантажте Excel або CSV файл</h3>
-            <p>Підтримуються `.xlsx` та `.csv`, до 10 MB і до 5000 рядків.</p>
-            <button class="primary-soft-btn" type="button">Обрати файл</button>
-            <span v-if="selectedFile" class="selected-file">{{ selectedFile.name }}</span>
-          </div>
-        </section>
-
-        <section v-else-if="activeStep === 1" class="wizard-panel">
-          <div class="panel-title-row">
-            <div>
-              <h3>Вибір листа Excel</h3>
-              <p>Якщо в файлі кілька листів, оберіть той, де знаходиться номенклатура.</p>
-            </div>
-          </div>
-          <el-select v-model="selectedSheet" class="sheet-select" placeholder="Оберіть лист" @change="reloadPreview">
-            <el-option v-for="sheet in sheets" :key="sheet" :label="sheet" :value="sheet" />
-          </el-select>
-        </section>
-
+        <!-- Step 2: Mapping & Preview -->
         <section v-else-if="activeStep === 2" class="wizard-panel mapping-preview-panel">
           <div class="panel-title-row">
             <div>
@@ -153,6 +131,7 @@
           </div>
         </section>
 
+        <!-- Step 3: Validation -->
         <section v-else-if="activeStep === 3" class="wizard-panel">
           <div class="panel-title-row">
             <div>
@@ -188,7 +167,8 @@
           </el-table>
         </section>
 
-        <section v-else-if="activeStep === 5" class="wizard-panel confirm-panel">
+        <!-- Step 4: Confirmation -->
+        <section v-else-if="activeStep === 4" class="wizard-panel confirm-panel">
           <h3>Підтвердження імпорту</h3>
           <p>Імпорт буде виконано тільки для рядків без критичних помилок. Існуючі товари будуть оновлені згідно з обраним режимом.</p>
           <div class="confirm-card">
@@ -198,6 +178,7 @@
           </div>
         </section>
 
+        <!-- Step 5: Result -->
         <section v-else class="wizard-panel result-panel">
           <div class="result-icon">✓</div>
           <h3>Імпорт завершено</h3>
@@ -213,19 +194,17 @@
           </button>
         </section>
       </div>
-    </div>
 
-    <template #footer>
       <div class="wizard-footer">
         <button class="ghost-btn" type="button" @click="handleClose">Закрити</button>
         <div>
-          <button v-if="activeStep > 0 && activeStep < 6" class="ghost-btn" type="button" @click="activeStep--">Назад</button>
+          <button v-if="activeStep > 0 && activeStep < 5" class="ghost-btn" type="button" @click="activeStep--">Назад</button>
           <button class="primary-btn" type="button" :disabled="loading || !canGoNext" @click="nextStep">
             {{ nextButtonText }}
           </button>
         </div>
       </div>
-    </template>
+    </div>
   </el-dialog>
 </template>
 
@@ -271,7 +250,6 @@ watch(() => props.visible, (value) => {
 const reverseMapping = reactive({})
 
 const onColumnMapChange = (header, fieldKey) => {
-  // Clear old mapping if this field was mapped elsewhere
   if (fieldKey) {
     Object.keys(reverseMapping).forEach(h => {
       if (h !== header && reverseMapping[h] === fieldKey) {
@@ -280,7 +258,6 @@ const onColumnMapChange = (header, fieldKey) => {
     })
   }
   
-  // Sync back to original mapping object
   Object.keys(mapping).forEach(key => delete mapping[key])
   Object.entries(reverseMapping).forEach(([h, key]) => {
     if (key) mapping[key] = h
@@ -471,11 +448,11 @@ const actionLabel = (action) => ({
 
 <style scoped>
 :deep(.nomenclature-import-dialog) {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   max-height: 90vh;
+  height: 800px;
   margin: 5vh auto !important;
-  border-radius: 20px;
   border-radius: 24px;
   overflow: hidden;
 }
@@ -571,10 +548,11 @@ const actionLabel = (action) => ({
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background: #fff;
 }
 
 .import-steps {
-  padding: 20px 24px;
+  padding: 20px 32px;
   background: #F8FAFC;
   border-bottom: 1px solid #F1F5F9;
 }
@@ -582,27 +560,33 @@ const actionLabel = (action) => ({
 .wizard-content-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px;
+  min-height: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mapping-preview-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  height: 100%;
 }
 
 .table-container-modern {
+  flex: 1;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid #E2E8F0;
   background: #fff;
+  min-height: 300px;
 }
 
 .column-mapping-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 8px;
+  gap: 8px;
+  padding: 10px;
   background: #F8FAFC;
 }
 
@@ -670,6 +654,7 @@ const actionLabel = (action) => ({
 .mode-select {
   width: 180px;
 }
+
 .wizard-panel {
   min-height: 380px;
 }
@@ -798,46 +783,58 @@ const actionLabel = (action) => ({
 .confirm-panel,
 .result-panel {
   text-align: center;
+  padding: 40px 0;
 }
+
 .confirm-card {
   display: grid;
   grid-template-columns: 160px 1fr;
   gap: 8px 18px;
-  min-width: 420px;
+  min-width: 480px;
   text-align: left;
+  margin: 0 auto;
 }
+
 .confirm-card span {
   color: #64748B;
+  font-weight: 600;
 }
+
 .result-icon {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
-  border-radius: 22px;
+  border-radius: 24px;
   background: #ECFDF5;
-  color: #0E905F;
-  font-size: 34px;
-  font-weight: 900;
+  color: #059669;
+  font-size: 36px;
+  font-weight: 950;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
+  margin: 0 auto 20px;
 }
+
 .summary-grid.result {
-  width: min(680px, 100%);
+  width: 100%;
+  max-width: 800px;
   grid-template-columns: repeat(4, 1fr);
+  margin: 20px auto;
 }
+
+.message-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.msg.error { background: #FEF2F2; color: #EF4444; }
+.msg.warn { background: #FFF7ED; color: #B45309; }
+
 .wizard-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
-.wizard-footer > div {
-  display: flex;
-  gap: 8px;
-}
-@media (max-width: 980px) {
-  .mapping-layout,
-  .summary-grid,
-  .summary-grid.result {
-    grid-template-columns: 1fr;
-  }
+  padding: 16px 32px;
+  background: #fff;
+  border-top: 1px solid #F1F5F9;
 }
 </style>
