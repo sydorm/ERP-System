@@ -799,9 +799,9 @@ const save = async (action) => {
       lines: form.product_id ? [{
         product_id: form.product_id,
         quantity:   1,
-        price:      form.total_amount,
-        total:      form.total_amount,
-      }] : [],
+        price:      Number(form.total_amount) || 0,
+        total:      Number(form.total_amount) || 0,
+      }] : null,
     }
 
     // 1. Save / update the order
