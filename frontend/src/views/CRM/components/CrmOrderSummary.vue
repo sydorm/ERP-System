@@ -80,7 +80,7 @@
       </div>
       <div class="date-item">
         <span>Дедлайн:</span>
-        <span class="date-val blue">{{ form.deadline ? formatDate(form.deadline) : 'Не встановлено' }}</span>
+        <span class="date-val blue">{{ form.deadline_date ? formatDate(form.deadline_date) : 'Не встановлено' }}</span>
       </div>
     </div>
   </div>

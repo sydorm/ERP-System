@@ -57,7 +57,7 @@ defineEmits(['back', 'set-stage', 'print', 'save-draft', 'save-production'])
   margin-bottom: 0;
   padding: 16px 32px;
   position: sticky;
-  top: 0;
+  top: -24px;
   z-index: 1001;
   display: flex;
   align-items: center;

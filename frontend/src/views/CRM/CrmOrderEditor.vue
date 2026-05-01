@@ -588,8 +588,6 @@ const save = async (action) => {
         attributes_values: {
           ...form.attributes_values,
           _np_branch: form.np_branch,
-          _next_contact_channel: form.next_contact_channel,
-          _next_contact_comment: form.next_contact_comment,
         }
       })
       savedOrder = res.data
