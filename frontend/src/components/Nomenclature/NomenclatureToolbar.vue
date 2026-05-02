@@ -102,8 +102,13 @@ defineEmits([
 
 <style scoped>
 .toolbar-section {
-  display: flex;
-  flex-direction: column;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin-top: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.03);
 }
 
 .action-row {
@@ -154,15 +159,15 @@ defineEmits([
 }
 
 .act-btn--primary {
-  background: linear-gradient(135deg, #15B97A 0%, #0E905F 100%);
+  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(21, 185, 122, 0.22);
+  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3);
+  font-weight: 700;
 }
 
 .act-btn--primary:hover {
-  background: linear-gradient(135deg, #12A46C 0%, #15B97A 100%);
-  box-shadow: 0 6px 18px rgba(21, 185, 122, 0.3);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(115, 103, 240, 0.35);
 }
 
 .search-dense-wrapper {

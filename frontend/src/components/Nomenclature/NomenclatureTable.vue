@@ -119,11 +119,11 @@ const isAllSelected = computed(() => {
   flex-direction: column;
   min-height: 0;
   background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.05);
   margin: 16px 24px 24px;
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
 .nom-table {
@@ -164,18 +164,15 @@ const isAllSelected = computed(() => {
 }
 
 .nom-header .nom-cell {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #475569;
+  letter-spacing: 0.1em;
+  color: #8E8BA2;
   padding: 0 16px;
   height: 48px;
   display: flex;
   align-items: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .nom-cell {

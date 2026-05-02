@@ -635,18 +635,9 @@ onActivated(() => {
 
 <style scoped>
 .orders-page {
-  --page-bg: #f8fafc;
-  --card-bg: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --border: #e2e8f0;
-  --primary: #1463FF;
-
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  margin: -24px;
+  background-color: #F8F9FA;
+  margin: 0;
   height: calc(100vh - 64px);
-  font-family: 'Inter', sans-serif;
-  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -656,14 +647,8 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 1001;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  padding: 24px 24px 8px;
+  background: transparent;
 }
 
 /* AI FLOATING BUTTON */

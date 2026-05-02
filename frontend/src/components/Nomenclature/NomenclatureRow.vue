@@ -162,12 +162,11 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 56px;
-  border-bottom: 6px solid #F8FAFC;
+  height: 64px;
+  border-bottom: 1px solid #F1F5F9;
   cursor: pointer;
-  transition: background 0.14s ease;
+  transition: all 0.2s ease;
   background: #ffffff;
-  border-radius: 8px;
 }
 .nom-body-row:last-child {
   border-bottom: none;
@@ -232,21 +231,18 @@ const getAiWarningReason = (row) => {
   width: 100%;
 }
 .nom-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  color: #0F172A;
+  color: #444050;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nom-sku {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: #94A3B8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+  margin-top: 2px;
 }
 .nom-dot {
   margin: 0 2px;
@@ -304,16 +300,16 @@ const getAiWarningReason = (row) => {
 .nom-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  line-height: 1;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
-.nom-status-badge.success { background: #EDFAF4; color: #0F5C3A; }
-.nom-status-badge.warning { background: #FFFBEB; color: #92400E; }
-.nom-status-badge.danger  { background: #FEF2F4; color: #991B1B; }
+.nom-status-badge.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.nom-status-badge.warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.nom-status-badge.danger  { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
 
 .nom-cell--price {
   justify-content: flex-end;

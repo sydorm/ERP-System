@@ -1,51 +1,66 @@
 <template>
-  <div class="crm-insights-row">
+  <div class="kpi-grid-modern">
     <!-- Всього позицій -->
-    <div class="crm-insight-card metric-pipeline">
-      <div class="insight-content">
-        <span class="metric-label">Всього позицій</span>
-        <div class="insight-value-row">
-          <strong class="metric-value">{{ stats.total_products }}</strong>
-          <div class="insight-sparkline">
-            <svg width="56" height="20" viewBox="0 0 64 28">
-              <path d="M0 22C12 18 24 20 36 13C48 6 56 10 64 6" stroke="rgba(20,99,255,0.4)" stroke-width="2" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
+    <div class="kpi-card-modern">
+      <div class="kpi-header-row">
+        <div class="kpi-icon-wrapper" style="background-color: rgba(115, 103, 240, 0.1); color: #7367f0;">
+          <el-icon><Box /></el-icon>
         </div>
-        <small>Зареєстровано в системі</small>
+        <div class="kpi-trend trend-up">+12%</div>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ stats.total_products }}</div>
+        <div class="kpi-label">Всього позицій</div>
       </div>
     </div>
 
     <!-- Низький запас -->
-    <div class="crm-insight-card metric-sla">
-      <div class="insight-content">
-        <span class="metric-label">Низький запас</span>
-        <strong class="metric-value">{{ stats.low_stock }}</strong>
-        <small>потребують дозамовлення</small>
+    <div class="kpi-card-modern">
+      <div class="kpi-header-row">
+        <div class="kpi-icon-wrapper" style="background-color: rgba(255, 159, 67, 0.1); color: #ff9f43;">
+          <el-icon><Warning /></el-icon>
+        </div>
+        <div class="kpi-trend trend-down">-8%</div>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ stats.low_stock }}</div>
+        <div class="kpi-label">Низький запас</div>
       </div>
     </div>
 
     <!-- В наявності -->
-    <div class="crm-insight-card metric-payment">
-      <div class="insight-content">
-        <span class="metric-label">В наявності</span>
-        <strong class="metric-value">{{ stats.in_stock }}</strong>
-        <small>доступно для продажу</small>
+    <div class="kpi-card-modern">
+      <div class="kpi-header-row">
+        <div class="kpi-icon-wrapper" style="background-color: rgba(40, 199, 111, 0.1); color: #28c76f;">
+          <el-icon><Check /></el-icon>
+        </div>
+        <div class="kpi-trend trend-up">+24%</div>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ stats.in_stock }}</div>
+        <div class="kpi-label">В наявності</div>
       </div>
     </div>
 
-    <!-- Немає в наявності -->
-    <div class="crm-insight-card metric-today">
-      <div class="insight-content">
-        <span class="metric-label">Дефіцит</span>
-        <strong class="metric-value">{{ stats.out_of_stock }}</strong>
-        <small>критичні відсутності</small>
+    <!-- Дефіцит -->
+    <div class="kpi-card-modern">
+      <div class="kpi-header-row">
+        <div class="kpi-icon-wrapper" style="background-color: rgba(234, 84, 85, 0.1); color: #ea5455;">
+          <el-icon><CircleClose /></el-icon>
+        </div>
+        <div class="kpi-trend trend-down">-14%</div>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ stats.out_of_stock }}</div>
+        <div class="kpi-label">Дефіцит</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { Box, Warning, Check, CircleClose } from '@element-plus/icons-vue'
+
 defineProps({
   stats: {
     type: Object,
@@ -61,73 +76,64 @@ defineProps({
 </script>
 
 <style scoped>
-.crm-insights-row {
+.kpi-grid-modern {
   display: grid;
-  grid-template-columns: 1.25fr repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
-.crm-insight-card {
-  background: #FFFFFF;
-  border: 0.5px solid #E5E7EB;
+.kpi-card-modern {
+  background: #ffffff;
+  padding: 16px 20px;
   border-radius: 14px;
-  padding: 16px 22px;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.kpi-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px 0 rgba(15, 20, 34, 0.1);
+}
+
+.kpi-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.kpi-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  transition: transform 0.18s, box-shadow 0.18s;
-  height: 96px;
-  box-sizing: border-box;
+  justify-content: center;
+  font-size: 18px;
 }
 
-.crm-insight-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-/* Indicator rails matching CRM */
-.crm-insight-card.metric-pipeline { border-left: 5px solid #1463FF; }
-.crm-insight-card.metric-sla      { border-left: 5px solid #F59E0B; }
-.crm-insight-card.metric-payment  { border-left: 5px solid #15B97A; }
-.crm-insight-card.metric-today    { border-left: 5px solid #EF4444; }
-
-.insight-content { flex: 1; min-width: 0; }
-
-.metric-label {
-  display: block;
+.kpi-trend {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #94A3B8;
-  margin-bottom: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
 }
 
-.metric-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 28px;
+.trend-up { background: rgba(40, 199, 111, 0.12); color: #28c76f; }
+.trend-down { background: rgba(234, 84, 85, 0.12); color: #ea5455; }
+
+.kpi-value {
+  font-size: 24px;
   font-weight: 800;
-  color: #0F172A;
-  display: block;
-  line-height: 1.1;
+  color: #444050;
+  line-height: 1.2;
 }
 
-.insight-value-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.insight-sparkline { opacity: 0.6; }
-
-.crm-insight-card small {
-  display: block;
-  font-size: 11px;
-  color: #64748B;
-  font-weight: 500;
+.kpi-label {
+  font-size: 12px;
+  color: #8E8BA2;
+  font-weight: 600;
   margin-top: 2px;
 }
 </style>
