@@ -426,7 +426,7 @@ onMounted(() => {
 }
 
 .btn-primary-compact {
-  background: linear-gradient(135deg, #7367f0 0%, #ce9ffc 100%);
+  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%);
   border: none;
   color: #fff;
   height: 40px;

@@ -3,7 +3,7 @@
     
     <!-- ─── FLOATING ROUNDED STICKY HEADER ─── -->
     <div class="sticky-header-wrapper">
-      <div class="unified-sticky-header">
+      <div class="unified-sticky-header card-shadow">
         <div class="profile-main-content">
           <div class="user-avatar-wrapper">
             <el-avatar :size="80" :src="form.photo_url" class="main-avatar">
@@ -344,7 +344,7 @@ onMounted(fetchFormData)
 <style scoped>
 .page-container {
   padding: 0;
-  background-color: var(--erp-bg-page);
+  background-color: #F8F9FA;
   height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
@@ -357,15 +357,18 @@ onMounted(fetchFormData)
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #F8F9FA;
+  background: transparent; /* Remove the greyish glow */
+}
+
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .unified-sticky-header {
-  background: #fff;
+  background: #ffffff !important;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(15, 20, 34, 0.08);
   overflow: hidden;
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  border: 1px solid rgba(0,0,0,0.02);
 }
 
 .profile-main-content {
@@ -538,14 +541,30 @@ onMounted(fetchFormData)
 }
 
 /* ─── Buttons ─── */
+.btn-primary-compact {
+  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%);
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3);
+  transition: all 0.3s;
+}
+.btn-primary-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(115, 103, 240, 0.35);
+}
+
 .btn-vuexy-glow {
-  background: #7367f0;
+  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%) !important;
   border: none;
   font-weight: 700;
   border-radius: 8px;
   padding: 12px 24px;
-  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.25);
+  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3);
   transition: all 0.3s;
+  color: #fff;
 }
 .btn-vuexy-glow:hover {
   transform: translateY(-2px);
