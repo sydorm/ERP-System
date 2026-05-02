@@ -198,7 +198,6 @@ import { MoreFilled, TopRight, Upload } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import VariantSelectorDialog from '@/views/Sales/VariantSelectorDialog.vue'
-import * as XLSX from 'xlsx'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -406,16 +405,30 @@ const handleExcelFile = (e) => {
   
   const reader = new FileReader()
   reader.onload = (ev) => {
-    const data = new Uint8Array(ev.target.result)
-    const workbook = XLSX.read(data, { type: 'array' })
-    const sheetName = workbook.SheetNames[0]
-    const worksheet = workbook.Sheets[sheetName]
-    const json = XLSX.utils.sheet_to_json(worksheet)
-    
-    processImportedJson(json)
+    const text = ev.target.result
+    if (file.name.endsWith('.csv')) {
+      parseCSV(text)
+    } else {
+      ElMessage.warning('Для підтримки .xlsx файлів встановіть бібліотеку: npm install xlsx. Наразі підтримується лише .csv')
+    }
     excelInput.value.value = '' // Clear
   }
-  reader.readAsArrayBuffer(file)
+  reader.readAsText(file)
+}
+
+const parseCSV = (text) => {
+  const lines = text.split('\n').filter(l => l.trim())
+  if (lines.length === 0) return
+  
+  const headers = lines[0].split(/[;,]/).map(h => h.trim())
+  const rows = lines.slice(1).map(line => {
+    const values = line.split(/[;,]/).map(v => v.trim())
+    const obj = {}
+    headers.forEach((h, i) => { obj[h] = values[i] })
+    return obj
+  })
+  
+  processImportedJson(rows)
 }
 
 const processImportedJson = (json) => {
