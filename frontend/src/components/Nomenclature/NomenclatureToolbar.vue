@@ -159,9 +159,9 @@ defineEmits([
 }
 
 .act-btn--primary {
-  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%);
-  color: #ffffff;
-  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3);
+  background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3) !important;
   font-weight: 700;
 }
 

@@ -102,13 +102,14 @@ defineProps({
 }
 
 .kpi-icon-wrapper {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .kpi-trend {
