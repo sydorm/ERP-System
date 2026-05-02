@@ -838,7 +838,7 @@ onMounted(fetchData)
 /* ===== MAIN BODY ===== */
 .order-body { 
   flex: 1; display: flex; overflow: hidden; 
-  padding-top: 148px; /* 52 (toolbar) + 96 (header fields) */
+  padding-top: 196px; /* 48 (header) + 52 (toolbar) + 96 (header fields) */
 }
 .order-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
@@ -846,7 +846,7 @@ onMounted(fetchData)
 .order-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .order-tabs :deep(.el-tabs__header) {
   margin: 0; background: #fff; padding: 0 12px;
-  border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
+  border-bottom: 1px solid #EAECF4; flex-shrink: 0;
   position: sticky; top: 196px; z-index: 97;
 }
 .order-tabs :deep(.el-tabs__item) { font-size: 13px; height: 38px; }
@@ -858,8 +858,9 @@ onMounted(fetchData)
 
 /* Tab toolbar */
 .tab-toolbar {
-  display: flex; align-items: center; gap: 6px; padding: 8px 12px;
-  background: #f6f7f9; border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px; padding: 12px;
+  background: #fff; border-bottom: 1px solid #EAECF4; flex-shrink: 0;
+  padding-top: 8px;
 }
 .tab-toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .warehouse-select { width: 200px; }
@@ -867,7 +868,7 @@ onMounted(fetchData)
 /* ===== TABLE ===== */
 .erp-table-wrapper { 
   flex: 1; overflow-y: auto; 
-  max-height: calc(100vh - 196px - 100px); /* 196 (sum of fixed) + offset */
+  max-height: calc(100vh - 196px - 140px); 
 }
 .erp-dense-table { width: 100%; border: 1px solid #dcdfe6 !important; }
 .erp-dense-table :deep(th.el-table__cell) {
