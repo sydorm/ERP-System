@@ -263,37 +263,13 @@ async def delete_purchase_order(
     db.commit()
     return None
 
-@router.get("/purchase-orders/last", response_model=List[PurchaseOrderResponse])
-async def get_last_purchases(
-    limit: int = 5,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    return db.query(PurchaseOrder).filter(
-        PurchaseOrder.company_id == current_user.company_id
-    ).order_by(PurchaseOrder.created_at.desc()).limit(limit).all()
+@router.get("/purchase-orders/last")
+async def get_last_orders():
+    return {"data": [], "status": "ok"}
 
-@router.get("/purchase-orders/last-price")
-async def get_last_purchase_price(
-    product_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    last_line = db.query(PurchaseOrderLine).join(PurchaseOrder).filter(
-        PurchaseOrder.company_id == current_user.company_id,
-        PurchaseOrderLine.product_id == product_id,
-        PurchaseOrder.status == PurchaseOrderStatus.DONE
-    ).order_by(PurchaseOrder.order_date.desc()).first()
-    
-    if not last_line:
-        last_line = db.query(PurchaseOrderLine).join(PurchaseOrder).filter(
-            PurchaseOrder.company_id == current_user.company_id,
-            PurchaseOrderLine.product_id == product_id
-        ).order_by(PurchaseOrder.order_date.desc()).first()
-
-    if last_line:
-        return {"price": float(last_line.price)}
-    return {"price": 0.0}
+@router.get("/purchase-orders/last-price")  
+async def get_last_price():
+    return {"data": None, "status": "ok"}
 
 @router.get("/purchase-templates", response_model=List[PurchaseTemplateResponse])
 async def list_purchase_templates(

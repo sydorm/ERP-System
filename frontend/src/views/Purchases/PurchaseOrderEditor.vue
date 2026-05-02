@@ -482,6 +482,12 @@ const supplierRatingType = computed(() => {
 // ===== ACTIONS =====
 const goBack = () => router.push('/purchases/orders')
 
+const repeatLastOrder = () => {
+  // тимчасово порожній метод
+  console.log('repeatLastOrder called')
+}
+
+
 const handleCreateBasedOn = (command) => {
   if (command === 'receipt') {
     router.push({

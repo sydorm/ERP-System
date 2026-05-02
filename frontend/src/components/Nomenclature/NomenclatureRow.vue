@@ -62,9 +62,9 @@
     <!-- Status -->
     <div class="nom-cell nom-cell--status">
       <div class="status-badge-premium" :class="stockBadgeClass">
-        <CircleX v-if="stockBadgeClass === 'danger'" :size="14" />
-        <CheckCircle v-else-if="stockBadgeClass === 'success'" :size="14" />
-        <AlertCircle v-else :size="14" />
+        <el-icon v-if="stockBadgeClass === 'danger'" :size="14"><CircleClose /></el-icon>
+        <el-icon v-else-if="stockBadgeClass === 'success'" :size="14"><CircleCheck /></el-icon>
+        <el-icon v-else :size="14"><Warning /></el-icon>
         <span>{{ stockBadgeText }}</span>
       </div>
     </div>
@@ -114,8 +114,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Edit, Box, More, View, Fold, Coordinate, CircleClose, Grid } from '@element-plus/icons-vue'
-import { CircleX, CheckCircle, AlertCircle } from 'lucide-vue-next'
+import { Edit, Box, More, View, Fold, Coordinate, CircleClose, Grid, CircleCheck, Warning } from '@element-plus/icons-vue'
 import NomenclatureAIBadge from './NomenclatureAIBadge.vue'
 
 const props = defineProps({
