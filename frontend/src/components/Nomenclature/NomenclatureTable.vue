@@ -11,7 +11,7 @@
             @change="$emit('toggle-all', $event.target.checked)" 
           />
         </div>
-        <div class="nom-cell nom-cell--photo"></div>
+        <div class="nom-cell nom-cell--photo" v-if="false"></div>
         <div class="nom-cell nom-cell--name">Назва / Артикул</div>
         <div class="nom-cell nom-cell--category">Категорія</div>
         <div class="nom-cell nom-cell--stock">Залишок</div>

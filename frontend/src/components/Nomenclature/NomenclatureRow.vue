@@ -14,7 +14,7 @@
     </div>
 
     <!-- Photo -->
-    <div class="nom-cell nom-cell--photo" @click.stop>
+    <div class="nom-cell nom-cell--photo" @click.stop v-if="false">
       <el-image
         v-if="row.image_url"
         :src="row.image_url"
@@ -61,9 +61,12 @@
 
     <!-- Status -->
     <div class="nom-cell nom-cell--status">
-      <span class="nom-status-badge" :class="stockBadgeClass">
-        {{ stockBadgeText }}
-      </span>
+      <div class="status-badge-premium" :class="stockBadgeClass">
+        <CircleX v-if="stockBadgeClass === 'danger'" :size="14" />
+        <CheckCircle v-else-if="stockBadgeClass === 'success'" :size="14" />
+        <AlertCircle v-else :size="14" />
+        <span>{{ stockBadgeText }}</span>
+      </div>
     </div>
 
     <!-- Price -->
@@ -112,6 +115,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Edit, Box, More, View, Fold, Coordinate, CircleClose, Grid } from '@element-plus/icons-vue'
+import { CircleX, CheckCircle, AlertCircle } from 'lucide-vue-next'
 import NomenclatureAIBadge from './NomenclatureAIBadge.vue'
 
 const props = defineProps({
@@ -162,7 +166,7 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 48px; /* Reduced from 64px */
+  height: auto; /* Allow padding to define height */
   border-bottom: 1px solid #F1F5F9;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -174,12 +178,15 @@ const getAiWarningReason = (row) => {
 .nom-body-row:hover {
   background: #F8F9FC;
 }
+.nom-body-row:hover .nom-action-btn {
+  opacity: 1;
+}
 .nom-body-row.is-selected {
   background: #F0F5FF;
 }
 
 .nom-cell {
-  padding: 0 16px;
+  padding: 6px 12px; /* Standardized as per request */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -273,8 +280,9 @@ const getAiWarningReason = (row) => {
   gap: 3px;
 }
 .nom-stock-qty {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
   color: #0F172A;
   white-space: nowrap;
 }
@@ -297,19 +305,27 @@ const getAiWarningReason = (row) => {
 .nom-cell--status {
   justify-content: flex-start;
 }
-.nom-status-badge {
+.status-badge-premium {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px; /* Reduced from 6px 12px */
-  border-radius: 6px;
-  font-size: 10px; /* Reduced from 11px */
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
 }
-.nom-status-badge.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
-.nom-status-badge.warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
-.nom-status-badge.danger  { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
+.status-badge-premium.danger {
+  color: #EF4444;
+  background: #FEF2F2;
+}
+.status-badge-premium.success {
+  color: #16A34A;
+  background: #F0FDF4;
+}
+.status-badge-premium.warning {
+  color: #D97706;
+  background: #FFF7ED;
+}
 
 .nom-cell--price {
   justify-content: flex-end;
@@ -332,8 +348,8 @@ const getAiWarningReason = (row) => {
   padding-left: 0;
 }
 .nom-action-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   background: transparent;
   border: 1px solid transparent;
@@ -344,6 +360,8 @@ const getAiWarningReason = (row) => {
   justify-content: center;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  font-size: 13px;
+  opacity: 0;
 }
 .nom-action-btn:hover {
   background: #eef2ff;
