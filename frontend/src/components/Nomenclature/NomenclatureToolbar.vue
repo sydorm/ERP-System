@@ -108,9 +108,9 @@ defineEmits([
 .toolbar-section {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
-  padding: 16px 20px;
-  border-radius: 14px;
-  margin-top: 16px;
+  padding: 8px 16px; /* Reduced from 16px 20px */
+  border-radius: 12px;
+  margin-top: 4px; /* Reduced from 16px */
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.03);
 }
@@ -136,10 +136,10 @@ defineEmits([
 }
 
 .act-btn {
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 12px;
-  font-size: 14px;
+  height: 36px; /* Reduced from 44px */
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 13px; /* Slightly smaller */
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -192,11 +192,11 @@ defineEmits([
 
 .search-dense-input {
   width: 100%;
-  height: 44px;
-  border-radius: 12px;
+  height: 36px; /* Reduced from 44px */
+  border-radius: 10px;
   border: 1px solid #E6ECF3;
-  padding: 0 12px 0 40px;
-  font-size: 14px;
+  padding: 0 12px 0 36px;
+  font-size: 13px;
   background: #ffffff;
   transition: all 0.2s ease;
   color: #0f172a;
@@ -209,11 +209,11 @@ defineEmits([
 }
 
 .pill-select :deep(.el-select__wrapper) {
-  height: 44px !important;
-  border-radius: 12px !important;
+  height: 36px !important; /* Reduced from 44px */
+  border-radius: 10px !important;
   border: 1px solid #E6ECF3 !important;
   background: #ffffff !important;
   box-shadow: none !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
 }
 </style>

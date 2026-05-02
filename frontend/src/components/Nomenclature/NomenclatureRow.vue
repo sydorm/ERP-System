@@ -162,7 +162,7 @@ const getAiWarningReason = (row) => {
 }
 
 .nom-body-row {
-  height: 64px;
+  height: 48px; /* Reduced from 64px */
   border-bottom: 1px solid #F1F5F9;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -201,9 +201,9 @@ const getAiWarningReason = (row) => {
   padding: 0;
 }
 .nom-thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px; /* Reduced from 40px */
+  height: 32px;
+  border-radius: 8px;
   object-fit: cover;
   border: 1px solid #E2E8F0;
   background: #F8FAFC;
@@ -221,8 +221,8 @@ const getAiWarningReason = (row) => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 2px;
-  padding-right: 12px;
+  gap: 0; /* Reduced gap */
+  padding-right: 8px;
 }
 .nom-name-row {
   display: flex;
@@ -256,8 +256,8 @@ const getAiWarningReason = (row) => {
   align-items: center;
   max-width: 100%;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
+  padding: 3px 8px; /* Reduced padding */
+  font-size: 10px; /* Reduced from 11px */
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -300,9 +300,9 @@ const getAiWarningReason = (row) => {
 .nom-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 3px 8px; /* Reduced from 6px 12px */
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10px; /* Reduced from 11px */
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.02em;

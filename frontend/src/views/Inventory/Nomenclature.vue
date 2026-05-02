@@ -646,8 +646,8 @@ onActivated(() => {
 .top-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px 24px 8px;
+  gap: 8px; /* Reduced gap between blocks */
+  padding: 16px 24px 4px; /* Reduced top/bottom padding */
   background: transparent;
 }
 

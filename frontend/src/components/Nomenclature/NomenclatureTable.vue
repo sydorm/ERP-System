@@ -119,9 +119,9 @@ const isAllSelected = computed(() => {
   flex-direction: column;
   min-height: 0;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.05);
-  margin: 16px 24px 24px;
+  margin: 8px 24px 16px; /* Reduced margin from 16px 24px 24px */
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.02);
 }
@@ -153,24 +153,24 @@ const isAllSelected = computed(() => {
 
 .nom-header {
   background: #ffffff !important;
-  border-bottom: 2px solid #F1F5F9;
-  height: 48px !important;
-  min-height: 48px !important;
+  border-bottom: 1px solid #F1F5F9;
+  height: 38px !important; /* Reduced from 48px */
+  min-height: 38px !important;
   position: sticky;
   top: 0;
   z-index: 20;
-  margin-bottom: 4px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .nom-header .nom-cell {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #8E8BA2;
   padding: 0 16px;
-  height: 48px;
+  height: 38px;
   display: flex;
   align-items: center;
 }
