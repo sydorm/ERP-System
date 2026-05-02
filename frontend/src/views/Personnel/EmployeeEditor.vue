@@ -24,10 +24,10 @@
             </div>
             <div class="header-action-group">
               <el-button @click="router.back()" class="btn-ghost-modern">
-                <el-icon class="mr-1"><ArrowLeft /></el-icon> Назад
+                <el-icon class="mr-1"><LucideArrowLeft :size="18" /></el-icon> Назад
               </el-button>
               <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-glow">
-                <el-icon class="mr-1"><Check /></el-icon>
+                <el-icon class="mr-1"><LucideCheck :size="18" /></el-icon>
                 {{ isEdit ? 'Зберегти зміни' : 'Створити профіль' }}
               </el-button>
             </div>
@@ -192,6 +192,7 @@ import {
   CreditCard, Plus, Delete, Check, ArrowLeft 
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft as LucideArrowLeft, Check as LucideCheck } from 'lucide-vue-next'
 import api from '@/api'
 import dayjs from 'dayjs'
 
@@ -320,7 +321,9 @@ const saveEmployee = async () => {
           ...form.value,
           birth_date: form.value.birth_date ? dayjs(form.value.birth_date).format('YYYY-MM-DD') : null,
           hire_date: form.value.hire_date ? dayjs(form.value.hire_date).format('YYYY-MM-DD') : null,
-          roles: form.value.roles.map(r => ({ ...r, rate: parseFloat(r.rate) || 0 }))
+          roles: form.value.roles
+            .filter(r => r.role_id !== null)
+            .map(r => ({ ...r, rate: parseFloat(r.rate) || 0 }))
         }
         console.log('Sending Employee Payload:', payload)
         
