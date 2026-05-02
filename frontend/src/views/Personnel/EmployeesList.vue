@@ -335,9 +335,9 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  padding: 16px 24px;
+  padding: 0;
   background-color: var(--erp-bg-page);
-  height: calc(100vh - 64px);
+  height: calc(100vh - 64px - 48px); /* 64px header, 48px view-container padding (24*2) */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -426,18 +426,20 @@ onMounted(() => {
 }
 
 .btn-primary-compact {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #7367f0 0%, #ce9ffc 100%);
   border: none;
   color: #fff;
   height: 40px;
-  padding: 0 16px;
+  padding: 0 20px;
   border-radius: 8px;
   font-weight: 700;
   font-size: 13px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 14px rgba(115, 103, 240, 0.4);
   transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   display: flex;
   align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-primary-compact:hover {
@@ -634,18 +636,18 @@ onMounted(() => {
 }
 
 .pulse-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background-color: #10B981;
   border-radius: 50%;
   box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: pulse 2s infinite;
+  animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 .status-warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
 .status-danger { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
