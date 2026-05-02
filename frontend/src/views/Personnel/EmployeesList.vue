@@ -100,6 +100,7 @@
         <el-table-column prop="status_name" label="Статус" width="160">
           <template #default="scope">
             <div :class="['modern-badge', getStatusClass(scope.row.status_name)]">
+              <span v-if="getStatusClass(scope.row.status_name) === 'status-active'" class="pulse-dot"></span>
               {{ scope.row.status_name }}
             </div>
           </template>
@@ -336,12 +337,13 @@ onMounted(() => {
 .page-container {
   padding: 16px 24px;
   background-color: var(--erp-bg-page);
-  height: 100vh;
+  height: calc(100vh - 64px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   color: #444050;
   font-size: 13px;
+  box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
@@ -424,7 +426,7 @@ onMounted(() => {
 }
 
 .btn-primary-compact {
-  background: #6366F1;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   border: none;
   color: #fff;
   height: 40px;
@@ -432,13 +434,20 @@ onMounted(() => {
   border-radius: 8px;
   font-weight: 700;
   font-size: 13px;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
-  transition: all 0.2s;
-}
-.btn-primary-compact:hover {
-  background: #4F46E5;
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  align-items: center;
+}
+
+.btn-primary-compact:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+  filter: brightness(1.1);
+}
+
+.btn-primary-compact:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* KPI Cards */
@@ -449,18 +458,22 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 .kpi-card-modern {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
   padding: 16px 20px;
   border-radius: 14px;
-  box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
+  box-shadow: 
+    0 2px 4px rgba(15, 20, 34, 0.02),
+    0 10px 20px rgba(15, 20, 34, 0.04);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .kpi-card-modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(15, 20, 34, 0.08);
-  border-color: rgba(99, 102, 241, 0.1);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 
+    0 4px 8px rgba(99, 102, 241, 0.05),
+    0 20px 40px rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .kpi-header-row {
@@ -500,18 +513,20 @@ onMounted(() => {
 
 /* Filters Toolbar */
 .filters-card-modern {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
   padding: 16px;
   border-radius: 14px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.03);
 }
 
 .filter-title {
   font-size: 11px;
-  font-weight: 700;
-  color: #A3A7C5;
-  letter-spacing: 1px;
+  font-weight: 800;
+  color: #8E8BA2;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   display: block;
   margin-bottom: 12px;
@@ -610,7 +625,28 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-.status-active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.status-active { 
+  background: rgba(16, 185, 129, 0.1); 
+  color: #10B981; 
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
 .status-warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
 .status-danger { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
 .status-default { background: rgba(148, 163, 184, 0.12); color: #64748B; }
