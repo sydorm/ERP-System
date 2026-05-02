@@ -769,7 +769,9 @@ onMounted(fetchData)
 /* ===== TOOLBAR ===== */
 .erp-toolbar {
   display: flex; align-items: center; justify-content: space-between; padding: 6px 12px;
-  background-color: #fcfcfc; border-bottom: 1px solid #dcdfe6; flex-shrink: 0;
+  background-color: #fff; border-bottom: 1px solid #EAECF4; flex-shrink: 0;
+  position: fixed; top: 104px; left: 260px; right: 0; z-index: 99;
+  height: 44px;
 }
 .erp-toolbar-left { display: flex; align-items: center; gap: 8px; }
 .erp-toolbar-right { display: flex; align-items: center; gap: 6px; }
@@ -795,8 +797,10 @@ onMounted(fetchData)
 
 /* ===== HEADER FIELDS ===== */
 .erp-header-fields {
-  background-color: #f6f7f9; padding: 10px 16px 8px 16px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #e4e7ed;
+  background-color: #fff; padding: 10px 16px 8px 16px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #EAECF4;
+  position: fixed; top: 148px; left: 260px; right: 0; z-index: 98;
+  height: 105px;
 }
 .erp-field-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .erp-field { display: flex; align-items: center; }
@@ -832,7 +836,10 @@ onMounted(fetchData)
 .client-info-item { display: flex; align-items: center; gap: 4px; }
 
 /* ===== MAIN BODY ===== */
-.order-body { flex: 1; display: flex; overflow: hidden; }
+.order-body { 
+  flex: 1; display: flex; overflow: hidden; 
+  padding-top: 149px; /* Height of fixed toolbar (44) + header fields (105) */
+}
 .order-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
 /* ===== TABS ===== */
@@ -857,7 +864,10 @@ onMounted(fetchData)
 .warehouse-select { width: 200px; }
 
 /* ===== TABLE ===== */
-.erp-table-wrapper { flex: 1; overflow: hidden; }
+.erp-table-wrapper { 
+  flex: 1; overflow-y: auto; 
+  max-height: calc(100vh - 253px - 100px); /* 104 + 149 (fixed) + 100 extra */
+}
 .erp-dense-table { width: 100%; border: 1px solid #dcdfe6 !important; }
 .erp-dense-table :deep(th.el-table__cell) {
   background-color: #f5f7fa !important; color: #606266; font-size: 12px;
@@ -930,7 +940,8 @@ onMounted(fetchData)
 .order-sidebar {
   width: 300px; flex-shrink: 0; background: #fff; border-left: 1px solid #EAECF4;
   overflow-y: auto; display: flex; flex-direction: column;
-  position: sticky; top: 0; height: fit-content;
+  position: sticky; top: 253px; align-self: flex-start;
+  max-height: calc(100vh - 253px);
 }
 .sidebar-card { 
   padding: 20px; border-bottom: 1px solid #f0f2f5; 
