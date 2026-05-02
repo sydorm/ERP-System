@@ -1,22 +1,5 @@
 <template>
   <div class="page-container">
-    <!-- ─── HEADER & BREADCRUMBS ─── -->
-    <div class="header-section-modern">
-      <div class="header-title-block">
-        <el-breadcrumb separator="/" class="breadcrumb-modern">
-          <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
-          <el-breadcrumb-item>Персонал</el-breadcrumb-item>
-          <el-breadcrumb-item>Співробітники</el-breadcrumb-item>
-        </el-breadcrumb>
-        <h2 class="title-modern">Співробітники</h2>
-      </div>
-      <div class="header-actions">
-        <el-button @click="handleCreate" class="btn-primary-modern">
-          <el-icon class="mr-2"><Plus /></el-icon>
-          <span>Новий співробітник</span>
-        </el-button>
-      </div>
-    </div>
 
     <!-- ─── KPI CARDS (VUEXY STYLE) ─── -->
     <div class="kpi-grid-modern">
@@ -76,6 +59,11 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          
+          <el-button @click="handleCreate" class="btn-primary-compact">
+            <el-icon class="mr-2"><Plus /></el-icon>
+            <span>Новий співробітник</span>
+          </el-button>
         </div>
       </div>
     </div>
@@ -354,22 +342,22 @@ onMounted(() => {
   letter-spacing: -0.01em;
 }
 
-.btn-primary-modern {
+.btn-primary-compact {
   background: #6366F1;
   border: none;
   color: #fff;
-  height: 42px;
-  padding: 0 20px;
-  border-radius: 10px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
   transition: all 0.2s;
 }
-.btn-primary-modern:hover {
+.btn-primary-compact:hover {
   background: #4F46E5;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 /* KPI Cards */
