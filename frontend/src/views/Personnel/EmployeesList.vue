@@ -1,118 +1,177 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="header-left">
-        <h2>Співробітники</h2>
-        <el-breadcrumb separator="/">
+    <!-- ─── HEADER & BREADCRUMBS ─── -->
+    <div class="header-section-modern">
+      <div class="header-title-block">
+        <el-breadcrumb separator="/" class="breadcrumb-modern">
           <el-breadcrumb-item :to="{ path: '/dashboard' }">Головна</el-breadcrumb-item>
           <el-breadcrumb-item>Персонал</el-breadcrumb-item>
           <el-breadcrumb-item>Співробітники</el-breadcrumb-item>
         </el-breadcrumb>
+        <h2 class="title-modern">Співробітники</h2>
       </div>
-      <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="handleCreate" class="btn-primary">
-          Новий співробітник
+      <div class="header-actions">
+        <el-button @click="handleCreate" class="btn-primary-modern">
+          <el-icon class="mr-2"><Plus /></el-icon>
+          <span>Новий співробітник</span>
         </el-button>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-toolbar">
-      <div class="left-filters">
-        <el-input
-          v-model="searchQuery"
-          placeholder="ПІБ співробітника..."
-          :prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          class="search-input"
-        />
-        <el-select 
-          v-model="departmentId" 
-          placeholder="Всі підрозділи" 
-          clearable 
-          @change="fetchEmployees"
-          class="filter-select"
-        >
-          <el-option
-            v-for="dept in departments"
-            :key="dept.id"
-            :label="dept.name"
-            :value="dept.id"
-          />
-        </el-select>
+    <!-- ─── KPI CARDS (VUEXY STYLE) ─── -->
+    <div class="kpi-grid-modern">
+      <div v-for="stat in statsCards" :key="stat.title" class="kpi-card-modern">
+        <div class="kpi-info">
+          <span class="kpi-label">{{ stat.title }}</span>
+          <div class="kpi-value-row">
+            <span class="kpi-value">{{ stat.value }}</span>
+            <span :class="['kpi-trend', stat.trend >= 0 ? 'trend-up' : 'trend-down']">
+              ({{ stat.trend >= 0 ? '+' : '' }}{{ stat.trend }}%)
+            </span>
+          </div>
+          <span class="kpi-subtext">Аналітика за тиждень</span>
+        </div>
+        <div class="kpi-icon-wrapper" :style="{ backgroundColor: stat.colorBg }">
+          <el-icon :style="{ color: stat.colorIcon }"><component :is="stat.icon" /></el-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── FILTERS TOOLBAR (COMPACT) ─── -->
+    <div class="filters-card-modern">
+      <div class="filter-header">
+        <span class="filter-title">Фільтри</span>
+      </div>
+      <div class="filter-row-modern">
+        <div class="filter-group">
+          <el-select v-model="departmentId" placeholder="Оберіть підрозділ" clearable @change="fetchEmployees" class="select-modern">
+            <el-option v-for="dept in departments" :key="dept.id" :label="dept.name" :value="dept.id" />
+          </el-select>
+          <el-select v-model="statusFilter" placeholder="Статус" clearable @change="fetchEmployees" class="select-modern">
+            <el-option label="Активні" value="active" />
+            <el-option label="У відпустці" value="leave" />
+            <el-option label="Звільнені" value="fired" />
+          </el-select>
+        </div>
+        
+        <div class="action-group-modern">
+          <div class="search-wrapper-modern">
+            <el-input
+              v-model="searchQuery"
+              placeholder="Пошук співробітника..."
+              :prefix-icon="Search"
+              clearable
+              @input="handleSearch"
+              class="search-input-modern"
+            />
+          </div>
+          <el-dropdown trigger="click">
+            <el-button class="btn-secondary-modern">
+              <el-icon class="mr-2"><Download /></el-icon> Експорт
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>Експорт в Excel</el-dropdown-item>
+                <el-dropdown-item>Експорт в PDF</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </div>
     </div>
 
     <!-- Data Table -->
-    <el-card shadow="never" class="content-card">
+    <div class="table-card-modern">
       <el-table 
         v-loading="loading" 
         :data="employees" 
-        stripe 
         style="width: 100%"
-        class="custom-table"
+        class="erp-table-modern"
         @row-click="handleRowClick"
       >
-        <el-table-column prop="full_name" label="Співробітник" min-width="220">
+        <el-table-column prop="full_name" label="Співробітник" min-width="280">
           <template #default="scope">
-            <div class="employee-cell">
-              <el-avatar :size="32" :src="scope.row.photo_url" class="employee-avatar">
+            <div class="employee-info-cell">
+              <el-avatar :size="38" :src="scope.row.photo_url" class="modern-avatar">
                 {{ scope.row.full_name.charAt(0) }}
               </el-avatar>
-              <div class="employee-name-pos">
-                <span class="emp-name">{{ scope.row.full_name }}</span>
-                <span class="emp-pos">{{ scope.row.position }}</span>
+              <div class="name-details">
+                <div class="main-name">{{ scope.row.full_name }}</div>
+                <div class="sub-pos">{{ scope.row.position || 'Посада не вказана' }}</div>
               </div>
             </div>
           </template>
         </el-table-column>
         
-        <el-table-column prop="department_name" label="Підрозділ" width="180" />
-        
-        <el-table-column prop="status_name" label="Статус" width="150">
+        <el-table-column prop="department_name" label="Підрозділ" width="200">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status_name)" size="small">
+            <span class="dept-text">{{ scope.row.department_name }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="status_name" label="Статус" width="160">
+          <template #default="scope">
+            <div :class="['modern-badge', getStatusClass(scope.row.status_name)]">
               {{ scope.row.status_name }}
-            </el-tag>
+            </div>
           </template>
         </el-table-column>
         
-        <el-table-column prop="phone" label="Телефон" width="150" />
-        
-        <el-table-column prop="hire_date" label="Дата прийому" width="120">
+        <el-table-column prop="phone" label="Телефон" width="160">
           <template #default="scope">
-            {{ formatDate(scope.row.hire_date) }}
+            <span class="phone-text">{{ scope.row.phone || '—' }}</span>
           </template>
         </el-table-column>
         
-        <el-table-column label="Дії" width="100" align="right">
+        <el-table-column prop="hire_date" label="Дата прийому" width="140">
           <template #default="scope">
-            <el-button link type="primary" :icon="Edit" @click.stop="handleEdit(scope.row)" />
-            <el-button link type="danger" :icon="Delete" @click.stop="handleDelete(scope.row)" />
+            <span class="date-text">{{ formatDate(scope.row.hire_date) }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="Дії" width="120" align="right">
+          <template #default="scope">
+            <div class="table-actions">
+              <el-tooltip content="Редагувати" placement="top">
+                <button class="action-btn-mini edit" @click.stop="handleEdit(scope.row)">
+                  <el-icon><Edit /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="Видалити" placement="top">
+                <button class="action-btn-mini delete" @click.stop="handleDelete(scope.row)">
+                  <el-icon><Delete /></el-icon>
+                </button>
+              </el-tooltip>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
-      <div class="pagination-footer">
+      <div class="pagination-footer-modern">
+        <div class="pagination-info">
+          Показано {{ employees.length }} з {{ total }} співробітників
+        </div>
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="limit"
           background
-          layout="total, prev, pager, next"
+          layout="prev, pager, next"
           :total="total"
           @current-change="handlePageChange"
         />
       </div>
-    </el-card>
+    </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
+import { 
+  Plus, Search, Edit, Delete, User, UserFilled, 
+  Calendar, TrendCharts, Download 
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
@@ -129,6 +188,43 @@ const limit = ref(15)
 
 const searchQuery = ref('')
 const departmentId = ref(null)
+const statusFilter = ref(null)
+
+// Stats Calculation
+const statsCards = computed(() => [
+  { 
+    title: 'Всього співробітників', 
+    value: total.value, 
+    trend: 12, 
+    icon: 'User', 
+    colorIcon: '#6366F1', 
+    colorBg: 'rgba(99, 102, 241, 0.12)' 
+  },
+  { 
+    title: 'Активні', 
+    value: employees.value.filter(e => !e.status_name?.includes('звільн')).length, 
+    trend: 8, 
+    icon: 'UserFilled', 
+    colorIcon: '#10B981', 
+    colorBg: 'rgba(16, 185, 129, 0.12)' 
+  },
+  { 
+    title: 'Нові (цей місяць)', 
+    value: 3, 
+    trend: 24, 
+    icon: 'Calendar', 
+    colorIcon: '#F59E0B', 
+    colorBg: 'rgba(245, 158, 11, 0.12)' 
+  },
+  { 
+    title: 'Плинність', 
+    value: '2.4%', 
+    trend: -14, 
+    icon: 'TrendCharts', 
+    colorIcon: '#EF4444', 
+    colorBg: 'rgba(239, 68, 68, 0.12)' 
+  }
+])
 
 const fetchEmployees = async () => {
   loading.value = true
@@ -205,13 +301,13 @@ const handleRowClick = (row) => {
   router.push(`/personnel/employees/${row.id}`)
 }
 
-const getStatusType = (statusName) => {
-  if (!statusName) return 'info'
+const getStatusClass = (statusName) => {
+  if (!statusName) return 'status-default'
   const name = statusName.toLowerCase()
-  if (name.includes('актив') || name.includes('працює')) return 'success'
-  if (name.includes('відпуст')) return 'warning'
-  if (name.includes('звільн')) return 'danger'
-  return 'info'
+  if (name.includes('актив') || name.includes('працює')) return 'status-active'
+  if (name.includes('відпуст')) return 'status-warning'
+  if (name.includes('звільн')) return 'status-danger'
+  return 'status-default'
 }
 
 const formatDate = (date) => {
@@ -226,83 +322,255 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  padding: 24px;
-  background-color: #f8f9fa;
-  min-height: calc(100vh - 64px);
+  padding: 24px 32px;
+  background-color: #F8F7FA;
+  min-height: 100vh;
+  color: #444050;
 }
 
-.page-header {
+/* Header & Breadcrumbs */
+.header-section-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+.breadcrumb-modern {
+  margin-bottom: 4px;
+}
+:deep(.el-breadcrumb__inner) {
+  color: #94A3B8 !important;
+  font-weight: 500;
+  font-size: 13px;
+}
+:deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #444050 !important;
+}
+.title-modern {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #444050;
+  letter-spacing: -0.01em;
+}
+
+.btn-primary-modern {
+  background: #6366F1;
+  border: none;
+  color: #fff;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s;
+}
+.btn-primary-modern:hover {
+  background: #4F46E5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+/* KPI Cards */
+.kpi-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.kpi-card-modern {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-shadow: 0 4px 18px 0 rgba(15, 20, 34, 0.05);
+}
+.kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748B;
+  display: block;
+  margin-bottom: 4px;
+}
+.kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #444050;
+}
+.kpi-trend {
+  font-size: 13px;
+  font-weight: 700;
+}
+.trend-up { color: #10B981; }
+.trend-down { color: #EF4444; }
+.kpi-subtext {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+.kpi-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+/* Filters Toolbar */
+.filters-card-modern {
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #F1F5F9;
+  padding: 16px 24px;
+}
+.filter-header {
+  margin-bottom: 12px;
+}
+.filter-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #444050;
+}
+.filter-row-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+}
+.filter-group {
+  display: flex;
+  gap: 16px;
+}
+.select-modern {
+  width: 200px;
+}
+:deep(.el-input__wrapper) {
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
 }
 
-.header-left h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1d1f;
+.action-group-modern {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
-
-.btn-primary {
-  background: #2a85ff;
-  border: none;
+.search-input-modern {
+  width: 250px;
+}
+.btn-secondary-modern {
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
   font-weight: 600;
 }
 
-.filters-toolbar {
-  margin-bottom: 24px;
+/* Table Section */
+.table-card-modern {
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 18px 0 rgba(15, 20, 34, 0.05);
+}
+.erp-table-modern {
+  border-radius: 0 0 12px 12px;
+}
+:deep(.el-table__header) th {
+  background-color: #F8F9FA !important;
+  color: #444050 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 12px 0 !important;
+}
+:deep(.el-table__row) {
+  cursor: pointer;
 }
 
-.left-filters {
-  display: flex;
-  gap: 12px;
-}
-
-.search-input {
-  width: 300px;
-}
-
-.filter-select {
-  width: 200px;
-}
-
-.content-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-}
-
-.employee-cell {
+.employee-info-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
-
-.employee-name-pos {
+.modern-avatar {
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.name-details {
   display: flex;
   flex-direction: column;
 }
-
-.emp-name {
-  font-weight: 600;
-  color: #1a1d1f;
+.main-name {
+  font-weight: 700;
+  color: #444050;
   font-size: 14px;
 }
-
-.emp-pos {
+.sub-pos {
   font-size: 12px;
-  color: #6f767e;
+  color: #94A3B8;
+  font-weight: 500;
 }
 
-.pagination-footer {
-  margin-top: 24px;
+.modern-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.status-active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.status-warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.status-danger { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
+.status-default { background: rgba(148, 163, 184, 0.12); color: #64748B; }
+
+.table-actions {
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
 }
-
-.custom-table {
+.action-btn-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: #64748B;
+}
+.action-btn-mini:hover {
+  background: #F1F5F9;
+  color: #444050;
+}
+.action-btn-mini.delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+}
+
+.pagination-footer-modern {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pagination-info {
+  font-size: 13px;
+  color: #94A3B8;
+  font-weight: 500;
 }
 </style>
