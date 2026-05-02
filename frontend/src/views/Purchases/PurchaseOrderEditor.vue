@@ -1,123 +1,112 @@
 <template>
   <div class="erp-page-container">
 
-    <!-- ─── 1. TOP PREMIUM HEADER (CRM STYLE) ─── -->
-    <div class="order-topbar-wrapper">
-      <header class="order-topbar">
-        <div class="flex items-center h-[58px] px-6 justify-between">
-          
-          <!-- Left: Back & Title -->
-          <div class="flex items-center gap-4">
-            <button @click="goBack" class="text-gray-400 hover:text-[#6C63FF] transition-all transform hover:scale-110">
-              <el-icon class="text-lg"><ArrowLeft /></el-icon>
+    <!-- ─── 1. MODERN STICKY HEADER (STRICT PROTOCOL) ─── -->
+    <header class="order-header-modern">
+      <div class="header-main-row">
+        <!-- Left: Context & Identity -->
+        <div class="header-left">
+          <button @click="goBack" class="back-pill-modern" title="Назад">
+            <el-icon><ArrowLeft /></el-icon>
+          </button>
+          <div class="header-title-block">
+            <div class="header-breadcrumb">Закупівля</div>
+            <div class="header-main-title">
+              {{ isEditMode ? form.order_number : 'Нова закупівля' }}
+              <div v-if="form.status !== 'draft'" class="status-badge-mini" :class="statusBadgeClass">
+                {{ statusLabel }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Dynamic Configuration (Integrated Fields) -->
+        <div class="header-center">
+          <div class="header-inline-fields">
+            <div class="inline-field supplier-field">
+              <label>Постачальник</label>
+              <el-select 
+                v-model="form.supplier_id" 
+                filterable 
+                placeholder="Оберіть..." 
+                size="default" 
+                class="modern-select"
+                @change="onSupplierChange"
+              >
+                <el-option v-for="s in suppliers" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
+              <div v-if="supplierRating" class="rating-dot" :class="supplierRating" :title="supplierRatingLabel"></div>
+            </div>
+
+            <div class="inline-field date-field">
+              <label>Дата від</label>
+              <el-date-picker 
+                v-model="form.order_date" 
+                type="date" 
+                size="default" 
+                value-format="YYYY-MM-DD" 
+                class="modern-date-picker"
+                :clearable="false"
+              />
+            </div>
+
+            <div class="inline-field date-field">
+              <label>Очікується</label>
+              <el-date-picker 
+                v-model="form.expected_date" 
+                type="date" 
+                size="default" 
+                value-format="YYYY-MM-DD" 
+                placeholder="Планова" 
+                class="modern-date-picker"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Control Actions -->
+        <div class="header-right">
+          <div class="action-group">
+            <button @click="saveOrder('save')" :disabled="submitting" class="btn-draft-modern">
+              <span>Записати</span>
             </button>
-            <div class="flex flex-col leading-tight">
-              <span class="text-[13px] font-bold text-gray-900 tracking-tight">{{ isEditMode ? 'Редагування' : 'Створення' }}</span>
-              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Закупівлі</span>
-            </div>
-          </div>
-
-          <!-- Right: Actions -->
-          <div class="flex items-center gap-4">
-            <!-- Readiness Pill Badge -->
-            <div class="flex items-center px-3 py-1.5 rounded-full bg-[rgba(108,99,255,0.08)] border border-[rgba(108,99,255,0.2)]">
-              <span class="text-[11px] font-black text-[#6C63FF] uppercase tracking-tighter">Готовність {{ readinessProgress }}%</span>
-            </div>
-
-            <!-- Productivity Tools -->
-            <div class="flex items-center gap-2 border-r border-gray-100 pr-4 mr-2">
-              <el-button @click="repeatLastOrder" :icon="Refresh" class="erp-btn-repeat" size="small">
-                Як минулого разу
-              </el-button>
-              <el-dropdown @command="loadTemplate">
-                <el-button class="erp-btn" size="small">
-                  Завантажити шаблон <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item v-for="t in templates" :key="t.id" :command="t">{{ t.name }}</el-dropdown-item>
-                    <el-dropdown-item v-if="templates.length === 0" disabled>Немає шаблонів</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button @click="saveOrder('save')" :disabled="submitting" class="px-4 py-2 rounded-lg border border-[#E5E7EB] text-gray-500 font-bold text-[12px] hover:bg-gray-50 transition-all active:scale-95">
-                Записати
+            <button @click="saveOrder('post_close')" :disabled="submitting" class="btn-primary-modern">
+              <el-icon><Promotion /></el-icon>
+              <span>Провести та закрити</span>
+            </button>
+            
+            <el-dropdown trigger="click">
+              <button class="btn-more-modern">
+                <el-icon><MoreFilled /></el-icon>
               </button>
-              <button @click="saveOrder('post')" :disabled="submitting" class="px-4 py-2 rounded-lg border border-[#E5E7EB] text-gray-500 font-bold text-[12px] hover:bg-gray-50 transition-all active:scale-95">
-                Провести
-              </button>
-              <button @click="saveOrder('post_close')" :disabled="submitting" class="btn-premium px-6 py-2 rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-black text-[12px] uppercase tracking-wider transition-all active:scale-95">
-                Провести та закрити
-              </button>
-              
-              <el-dropdown trigger="click">
-                <button class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                  <el-icon class="text-lg"><MoreFilled /></el-icon>
-                </button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="handlePrint"><el-icon><Printer /></el-icon> Друк</el-dropdown-item>
-                    <el-dropdown-item @click="handleSendToSupplier" :disabled="!selectedSupplierObj">
-                      <el-icon><Promotion /></el-icon> Надіслати постачальнику
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт</el-dropdown-item>
-                    <el-dropdown-item @click="saveAsTemplate" divided><el-icon><CopyDocument /></el-icon> Зберегти як шаблон</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handlePrint"><el-icon><Printer /></el-icon> Друк</el-dropdown-item>
+                  <el-dropdown-item @click="handleSendToSupplier" :disabled="!selectedSupplierObj">
+                    <el-icon><Promotion /></el-icon> Надіслати постачальнику
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт</el-dropdown-item>
+                  <el-dropdown-item @click="saveAsTemplate" divided><el-icon><CopyDocument /></el-icon> Зберегти як шаблон</el-dropdown-item>
+                  <el-dropdown-item v-if="isEditMode" @click="saveOrder('post')" divided>
+                    <el-icon><Check /></el-icon> Провести (без закриття)
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
-        </div>
-        <!-- Progress Line -->
-        <div class="h-[2px] w-full bg-gray-50 overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000 shadow-[0_0_8px_rgba(108,99,255,0.3)]"
-               :style="`width: ${readinessProgress}%`"></div>
-        </div>
-      </header>
-    </div>
-
-    <!-- ===== HEADER FIELDS ===== -->
-    <el-collapse-transition>
-      <div class="erp-header-fields" v-show="isHeaderExpanded">
-        <div class="erp-field-row justify-between">
-          <div class="erp-field">
-            <span class="erp-label">Номер:</span>
-            <el-input v-model="form.order_number" size="small" class="erp-input-wrapper" disabled style="width:120px" />
-          </div>
-          <div class="erp-field">
-            <span class="erp-label">від:</span>
-            <el-date-picker v-model="form.order_date" type="date" size="small" value-format="YYYY-MM-DD" style="width:145px" />
-          </div>
-          <div class="erp-field">
-            <span class="erp-label">Очікується:</span>
-            <el-date-picker v-model="form.expected_date" type="date" size="small" value-format="YYYY-MM-DD" placeholder="Планова" style="width:145px" />
-          </div>
-          <div class="erp-badges-group ml-auto">
-            <div class="erp-status-pill" :class="statusBadgeClass">{{ statusLabel }}</div>
-            <div class="payment-status-badge" :class="paymentStatusClass">{{ paymentStatusLabel }}</div>
-          </div>
-        </div>
-        <div class="erp-field-row mt-1">
-          <div class="erp-field client-field">
-            <span class="erp-label req">Постачальник:</span>
-            <el-select v-model="form.supplier_id" filterable size="small" class="erp-input-wrapper client-select" @change="onSupplierChange">
-              <el-option v-for="s in suppliers" :key="s.id" :label="s.name" :value="s.id" />
-            </el-select>
-            <el-tag v-if="supplierRating" :type="supplierRatingType" size="small" effect="dark" class="supplier-rating-badge">
-              {{ supplierRatingLabel }}
-            </el-tag>
-          </div>
-        </div>
-        <div class="client-info-banner" v-if="selectedSupplierObj">
-          <span class="client-info-item"><el-icon><Phone /></el-icon> {{ selectedSupplierObj.phone || '—' }}</span>
-          <span class="client-info-item"><el-icon><Message /></el-icon> {{ selectedSupplierObj.email || '—' }}</span>
-          <span class="client-info-item"><el-icon><Location /></el-icon> {{ selectedSupplierObj.address || '—' }}</span>
         </div>
       </div>
-    </el-collapse-transition>
+
+      <!-- Optional Supplier Info & Payment Strip -->
+      <transition name="slide-fade">
+        <div class="supplier-info-strip" v-if="selectedSupplierObj">
+          <div class="info-item"><el-icon><Phone /></el-icon> {{ selectedSupplierObj.phone || '—' }}</div>
+          <div class="info-item"><el-icon><Message /></el-icon> {{ selectedSupplierObj.email || '—' }}</div>
+          <div class="info-item"><el-icon><Location /></el-icon> {{ selectedSupplierObj.address || '—' }}</div>
+          <div class="info-item payment-status-pill" :class="paymentStatusClass">{{ paymentStatusLabel }}</div>
+        </div>
+      </transition>
+    </header>
 
     <div class="order-body">
       <div class="order-main">
@@ -369,7 +358,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft, Plus, Delete, ArrowDown, ArrowUp, MoreFilled,
   Printer, Promotion, Download, Phone, Message, Location,
-  Box, Van, CreditCard, Document, Timer, View, Refresh, CopyDocument
+  Box, Van, CreditCard, Document, Timer, View, Refresh, CopyDocument, Check
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -777,52 +766,270 @@ onMounted(fetchData)
 
 <style scoped>
 .erp-page-container {
-  display: flex; flex-direction: column; height: 100%; overflow: hidden;
-  background-color: #F4F6F9; font-family: 'Inter', sans-serif;
+  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  background-color: #F8FAFC; font-family: 'Inter', sans-serif;
   width: 100%; padding: 0;
 }
 
-/* ─── PREMIUM TOPBAR ─── */
-.order-topbar-wrapper {
-  height: 60px;
-  flex-shrink: 0;
-  z-index: 1050;
-}
-.order-topbar {
-  position: fixed;
-  top: 64px;
-  left: 260px;
-  right: 0;
-  height: 60px;
+/* ─── MODERN HEADER STYLES (STICKY) ─── */
+.order-header-modern {
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  z-index: 1050;
   display: flex;
   flex-direction: column;
+}
+
+.header-main-row {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  gap: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 240px;
+}
+
+.back-pill-modern {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.back-pill-modern:hover {
+  border-color: #6366F1;
+  color: #6366F1;
+  transform: translateX(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+.header-title-block {
+  display: flex;
+  flex-direction: column;
+}
+.header-breadcrumb {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.header-main-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+}
+
+.status-badge-mini {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* Center Configuration Fields */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.header-inline-fields {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: #F1F5F9;
+  padding: 8px 24px;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+}
+
+.inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.inline-field label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  margin-left: 2px;
+  letter-spacing: 0.02em;
+}
+
+.modern-select, .modern-date-picker {
+  width: auto;
+}
+.modern-select :deep(.el-select__wrapper),
+.modern-date-picker :deep(.el-input__wrapper) {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  height: 26px !important;
+  min-height: 26px !important;
+}
+.modern-select :deep(.el-select__placeholder),
+.modern-select :deep(.el-select__inner),
+.modern-date-picker :deep(.el-input__inner) {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #1E293B !important;
+}
+.modern-select { width: 220px; }
+.modern-date-picker { width: 120px; }
+
+.supplier-field {
+  position: relative;
+  padding-right: 14px;
+}
+.rating-dot {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+.rating-dot.reliable { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.rating-dot.new { background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+
+/* Right Actions Group */
+.header-right {
+  display: flex;
+  align-items: center;
+}
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-draft-modern {
+  height: 44px;
   padding: 0 24px;
-}
-
-.stage-glow {
-  box-shadow: 0 0 10px rgba(108, 99, 255, 0.4);
-}
-
-.btn-premium {
-  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
   transition: all 0.2s;
 }
-.btn-premium:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+.btn-draft-modern:hover:not(:disabled) {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
 }
 
-.erp-btn, .erp-btn-icon, .erp-btn-primary, .erp-btn-repeat {
-  border-radius: 8px !important; font-size: 12px !important; height: 32px !important;
-  padding: 0 12px !important; border: 1px solid #E5E7EB !important;
-  background-color: #fff !important; color: #4B5563 !important;
-  display: inline-flex; align-items: center; gap: 6px;
+.btn-primary-modern {
+  height: 44px;
+  padding: 0 28px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.18);
+}
+.btn-primary-modern:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.28);
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+}
+.btn-primary-modern:active { transform: translateY(0) scale(0.98); }
+
+.btn-more-modern {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-more-modern:hover {
+  background: #F8FAFC;
+  color: #1E293B;
+}
+
+/* Secondary Info Strip */
+.supplier-info-strip {
+  background: #F8FAFC;
+  border-top: 1px solid #F1F5F9;
+  padding: 8px 28px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  overflow: hidden;
+}
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 600;
+  color: #64748B;
+}
+.info-item .el-icon { color: #94A3B8; font-size: 14px; }
+
+.payment-status-pill {
+  padding: 4px 14px;
+  border-radius: 24px;
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+.slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.4s ease; }
+.slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; transform: translateY(-12px); }
+
+/* Buttons & Component Refinements */
+.erp-btn, .erp-btn-icon, .erp-btn-primary, .erp-btn-repeat {
+  border-radius: 10px !important; font-size: 13px !important; height: 36px !important;
+  padding: 0 16px !important; border: 1px solid #E2E8F0 !important;
+  background-color: #fff !important; color: #475569 !important;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 650;
   transition: all 0.2s;
 }
 .erp-btn-repeat {
@@ -931,7 +1138,7 @@ onMounted(fetchData)
 }
 
 /* Tab content card */
-.tab-content-card { padding: 16px; display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
+.tab-content-card { padding: 24px; display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box; }
 .fields-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .fields-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .field-block { display: flex; flex-direction: column; gap: 4px; }
