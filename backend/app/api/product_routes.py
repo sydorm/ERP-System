@@ -670,7 +670,9 @@ async def find_or_create_variant(
         parts = []
         for v in vals:
             attr_id = str(v.get("attribute_id", ""))
-            key = str(v.get("option_id") or v.get("text_value") or "")
+            val = v.get("option_id") or v.get("text_value") or ""
+            # Normalize: strip whitespace and lowercase
+            key = str(val).strip().lower()
             parts.append((attr_id, key))
         return tuple(sorted(parts))
     

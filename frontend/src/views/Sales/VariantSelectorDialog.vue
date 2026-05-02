@@ -399,12 +399,15 @@ const currentVariant = computed(() => {
       return v.values?.some(vv => {
         if (vv.attribute_id !== a.id) return false
         if (a.type === 'DIMENSIONS') {
-            if (!vv.text_value) return false
-            const normStored = vv.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '')
-            const normExpected = `${dim.w}x${dim.h}`
-            return normStored === normExpected
+          if (!vv.text_value) return false
+          const normStored = vv.text_value.replace(/[\u00d7*]/g, 'x').replace(/\s+/g, '').toLowerCase()
+          const normExpected = `${dim.w}x${dim.h}`
+          return normStored === normExpected
         }
-        return vv.option_id === selection || vv.text_value === selection
+        
+        const v1 = String(vv.option_id || vv.text_value || '').trim().toLowerCase()
+        const v2 = String(selection || '').trim().toLowerCase()
+        return v1 === v2
       })
     })
   })
@@ -433,7 +436,7 @@ const handleConfirm = async () => {
         return {
             attribute_id: attr.id,
             option_id: isUuid ? selection : null,
-            text_value: isUuid ? null : selection,
+            text_value: isUuid ? null : (typeof selection === 'string' ? selection.trim() : selection),
             attribute: attr,
             option: isUuid ? attr.options?.find(o => o.id === selection) : null
         }
