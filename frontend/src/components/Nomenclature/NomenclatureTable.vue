@@ -140,8 +140,7 @@ const isAllSelected = computed(() => {
   display: grid;
   grid-template-columns:
     32px    /* checkbox */
-    64px    /* photo */
-    minmax(240px, 2.2fr) /* name */
+    minmax(280px, 2.5fr) /* name - increased width */
     180px   /* category */
     170px   /* stock */
     150px   /* status */
