@@ -112,7 +112,6 @@
       </div>
     </el-collapse-transition>
 
-    <!-- ===== MAIN BODY ===== -->
     <div class="order-body">
       <div class="order-main">
         <el-tabs v-model="activeTab" class="order-tabs">
@@ -847,7 +846,10 @@ onMounted(fetchData)
 .order-tabs :deep(.el-tabs__header) {
   margin: 0; background: #fff; padding: 0 12px;
   border-bottom: 1px solid #EAECF4; flex-shrink: 0;
-  position: sticky; top: 196px; z-index: 97;
+  position: sticky; top: 0; z-index: 97;
+}
+.order-tabs :deep(.el-tabs__content) {
+  flex: 1; overflow-y: auto; padding-bottom: 20px;
 }
 .order-tabs :deep(.el-tabs__item) { font-size: 13px; height: 38px; }
 .order-tabs :deep(.el-tabs__item.is-active) { color: #6366f1; font-weight: 600; }
@@ -867,8 +869,7 @@ onMounted(fetchData)
 
 /* ===== TABLE ===== */
 .erp-table-wrapper { 
-  flex: 1; overflow-y: auto; 
-  max-height: calc(100vh - 196px - 140px); 
+  flex: 1; padding: 12px;
 }
 .erp-dense-table { width: 100%; border: 1px solid #dcdfe6 !important; }
 .erp-dense-table :deep(th.el-table__cell) {
@@ -942,8 +943,8 @@ onMounted(fetchData)
 .order-sidebar {
   width: 300px; flex-shrink: 0; background: #fff; border-left: 1px solid #EAECF4;
   overflow-y: auto; display: flex; flex-direction: column;
-  position: sticky; top: 196px; align-self: flex-start;
-  max-height: calc(100vh - 196px);
+  position: sticky; top: 0; align-self: flex-start;
+  height: calc(100vh - 196px);
 }
 .sidebar-card { 
   padding: 20px; border-bottom: 1px solid #f0f2f5; 
