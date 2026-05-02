@@ -449,17 +449,21 @@ const handleConfirm = async () => {
         })
         visible.value = false
     } else {
-        // Check if we should skip variant creation for materials/components
+        // Check if we should skip variant creation for materials/components (auto-create silently)
         const catStr = (props.product?.category || '').toUpperCase();
+        const nameStr = (props.product?.name || '').toUpperCase();
         const skipVariantCreation = 
             props.product?.type === 'material' || 
             props.product?.type === 'component' || 
             catStr.includes('МАТЕРІАЛ') || 
+            catStr.includes('ТКАНИНА') || 
             catStr.includes('ДСП') || 
             catStr.includes('МЕТАЛ') ||
             catStr.includes('MATERIAL') ||
+            catStr.includes('TEXTILE') ||
             catStr.includes('DSP') ||
-            catStr.includes('METAL');
+            catStr.includes('METAL') ||
+            nameStr.includes('ТКАНИНА');
 
         if (skipVariantCreation) {
             try {
@@ -497,15 +501,23 @@ const handleConfirm = async () => {
         // If variant not found but all variant-generating attributes are selected
         // Ask to create a new variant
         try {
-            const dimAttr = variantAttributes.value.find(a => a.type === 'DIMENSIONS')
-            let label = "цю комбінацію"
-            if (dimAttr) {
-                const d = dimSelections.value[dimAttr.id]
-                label = `${d.w}×${d.h}`
-            }
+            // Build a descriptive label from selected values
+            let label = ""
+            const selectedLabels = variantAttributes.value.map(a => {
+                const val = selections.value[a.id]
+                const opt = a.options?.find(o => o.id === val)
+                const text = opt ? opt.value : val
+                
+                if (a.type === 'DIMENSIONS') {
+                    const d = dimSelections.value[a.id]
+                    return `${a.name}: ${d.w}×${d.h}`
+                }
+                return `${a.name}: ${text}`
+            })
+            label = selectedLabels.join(', ') || "цю комбінацію"
 
             await ElMessageBox.confirm(
-                `Варіант "${label}" не існує. Створити автоматично?`,
+                `Варіант "${label}" ще не існує в базі. Створити його автоматично?`,
                 'Новий варіант',
                 { confirmButtonText: 'Так, створити', cancelButtonText: 'Ні, просто вибрати', type: 'info' }
             )

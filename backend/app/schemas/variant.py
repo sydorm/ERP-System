@@ -30,9 +30,9 @@ class ProductVariantBase(BaseModel):
     is_active: bool = True
     
     # Physical Parameters
-    length_cm: Optional[Decimal] = None
-    width_cm: Optional[Decimal] = None
-    height_cm: Optional[Decimal] = None
+    length_mm: Optional[Decimal] = None
+    width_mm: Optional[Decimal] = None
+    height_mm: Optional[Decimal] = None
     weight_kg: Optional[Decimal] = None
 
 class ProductVariantCreate(ProductVariantBase):
