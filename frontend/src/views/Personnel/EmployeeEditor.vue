@@ -1,42 +1,49 @@
 <template>
   <div class="page-container" v-loading="loading">
     
-    <!-- ─── UNIFIED STICKY HEADER BLOCK ─── -->
-    <div class="unified-sticky-header shadow-sm">
+    <!-- ─── PREMIUM UNIFIED STICKY HEADER ─── -->
+    <div class="unified-sticky-header">
       <div class="user-profile-banner">
+        <div class="banner-gradient-overlay"></div>
         <img src="https://demos.pixinvent.com/vuexy-html-admin-template/assets/img/pages/profile-banner.png" class="banner-img" />
       </div>
       
       <div class="profile-main-content">
-        <div class="user-avatar-section">
-          <el-avatar :size="90" :src="form.photo_url" class="main-avatar">
+        <div class="user-avatar-wrapper">
+          <el-avatar :size="110" :src="form.photo_url" class="main-avatar">
             {{ form.full_name?.charAt(0) || 'U' }}
           </el-avatar>
         </div>
-        <div class="user-details-section">
-          <div class="user-title-box">
-            <h2 class="user-name">{{ form.full_name || 'Новий співробітник' }}</h2>
-            <div class="user-meta-tags">
-              <span class="meta-tag"><el-icon><User /></el-icon> {{ form.position || 'Посада' }}</span>
-              <span class="meta-divider"></span>
-              <span :class="['status-pill-mini', getStatusClass(currentStatusName)]">{{ currentStatusName || 'Неактивний' }}</span>
+        <div class="user-details-layout">
+          <div class="user-info-group">
+            <h2 class="user-display-name">{{ form.full_name || 'Новий співробітник' }}</h2>
+            <div class="user-meta-info">
+              <span class="meta-badge"><el-icon><User /></el-icon> {{ form.position || 'Посада не вказана' }}</span>
+              <span class="meta-dot"></span>
+              <span :class="['status-tag', getStatusClass(currentStatusName)]">
+                <span class="status-dot"></span>
+                {{ currentStatusName || 'Неактивний' }}
+              </span>
             </div>
           </div>
-          <div class="header-actions-box">
-            <el-button @click="router.back()" class="btn-vuexy-secondary">Назад</el-button>
-            <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-primary">
-              {{ isEdit ? 'Зберегти' : 'Створити' }}
+          <div class="header-action-group">
+            <el-button @click="router.back()" class="btn-ghost-modern">
+              <el-icon class="mr-1"><ArrowLeft /></el-icon> Назад
+            </el-button>
+            <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-glow">
+              <el-icon class="mr-1"><Check /></el-icon>
+              {{ isEdit ? 'Зберегти зміни' : 'Створити профіль' }}
             </el-button>
           </div>
         </div>
       </div>
 
-      <!-- Combined Navigation Inside Header -->
-      <div class="header-nav-pills">
+      <!-- Navigation Pills (Refined Vuexy Style) -->
+      <div class="header-navigation-bar">
         <div 
           v-for="tab in tabs" 
           :key="tab.id" 
-          :class="['nav-pill-item', { active: activeTab === tab.id }]"
+          :class="['nav-item-pill', { active: activeTab === tab.id }]"
           @click="activeTab = tab.id"
         >
           <el-icon><component :is="tab.icon" /></el-icon>
@@ -45,38 +52,38 @@
       </div>
     </div>
 
-    <!-- ─── SCROLLABLE CONTENT ─── -->
-    <div class="settings-scroll-area">
+    <!-- ─── SCROLLABLE CONTENT AREA ─── -->
+    <div class="settings-content-scroll">
       
       <!-- TAB: ACCOUNT -->
-      <div v-if="activeTab === 'account'" class="animate-fade-in">
-        <el-card class="settings-card-modern mb-4">
-          <template #header>
-            <h3 class="card-section-title">ОСНОВНА ІНФОРМАЦІЯ</h3>
-          </template>
+      <div v-if="activeTab === 'account'" class="fade-up-animation">
+        <el-card class="settings-card-premium mb-4">
+          <div class="card-section-header">
+            <h3 class="section-accent-title">ОСНОВНА ІНФОРМАЦІЯ</h3>
+          </div>
 
-          <el-form :model="form" :rules="rules" ref="formRef" label-position="top">
-            <el-row :gutter="24">
+          <el-form :model="form" :rules="rules" ref="formRef" label-position="top" class="modern-form-dense">
+            <el-row :gutter="32">
               <el-col :span="12">
-                <el-form-item label="ПІБ" prop="full_name">
+                <el-form-item label="ПІБ Співробітника" prop="full_name">
                   <el-input v-model="form.full_name" placeholder="Олександр Петренко" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="ТЕЛЕФОН" prop="phone">
+                <el-form-item label="Телефонний номер" prop="phone">
                   <el-input v-model="form.phone" placeholder="+380..." />
                 </el-form-item>
               </el-col>
             </el-row>
 
-            <el-row :gutter="24">
+            <el-row :gutter="32">
               <el-col :span="12">
-                <el-form-item label="ПОСАДА" prop="position">
-                  <el-input v-model="form.position" placeholder="Senior Developer" />
+                <el-form-item label="Посада в компанії" prop="position">
+                  <el-input v-model="form.position" placeholder="Наприклад: Менеджер з продажів" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="ПІДРОЗДІЛ" prop="department_id">
+                <el-form-item label="Підрозділ" prop="department_id">
                   <el-select v-model="form.department_id" placeholder="Оберіть відділ" style="width: 100%">
                     <el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" />
                   </el-select>
@@ -84,78 +91,90 @@
               </el-col>
             </el-row>
 
-            <el-row :gutter="24">
+            <el-row :gutter="32">
               <el-col :span="12">
-                <el-form-item label="СТАТУС" prop="status_id">
+                <el-form-item label="Поточний статус" prop="status_id">
                   <el-select v-model="form.status_id" placeholder="Оберіть статус" style="width: 100%">
                     <el-option v-for="s in dictionaries.EMPLOYEE_STATUS" :key="s.id" :label="s.name" :value="s.id" />
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="ДАТА ПРИЙОМУ">
+                <el-form-item label="Дата прийняття на роботу">
                   <el-date-picker v-model="form.hire_date" type="date" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="32">
+              <el-col :span="24">
+                <el-form-item label="Коментарі або примітки">
+                  <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="Будь-яка додаткова інформація..." />
                 </el-form-item>
               </el-col>
             </el-row>
           </el-form>
         </el-card>
 
-        <el-card class="settings-card-modern danger-zone-card shadow-sm">
-          <div class="danger-zone-content">
-            <h3 class="card-section-title text-danger">ВИДАЛЕННЯ ПРОФІЛЮ</h3>
-            <p class="danger-text">Після деактивації співробітник втратить доступ до системи.</p>
-            <el-checkbox v-model="confirmDelete" label="Я підтверджую деактивацію" />
-            <div class="mt-3">
-              <el-button type="danger" :disabled="!confirmDelete" plain size="small">Деактивувати</el-button>
+        <el-card class="settings-card-premium danger-zone-card">
+          <div class="danger-header">
+            <h3 class="section-accent-title text-danger">БЕЗПЕКА ТА ВИДАЛЕННЯ</h3>
+          </div>
+          <div class="danger-body">
+            <p class="danger-instruction">Після деактивації картка співробітника перейде в архів. Його доступ до системи буде негайно заблоковано.</p>
+            <div class="danger-actions">
+              <el-checkbox v-model="confirmDelete" label="Я підтверджую деактивацію цього профілю" class="mb-2" />
+              <div class="mt-2">
+                <el-button type="danger" :disabled="!confirmDelete" plain>Деактивувати фахівця</el-button>
+              </div>
             </div>
           </div>
         </el-card>
       </div>
 
       <!-- TAB: SECURITY -->
-      <div v-if="activeTab === 'security'" class="animate-fade-in">
-        <el-card class="settings-card-modern">
-          <h3 class="card-section-title">ЗМІНА ПАРОЛЯ</h3>
-          <el-form label-position="top" class="mt-3">
-            <el-row :gutter="24">
+      <div v-if="activeTab === 'security'" class="fade-up-animation">
+        <el-card class="settings-card-premium">
+          <h3 class="section-accent-title">ДОСТУП ДО СИСТЕМИ</h3>
+          <el-form label-position="top" class="mt-4">
+            <el-row :gutter="32">
               <el-col :span="12">
                 <el-form-item label="Новий пароль">
                   <el-input type="password" show-password placeholder="••••••••" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="Підтвердіть пароль">
+                <el-form-item label="Повторіть пароль">
                   <el-input type="password" show-password placeholder="••••••••" />
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-button type="primary" class="btn-vuexy-primary mt-2">Оновити доступ</el-button>
+            <el-button type="primary" class="btn-vuexy-glow mt-2">Оновити пароль</el-button>
           </el-form>
         </el-card>
       </div>
 
       <!-- TAB: PAYROLL -->
-      <div v-if="activeTab === 'payroll'" class="animate-fade-in">
-        <el-card class="settings-card-modern">
-          <div class="section-header-flex">
-            <h3 class="card-section-title">РОЛІ ТА СТАВКИ</h3>
-            <el-button type="primary" link :icon="Plus" @click="addRole">Додати роль</el-button>
+      <div v-if="activeTab === 'payroll'" class="fade-up-animation">
+        <el-card class="settings-card-premium">
+          <div class="card-section-header between">
+            <h3 class="section-accent-title">СТАВКИ ТА РОЛІ</h3>
+            <el-button type="primary" link :icon="Plus" @click="addRole">Додати нову роль</el-button>
           </div>
-          <el-table :data="form.roles" class="modern-table-compact mt-3">
-            <el-table-column label="Етап виробництва" min-width="220">
+          <el-table :data="form.roles" class="premium-table-compact mt-4">
+            <el-table-column label="Роль / Етап виробництва" min-width="250">
               <template #default="scope">
-                <el-select v-model="scope.row.role_id" style="width: 100%" size="small">
+                <el-select v-model="scope.row.role_id" style="width: 100%" size="default">
                   <el-option v-for="it in dictionaries.PRODUCTION_STAGE" :key="it.id" :label="it.name" :value="it.id" />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="Ставка" width="140">
+            <el-table-column label="Ставка (грн)" width="180">
               <template #default="scope">
-                <el-input-number v-model="scope.row.rate" :controls="false" style="width: 100%" size="small" />
+                <el-input-number v-model="scope.row.rate" :controls="false" style="width: 100%" />
               </template>
             </el-table-column>
-            <el-table-column width="60" align="center">
+            <el-table-column width="80" align="center">
               <template #default="scope">
                 <el-button link type="danger" :icon="Delete" @click="removeRole(scope.$index)" />
               </template>
@@ -173,7 +192,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   User, Location, Calendar, Lock, Bell, Link, 
-  CreditCard, Plus, Delete, Check 
+  CreditCard, Plus, Delete, Check, ArrowLeft 
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
@@ -192,8 +211,7 @@ const tabs = [
   { id: 'account', label: 'Профіль', icon: 'User' },
   { id: 'security', label: 'Безпека', icon: 'Lock' },
   { id: 'payroll', label: 'Оплата', icon: 'CreditCard' },
-  { id: 'notifications', label: 'Сповіщення', icon: 'Bell' },
-  { id: 'connections', label: 'Зв\'язки', icon: 'Link' }
+  { id: 'notifications', label: 'Сповіщення', icon: 'Bell' }
 ]
 
 const departments = ref([])
@@ -336,18 +354,29 @@ onMounted(fetchFormData)
   overflow: hidden;
 }
 
-/* ─── Unified Sticky Header ─── */
+/* ─── Premium Unified Sticky Header ─── */
 .unified-sticky-header {
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid #F1F1F2;
-  box-shadow: 0 4px 12px rgba(15, 20, 34, 0.05);
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 4px 15px rgba(15, 20, 34, 0.06);
 }
 
 .user-profile-banner {
-  height: 100px;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+}
+.banner-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 100%);
+  z-index: 1;
 }
 .banner-img {
   width: 100%;
@@ -356,171 +385,235 @@ onMounted(fetchFormData)
 }
 
 .profile-main-content {
-  padding: 0 24px 16px;
+  padding: 0 32px 16px;
   display: flex;
   align-items: flex-end;
-  gap: 20px;
-  margin-top: -40px;
+  gap: 28px;
+  margin-top: -55px;
+  position: relative;
+  z-index: 2;
 }
 
+.user-avatar-wrapper {
+  position: relative;
+}
 .main-avatar {
-  border: 4px solid #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border: 6px solid #fff;
+  box-shadow: 0 10px 25px rgba(15, 20, 34, 0.12);
+  background-color: #F8F9FA;
 }
 
-.user-details-section {
+.user-details-layout {
   flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding-bottom: 4px;
+  padding-bottom: 10px;
 }
 
-.user-name {
-  font-size: 20px;
+.user-display-name {
+  font-size: 26px;
   font-weight: 800;
-  margin: 0 0 4px 0;
-  color: #444050;
+  margin: 0 0 6px 0;
+  color: #2D3748;
+  letter-spacing: -0.02em;
 }
 
-.user-meta-tags {
+.user-meta-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: #8E8BA2;
-  font-size: 12px;
-  font-weight: 600;
+  gap: 14px;
 }
 
-.meta-divider {
-  width: 4px;
-  height: 4px;
+.meta-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #718096;
+}
+
+.meta-dot {
+  width: 5px;
+  height: 5px;
   background: #CBD5E1;
   border-radius: 50%;
 }
 
-.status-pill-mini {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.header-actions-box {
-  display: flex;
-  gap: 8px;
-}
-
-/* ─── Header Navigation (Tabs) ─── */
-.header-nav-pills {
-  display: flex;
-  padding: 0 24px;
-  background: #FBFBFC;
-  border-top: 1px solid #F1F1F2;
-}
-
-.nav-pill-item {
-  padding: 14px 20px;
+.status-tag {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.header-action-group {
+  display: flex;
+  gap: 12px;
+}
+
+/* ─── Navigation Bar (Vuexy Style) ─── */
+.header-navigation-bar {
+  display: flex;
+  padding: 0 32px;
+  background: #fff;
+  border-top: 1px solid #F1F5F9;
+}
+
+.nav-item-pill {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   color: #64748B;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  position: relative;
 }
 
-.nav-pill-item:hover {
+.nav-item-pill:hover {
   color: #7367f0;
-  background: rgba(115, 103, 240, 0.05);
 }
 
-.nav-pill-item.active {
+.nav-item-pill.active {
   color: #7367f0;
-  border-bottom-color: #7367f0;
-  background: #fff;
+  background: rgba(115, 103, 240, 0.06);
+}
+.nav-item-pill.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #7367f0;
 }
 
-/* ─── Scrollable Content ─── */
-.settings-scroll-area {
+/* ─── Content Area ─── */
+.settings-content-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px;
   scroll-behavior: smooth;
 }
 
-.settings-card-modern {
+.settings-card-premium {
   border: none;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(15, 20, 34, 0.04);
-  margin-bottom: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 20, 34, 0.03);
+  margin-bottom: 24px;
+  background: #fff;
 }
 
-.card-section-title {
-  font-size: 11px;
+.section-accent-title {
+  font-size: 12px;
   font-weight: 800;
-  color: #A3A7C5;
-  letter-spacing: 1px;
+  color: #475569;
+  letter-spacing: 1.5px;
   margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid #7367f0;
   text-transform: uppercase;
 }
 
-.section-header-flex {
+.card-section-header {
+  margin-bottom: 28px;
+}
+.card-section-header.between {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* ─── Modern Form ─── */
+:deep(.el-form-item__label) {
+  font-weight: 700;
+  font-size: 13px;
+  color: #4A5568;
+  margin-bottom: 8px !important;
+}
+
+:deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+  background-color: #F8FAFC !important;
+  transition: all 0.2s;
+}
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #7367f0 inset !important;
+}
+
 /* ─── Buttons ─── */
-.btn-vuexy-primary {
+.btn-vuexy-glow {
   background: #7367f0;
   border: none;
   font-weight: 700;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border-radius: 8px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 15px rgba(115, 103, 240, 0.25);
+  transition: all 0.3s;
 }
-.btn-vuexy-secondary {
-  background: #F1F1F2;
-  border: none;
+.btn-vuexy-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(115, 103, 240, 0.35);
+}
+
+.btn-ghost-modern {
+  background: transparent;
+  border: 1px solid #E2E8F0;
   color: #64748B;
   font-weight: 700;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border-radius: 8px;
+  padding: 12px 24px;
+}
+.btn-ghost-modern:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
 }
 
-/* ─── Form Elements ─── */
-:deep(.el-form-item__label) {
-  font-weight: 700;
-  font-size: 12px;
-  color: #444050;
-  margin-bottom: 4px !important;
+/* ─── Danger Zone ─── */
+.danger-zone-card {
+  border: 1px solid rgba(239, 68, 68, 0.1);
 }
-
-:deep(.el-input__wrapper) {
-  border-radius: 8px !important;
-  box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+.danger-body {
+  padding: 10px 12px;
+}
+.danger-instruction {
+  font-size: 14px;
+  color: #64748B;
+  margin-bottom: 20px;
 }
 
 /* ─── Status Colors ─── */
-.status-active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
-.status-warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
-.status-danger { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
-.status-default { background: rgba(148, 163, 184, 0.12); color: #64748B; }
+.status-active { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.status-warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.status-danger { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.status-default { background: rgba(148, 163, 184, 0.1); color: #64748B; }
 
-.mb-4 { margin-bottom: 24px; }
-.mt-2 { margin-top: 12px; }
-.mt-3 { margin-top: 16px; }
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
+.fade-up-animation {
+  animation: fadeUp 0.5s ease-out forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.mr-1 { margin-right: 6px; }
+.mb-2 { margin-bottom: 12px; }
+.mt-4 { margin-top: 24px; }
 </style>
