@@ -1,75 +1,109 @@
 <template>
   <div class="erp-page-container">
 
-    <!-- ===== TOOLBAR ===== -->
-    <div class="erp-toolbar">
-      <div class="erp-toolbar-left">
-        <el-button size="small" :icon="ArrowLeft" @click="goBack" class="erp-btn-icon" title="Назад" />
-        <el-button type="warning" size="small" :loading="submitting" @click="saveOrder('post_close')" class="erp-btn-primary">
-          Провести та закрити
-        </el-button>
-        <el-button size="small" @click="saveOrder('save')" class="erp-btn" :loading="submitting">Записати</el-button>
-        <el-button size="small" @click="saveOrder('post')" class="erp-btn" :loading="submitting">Провести</el-button>
-        <el-dropdown v-if="isEditMode" trigger="click" @command="handleCreateBasedOn" size="small">
-          <el-button size="small" class="erp-btn">
-            Створити на підставі <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="receipt">Прибуткова накладна</el-dropdown-item>
-              <el-dropdown-item command="payment">Вихідний платіж</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-        <div class="erp-doc-info">
-          <span class="erp-doc-title">{{ isEditMode ? 'Замовлення постачальнику ' + form.order_number : 'Замовлення постачальнику (створення)' }}</span>
-        </div>
-        <el-popover placement="bottom" :width="300" trigger="click" v-if="!isEditMode">
-          <template #reference>
-            <el-button size="small" class="erp-btn-repeat" :icon="Refresh">
-              🔄 Як минулого разу
-            </el-button>
-          </template>
-          <div class="last-purchases-popover">
-            <div class="popover-title">Останні закупівлі</div>
-            <div v-if="lastPurchases.length === 0" class="empty-popover">Немає недавніх закупівель</div>
-            <div v-for="p in lastPurchases" :key="p.id" class="last-purchase-item" @click="applyLastPurchase(p)">
-              <div class="lp-info">
-                <span class="lp-number">#{{ p.order_number }}</span>
-                <span class="lp-date">{{ p.order_date }}</span>
-              </div>
-              <div class="lp-amount">{{ formatCurrency(p.total_amount) }}</div>
+    <!-- ─── 1. TOP PREMIUM HEADER (CRM STYLE) ─── -->
+    <div class="order-topbar-wrapper">
+      <header class="order-topbar">
+        <div class="flex items-center h-[59px] px-6 justify-between">
+          
+          <!-- Left: Back & Title -->
+          <div class="flex items-center gap-4">
+            <button @click="goBack" class="text-gray-400 hover:text-[#6C63FF] transition-all transform hover:scale-110">
+              <el-icon class="text-lg"><ArrowLeft /></el-icon>
+            </button>
+            <div class="flex flex-col leading-tight">
+              <span class="text-[13px] font-bold text-gray-900 tracking-tight">{{ isEditMode ? 'Редагування' : 'Створення' }}</span>
+              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Закупівлі · Нова заявка</span>
             </div>
           </div>
-        </el-popover>
-        <el-dropdown trigger="click" @command="loadTemplate" size="small">
-          <el-button size="small" class="erp-btn">
-            Завантажити шаблон <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-for="t in templates" :key="t.id" :command="t">{{ t.name }}</el-dropdown-item>
-              <el-dropdown-item v-if="templates.length === 0" disabled>Немає шаблонів</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-      <div class="erp-toolbar-right">
-        <el-button size="small" class="erp-btn-icon" :icon="isHeaderExpanded ? ArrowUp : ArrowDown" @click="isHeaderExpanded = !isHeaderExpanded" title="Шапка" />
-        <el-dropdown trigger="click" size="small">
-          <el-button size="small" class="erp-btn-icon" :icon="MoreFilled" title="Більше дій" />
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="handlePrint"><el-icon><Printer /></el-icon> Друк</el-dropdown-item>
-              <el-dropdown-item @click="handleSendToSupplier" :disabled="!selectedSupplierObj">
-                <el-icon><Promotion /></el-icon> Надіслати постачальнику
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт в Excel</el-dropdown-item>
-              <el-dropdown-item @click="saveAsTemplate" divided><el-icon><CopyDocument /></el-icon> Зберегти як шаблон</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
+
+          <!-- Center: Stages (Simplified for Purchase) -->
+          <div class="hidden lg:flex items-center gap-0">
+            <template v-for="(s, idx) in stages" :key="s.key">
+              <div class="flex items-center gap-2.5 px-4 py-2 transition-all">
+                <div 
+                  class="w-2 h-2 rounded-full transition-all duration-500"
+                  :class="[
+                    form.status === s.key ? 'bg-[#6C63FF] stage-glow' : '',
+                    isStagePast(s.key) && form.status !== s.key ? 'bg-emerald-500' : 'bg-gray-200'
+                  ]"
+                ></div>
+                <span 
+                  class="text-[10px] font-black tracking-widest uppercase transition-colors"
+                  :class="[
+                    form.status === s.key ? 'text-[#6C63FF]' : 'text-gray-400',
+                    isStagePast(s.key) && form.status !== s.key ? 'text-emerald-600' : ''
+                  ]"
+                >
+                  {{ s.label }}
+                </span>
+              </div>
+              <div v-if="idx < stages.length - 1" 
+                   class="w-4 h-[1px]"
+                   :class="isStagePast(stages[idx+1].key) ? 'bg-emerald-500' : 'bg-gray-100'"></div>
+            </template>
+          </div>
+
+          <!-- Right: Actions -->
+          <div class="flex items-center gap-4">
+            <!-- Readiness Pill Badge -->
+            <div class="flex items-center px-3 py-1.5 rounded-full bg-[rgba(108,99,255,0.08)] border border-[rgba(108,99,255,0.2)]">
+              <span class="text-[11px] font-black text-[#6C63FF] uppercase tracking-tighter">Готовність {{ readinessProgress }}%</span>
+            </div>
+
+            <!-- Productivity Tools -->
+            <div class="flex items-center gap-2 border-r border-gray-100 pr-4 mr-2">
+              <el-button @click="repeatLastOrder" :icon="Refresh" class="erp-btn-repeat" size="small">
+                Як минулого разу
+              </el-button>
+              <el-dropdown @command="loadTemplate">
+                <el-button class="erp-btn" size="small">
+                  Завантажити шаблон <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-for="t in templates" :key="t.id" :command="t">{{ t.name }}</el-dropdown-item>
+                    <el-dropdown-item v-if="templates.length === 0" disabled>Немає шаблонів</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button @click="saveOrder('save')" :disabled="submitting" class="px-4 py-2 rounded-lg border border-[#E5E7EB] text-gray-500 font-bold text-[12px] hover:bg-gray-50 transition-all active:scale-95">
+                Записати
+              </button>
+              <button @click="saveOrder('post')" :disabled="submitting" class="px-4 py-2 rounded-lg border border-[#E5E7EB] text-gray-500 font-bold text-[12px] hover:bg-gray-50 transition-all active:scale-95">
+                Провести
+              </button>
+              <button @click="saveOrder('post_close')" :disabled="submitting" class="btn-premium px-6 py-2 rounded-lg bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] text-white font-black text-[12px] uppercase tracking-wider transition-all active:scale-95">
+                Провести та закрити
+              </button>
+              
+              <el-dropdown trigger="click">
+                <button class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <el-icon class="text-lg"><MoreFilled /></el-icon>
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="handlePrint"><el-icon><Printer /></el-icon> Друк</el-dropdown-item>
+                    <el-dropdown-item @click="handleSendToSupplier" :disabled="!selectedSupplierObj">
+                      <el-icon><Promotion /></el-icon> Надіслати постачальнику
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт</el-dropdown-item>
+                    <el-dropdown-item @click="saveAsTemplate" divided><el-icon><CopyDocument /></el-icon> Зберегти як шаблон</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+        </div>
+        <!-- Progress Line -->
+        <div class="h-[1px] w-full bg-gray-50 overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000"
+               :style="`width: ${readinessProgress}%`"></div>
+        </div>
+      </header>
     </div>
 
     <!-- ===== HEADER FIELDS ===== -->
@@ -417,7 +451,29 @@ const templates = ref([])
 const aiSuggestion = ref('')
 const aiSuggestionProducts = ref([])
 
+const stages = [
+  { key: 'draft', label: 'ЧЕРНЕТКА' },
+  { key: 'confirmed', label: 'ПІДТВЕРДЖЕНО' },
+  { key: 'done', label: 'ВИКОНАНО' }
+]
+
 // ===== COMPUTED =====
+const readinessProgress = computed(() => {
+  const items = [
+    { done: !!form.supplier_id },
+    { done: form.lines.length > 0 },
+    { done: !!form.warehouse_id },
+    { done: !!form.expected_date }
+  ]
+  const doneCount = items.filter(i => i.done).length
+  return Math.round((doneCount / items.length) * 100)
+})
+
+const isStagePast = (stageKey) => {
+  const idx = stages.findIndex(s => s.key === stageKey)
+  const currentIdx = stages.findIndex(s => s.key === form.status)
+  return idx <= currentIdx
+}
 const subtotal = computed(() => form.lines.reduce((acc, line) => acc + (line.total || 0), 0))
 const totalAmount = computed(() => subtotal.value)
 const totalQty = computed(() => form.lines.reduce((sum, l) => sum + (l.quantity || 0), 0))
@@ -761,34 +817,56 @@ onMounted(fetchData)
 <style scoped>
 .erp-page-container {
   display: flex; flex-direction: column; height: 100%; overflow: hidden;
-  background-color: #f6f7f9; font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: #F4F6F9; font-family: 'Inter', sans-serif;
   width: 100%; padding: 0;
 }
 
-/* ===== TOOLBAR ===== */
-.erp-toolbar {
-  display: flex; align-items: center; justify-content: space-between; padding: 6px 12px;
-  background-color: #fcfcfc; border-bottom: 1px solid #dcdfe6; flex-shrink: 0;
+/* ─── PREMIUM TOPBAR ─── */
+.order-topbar-wrapper {
+  height: 60px;
+  flex-shrink: 0;
+  z-index: 1050;
 }
-.erp-toolbar-left { display: flex; align-items: center; gap: 8px; }
-.erp-toolbar-right { display: flex; align-items: center; gap: 6px; }
+.order-topbar {
+  position: fixed;
+  top: 64px;
+  left: 260px;
+  right: 0;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-glow {
+  box-shadow: 0 0 10px rgba(108, 99, 255, 0.4);
+}
+
+.btn-premium {
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+  transition: all 0.2s;
+}
+.btn-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+}
+
 .erp-btn, .erp-btn-icon, .erp-btn-primary, .erp-btn-repeat {
-  border-radius: 2px !important; font-size: 13px !important; height: 28px !important;
-  padding: 0 12px !important; border: 1px solid #dcdfe6 !important;
-  background-color: #fff !important; color: #303133 !important;
+  border-radius: 8px !important; font-size: 12px !important; height: 32px !important;
+  padding: 0 12px !important; border: 1px solid #E5E7EB !important;
+  background-color: #fff !important; color: #4B5563 !important;
   display: inline-flex; align-items: center; gap: 6px;
-  transition: all 0.1s;
+  font-weight: 600;
+  transition: all 0.2s;
 }
 .erp-btn-repeat {
-  background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #166534 !important;
+  background-color: #F0FDF4 !important; border-color: #DCFCE7 !important; color: #166534 !important;
 }
-.erp-btn:hover, .erp-btn-icon:hover, .erp-btn-repeat:hover { background-color: #f5f7fa !important; border-color: #c0c4cc !important; }
-.erp-btn-primary {
-  background-color: #eef2ff !important; border-color: #6366f1 !important;
-  color: #4338ca !important; font-weight: 600 !important;
-}
-.erp-btn-primary:hover { background-color: #e0e7ff !important; }
-.erp-btn-icon { padding: 0 8px !important; }
+.erp-btn:hover { background-color: #F9FAFB !important; border-color: #D1D5DB !important; }
 .erp-doc-info { margin-left: 16px; }
 .erp-doc-title { font-size: 14px; font-weight: 600; color: #303133; }
 
