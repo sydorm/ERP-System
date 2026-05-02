@@ -19,10 +19,6 @@
 
           <!-- Right: Actions -->
           <div class="flex items-center gap-4">
-            <!-- Readiness Pill Badge -->
-            <div class="flex items-center px-3 py-1.5 rounded-full bg-[rgba(108,99,255,0.08)] border border-[rgba(108,99,255,0.2)]">
-              <span class="text-[11px] font-black text-[#6C63FF] uppercase tracking-tighter">Готовність {{ readinessProgress }}%</span>
-            </div>
 
             <!-- Productivity Tools -->
             <div class="flex items-center gap-2 border-r border-gray-100 pr-4 mr-2">
@@ -70,11 +66,6 @@
               </el-dropdown>
             </div>
           </div>
-        </div>
-        <!-- Progress Line -->
-        <div class="h-[2px] w-full bg-gray-50 overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000 shadow-[0_0_8px_rgba(108,99,255,0.3)]"
-               :style="`width: ${readinessProgress}%`"></div>
         </div>
       </header>
     </div>
@@ -777,28 +768,25 @@ onMounted(fetchData)
 
 <style scoped>
 .erp-page-container {
-  display: flex; flex-direction: column; height: 100%; overflow: hidden;
+  display: flex; flex-direction: column; height: 100%; overflow-y: auto;
   background-color: #F4F6F9; font-family: 'Inter', sans-serif;
   width: 100%; padding: 0;
 }
 
 /* ─── PREMIUM TOPBAR ─── */
 .order-topbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 80;
   height: 60px;
   flex-shrink: 0;
-  z-index: 1050;
 }
 .order-topbar {
-  position: fixed;
-  top: 64px;
-  left: 260px;
-  right: 0;
   height: 60px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  z-index: 1050;
   display: flex;
   flex-direction: column;
   padding: 0 24px;
@@ -834,6 +822,9 @@ onMounted(fetchData)
 
 /* ===== HEADER FIELDS ===== */
 .erp-header-fields {
+  position: sticky;
+  top: 60px;
+  z-index: 70;
   background-color: #f6f7f9; padding: 10px 16px 8px 16px; flex-shrink: 0;
   display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #e4e7ed;
 }
@@ -872,9 +863,9 @@ onMounted(fetchData)
 
 /* ===== MAIN BODY ===== */
 .order-body { 
-  flex: 1; display: flex; overflow: hidden; 
+  flex: 1; display: flex; 
 }
-.order-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.order-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 /* ===== TABS ===== */
 .order-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -883,7 +874,7 @@ onMounted(fetchData)
   border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
 }
 .order-tabs :deep(.el-tabs__content) {
-  flex: 1; overflow-y: auto; padding-bottom: 20px;
+  flex: 1; padding-bottom: 20px;
 }
 .order-tabs :deep(.el-tabs__item) { font-size: 13px; height: 38px; }
 .order-tabs :deep(.el-tabs__item.is-active) { color: #6366f1; font-weight: 600; }
