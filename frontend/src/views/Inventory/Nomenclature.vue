@@ -177,13 +177,13 @@ import api from '@/api'
 import { useDictionaryStore } from '@/stores/dictionary'
 
 // Components
-import NomenclatureHeader from '@/components/Nomenclature/NomenclatureHeader.vue'
-import NomenclatureToolbar from '@/components/Nomenclature/NomenclatureToolbar.vue'
-import NomenclatureTable from '@/components/Nomenclature/NomenclatureTable.vue'
-import NomenclatureDrawer from '@/components/Nomenclature/NomenclatureDrawer.vue'
-import NomenclatureImportWizard from '@/components/Nomenclature/NomenclatureImportWizard.vue'
-import NomenclatureBulkBar from '@/components/Nomenclature/NomenclatureBulkBar.vue'
-import NomenclatureBulkPriceDialog from '@/components/Nomenclature/NomenclatureBulkPriceDialog.vue'
+import NomenclatureHeader from '../../components/Nomenclature/NomenclatureHeader.vue'
+import NomenclatureToolbar from '../../components/Nomenclature/NomenclatureToolbar.vue'
+import NomenclatureTable from '../../components/Nomenclature/NomenclatureTable.vue'
+import NomenclatureDrawer from '../../components/Nomenclature/NomenclatureDrawer.vue'
+import NomenclatureImportWizard from '../../components/Nomenclature/NomenclatureImportWizard.vue'
+import NomenclatureBulkBar from '../../components/Nomenclature/NomenclatureBulkBar.vue'
+import NomenclatureBulkPriceDialog from '../../components/Nomenclature/NomenclatureBulkPriceDialog.vue'
 
 const dictStore = useDictionaryStore()
 const router = useRouter()
