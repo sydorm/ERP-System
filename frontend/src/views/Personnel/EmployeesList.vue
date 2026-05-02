@@ -182,40 +182,61 @@ const departmentId = ref(null)
 const statusFilter = ref(null)
 
 // Stats Calculation
-const statsCards = computed(() => [
-  { 
-    title: 'Всього співробітників', 
-    value: total.value, 
-    trend: 12, 
-    icon: 'User', 
-    colorIcon: '#6366F1', 
-    colorBg: 'rgba(99, 102, 241, 0.12)' 
-  },
-  { 
-    title: 'Активні', 
-    value: employees.value.filter(e => !e.status_name?.includes('звільн')).length, 
-    trend: 8, 
-    icon: 'UserFilled', 
-    colorIcon: '#10B981', 
-    colorBg: 'rgba(16, 185, 129, 0.12)' 
-  },
-  { 
-    title: 'Нові (цей місяць)', 
-    value: 3, 
-    trend: 24, 
-    icon: 'Calendar', 
-    colorIcon: '#F59E0B', 
-    colorBg: 'rgba(245, 158, 11, 0.12)' 
-  },
-  { 
-    title: 'Плинність', 
-    value: '2.4%', 
-    trend: -14, 
-    icon: 'TrendCharts', 
-    colorIcon: '#EF4444', 
-    colorBg: 'rgba(239, 68, 68, 0.12)' 
-  }
-])
+const statsCards = computed(() => {
+  const all = employees.value
+  const activeCount = all.filter(e => {
+    const s = (e.status_name || '').toLowerCase()
+    return !s.includes('звільн') && !s.includes('fired')
+  }).length
+  
+  const now = dayjs()
+  const newThisMonth = all.filter(e => {
+    if (!e.hire_date) return false
+    return dayjs(e.hire_date).isSame(now, 'month')
+  }).length
+
+  const firedCount = all.filter(e => (e.status_name || '').toLowerCase().includes('звільн')).length
+  const turnoverRate = all.length > 0 ? ((firedCount / all.length) * 100).toFixed(1) : 0
+
+  return [
+    { 
+      title: 'Всього співробітників', 
+      value: total.value || all.length, 
+      trend: 12, 
+      icon: 'User', 
+      colorIcon: '#6366F1', 
+      colorBg: 'rgba(99, 102, 241, 0.12)',
+      trendUp: true
+    },
+    { 
+      title: 'Активні', 
+      value: activeCount, 
+      trend: 8, 
+      icon: 'UserFilled', 
+      colorIcon: '#10B981', 
+      colorBg: 'rgba(16, 185, 129, 0.12)',
+      trendUp: true
+    },
+    { 
+      title: 'Нові (цей місяць)', 
+      value: newThisMonth, 
+      trend: 24, 
+      icon: 'Calendar', 
+      colorIcon: '#F59E0B', 
+      colorBg: 'rgba(245, 158, 11, 0.12)',
+      trendUp: true
+    },
+    { 
+      title: 'Плинність кадрів', 
+      value: `${turnoverRate}%`, 
+      trend: -14, 
+      icon: 'TrendCharts', 
+      colorIcon: '#EF4444', 
+      colorBg: 'rgba(239, 68, 68, 0.12)',
+      trendUp: false
+    }
+  ]
+})
 
 const fetchEmployees = async () => {
   loading.value = true
@@ -429,10 +450,17 @@ onMounted(() => {
 }
 .kpi-card-modern {
   background: #fff;
-  padding: 16px;
+  padding: 16px 20px;
   border-radius: 14px;
   box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
-  transition: transform 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.kpi-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(15, 20, 34, 0.08);
+  border-color: rgba(99, 102, 241, 0.1);
 }
 
 .kpi-header-row {
