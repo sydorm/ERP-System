@@ -4,7 +4,7 @@
     <!-- ─── 1. TOP PREMIUM HEADER (CRM STYLE) ─── -->
     <div class="order-topbar-wrapper">
       <header class="order-topbar">
-        <div class="flex items-center h-[59px] px-6 justify-between">
+        <div class="flex items-center h-[58px] px-6 justify-between">
           
           <!-- Left: Back & Title -->
           <div class="flex items-center gap-4">
@@ -13,7 +13,7 @@
             </button>
             <div class="flex flex-col leading-tight">
               <span class="text-[13px] font-bold text-gray-900 tracking-tight">{{ isEditMode ? 'Редагування' : 'Створення' }}</span>
-              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Закупівлі · Нова заявка</span>
+              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Закупівлі</span>
             </div>
           </div>
 
@@ -99,8 +99,8 @@
           </div>
         </div>
         <!-- Progress Line -->
-        <div class="h-[1px] w-full bg-gray-50 overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000"
+        <div class="h-[2px] w-full bg-gray-50 overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-[#6C63FF] to-[#00C9A7] transition-all duration-1000 shadow-[0_0_8px_rgba(108,99,255,0.3)]"
                :style="`width: ${readinessProgress}%`"></div>
         </div>
       </header>
@@ -452,7 +452,7 @@ const aiSuggestion = ref('')
 const aiSuggestionProducts = ref([])
 
 const stages = [
-  { key: 'draft', label: 'ЧЕРНЕТКА' },
+  { key: 'draft', label: 'НОВЕ' },
   { key: 'confirmed', label: 'ПІДТВЕРДЖЕНО' },
   { key: 'done', label: 'ВИКОНАНО' }
 ]
@@ -840,6 +840,7 @@ onMounted(fetchData)
   z-index: 1050;
   display: flex;
   flex-direction: column;
+  padding: 0 24px;
 }
 
 .stage-glow {
