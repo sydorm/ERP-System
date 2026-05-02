@@ -60,6 +60,10 @@
             </template>
           </el-dropdown>
           
+          <el-button @click="toggleTheme()" class="btn-theme-modern" circle>
+            <el-icon><component :is="isDark ? 'Sunny' : 'Moon'" /></el-icon>
+          </el-button>
+
           <el-button @click="handleCreate" class="btn-primary-compact">
             <el-icon class="mr-2"><Plus /></el-icon>
             <span>Новий співробітник</span>
@@ -156,15 +160,18 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDark, useToggle } from '@vueuse/core'
 import { 
   Plus, Search, Edit, Delete, User, UserFilled, 
-  Calendar, TrendCharts, Download 
+  Calendar, TrendCharts, Download, Sunny, Moon 
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const isDark = useDark()
+const toggleTheme = useToggle(isDark)
 
 // State
 const loading = ref(false)
@@ -312,11 +319,64 @@ onMounted(() => {
 .page-container {
   padding: 0;
   background-color: var(--erp-bg-page);
-  height: calc(100vh - 64px - 48px); /* 64px header, 48px view-container padding */
+  height: calc(100vh - 64px - 48px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   color: #444050;
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Overrides */
+:deep(.dark) .page-container,
+.page-container.dark-mode-manual {
+  background-color: #28243D !important;
+  color: #D0D4F1 !important;
+}
+
+:deep(.dark) .kpi-card-modern,
+:deep(.dark) .filters-card-modern,
+:deep(.dark) .table-card-modern {
+  background-color: #2F3349 !important;
+  box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+:deep(.dark) .kpi-value,
+:deep(.dark) .filter-title,
+:deep(.dark) .main-name {
+  color: #D0D4F1 !important;
+}
+
+:deep(.dark) .kpi-label,
+:deep(.dark) .kpi-subtext,
+:deep(.dark) .sub-pos,
+:deep(.dark) .dept-text,
+:deep(.dark) .phone-text,
+:deep(.dark) .date-text,
+:deep(.dark) .pagination-info {
+  color: #A3A7C5 !important;
+}
+
+:deep(.dark) .el-table {
+  --el-table-bg-color: #2F3349 !important;
+  --el-table-tr-bg-color: #2F3349 !important;
+  --el-table-header-bg-color: #363B54 !important;
+  --el-table-border-color: #434968 !important;
+  --el-table-text-color: #D0D4F1 !important;
+}
+
+:deep(.dark) .el-input__wrapper,
+:deep(.dark) .el-select__wrapper {
+  background-color: #2F3349 !important;
+  box-shadow: 0 0 0 1px #434968 inset !important;
+}
+
+:deep(.dark) .el-input__inner {
+  color: #D0D4F1 !important;
+}
+
+:deep(.dark) .filters-card-modern {
+  border-bottom-color: #434968 !important;
 }
 
 /* Header & Breadcrumbs */
@@ -448,6 +508,20 @@ onMounted(() => {
 :deep(.el-input__wrapper) {
   border-radius: 8px !important;
   box-shadow: 0 0 0 1px #E2E8F0 inset !important;
+}
+
+.btn-theme-modern {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+  transition: all 0.2s;
+}
+:deep(.dark) .btn-theme-modern {
+  border-color: #434968;
+  color: #F59E0B;
+  background: #363B54;
 }
 
 .action-group-modern {
