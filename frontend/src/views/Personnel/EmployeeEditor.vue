@@ -247,7 +247,8 @@ const form = ref({
 
 const rules = {
   full_name: [{ required: true, message: 'Введіть ПІБ', trigger: 'blur' }],
-  department_id: [{ required: true, message: 'Оберіть підрозділ', trigger: 'change' }]
+  department_id: [{ required: true, message: 'Оберіть підрозділ', trigger: 'change' }],
+  status_id: [{ required: true, message: 'Оберіть статус', trigger: 'change' }]
 }
 
 const getStatusClass = (statusName) => {
@@ -321,6 +322,8 @@ const saveEmployee = async () => {
           hire_date: form.value.hire_date ? dayjs(form.value.hire_date).format('YYYY-MM-DD') : null,
           roles: form.value.roles.map(r => ({ ...r, rate: parseFloat(r.rate) || 0 }))
         }
+        console.log('Sending Employee Payload:', payload)
+        
         if (isEdit.value) {
           await api.put(`/api/v1/employees/${route.params.id}`, payload)
           ElMessage.success('Дані оновлено')
@@ -330,7 +333,13 @@ const saveEmployee = async () => {
         }
         router.push('/personnel/employees')
       } catch (error) {
-        ElMessage.error('Помилка збереження')
+        console.error('API Error Details:', error.response?.data || error)
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Помилка збереження'
+        ElMessage.error(errorMsg)
+        
+        if (error.response?.status === 422 && error.response?.data?.details) {
+          console.table(error.response.data.details)
+        }
       } finally {
         saving.value = false
       }
