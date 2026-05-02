@@ -1,196 +1,199 @@
 <template>
   <div class="page-container" v-loading="loading">
     
-    <!-- ─── PROFILE HEADER CARD ─── -->
-    <div class="profile-header-card">
-      <div class="header-content">
-        <div class="profile-main">
-          <div class="avatar-container">
-            <el-avatar :size="80" :src="form.photo_url" class="profile-avatar">
-              {{ form.full_name?.charAt(0) || 'U' }}
-            </el-avatar>
-            <div :class="['status-ring', getStatusClass(currentStatusName)]"></div>
-          </div>
-          <div class="profile-info">
-            <div class="back-link" @click="router.back()">
-              <el-icon><ArrowLeft /></el-icon> Назад до списку
-            </div>
-            <h1 class="employee-name">{{ form.full_name || 'Новий співробітник' }}</h1>
-            <div class="employee-meta">
-              <span class="meta-tag position">{{ form.position || 'Посада не вказана' }}</span>
-              <span class="meta-divider"></span>
-              <span :class="['meta-tag status', getStatusClass(currentStatusName)]">
-                <span class="pulse-dot"></span>
-                {{ currentStatusName || 'Статус не обрано' }}
-              </span>
-            </div>
-          </div>
+    <!-- ─── VUEXY PROFILE HEADER ─── -->
+    <div class="account-header-modern shadow-sm">
+      <div class="user-profile-banner">
+        <img src="https://demos.pixinvent.com/vuexy-html-admin-template/assets/img/pages/profile-banner.png" class="banner-img" />
+      </div>
+      <div class="user-profile-info">
+        <div class="user-avatar-section">
+          <el-avatar :size="100" :src="form.photo_url" class="main-avatar">
+            {{ form.full_name?.charAt(0) || 'U' }}
+          </el-avatar>
         </div>
-        
-        <div class="header-actions">
-          <el-button @click="router.back()" class="btn-secondary-modern">Скасувати</el-button>
-          <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-primary-gradient">
-            <el-icon class="mr-2"><Check /></el-icon>
-            {{ isEdit ? 'Зберегти зміни' : 'Створити профіль' }}
-          </el-button>
+        <div class="user-details-section">
+          <div class="user-main-info">
+            <h2 class="user-name">{{ form.full_name || 'Новий співробітник' }}</h2>
+            <div class="user-meta-row">
+              <span class="meta-item"><el-icon><User /></el-icon> {{ form.position || 'Посада' }}</span>
+              <span class="meta-item"><el-icon><Location /></el-icon> {{ currentDeptName || 'Відділ' }}</span>
+              <span class="meta-item"><el-icon><Calendar /></el-icon> Прийнятий {{ formatDate(form.hire_date) }}</span>
+            </div>
+          </div>
+          <div class="user-actions">
+            <span :class="['status-badge-pill', getStatusClass(currentStatusName)]">
+              {{ currentStatusName || 'Неактивний' }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="content-grid">
-      <!-- ─── LEFT COLUMN: QUICK SUMMARY ─── -->
-      <div class="side-column">
-        <div class="glass-card summary-card">
-          <h3 class="card-title">ШВИДКА ІНФОРМАЦІЯ</h3>
-          <div class="summary-list">
-            <div class="summary-item">
-              <div class="item-label">ТЕЛЕФОН</div>
-              <div class="item-value">{{ form.phone || '—' }}</div>
+    <!-- ─── NAVIGATION PILLS (VUEXY STYLE) ─── -->
+    <div class="nav-pills-container mb-4">
+      <div 
+        v-for="tab in tabs" 
+        :key="tab.id" 
+        :class="['nav-pill', { active: activeTab === tab.id }]"
+        @click="activeTab = tab.id"
+      >
+        <el-icon><component :is="tab.icon" /></el-icon>
+        <span>{{ tab.label }}</span>
+      </div>
+    </div>
+
+    <!-- ─── SETTINGS CONTENT ─── -->
+    <div class="settings-view-wrapper">
+      
+      <!-- TAB: ACCOUNT -->
+      <div v-if="activeTab === 'account'" class="animate-fade-in">
+        <el-card class="settings-card mb-4">
+          <template #header>
+            <div class="card-header-modern">
+              <h3 class="card-title-modern">Деталі профілю</h3>
+              <p class="card-subtitle">Основна інформація та контакти співробітника</p>
             </div>
-            <div class="summary-item">
-              <div class="item-label">ПІДРОЗДІЛ</div>
-              <div class="item-value">{{ currentDeptName || '—' }}</div>
+          </template>
+
+          <el-form :model="form" :rules="rules" ref="formRef" label-position="top" class="modern-form">
+            <el-row :gutter="24">
+              <el-col :span="12">
+                <el-form-item label="ПІБ" prop="full_name">
+                  <el-input v-model="form.full_name" placeholder="Олександр Петренко" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="ТЕЛЕФОН" prop="phone">
+                  <el-input v-model="form.phone" placeholder="+380..." />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="24">
+              <el-col :span="12">
+                <el-form-item label="ПОСАДА" prop="position">
+                  <el-input v-model="form.position" placeholder="Senior Developer" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="ПІДРОЗДІЛ" prop="department_id">
+                  <el-select v-model="form.department_id" placeholder="Оберіть відділ" style="width: 100%">
+                    <el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="24">
+              <el-col :span="12">
+                <el-form-item label="СТАТУС" prop="status_id">
+                  <el-select v-model="form.status_id" placeholder="Оберіть статус" style="width: 100%">
+                    <el-option v-for="s in dictionaries.EMPLOYEE_STATUS" :key="s.id" :label="s.name" :value="s.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="ДАТА ПРИЙОМУ">
+                  <el-date-picker v-model="form.hire_date" type="date" style="width: 100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="24">
+              <el-col :span="24">
+                <el-form-item label="URL ФОТО">
+                  <el-input v-model="form.photo_url" placeholder="https://..." />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <div class="form-footer mt-4">
+              <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-primary">Зберегти зміни</el-button>
+              <el-button @click="router.back()" class="btn-vuexy-secondary">Відмінити</el-button>
             </div>
-            <div class="summary-item">
-              <div class="item-label">ДАТА ПРИЙОМУ</div>
-              <div class="item-value">{{ formatDate(form.hire_date) }}</div>
+          </el-form>
+        </el-card>
+
+        <!-- Danger Zone -->
+        <el-card class="settings-card danger-zone-card shadow-sm">
+          <template #header>
+            <h3 class="card-title-modern text-danger">Видалення профілю</h3>
+          </template>
+          <div class="danger-zone-content">
+            <p class="danger-text">Після деактивації співробітник втратить доступ до системи. Це рішення можна скасувати в архіві.</p>
+            <el-checkbox v-model="confirmDelete" label="Я підтверджую деактивацію цього профілю" />
+            <div class="mt-3">
+              <el-button type="danger" :disabled="!confirmDelete" plain>Деактивувати співробітника</el-button>
             </div>
           </div>
-          <div class="notes-section">
-            <div class="item-label">ПРИМІТКИ</div>
-            <el-input 
-              v-model="form.notes" 
-              type="textarea" 
-              :rows="4" 
-              placeholder="Додайте опис або примітки..." 
-              class="modern-textarea"
-            />
-          </div>
-        </div>
+        </el-card>
       </div>
 
-      <!-- ─── RIGHT COLUMN: DETAILED TABS ─── -->
-      <div class="main-column">
-        <el-form 
-          :model="form" 
-          :rules="rules" 
-          ref="formRef" 
-          label-position="top"
-          class="modern-form"
-        >
-          <el-tabs v-model="activeTab" class="modern-tabs">
-            <!-- Basic Info Tab -->
-            <el-tab-pane label="Особисті дані" name="basic">
-              <div class="form-section">
-                <el-row :gutter="24">
-                  <el-col :span="24">
-                    <el-form-item label="ПІБ Співробітника" prop="full_name">
-                      <el-input v-model="form.full_name" placeholder="Введіть повне ім'я" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-
-                <el-row :gutter="24">
-                  <el-col :span="12">
-                    <el-form-item label="Посада" prop="position">
-                      <el-input v-model="form.position" placeholder="Наприклад: Менеджер проектів" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="Підрозділ" prop="department_id">
-                      <el-select v-model="form.department_id" placeholder="Оберіть підрозділ" style="width: 100%">
-                        <el-option v-for="d in departments" :key="d.id" :label="d.name" :value="d.id" />
-                      </el-select>
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-
-                <el-row :gutter="24">
-                  <el-col :span="12">
-                    <el-form-item label="Статус" prop="status_id">
-                      <el-select v-model="form.status_id" placeholder="Оберіть статус" style="width: 100%">
-                        <el-option v-for="s in dictionaries.EMPLOYEE_STATUS" :key="s.id" :label="s.name" :value="s.id" />
-                      </el-select>
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="Телефон" prop="phone">
-                      <el-input v-model="form.phone" placeholder="+380..." />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-
-                <el-row :gutter="24">
-                  <el-col :span="12">
-                    <el-form-item label="Дата народження" prop="birth_date">
-                      <el-date-picker v-model="form.birth_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="Дата прийому" prop="hire_date">
-                      <el-date-picker v-model="form.hire_date" type="date" placeholder="Оберіть дату" style="width: 100%" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-
-                <el-row :gutter="24">
-                  <el-col :span="24">
-                    <el-form-item label="URL Фото">
-                      <el-input v-model="form.photo_url" placeholder="Вставте посилання на зображення" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </div>
-            </el-tab-pane>
-
-            <!-- Roles & Rates Tab -->
-            <el-tab-pane label="Ролі та Оплата" name="roles">
-              <div class="form-section">
-                <div class="section-header">
-                  <h4 class="section-subtitle">ПРИЗНАЧЕНІ РОЛІ ТА СТАВКИ</h4>
-                  <el-button type="primary" link :icon="Plus" @click="addRole" class="btn-add-role">Додати роль</el-button>
-                </div>
-
-                <div v-if="form.roles.length === 0" class="empty-state">
-                  <el-empty :image-size="80" description="Ролей ще не додано" />
-                </div>
-
-                <div v-else class="roles-table-container">
-                  <el-table :data="form.roles" class="roles-table-modern">
-                    <el-table-column label="Етап / Роль" min-width="180">
-                      <template #default="scope">
-                        <el-select v-model="scope.row.role_id" placeholder="Оберіть етап" size="small">
-                          <el-option v-for="it in dictionaries.PRODUCTION_STAGE" :key="it.id" :label="it.name" :value="it.id" />
-                        </el-select>
-                      </template>
-                    </el-table-column>
-
-                    <el-table-column label="Тип" width="130">
-                      <template #default="scope">
-                        <el-select v-model="scope.row.role_type_id" placeholder="Тип" size="small">
-                          <el-option v-for="it in dictionaries.ROLE_TYPE" :key="it.id" :label="it.name" :value="it.id" />
-                        </el-select>
-                      </template>
-                    </el-table-column>
-
-                    <el-table-column label="Ставка" width="120">
-                      <template #default="scope">
-                        <el-input-number v-model="scope.row.rate" :min="0" :precision="2" :controls="false" size="small" />
-                      </template>
-                    </el-table-column>
-
-                    <el-table-column width="50" align="center">
-                      <template #default="scope">
-                        <el-button link type="danger" :icon="Delete" @click="removeRole(scope.$index)" />
-                      </template>
-                    </el-table-column>
-                  </el-table>
-                </div>
-              </div>
-            </el-tab-pane>
-          </el-tabs>
-        </el-form>
+      <!-- TAB: SECURITY -->
+      <div v-if="activeTab === 'security'" class="animate-fade-in">
+        <el-card class="settings-card shadow-sm">
+          <template #header>
+            <h3 class="card-title-modern">Зміна пароля</h3>
+          </template>
+          <el-form label-position="top">
+            <el-row :gutter="24">
+              <el-col :span="12">
+                <el-form-item label="Новий пароль">
+                  <el-input type="password" show-password placeholder="••••••••" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="Підтвердіть пароль">
+                  <el-input type="password" show-password placeholder="••••••••" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <div class="password-checklist">
+              <h4 class="checklist-title">Вимоги до пароля:</h4>
+              <ul class="checklist-items">
+                <li><el-icon class="mr-1"><Check /></el-icon> Мінімум 8 символів</li>
+                <li><el-icon class="mr-1"><Check /></el-icon> Хоча б одна велика літера</li>
+                <li><el-icon class="mr-1"><Check /></el-icon> Хоча б одна цифра або спецсимвол</li>
+              </ul>
+            </div>
+            <el-button type="primary" class="btn-vuexy-primary mt-3">Оновити доступ</el-button>
+          </el-form>
+        </el-card>
       </div>
+
+      <!-- TAB: PAYROLL -->
+      <div v-if="activeTab === 'payroll'" class="animate-fade-in">
+        <el-card class="settings-card shadow-sm">
+          <template #header>
+            <div class="card-header-between">
+              <h3 class="card-title-modern">Ролі та Оплата</h3>
+              <el-button type="primary" link :icon="Plus" @click="addRole">Додати роль</el-button>
+            </div>
+          </template>
+
+          <el-table :data="form.roles" class="modern-table">
+            <el-table-column label="Етап виробництва" min-width="220">
+              <template #default="scope">
+                <el-select v-model="scope.row.role_id" style="width: 100%" size="default">
+                  <el-option v-for="it in dictionaries.PRODUCTION_STAGE" :key="it.id" :label="it.name" :value="it.id" />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="Ставка" width="160">
+              <template #default="scope">
+                <el-input-number v-model="scope.row.rate" :controls="false" style="width: 100%" />
+              </template>
+            </el-table-column>
+            <el-table-column label="Дії" width="80" align="center">
+              <template #default="scope">
+                <el-button link type="danger" :icon="Delete" @click="removeRole(scope.$index)" />
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+
     </div>
   </div>
 </template>
@@ -198,7 +201,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ArrowLeft, UserFilled, Plus, Delete, Check } from '@element-plus/icons-vue'
+import { 
+  User, Location, Calendar, Lock, Bell, Link, 
+  CreditCard, Plus, Delete, Check 
+} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
@@ -208,8 +214,17 @@ const route = useRoute()
 
 const loading = ref(false)
 const saving = ref(false)
-const activeTab = ref('basic')
+const activeTab = ref('account')
 const isEdit = computed(() => route.params.id && route.params.id !== 'new')
+const confirmDelete = ref(false)
+
+const tabs = [
+  { id: 'account', label: 'Профіль', icon: 'User' },
+  { id: 'security', label: 'Безпека', icon: 'Lock' },
+  { id: 'payroll', label: 'Оплата', icon: 'CreditCard' },
+  { id: 'notifications', label: 'Сповіщення', icon: 'Bell' },
+  { id: 'connections', label: 'Зв\'язки', icon: 'Link' }
+]
 
 const departments = ref([])
 const dictionaries = ref({
@@ -247,9 +262,7 @@ const form = ref({
 
 const rules = {
   full_name: [{ required: true, message: 'Введіть ПІБ', trigger: 'blur' }],
-  position: [{ required: true, message: 'Введіть посаду', trigger: 'blur' }],
-  department_id: [{ required: true, message: 'Оберіть підрозділ', trigger: 'change' }],
-  status_id: [{ required: true, message: 'Оберіть статус', trigger: 'change' }]
+  department_id: [{ required: true, message: 'Оберіть підрозділ', trigger: 'change' }]
 }
 
 const getStatusClass = (statusName) => {
@@ -300,7 +313,7 @@ const fetchFormData = async () => {
 const addRole = () => {
   form.value.roles.push({
     role_id: null,
-    role_type_id: dictionaries.value.ROLE_TYPE.find(t => t.code?.includes('MAIN'))?.id || dictionaries.value.ROLE_TYPE[0]?.id,
+    role_type_id: dictionaries.value.ROLE_TYPE[0]?.id,
     accrual_type_id: dictionaries.value.ACCRUAL_TYPE[0]?.id,
     rate: 0,
     is_active: true
@@ -313,7 +326,6 @@ const removeRole = (index) => {
 
 const saveEmployee = async () => {
   if (!formRef.value) return
-  
   await formRef.value.validate(async (valid) => {
     if (valid) {
       saving.value = true
@@ -327,7 +339,6 @@ const saveEmployee = async () => {
             rate: parseFloat(r.rate) || 0
           }))
         }
-
         if (isEdit.value) {
           await api.put(`/api/v1/employees/${route.params.id}`, payload)
           ElMessage.success('Дані оновлено')
@@ -337,7 +348,7 @@ const saveEmployee = async () => {
         }
         router.push('/personnel/employees')
       } catch (error) {
-        ElMessage.error(error.response?.data?.detail || 'Помилка збереження')
+        ElMessage.error('Помилка збереження')
       } finally {
         saving.value = false
       }
@@ -355,255 +366,228 @@ onMounted(fetchFormData)
   height: calc(100vh - 64px);
   overflow-y: auto;
   color: #444050;
-  font-size: 13px;
+  font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* ─── Profile Header Card ─── */
-.profile-header-card {
+/* ─── Vuexy Header ─── */
+.account-header-modern {
   background: #fff;
   border-radius: 14px;
-  padding: 24px;
+  overflow: hidden;
   margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(15, 20, 34, 0.05);
 }
 
-.header-content {
+.user-profile-banner {
+  height: 140px;
+}
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-profile-info {
+  padding: 0 24px 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  margin-top: -50px;
+}
+
+.main-avatar {
+  border: 5px solid #fff;
+  box-shadow: 0 4px 14px rgba(15, 20, 34, 0.1);
+}
+
+.user-details-section {
+  flex: 1;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+  padding-bottom: 8px;
 }
 
-.profile-main {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.avatar-container {
-  position: relative;
-}
-
-.profile-avatar {
-  border: 4px solid #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.status-ring {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 14px;
-  height: 14px;
-  border: 3px solid #fff;
-  border-radius: 50%;
-}
-
-.status-ring.status-active { background-color: #10B981; }
-.status-ring.status-warning { background-color: #F59E0B; }
-.status-ring.status-danger { background-color: #EF4444; }
-.status-ring.status-default { background-color: #94A3B8; }
-
-.back-link {
-  font-size: 12px;
-  color: #A3A7C5;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-  transition: color 0.2s;
-}
-.back-link:hover { color: #6366F1; }
-
-.employee-name {
-  margin: 0 0 8px 0;
+.user-name {
   font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.employee-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.meta-tag {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.meta-tag.position { color: #8E8BA2; }
-
-.meta-tag.status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  font-size: 11px;
-}
-
-.meta-divider {
-  width: 1px;
-  height: 14px;
-  background-color: #E2E8F0;
-}
-
-/* ─── Buttons ─── */
-.btn-primary-gradient {
-  background: linear-gradient(135deg, #7367f0 0%, #ce9ffc 100%);
-  border: none;
-  color: #fff;
-  font-weight: 700;
-  padding: 12px 24px;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(115, 103, 240, 0.4);
-}
-
-.btn-secondary-modern {
-  border: 1px solid #E2E8F0;
-  color: #64748B;
-  font-weight: 600;
-  border-radius: 8px;
-}
-
-/* ─── Content Grid ─── */
-.content-grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(15, 20, 34, 0.03);
-}
-
-.card-title {
-  font-size: 11px;
-  font-weight: 800;
-  color: #A3A7C5;
-  letter-spacing: 1.5px;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-}
-
-.summary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.item-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #A3A7C5;
-  margin-bottom: 4px;
-}
-
-.item-value {
-  font-size: 14px;
-  font-weight: 600;
+  margin: 0 0 6px 0;
   color: #444050;
 }
 
-.main-column {
-  background: #fff;
-  border-radius: 14px;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(15, 20, 34, 0.03);
-  overflow: hidden;
-}
-
-.modern-form {
-  padding: 0;
-}
-
-.modern-tabs :deep(.el-tabs__header) {
-  background: #F8F9FA;
-  margin: 0;
-  padding: 0 24px;
-  border-bottom: 1px solid #F1F1F2;
-}
-
-.modern-tabs :deep(.el-tabs__item) {
-  height: 54px;
-  line-height: 54px;
-  font-weight: 700;
-  font-size: 14px;
+.user-meta-row {
+  display: flex;
+  gap: 20px;
   color: #8E8BA2;
+  font-size: 13px;
+  font-weight: 600;
+}
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.modern-tabs :deep(.el-tabs__item.is-active) {
-  color: #6366F1;
+.status-badge-pill {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.form-section {
-  padding: 32px;
+/* ─── Nav Pills ─── */
+.nav-pills-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
-.section-header {
+.nav-pill {
+  padding: 10px 18px;
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  color: #64748B;
+  box-shadow: 0 2px 6px rgba(15, 20, 34, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-pill:hover {
+  background: #f1f1f2;
+  color: #7367f0;
+}
+.nav-pill.active {
+  background: #7367f0;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(115, 103, 240, 0.35);
+}
+
+/* ─── Content Cards ─── */
+.settings-card {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(15, 20, 34, 0.05);
+}
+
+.card-header-modern {
+  margin-bottom: 8px;
+}
+.card-title-modern {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #444050;
+}
+.card-subtitle {
+  font-size: 13px;
+  color: #A3A7C5;
+  margin: 4px 0 0;
+}
+
+.card-header-between {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.section-subtitle {
-  font-size: 12px;
-  font-weight: 800;
-  color: #A3A7C5;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
-/* ─── Custom Form Styles ─── */
+/* ─── Form Styles ─── */
 :deep(.el-form-item__label) {
   font-weight: 700;
   font-size: 12px;
   color: #444050;
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
   border-radius: 8px !important;
   box-shadow: 0 0 0 1px #E2E8F0 inset !important;
-  background-color: #FBFBFC !important;
+  padding: 4px 12px !important;
 }
 
-.roles-table-container {
-  border: 1px solid #F1F1F2;
+.btn-vuexy-primary {
+  background: #7367f0;
+  border: none;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.btn-vuexy-primary:hover {
+  background: #5e50ee;
+  box-shadow: 0 4px 12px rgba(115, 103, 240, 0.4);
+}
+
+.btn-vuexy-secondary {
+  background: rgba(142, 139, 162, 0.1);
+  border: none;
+  color: #8e8ba2;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 6px;
+}
+
+/* ─── Security & Checklist ─── */
+.password-checklist {
+  background: rgba(115, 103, 240, 0.04);
+  padding: 20px;
   border-radius: 10px;
-  overflow: hidden;
+  margin-top: 24px;
+}
+.checklist-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #7367f0;
+}
+.checklist-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #64748B;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.checklist-items li {
+  display: flex;
+  align-items: center;
 }
 
-.pulse-dot {
-  width: 6px;
-  height: 6px;
-  background-color: currentColor;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
+/* ─── Danger Zone ─── */
+.danger-zone-card {
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.02);
+}
+.danger-text {
+  font-size: 13px;
+  color: #64748B;
+  margin-bottom: 16px;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.5); }
-  100% { opacity: 1; transform: scale(1); }
+/* ─── Status Colors ─── */
+.status-active { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.status-warning { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.status-danger { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
+.status-default { background: rgba(148, 163, 184, 0.12); color: #64748B; }
+
+.mb-4 { margin-bottom: 24px; }
+.mt-3 { margin-top: 16px; }
+.mt-4 { margin-top: 24px; }
+.mr-1 { margin-right: 4px; }
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
 }
 
-.status-active { color: #10B981; background: rgba(16, 185, 129, 0.1); }
-.status-warning { color: #F59E0B; background: rgba(245, 158, 11, 0.1); }
-.status-danger { color: #EF4444; background: rgba(239, 68, 68, 0.1); }
-.status-default { color: #94A3B8; background: rgba(148, 163, 184, 0.1); }
-
-.empty-state {
-  padding: 40px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
