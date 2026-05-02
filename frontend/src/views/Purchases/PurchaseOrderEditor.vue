@@ -761,30 +761,28 @@ onMounted(fetchData)
 <style scoped>
 .erp-page-container {
   display: flex; flex-direction: column; height: 100%; overflow: hidden;
-  background-color: #f6f7f9; font-family: 'Syne', sans-serif;
-  width: 100%; padding: 0 16px;
+  background-color: #f6f7f9; font-family: 'Segoe UI', Arial, sans-serif;
+  width: 100%; padding: 0;
 }
 
 /* ===== TOOLBAR ===== */
 .erp-toolbar {
   display: flex; align-items: center; justify-content: space-between; padding: 6px 12px;
-  background-color: #fff; border-bottom: 1px solid #EAECF4; flex-shrink: 0;
-  position: fixed; top: 48px; left: 260px; right: 0; z-index: 99;
-  height: 52px;
+  background-color: #fcfcfc; border-bottom: 1px solid #dcdfe6; flex-shrink: 0;
 }
 .erp-toolbar-left { display: flex; align-items: center; gap: 8px; }
 .erp-toolbar-right { display: flex; align-items: center; gap: 6px; }
 .erp-btn, .erp-btn-icon, .erp-btn-primary, .erp-btn-repeat {
-  border-radius: 8px !important; font-size: 13px !important; height: 32px !important;
-  padding: 0 16px !important; border: 1px solid #EAECF4 !important;
+  border-radius: 2px !important; font-size: 13px !important; height: 28px !important;
+  padding: 0 12px !important; border: 1px solid #dcdfe6 !important;
   background-color: #fff !important; color: #303133 !important;
   display: inline-flex; align-items: center; gap: 6px;
-  transition: all 0.2s;
+  transition: all 0.1s;
 }
 .erp-btn-repeat {
   background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #166534 !important;
 }
-.erp-btn:hover, .erp-btn-icon:hover, .erp-btn-repeat:hover { background-color: #f8fafc !important; border-color: #cbd5e1 !important; transform: translateY(-1px); }
+.erp-btn:hover, .erp-btn-icon:hover, .erp-btn-repeat:hover { background-color: #f5f7fa !important; border-color: #c0c4cc !important; }
 .erp-btn-primary {
   background-color: #eef2ff !important; border-color: #6366f1 !important;
   color: #4338ca !important; font-weight: 600 !important;
@@ -796,10 +794,8 @@ onMounted(fetchData)
 
 /* ===== HEADER FIELDS ===== */
 .erp-header-fields {
-  background-color: #fff; padding: 10px 16px 8px 16px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #EAECF4;
-  position: fixed; top: 100px; left: 260px; right: 0; z-index: 98;
-  height: 96px;
+  background-color: #f6f7f9; padding: 10px 16px 8px 16px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #e4e7ed;
 }
 .erp-field-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .erp-field { display: flex; align-items: center; }
@@ -837,7 +833,6 @@ onMounted(fetchData)
 /* ===== MAIN BODY ===== */
 .order-body { 
   flex: 1; display: flex; overflow: hidden; 
-  padding-top: 196px; /* 48 (header) + 52 (toolbar) + 96 (header fields) */
 }
 .order-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
@@ -845,8 +840,7 @@ onMounted(fetchData)
 .order-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .order-tabs :deep(.el-tabs__header) {
   margin: 0; background: #fff; padding: 0 12px;
-  border-bottom: 1px solid #EAECF4; flex-shrink: 0;
-  position: sticky; top: 0; z-index: 97;
+  border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
 }
 .order-tabs :deep(.el-tabs__content) {
   flex: 1; overflow-y: auto; padding-bottom: 20px;
@@ -860,9 +854,8 @@ onMounted(fetchData)
 
 /* Tab toolbar */
 .tab-toolbar {
-  display: flex; align-items: center; gap: 6px; padding: 12px;
-  background: #fff; border-bottom: 1px solid #EAECF4; flex-shrink: 0;
-  padding-top: 8px;
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+  background: #f6f7f9; border-bottom: 1px solid #e4e7ed; flex-shrink: 0;
 }
 .tab-toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .warehouse-select { width: 200px; }
@@ -941,10 +934,8 @@ onMounted(fetchData)
 
 /* ===== SIDEBAR ===== */
 .order-sidebar {
-  width: 300px; flex-shrink: 0; background: #fff; border-left: 1px solid #EAECF4;
+  width: 300px; flex-shrink: 0; background: #fff; border-left: 1px solid #e4e7ed;
   overflow-y: auto; display: flex; flex-direction: column;
-  position: sticky; top: 0; align-self: flex-start;
-  height: calc(100vh - 196px);
 }
 .sidebar-card { 
   padding: 20px; border-bottom: 1px solid #f0f2f5; 
