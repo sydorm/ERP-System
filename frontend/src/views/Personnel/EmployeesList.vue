@@ -1,23 +1,8 @@
 <template>
   <div class="page-container">
 
-    <!-- ─── KPI CARDS (REFERENCE LAYOUT) ─── -->
-    <div class="kpi-grid-modern">
-      <div v-for="stat in statsCards" :key="stat.title" class="kpi-card-modern">
-        <div class="kpi-header-row">
-          <div class="kpi-icon-wrapper" :style="{ backgroundColor: stat.colorBg, color: stat.colorIcon }">
-            <el-icon><component :is="stat.icon" /></el-icon>
-          </div>
-          <div :class="['kpi-trend', stat.trend >= 0 ? 'trend-up' : 'trend-down']">
-            {{ stat.trend >= 0 ? '+' : '' }}{{ stat.trend }}%
-          </div>
-        </div>
-        <div class="kpi-body">
-          <div class="kpi-value">{{ stat.value }}</div>
-          <div class="kpi-label">{{ stat.title }}</div>
-        </div>
-      </div>
-    </div>
+    <!-- ─── KPI CARDS (EXTRACTED) ─── -->
+    <EmployeeStats :stats="statsCards" />
 
     <!-- ─── FILTERS BLOCK (SEPARATED) ─── -->
     <div class="filters-card-modern">
@@ -165,6 +150,7 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import dayjs from 'dayjs'
+import EmployeeStats from '@/components/Personnel/EmployeeStats.vue'
 
 const router = useRouter()
 const isDark = useDark()

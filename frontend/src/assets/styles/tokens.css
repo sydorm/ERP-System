@@ -1,0 +1,34 @@
+:root {
+  /* Nexora 2026 Core Palette */
+  --nexora-indigo-start: #7367f0;
+  --nexora-indigo-end: #a8a1f8;
+  --nexora-primary: #7367f0;
+  
+  --nexora-bg-main: #F8F9FA;
+  --nexora-bg-card: #FFFFFF;
+  
+  /* Status Colors (Modern SaaS) */
+  --nexora-success: #28c76f;
+  --nexora-warning: #ff9f43;
+  --nexora-danger: #ea5455;
+  --nexora-info: #00cfe8;
+  
+  /* Neutral Palette */
+  --nexora-text-heading: #444050;
+  --nexora-text-body: #6D6A77;
+  --nexora-text-muted: #8E8BA2;
+  --nexora-border-light: rgba(0, 0, 0, 0.05);
+  
+  /* Geometry & Elevation */
+  --nexora-radius-xl: 16px;
+  --nexora-radius-lg: 12px;
+  --nexora-radius-md: 8px;
+  
+  --nexora-shadow-sm: 0 2px 4px rgba(165, 163, 174, 0.1);
+  --nexora-shadow-md: 0 4px 18px rgba(165, 163, 174, 0.2);
+  --nexora-shadow-lg: 0 8px 25px rgba(165, 163, 174, 0.3);
+  
+  /* Layout */
+  --nexora-header-height: 64px;
+  --nexora-sidebar-width: 260px;
+}
