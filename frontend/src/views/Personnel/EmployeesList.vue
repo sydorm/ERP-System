@@ -73,7 +73,7 @@
       <el-table 
         v-loading="loading" 
         :data="employees" 
-        style="width: 100%"
+        height="100%"
         class="erp-table-modern"
         @row-click="handleRowClick"
       >
@@ -310,9 +310,12 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  padding: 24px 32px;
+  padding: 0;
   background-color: var(--erp-bg-page);
-  min-height: 100vh;
+  height: calc(100vh - 64px - 48px); /* 64px header, 48px view-container padding */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   color: #444050;
 }
 
@@ -468,9 +471,14 @@ onMounted(() => {
   background: #fff;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 4px 18px 0 rgba(15, 20, 34, 0.05);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-bottom: 0;
 }
 .erp-table-modern {
-  border-radius: 0 0 12px 12px;
+  flex: 1;
 }
 :deep(.el-table__header) th {
   background-color: #F8F9FA !important;
