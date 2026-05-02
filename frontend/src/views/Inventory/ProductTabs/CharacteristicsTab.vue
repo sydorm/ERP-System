@@ -117,15 +117,6 @@
           </div>
         </div>
         
-        <div class="char-sku-toggle">
-          <span class="toggle-label">Генерує SKU</span>
-          <el-switch
-            :model-value="getGeneratesSku(char.attribute_id)"
-            @update:model-value="val => setGeneratesSku(char.attribute_id, val)"
-            active-color="#6366f1"
-            size="small"
-          />
-        </div>
         
         <div class="char-controls">
           <el-button 
@@ -523,21 +514,6 @@ const emitUpdate = () => {
   emit('update:modelValue', localCharacteristics.value)
 }
 
-const getGeneratesSku = (attrId) => {
-  const attr = props.productAttributes.find(a => a.attribute_id === attrId)
-  return attr ? attr.generates_sku : true
-}
-
-const setGeneratesSku = (attrId, val) => {
-  const attrs = [...props.productAttributes]
-  const idx = attrs.findIndex(a => a.attribute_id === attrId)
-  if (idx > -1) {
-    attrs[idx] = { ...attrs[idx], generates_sku: val }
-  } else {
-    attrs.push({ attribute_id: attrId, generates_sku: val })
-  }
-  emit('update:productAttributes', attrs)
-}
 
 // Watch for changes and emit
 watch(localCharacteristics, emitUpdate, { deep: true })
@@ -560,10 +536,10 @@ const syncCategoryAttributes = async () => {
         addCharacteristic(ca.attribute_id, ca.is_required || ca.attribute.name.toLowerCase() === 'каркас')
       }
       
-      // Also ensure it's in product_attributes
+      // Also ensure it's in product_attributes (for metadata storage)
       const inAttrs = props.productAttributes.some(a => a.attribute_id === ca.attribute_id)
       if (!inAttrs) {
-          const newAttrs = [...props.productAttributes, { attribute_id: ca.attribute_id, generates_sku: true }]
+          const newAttrs = [...props.productAttributes, { attribute_id: ca.attribute_id }]
           emit('update:productAttributes', newAttrs)
       }
     })

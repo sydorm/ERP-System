@@ -353,20 +353,12 @@ const initializeSelector = () => {
 
 const variantAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => {
-        const prodAttr = props.product?.product_attributes?.find(pa => pa.attribute_id === a.id)
-        if (prodAttr) return prodAttr.generates_sku
-        return a.generates_variant !== false
-    })
+    return attrs.filter(a => a.generates_variant !== false)
 })
 
 const extraAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => {
-        const prodAttr = props.product?.product_attributes?.find(pa => pa.attribute_id === a.id)
-        if (prodAttr) return !prodAttr.generates_sku
-        return a.generates_variant === false
-    })
+    return attrs.filter(a => a.generates_variant === false)
 })
 
 const getAvailableOptions = (attrId) => {
@@ -392,6 +384,7 @@ const currentVariant = computed(() => {
   if (!allAttributesSelected.value) return null
   
   return props.product.variants.find(v => {
+    // Only match against attributes that generate SKU
     return variantAttributes.value.every(a => {
       const selection = selections.value[a.id]
       const dim = dimSelections.value[a.id]
@@ -449,51 +442,20 @@ const handleConfirm = async () => {
         })
         visible.value = false
     } else {
-        // Check if we should skip variant creation for materials/components (auto-create silently)
-        const catStr = (props.product?.category || '').toUpperCase();
-        const nameStr = (props.product?.name || '').toUpperCase();
-        const skipVariantCreation = 
-            props.product?.type === 'material' || 
-            props.product?.type === 'component' || 
-            catStr.includes('МАТЕРІАЛ') || 
-            catStr.includes('ТКАНИНА') || 
-            catStr.includes('ДСП') || 
-            catStr.includes('МЕТАЛ') ||
-            catStr.includes('MATERIAL') ||
-            catStr.includes('TEXTILE') ||
-            catStr.includes('DSP') ||
-            catStr.includes('METAL') ||
-            nameStr.includes('ТКАНИНА');
+        // New logic: if no attributes generate SKU, or if we should skip creation
+        const hasSkuGeneratingAttrs = variantAttributes.value.length > 0;
+        
+        // Auto-create/Silent mode if it's a material-like category or if no SKU attrs
+        const skipConfirmation = !hasSkuGeneratingAttrs;
 
-        if (skipVariantCreation) {
-            try {
-                attributeLoading.value = true
-                const res = await api.post(
-                    `/api/v1/products/${props.product.id}/variants/find-or-create`,
-                    {
-                        values: selectedValues.map(v => ({
-                            attribute_id: v.attribute_id,
-                            option_id: v.option_id ?? null,
-                            text_value: v.text_value ?? null,
-                        }))
-                    }
-                )
-                emit('select', {
-                    id: res.data.id,
-                    product_id: res.data.product_id,
-                    sku: res.data.sku,
-                    values: selectedValues,
-                })
-            } catch {
-                emit('select', {
-                    id: null,
-                    product_id: props.product.id,
-                    sku: props.product.sku,
-                    values: selectedValues,
-                })
-            } finally {
-                attributeLoading.value = false
-            }
+        if (skipConfirmation) {
+            // Just emit as a virtual selection with the base product SKU
+            emit('select', {
+                id: null,
+                product_id: props.product.id,
+                sku: props.product.sku,
+                values: selectedValues,
+            })
             visible.value = false
             return
         }

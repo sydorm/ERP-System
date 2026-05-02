@@ -247,11 +247,7 @@ watch(() => props.categoryAttributes, (newAttrs) => {
 
 const variantAttributes = computed(() => {
     return props.categoryAttributes?.filter(attr => {
-        // Find per-product setting
-        const prodAttr = props.productAttributes?.find(pa => pa.attribute_id === attr.id)
-        if (prodAttr) return prodAttr.generates_sku
-        
-        // Fallback to global attribute setting
+        // Use only global attribute setting from dictionary
         return attr.generates_variant !== false
     }) || []
 })
