@@ -84,56 +84,54 @@ defineProps({
 
 .kpi-card-modern {
   background: #ffffff;
-  padding: 16px 20px;
-  border-radius: 14px;
-  box-shadow: 0 4px 20px 0 rgba(15, 20, 34, 0.05);
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px 0 rgba(15, 20, 34, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.02);
   transition: all 0.3s ease;
-}
-
-.kpi-card-modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px 0 rgba(15, 20, 34, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .kpi-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .kpi-icon-wrapper {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .kpi-trend {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 1px 4px;
+  border-radius: 4px;
 }
 
-.trend-up { background: rgba(40, 199, 111, 0.12); color: #28c76f; }
-.trend-down { background: rgba(234, 84, 85, 0.12); color: #ea5455; }
+.trend-up { background: rgba(40, 199, 111, 0.1); color: #28c76f; }
+.trend-down { background: rgba(234, 84, 85, 0.1); color: #ea5455; }
 
 .kpi-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #444050;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .kpi-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #8E8BA2;
   font-weight: 600;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 </style>
