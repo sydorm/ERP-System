@@ -1,10 +1,10 @@
 <template>
-  <div class="kpi-grid-modern">
+  <div class="kpi-grid-force">
     <!-- Всього позицій -->
-    <div class="kpi-card-modern">
+    <div class="kpi-card-force">
       <div class="kpi-header-row">
-        <div class="kpi-icon-wrapper" style="background-color: rgba(115, 103, 240, 0.1); color: #7367f0;">
-          <el-icon><Box /></el-icon>
+        <div class="kpi-icon-box" style="background-color: rgba(115, 103, 240, 0.12) !important; color: #7367f0 !important;">
+          <el-icon><User /></el-icon>
         </div>
         <div class="kpi-trend trend-up">+12%</div>
       </div>
@@ -15,9 +15,9 @@
     </div>
 
     <!-- Низький запас -->
-    <div class="kpi-card-modern">
+    <div class="kpi-card-force">
       <div class="kpi-header-row">
-        <div class="kpi-icon-wrapper" style="background-color: rgba(255, 159, 67, 0.1); color: #ff9f43;">
+        <div class="kpi-icon-box" style="background-color: rgba(255, 159, 67, 0.12) !important; color: #ff9f43 !important;">
           <el-icon><Warning /></el-icon>
         </div>
         <div class="kpi-trend trend-down">-8%</div>
@@ -29,9 +29,9 @@
     </div>
 
     <!-- В наявності -->
-    <div class="kpi-card-modern">
+    <div class="kpi-card-force">
       <div class="kpi-header-row">
-        <div class="kpi-icon-wrapper" style="background-color: rgba(40, 199, 111, 0.1); color: #28c76f;">
+        <div class="kpi-icon-box" style="background-color: rgba(40, 199, 111, 0.12) !important; color: #28c76f !important;">
           <el-icon><Check /></el-icon>
         </div>
         <div class="kpi-trend trend-up">+24%</div>
@@ -43,9 +43,9 @@
     </div>
 
     <!-- Дефіцит -->
-    <div class="kpi-card-modern">
+    <div class="kpi-card-force">
       <div class="kpi-header-row">
-        <div class="kpi-icon-wrapper" style="background-color: rgba(234, 84, 85, 0.1); color: #ea5455;">
+        <div class="kpi-icon-box" style="background-color: rgba(234, 84, 85, 0.12) !important; color: #ea5455 !important;">
           <el-icon><CircleClose /></el-icon>
         </div>
         <div class="kpi-trend trend-down">-14%</div>
@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { Box, Warning, Check, CircleClose } from '@element-plus/icons-vue'
+import { User, Warning, Check, CircleClose } from '@element-plus/icons-vue'
 
 defineProps({
   stats: {
@@ -76,32 +76,33 @@ defineProps({
 </script>
 
 <style scoped>
-.kpi-grid-modern {
+.kpi-grid-force {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
-.kpi-card-modern {
-  background: #ffffff;
-  padding: 10px 16px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px 0 rgba(15, 20, 34, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.02);
+.kpi-card-force {
+  background: #ffffff !important;
+  padding: 12px 18px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px 0 rgba(15, 20, 34, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.02) !important;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-height: 80px;
 }
 
 .kpi-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
-.kpi-icon-wrapper {
+.kpi-icon-box {
   width: 32px;
   height: 32px;
   border-radius: 10px;
@@ -109,21 +110,21 @@ defineProps({
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .kpi-trend {
   font-size: 10px;
   font-weight: 700;
-  padding: 1px 4px;
+  padding: 1px 6px;
   border-radius: 4px;
 }
 
-.trend-up { background: rgba(40, 199, 111, 0.1); color: #28c76f; }
-.trend-down { background: rgba(234, 84, 85, 0.1); color: #ea5455; }
+.trend-up { background: rgba(40, 199, 111, 0.12); color: #28c76f; }
+.trend-down { background: rgba(234, 84, 85, 0.12); color: #ea5455; }
 
 .kpi-value {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: #444050;
   line-height: 1;
@@ -133,6 +134,6 @@ defineProps({
   font-size: 11px;
   color: #8E8BA2;
   font-weight: 600;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 </style>

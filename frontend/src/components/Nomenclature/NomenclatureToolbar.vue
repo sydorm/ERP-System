@@ -65,7 +65,11 @@
         <button class="act-btn act-btn--secondary" @click="$emit('export')">
           📤 Експорт
         </button>
-        <button class="act-btn act-btn--primary" @click="$emit('create')">
+        <button 
+          class="act-btn act-btn--primary" 
+          style="background: linear-gradient(135deg, #7367f0 0%, #a8a1f8 100%) !important; color: white !important; box-shadow: 0 8px 15px rgba(115, 103, 240, 0.3) !important;"
+          @click="$emit('create')"
+        >
           <el-icon><Plus /></el-icon> Створити товар
         </button>
       </div>
