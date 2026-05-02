@@ -62,7 +62,7 @@
 
           <el-button @click="handleCreate" class="btn-primary-compact">
             <el-icon class="mr-2"><Plus /></el-icon>
-            <span>Новий співробітник</span>
+            <span>Новий співробітник.</span>
           </el-button>
         </div>
       </div>

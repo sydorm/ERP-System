@@ -1,53 +1,50 @@
 <template>
   <div class="page-container" v-loading="loading">
     
-    <!-- ─── PREMIUM UNIFIED STICKY HEADER ─── -->
-    <div class="unified-sticky-header">
-      <div class="user-profile-banner">
-        <div class="banner-gradient-overlay"></div>
-        <img src="https://demos.pixinvent.com/vuexy-html-admin-template/assets/img/pages/profile-banner.png" class="banner-img" />
-      </div>
-      
-      <div class="profile-main-content">
-        <div class="user-avatar-wrapper">
-          <el-avatar :size="110" :src="form.photo_url" class="main-avatar">
-            {{ form.full_name?.charAt(0) || 'U' }}
-          </el-avatar>
-        </div>
-        <div class="user-details-layout">
-          <div class="user-info-group">
-            <h2 class="user-display-name">{{ form.full_name || 'Новий співробітник' }}</h2>
-            <div class="user-meta-info">
-              <span class="meta-badge"><el-icon><User /></el-icon> {{ form.position || 'Посада не вказана' }}</span>
-              <span class="meta-dot"></span>
-              <span :class="['status-tag', getStatusClass(currentStatusName)]">
-                <span class="status-dot"></span>
-                {{ currentStatusName || 'Неактивний' }}
-              </span>
+    <!-- ─── FLOATING ROUNDED STICKY HEADER ─── -->
+    <div class="sticky-header-wrapper">
+      <div class="unified-sticky-header">
+        <div class="profile-main-content">
+          <div class="user-avatar-wrapper">
+            <el-avatar :size="80" :src="form.photo_url" class="main-avatar">
+              {{ form.full_name?.charAt(0) || 'U' }}
+            </el-avatar>
+          </div>
+          <div class="user-details-layout">
+            <div class="user-info-group">
+              <h2 class="user-display-name">{{ form.full_name || 'Новий співробітник.' }}</h2>
+              <div class="user-meta-info">
+                <span class="meta-badge"><el-icon><User /></el-icon> {{ form.position || 'Посада не вказана' }}</span>
+                <span class="meta-dot"></span>
+                <span :class="['status-tag', getStatusClass(currentStatusName)]">
+                  <span class="status-dot"></span>
+                  {{ currentStatusName || 'Неактивний' }}
+                </span>
+              </div>
+            </div>
+            <div class="header-action-group">
+              <el-button @click="router.back()" class="btn-ghost-modern">
+                <el-icon class="mr-1"><ArrowLeft /></el-icon> Назад
+              </el-button>
+              <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-glow">
+                <el-icon class="mr-1"><Check /></el-icon>
+                {{ isEdit ? 'Зберегти зміни' : 'Створити профіль' }}
+              </el-button>
             </div>
           </div>
-          <div class="header-action-group">
-            <el-button @click="router.back()" class="btn-ghost-modern">
-              <el-icon class="mr-1"><ArrowLeft /></el-icon> Назад
-            </el-button>
-            <el-button type="primary" :loading="saving" @click="saveEmployee" class="btn-vuexy-glow">
-              <el-icon class="mr-1"><Check /></el-icon>
-              {{ isEdit ? 'Зберегти зміни' : 'Створити профіль' }}
-            </el-button>
-          </div>
         </div>
-      </div>
 
-      <!-- Navigation Pills (Refined Vuexy Style) -->
-      <div class="header-navigation-bar">
-        <div 
-          v-for="tab in tabs" 
-          :key="tab.id" 
-          :class="['nav-item-pill', { active: activeTab === tab.id }]"
-          @click="activeTab = tab.id"
-        >
-          <el-icon><component :is="tab.icon" /></el-icon>
-          <span>{{ tab.label }}</span>
+        <!-- Navigation Pills (Refined Vuexy Style) -->
+        <div class="header-navigation-bar">
+          <div 
+            v-for="tab in tabs" 
+            :key="tab.id" 
+            :class="['nav-item-pill', { active: activeTab === tab.id }]"
+            @click="activeTab = tab.id"
+          >
+            <el-icon><component :is="tab.icon" /></el-icon>
+            <span>{{ tab.label }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -354,61 +351,44 @@ onMounted(fetchFormData)
   overflow: hidden;
 }
 
-/* ─── Premium Unified Sticky Header ─── */
-.unified-sticky-header {
-  background: #fff;
+/* ─── Floating Rounded Sticky Header ─── */
+.sticky-header-wrapper {
+  padding: 24px 32px 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid #E2E8F0;
-  box-shadow: 0 4px 15px rgba(15, 20, 34, 0.06);
+  background: #F8F9FA;
 }
 
-.user-profile-banner {
-  height: 120px;
-  position: relative;
+.unified-sticky-header {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 20, 34, 0.08);
   overflow: hidden;
-}
-.banner-gradient-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 100%);
-  z-index: 1;
-}
-.banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .profile-main-content {
-  padding: 0 32px 16px;
+  padding: 24px 32px 20px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 28px;
-  margin-top: -55px;
-  position: relative;
-  z-index: 2;
 }
 
 .user-avatar-wrapper {
   position: relative;
 }
 .main-avatar {
-  border: 6px solid #fff;
-  box-shadow: 0 10px 25px rgba(15, 20, 34, 0.12);
-  background-color: #F8F9FA;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 20px rgba(15, 20, 34, 0.1);
+  background-color: #F1F5F9;
 }
 
 .user-details-layout {
   flex: 1;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  padding-bottom: 10px;
+  align-items: center;
 }
 
 .user-display-name {
