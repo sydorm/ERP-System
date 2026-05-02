@@ -60,7 +60,7 @@ class DepartmentResponse(DepartmentBase):
 
 class EmployeeBase(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=255)
-    position: str = Field(..., min_length=1, max_length=255)
+    position: Optional[str] = Field(None, max_length=255)
     department_id: UUID
     status_id: UUID
     
@@ -75,7 +75,7 @@ class EmployeeCreate(EmployeeBase):
 
 class EmployeeUpdate(BaseModel):
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    position: Optional[str] = Field(None, min_length=1, max_length=255)
+    position: Optional[str] = Field(None, max_length=255)
     department_id: Optional[UUID] = None
     status_id: Optional[UUID] = None
     
