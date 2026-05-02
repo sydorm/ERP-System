@@ -1,29 +1,28 @@
 <template>
   <div class="page-container">
 
-    <!-- ─── KPI CARDS (VUEXY STYLE) ─── -->
+    <!-- ─── KPI CARDS (REFERENCE LAYOUT) ─── -->
     <div class="kpi-grid-modern">
       <div v-for="stat in statsCards" :key="stat.title" class="kpi-card-modern">
-        <div class="kpi-info">
-          <span class="kpi-label">{{ stat.title }}</span>
-          <div class="kpi-value-row">
-            <span class="kpi-value">{{ stat.value }}</span>
-            <span :class="['kpi-trend', stat.trend >= 0 ? 'trend-up' : 'trend-down']">
-              ({{ stat.trend >= 0 ? '+' : '' }}{{ stat.trend }}%)
-            </span>
+        <div class="kpi-header-row">
+          <div class="kpi-icon-wrapper" :style="{ backgroundColor: stat.colorBg, color: stat.colorIcon }">
+            <el-icon><component :is="stat.icon" /></el-icon>
           </div>
-          <span class="kpi-subtext">Аналітика за тиждень</span>
+          <div :class="['kpi-trend', stat.trend >= 0 ? 'trend-up' : 'trend-down']">
+            {{ stat.trend >= 0 ? '+' : '' }}{{ stat.trend }}%
+          </div>
         </div>
-        <div class="kpi-icon-wrapper" :style="{ backgroundColor: stat.colorBg }">
-          <el-icon :style="{ color: stat.colorIcon }"><component :is="stat.icon" /></el-icon>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ stat.value }}</div>
+          <div class="kpi-label">{{ stat.title }}</div>
         </div>
       </div>
     </div>
 
-    <!-- ─── FILTERS TOOLBAR (COMPACT) ─── -->
+    <!-- ─── FILTERS BLOCK (SEPARATED) ─── -->
     <div class="filters-card-modern">
       <div class="filter-header">
-        <span class="filter-title">Фільтри</span>
+        <span class="filter-title">ФІЛЬТРИ</span>
       </div>
       <div class="filter-row-modern">
         <div class="filter-group">
@@ -69,7 +68,7 @@
       </div>
     </div>
 
-    <!-- Data Table -->
+    <!-- ─── TABLE BLOCK (SEPARATED) ─── -->
     <div class="table-card-modern">
       <el-table 
         v-loading="loading" 
@@ -314,13 +313,14 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  padding: 0;
+  padding: 16px 24px;
   background-color: var(--erp-bg-page);
-  height: calc(100vh - 64px - 48px);
+  height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   color: #444050;
+  font-size: 13px;
   transition: all 0.3s ease;
 }
 
@@ -429,66 +429,64 @@ onMounted(() => {
 }
 .kpi-card-modern {
   background: #fff;
-  padding: 20px;
-  border-radius: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
+  transition: transform 0.2s;
+}
+
+.kpi-header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  box-shadow: 0 4px 18px 0 rgba(15, 20, 34, 0.05);
+  margin-bottom: 12px;
 }
-.kpi-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748B;
-  display: block;
-  margin-bottom: 4px;
-}
-.kpi-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.kpi-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: #444050;
-}
-.kpi-trend {
-  font-size: 13px;
-  font-weight: 700;
-}
-.trend-up { color: #10B981; }
-.trend-down { color: #EF4444; }
-.kpi-subtext {
-  font-size: 11px;
-  color: #94A3B8;
-  font-weight: 500;
-}
+
 .kpi-icon-wrapper {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 18px;
+}
+
+.kpi-trend {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #444050;
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: #8E8BA2;
+  margin-top: 4px;
 }
 
 /* Filters Toolbar */
 .filters-card-modern {
   background: #fff;
-  border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid #F1F5F9;
-  padding: 16px 24px;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
 }
-.filter-header {
-  margin-bottom: 12px;
-}
+
 .filter-title {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  color: #444050;
+  color: #A3A7C5;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 12px;
 }
 .filter-row-modern {
   display: flex;
@@ -527,8 +525,8 @@ onMounted(() => {
 /* Table Section */
 .table-card-modern {
   background: #fff;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 4px 18px 0 rgba(15, 20, 34, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px 0 rgba(15, 20, 34, 0.04);
   flex: 1;
   display: flex;
   flex-direction: column;
