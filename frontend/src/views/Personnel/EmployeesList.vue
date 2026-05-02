@@ -311,7 +311,7 @@ onMounted(() => {
 <style scoped>
 .page-container {
   padding: 24px 32px;
-  background-color: #F8F7FA;
+  background-color: var(--erp-bg-page);
   min-height: 100vh;
   color: #444050;
 }
