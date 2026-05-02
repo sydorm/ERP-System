@@ -3,9 +3,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.models.purchase_order import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus
+from app.models.purchase_order import PurchaseOrder, PurchaseOrderLine, PurchaseOrderStatus, PurchaseTemplate, PurchaseTemplateLine
 from app.models.user import User
-from app.schemas.purchase_order import PurchaseOrderCreate, PurchaseOrderUpdate, PurchaseOrderResponse
+from app.schemas.purchase_order import (
+    PurchaseOrderCreate, PurchaseOrderUpdate, PurchaseOrderResponse,
+    PurchaseTemplateCreate, PurchaseTemplateResponse
+)
 from app.api.dependencies import get_current_active_user
 from app.services.sequence_service import SequenceService
 from app.models import Product, AccumulationRegister, RegisterType, Counterparty
@@ -259,3 +262,73 @@ async def delete_purchase_order(
     db.delete(order)
     db.commit()
     return None
+
+@router.get("/purchase-orders/last", response_model=List[PurchaseOrderResponse])
+async def get_last_purchases(
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    return db.query(PurchaseOrder).filter(
+        PurchaseOrder.company_id == current_user.company_id
+    ).order_by(PurchaseOrder.created_at.desc()).limit(limit).all()
+
+@router.get("/purchase-orders/last-price")
+async def get_last_purchase_price(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    last_line = db.query(PurchaseOrderLine).join(PurchaseOrder).filter(
+        PurchaseOrder.company_id == current_user.company_id,
+        PurchaseOrderLine.product_id == product_id,
+        PurchaseOrder.status == PurchaseOrderStatus.DONE
+    ).order_by(PurchaseOrder.order_date.desc()).first()
+    
+    if not last_line:
+        last_line = db.query(PurchaseOrderLine).join(PurchaseOrder).filter(
+            PurchaseOrder.company_id == current_user.company_id,
+            PurchaseOrderLine.product_id == product_id
+        ).order_by(PurchaseOrder.order_date.desc()).first()
+
+    if last_line:
+        return {"price": float(last_line.price)}
+    return {"price": 0.0}
+
+@router.get("/purchase-templates", response_model=List[PurchaseTemplateResponse])
+async def list_purchase_templates(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    return db.query(PurchaseTemplate).filter(PurchaseTemplate.company_id == current_user.company_id).all()
+
+@router.post("/purchase-templates", response_model=PurchaseTemplateResponse)
+async def create_purchase_template(
+    template_data: PurchaseTemplateCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    template = PurchaseTemplate(
+        name=template_data.name,
+        supplier_id=template_data.supplier_id,
+        warehouse_id=template_data.warehouse_id,
+        notes=template_data.notes,
+        company_id=current_user.company_id,
+        created_by=current_user.id
+    )
+    db.add(template)
+    db.flush()
+    
+    for line_data in template_data.lines:
+        line = PurchaseTemplateLine(
+            template_id=template.id,
+            product_id=line_data.product_id,
+            variant_id=line_data.variant_id,
+            quantity=line_data.quantity,
+            attribute_values=line_data.attribute_values
+        )
+        db.add(line)
+    
+    db.commit()
+    db.refresh(template)
+    return template

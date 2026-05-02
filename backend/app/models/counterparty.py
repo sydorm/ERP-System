@@ -45,6 +45,7 @@ class Counterparty(BaseModel):
     min_order_amount = Column(Numeric(15, 2), nullable=True, default=0.0)
     contact_person = Column(String(255), nullable=True)
     supplied_materials = Column(Text, nullable=True)
+    rating = Column(String(50), nullable=True)  # New: "reliable", "new", etc.
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)

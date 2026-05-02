@@ -58,3 +58,35 @@ class PurchaseOrderResponse(PurchaseOrderBase):
     
     class Config:
         from_attributes = True
+
+class PurchaseTemplateLineBase(BaseModel):
+    product_id: UUID
+    variant_id: Optional[UUID] = None
+    quantity: Decimal = Field(..., ge=0)
+    attribute_values: Optional[List[dict]] = None
+
+class PurchaseTemplateLineCreate(PurchaseTemplateLineBase):
+    pass
+
+class PurchaseTemplateLineResponse(PurchaseTemplateLineBase):
+    id: UUID
+    template_id: UUID
+    class Config:
+        from_attributes = True
+
+class PurchaseTemplateBase(BaseModel):
+    name: str
+    supplier_id: Optional[UUID] = None
+    warehouse_id: Optional[UUID] = None
+    notes: Optional[str] = None
+
+class PurchaseTemplateCreate(PurchaseTemplateBase):
+    lines: List[PurchaseTemplateLineCreate]
+
+class PurchaseTemplateResponse(PurchaseTemplateBase):
+    id: UUID
+    company_id: UUID
+    created_by: UUID
+    lines: List[PurchaseTemplateLineResponse]
+    class Config:
+        from_attributes = True

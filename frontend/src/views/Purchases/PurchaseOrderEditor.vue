@@ -24,6 +24,35 @@
         <div class="erp-doc-info">
           <span class="erp-doc-title">{{ isEditMode ? 'Замовлення постачальнику ' + form.order_number : 'Замовлення постачальнику (створення)' }}</span>
         </div>
+        <el-popover placement="bottom" :width="300" trigger="click" v-if="!isEditMode">
+          <template #reference>
+            <el-button size="small" class="erp-btn-repeat" :icon="Refresh">
+              🔄 Як минулого разу
+            </el-button>
+          </template>
+          <div class="last-purchases-popover">
+            <div class="popover-title">Останні закупівлі</div>
+            <div v-if="lastPurchases.length === 0" class="empty-popover">Немає недавніх закупівель</div>
+            <div v-for="p in lastPurchases" :key="p.id" class="last-purchase-item" @click="applyLastPurchase(p)">
+              <div class="lp-info">
+                <span class="lp-number">#{{ p.order_number }}</span>
+                <span class="lp-date">{{ p.order_date }}</span>
+              </div>
+              <div class="lp-amount">{{ formatCurrency(p.total_amount) }}</div>
+            </div>
+          </div>
+        </el-popover>
+        <el-dropdown trigger="click" @command="loadTemplate" size="small">
+          <el-button size="small" class="erp-btn">
+            Завантажити шаблон <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="t in templates" :key="t.id" :command="t">{{ t.name }}</el-dropdown-item>
+              <el-dropdown-item v-if="templates.length === 0" disabled>Немає шаблонів</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
       <div class="erp-toolbar-right">
         <el-button size="small" class="erp-btn-icon" :icon="isHeaderExpanded ? ArrowUp : ArrowDown" @click="isHeaderExpanded = !isHeaderExpanded" title="Шапка" />
@@ -36,6 +65,7 @@
                 <el-icon><Promotion /></el-icon> Надіслати постачальнику
               </el-dropdown-item>
               <el-dropdown-item @click="handleExportExcel"><el-icon><Download /></el-icon> Експорт в Excel</el-dropdown-item>
+              <el-dropdown-item @click="saveAsTemplate" divided><el-icon><CopyDocument /></el-icon> Зберегти як шаблон</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -69,6 +99,9 @@
             <el-select v-model="form.supplier_id" filterable size="small" class="erp-input-wrapper client-select" @change="onSupplierChange">
               <el-option v-for="s in suppliers" :key="s.id" :label="s.name" :value="s.id" />
             </el-select>
+            <el-tag v-if="supplierRating" :type="supplierRatingType" size="small" effect="dark" class="supplier-rating-badge">
+              {{ supplierRatingLabel }}
+            </el-tag>
           </div>
         </div>
         <div class="client-info-banner" v-if="selectedSupplierObj">
@@ -101,7 +134,13 @@
                 :show-warehouse="true"
                 @add-line="addLine"
                 @remove-line="removeLine"
+                @line-change="onTableLineChange"
               />
+            </div>
+            <div class="ai-purchase-suggestions" v-if="aiSuggestion">
+              <span class="ai-icon">✦</span>
+              <span class="ai-text">{{ aiSuggestion }}</span>
+              <el-button link type="primary" size="small" @click="addAllSuggestions" class="ai-add-btn">Додати все</el-button>
             </div>
             <div class="items-comment">
               <el-input v-model="form.comment" type="textarea" :autosize="{ minRows: 2, maxRows: 3 }"
@@ -324,9 +363,9 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft, Plus, Delete, ArrowDown, ArrowUp, MoreFilled,
   Printer, Promotion, Download, Phone, Message, Location,
-  Box, Van, CreditCard, Document, Timer, View
+  Box, Van, CreditCard, Document, Timer, View, Refresh, CopyDocument
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import DocumentItemsTable from '@/components/DocumentItemsTable.vue'
 
@@ -374,6 +413,10 @@ const form = reactive({
 const suppliers = ref([])
 const warehouses = ref([])
 const products = ref([])
+const lastPurchases = ref([])
+const templates = ref([])
+const aiSuggestion = ref('')
+const aiSuggestionProducts = ref([])
 
 // ===== COMPUTED =====
 const subtotal = computed(() => form.lines.reduce((acc, line) => acc + (line.total || 0), 0))
@@ -416,6 +459,18 @@ const statusLabel = computed(() => ({
   done: 'Виконано',
   cancelled: 'Скасовано'
 }[form.status] || form.status))
+
+const supplierRating = computed(() => selectedSupplierObj.value?.rating || '')
+const supplierRatingLabel = computed(() => {
+  if (supplierRating.value === 'reliable') return 'Надійний'
+  if (supplierRating.value === 'new') return 'Новий'
+  return ''
+})
+const supplierRatingType = computed(() => {
+  if (supplierRating.value === 'reliable') return 'success'
+  if (supplierRating.value === 'new') return 'warning'
+  return 'info'
+})
 
 // ===== ACTIONS =====
 const goBack = () => router.push('/purchases/orders')
@@ -498,6 +553,118 @@ const removeLine = (index) => {
   form.lines.splice(index, 1)
 }
 
+const onTableLineChange = async (line) => {
+  // If product changed, fetch last price
+  if (line.product_id && !line.price_fetched) {
+    try {
+      const res = await api.get('/api/v1/purchase-orders/last-price', { params: { product_id: line.product_id } })
+      if (res.data.price > 0) {
+        line.last_price = res.data.price
+        line.price = res.data.price
+        line.price_fetched = true
+        // Calculate difference
+        // This will be handled inside DocumentItemsTable for UI
+      }
+    } catch (e) { console.error(e) }
+  }
+}
+
+const applyLastPurchase = (purchase) => {
+  form.lines = purchase.lines.map(l => ({
+    product_id: l.product_id,
+    variant_id: l.variant_id,
+    quantity: l.quantity,
+    price: l.price,
+    total: l.total,
+    values: l.attribute_values || []
+  }))
+  ElMessage.success('Товари заповнено з попереднього замовлення')
+}
+
+const saveAsTemplate = async () => {
+  try {
+    const { value: name } = await ElMessageBox.prompt('Введіть назву шаблону', 'Зберегти як шаблон', {
+      confirmButtonText: 'Зберегти',
+      cancelButtonText: 'Скасувати',
+    })
+    
+    if (name) {
+      await api.post('/api/v1/purchase-templates', {
+        name,
+        supplier_id: form.supplier_id || null,
+        warehouse_id: form.warehouse_id || null,
+        lines: form.lines.map(l => ({
+          product_id: l.product_id,
+          variant_id: l.variant_id,
+          quantity: l.quantity,
+          attribute_values: l.values
+        }))
+      })
+      ElMessage.success('Шаблон збережено')
+      fetchTemplates()
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('Помилка збереження шаблону')
+  }
+}
+
+const loadTemplate = (template) => {
+  if (template.supplier_id) form.supplier_id = template.supplier_id
+  if (template.warehouse_id) form.warehouse_id = template.warehouse_id
+  form.lines = template.lines.map(l => ({
+    product_id: l.product_id,
+    variant_id: l.variant_id,
+    quantity: l.quantity,
+    price: 0, // Will be fetched via last price or product price
+    total: 0,
+    values: l.attribute_values || []
+  }))
+  // Trigger price fetch for each line
+  form.lines.forEach(onTableLineChange)
+  ElMessage.success(`Шаблон "${template.name}" завантажено`)
+}
+
+const fetchTemplates = async () => {
+  try {
+    const res = await api.get('/api/v1/purchase-templates')
+    templates.value = res.data
+  } catch (e) { console.error(e) }
+}
+
+const fetchLastPurchases = async () => {
+  try {
+    const res = await api.get('/api/v1/purchase-orders/last', { params: { limit: 5 } })
+    lastPurchases.value = res.data
+  } catch (e) { console.error(e) }
+}
+
+const fetchAiSuggestions = async () => {
+  try {
+    const res = await api.get('/api/ai/purchase-suggestions')
+    aiSuggestion.value = res.data.analysis
+    aiSuggestionProducts.value = res.data.products || []
+  } catch (e) { console.error(e) }
+}
+
+const addAllSuggestions = () => {
+  if (aiSuggestionProducts.value.length === 0) return
+  
+  aiSuggestionProducts.value.forEach(p => {
+    const line = {
+      product_id: p.product_id,
+      variant_id: null,
+      quantity: p.quantity,
+      price: 0,
+      total: 0,
+      values: []
+    }
+    form.lines.push(line)
+    onTableLineChange(line)
+  })
+  ElMessage.success(`Додано ${aiSuggestionProducts.value.length} товарів за рекомендацією AI`)
+  aiSuggestion.value = '' // Clear after adding
+}
+
 // ===== DATA FETCHING =====
 const fetchData = async () => {
   loading.value = true
@@ -510,6 +677,10 @@ const fetchData = async () => {
     suppliers.value = supRes.data
     warehouses.value = whRes.data
     products.value = prodRes.data
+
+    fetchTemplates()
+    fetchLastPurchases()
+    fetchAiSuggestions()
 
     if (isEditMode.value) {
       const res = await api.get(`/api/v1/purchase-orders/${route.params.id}`)
@@ -591,7 +762,8 @@ onMounted(fetchData)
 <style scoped>
 .erp-page-container {
   display: flex; flex-direction: column; height: 100%; overflow: hidden;
-  background-color: #f6f7f9; font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: #f6f7f9; font-family: 'Syne', sans-serif;
+  width: 100%; padding: 0 16px;
 }
 
 /* ===== TOOLBAR ===== */
@@ -601,12 +773,17 @@ onMounted(fetchData)
 }
 .erp-toolbar-left { display: flex; align-items: center; gap: 8px; }
 .erp-toolbar-right { display: flex; align-items: center; gap: 6px; }
-.erp-btn, .erp-btn-icon, .erp-btn-primary {
-  border-radius: 2px !important; font-size: 13px !important; height: 28px !important;
-  padding: 0 12px !important; border: 1px solid #dcdfe6 !important;
+.erp-btn, .erp-btn-icon, .erp-btn-primary, .erp-btn-repeat {
+  border-radius: 8px !important; font-size: 13px !important; height: 32px !important;
+  padding: 0 16px !important; border: 1px solid #EAECF4 !important;
   background-color: #fff !important; color: #303133 !important;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
 }
-.erp-btn:hover, .erp-btn-icon:hover { background-color: #f5f7fa !important; border-color: #c0c4cc !important; }
+.erp-btn-repeat {
+  background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; color: #166534 !important;
+}
+.erp-btn:hover, .erp-btn-icon:hover, .erp-btn-repeat:hover { background-color: #f8fafc !important; border-color: #cbd5e1 !important; transform: translateY(-1px); }
 .erp-btn-primary {
   background-color: #eef2ff !important; border-color: #6366f1 !important;
   color: #4338ca !important; font-weight: 600 !important;
@@ -751,19 +928,24 @@ onMounted(fetchData)
 
 /* ===== SIDEBAR ===== */
 .order-sidebar {
-  width: 280px; flex-shrink: 0; background: #fff; border-left: 1px solid #e4e7ed;
+  width: 300px; flex-shrink: 0; background: #fff; border-left: 1px solid #EAECF4;
   overflow-y: auto; display: flex; flex-direction: column;
+  position: sticky; top: 0; height: fit-content;
 }
-.sidebar-card { padding: 14px 16px; border-bottom: 1px solid #f0f2f5; }
+.sidebar-card { 
+  padding: 20px; border-bottom: 1px solid #f0f2f5; 
+  border: 1px solid #EAECF4; border-radius: 16px; margin: 0 16px 16px 16px;
+}
+.sidebar-card:first-child { margin-top: 16px; }
 .sidebar-card-title {
   font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 10px;
   padding-bottom: 6px; border-bottom: 1px solid #e4e7ed;
 }
 .summary-rows { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
-.sum-row { display: flex; justify-content: space-between; font-size: 12px; color: #606266; }
-.sum-row--total { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 2px; }
-.total-value { color: #6366f1; }
-.sum-divider { height: 1px; background: #e4e7ed; margin: 3px 0; }
+.sum-row { display: flex; justify-content: space-between; font-size: 13px; color: #64748b; }
+.sum-row--total { font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 8px; }
+.total-value { color: #6366f1; font-family: 'JetBrains Mono', monospace; }
+.sum-divider { height: 1px; background: #EAECF4; margin: 12px 0; }
 
 /* Quick actions */
 .quick-actions { display: flex; flex-direction: column; gap: 6px; }
@@ -773,4 +955,27 @@ onMounted(fetchData)
   background: #f8fafc !important; border-color: #e2e8f0 !important; color: #374151 !important;
 }
 .qa-btn:hover { background: #f0f9ff !important; border-color: #bae6fd !important; color: #0369a1 !important; }
+
+/* New Styles */
+.supplier-rating-badge { margin-left: 12px; border-radius: 6px; }
+.ai-purchase-suggestions {
+  margin: 12px 16px; padding: 12px 16px; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe; border-radius: 12px; display: flex; align-items: center; gap: 12px;
+}
+.ai-icon { font-size: 18px; color: #8b5cf6; }
+.ai-text { font-size: 13px; color: #5b21b6; font-weight: 500; }
+.ai-add-btn { font-weight: 600; }
+
+.last-purchases-popover { padding: 8px; }
+.popover-title { font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+.last-purchase-item {
+  padding: 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  transition: background 0.2s;
+}
+.last-purchase-item:hover { background: #f1f5f9; }
+.lp-info { display: flex; flex-direction: column; }
+.lp-number { font-weight: 600; font-size: 13px; }
+.lp-date { font-size: 11px; color: #94a3b8; }
+.lp-amount { font-weight: 600; font-size: 13px; color: #6366f1; font-family: 'JetBrains Mono', monospace; }
+.empty-popover { text-align: center; color: #94a3b8; padding: 12px; font-size: 13px; }
 </style>

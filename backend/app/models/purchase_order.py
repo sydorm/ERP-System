@@ -57,3 +57,35 @@ class PurchaseOrderLine(BaseModel):
     purchase_order = relationship("PurchaseOrder", back_populates="lines")
     product = relationship("Product")
     variant = relationship("ProductVariant")
+
+class PurchaseTemplate(BaseModel):
+    """
+    Purchase Template (Шаблон закупівлі)
+    """
+    __tablename__ = "purchase_templates"
+    
+    name = Column(String(255), nullable=False)
+    supplier_id = Column(UUID(as_uuid=True), ForeignKey("counterparties.id"), nullable=True)
+    warehouse_id = Column(UUID(as_uuid=True), ForeignKey("warehouses.id"), nullable=True)
+    notes = Column(Text, nullable=True)
+    
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    
+    lines = relationship("PurchaseTemplateLine", back_populates="template", cascade="all, delete-orphan")
+    supplier = relationship("Counterparty")
+
+class PurchaseTemplateLine(BaseModel):
+    """
+    Purchase Template Line
+    """
+    __tablename__ = "purchase_template_lines"
+    
+    template_id = Column(UUID(as_uuid=True), ForeignKey("purchase_templates.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True)
+    quantity = Column(Numeric(15, 4), nullable=False, default=1.0)
+    attribute_values = Column(JSON, nullable=True)
+    
+    template = relationship("PurchaseTemplate", back_populates="lines")
+    product = relationship("Product")

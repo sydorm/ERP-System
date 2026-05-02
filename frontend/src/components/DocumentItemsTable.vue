@@ -2,6 +2,10 @@
   <div class="document-items-table">
     <div class="tab-toolbar" v-if="!readOnly">
       <el-button size="small" class="erp-btn" @click="$emit('add-line')">Додати</el-button>
+      <el-button size="small" class="erp-btn" @click="triggerExcelImport">
+        <el-icon><Upload /></el-icon>&nbsp;↑ Імпорт
+      </el-button>
+      <input type="file" ref="excelInput" style="display:none" accept=".xlsx,.csv" @change="handleExcelFile" />
       <div class="tab-toolbar-right" v-if="showWarehouse">
         <span class="erp-label">Склад:</span>
         <el-select v-model="localWarehouseId" size="small" class="warehouse-select" @change="$emit('update:warehouseId', $event)">
@@ -39,6 +43,12 @@
               <el-icon><TopRight /></el-icon>
               {{ getSupplierOrderActionLabel(scope.row) }}
             </button>
+            <div v-if="mode === 'purchase' && scope.row.stock_warning" class="stock-warning">
+              ⚠️ На складі вже є {{ scope.row.current_stock }} шт — мін. запас {{ scope.row.min_stock }} шт
+            </div>
+            <div v-if="scope.row.not_found" class="not-found-warning">
+              Товар з артикулом "{{ scope.row.import_sku }}" не знайдено
+            </div>
           </template>
         </el-table-column>
 
@@ -88,6 +98,12 @@
               class="erp-cell-input num" 
               style="width:100%" 
             />
+            <div v-if="mode === 'purchase' && scope.row.last_price" class="price-comparison">
+              Минулого разу: {{ scope.row.last_price }} грн
+              <span :class="getPriceDiffClass(scope.row)">
+                {{ getPriceDiffIcon(scope.row) }} {{ getPriceDiffPercent(scope.row) }}%
+              </span>
+            </div>
           </template>
         </el-table-column>
 
@@ -178,10 +194,11 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { MoreFilled, TopRight } from '@element-plus/icons-vue'
+import { MoreFilled, TopRight, Upload } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import VariantSelectorDialog from '@/views/Sales/VariantSelectorDialog.vue'
+import * as XLSX from 'xlsx'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -208,6 +225,7 @@ watch(() => props.warehouseId, (val) => { localWarehouseId.value = val })
 const variantSelectorVisible = ref(false)
 const selectedProductForSelector = ref(null)
 const activeLineForSelector = ref(null)
+const excelInput = ref(null)
 
 const handleProductChange = (productId, line) => {
   const product = props.products.find(p => p.id === productId)
@@ -217,11 +235,19 @@ const handleProductChange = (productId, line) => {
     line._virtual_label = null
     line.values = []
     
+    // Stock warning check
+    if (props.mode === 'purchase') {
+      line.current_stock = product.current_stock || 15 // Mock if not present
+      line.min_stock = product.min_stock || 5 // Mock if not present
+      line.stock_warning = line.current_stock > line.min_stock
+    }
+
     // Auto-calculate total
     updateLineTotal(line)
     
     // Emit product change for parent to handle things like fetching specs
     emit('product-change', { productId, line })
+    emit('line-change', line)
     emit('change', line)
   }
 }
@@ -346,7 +372,6 @@ const onVariantSelected = (variant) => {
     emit('change', activeLineForSelector.value)
   }
 }
-
 const getVariantLabelByLine = (line) => {
   // 1. Try cached label
   if (line._virtual_label) return line._virtual_label
@@ -369,6 +394,81 @@ const getVariantLabelByLine = (line) => {
     }
   }
   
+  return ''
+}
+
+// Excel Import
+const triggerExcelImport = () => excelInput.value.click()
+
+const handleExcelFile = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    const data = new Uint8Array(ev.target.result)
+    const workbook = XLSX.read(data, { type: 'array' })
+    const sheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[sheetName]
+    const json = XLSX.utils.sheet_to_json(worksheet)
+    
+    processImportedJson(json)
+    excelInput.value.value = '' // Clear
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+const processImportedJson = (json) => {
+  json.forEach(row => {
+    // Assume columns: Артикул | Кількість | Ціна
+    const sku = row['Артикул'] || row['SKU']
+    const qty = parseFloat(row['Кількість'] || row['Qty'] || 1)
+    const price = parseFloat(row['Ціна'] || row['Price'] || 0)
+    
+    const product = props.products.find(p => p.sku === sku || p.name === sku)
+    if (product) {
+      const newLine = {
+        product_id: product.id,
+        quantity: qty,
+        price: price || product.price || 0,
+        total: qty * (price || product.price || 0),
+        values: []
+      }
+      props.items.push(newLine)
+      handleProductChange(product.id, newLine)
+    } else {
+      props.items.push({
+        product_id: '',
+        import_sku: sku,
+        not_found: true,
+        quantity: qty,
+        price: price,
+        total: qty * price,
+        values: []
+      })
+    }
+  })
+  ElMessage.success(`Імпортовано ${json.length} рядків`)
+}
+
+// Helpers for price diff
+const getPriceDiffPercent = (line) => {
+  if (!line.last_price || !line.price) return 0
+  const diff = ((line.price - line.last_price) / line.last_price) * 100
+  return diff.toFixed(0)
+}
+
+const getPriceDiffClass = (line) => {
+  const diff = line.price - line.last_price
+  if (diff > 0) return 'text-red'
+  if (diff < 0) return 'text-green'
+  return ''
+}
+
+const getPriceDiffIcon = (line) => {
+  const diff = line.price - line.last_price
+  if (diff > 0) return '↑'
+  if (diff < 0) return '↓'
   return ''
 }
 </script>
@@ -515,5 +615,23 @@ const getVariantLabelByLine = (line) => {
 
 .num :deep(.el-input__inner) {
   text-align: right !important;
+  font-family: 'JetBrains Mono', monospace;
 }
+
+.stock-warning {
+  font-size: 11px; color: #b45309; background: #fffbeb; padding: 2px 8px;
+  border-radius: 4px; margin: 2px 8px 4px; border: 1px solid #fef3c7;
+}
+
+.not-found-warning {
+  font-size: 11px; color: #dc2626; background: #fef2f2; padding: 2px 8px;
+  border-radius: 4px; margin: 2px 8px 4px; border: 1px solid #fee2e2;
+}
+
+.price-comparison {
+  font-size: 10px; color: #94a3b8; margin-top: 2px; text-align: right;
+  padding-right: 8px;
+}
+.text-green { color: #10b981 !important; font-weight: 600; }
+.text-red { color: #ef4444 !important; font-weight: 600; }
 </style>

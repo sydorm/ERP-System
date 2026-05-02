@@ -56,6 +56,7 @@ def on_startup():
         db.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_source VARCHAR(200)"))
         db.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_links JSONB"))
         db.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS cost_method VARCHAR(30) NOT NULL DEFAULT 'last_price'"))
+        db.execute(text("ALTER TABLE counterparties ADD COLUMN IF NOT EXISTS rating VARCHAR(50)"))
 
         # Business process tables (migration 037) — columns guard
         db.execute(text("""

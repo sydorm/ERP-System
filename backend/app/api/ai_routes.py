@@ -2,9 +2,13 @@
 AI Routes - API endpoints for Kimi AI integration
 """
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from ..services.kimi_service import kimi_service
+from app.db.session import get_db
+from app.api.dependencies import get_current_active_user
+from app.models.user import User
 
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
@@ -144,3 +148,37 @@ async def analyze_business_data(request: AnalyzeDataRequest):
     )
     
     return AnalyzeDataResponse(analysis=analysis)
+
+@router.get("/purchase-suggestions")
+async def get_purchase_suggestions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get AI-powered purchase suggestions based on low stock levels
+    """
+    from app.api.purchase_order_routes import get_procurement_alerts
+    
+    alerts = await get_procurement_alerts(db, current_user)
+    items_to_order = alerts.get("critical", []) + alerts.get("soon", [])
+    
+    if not items_to_order:
+        return {
+            "analysis": "✦ AI рекомендує: Всі запаси в нормі. Нових закупівель не потрібно.",
+            "products": []
+        }
+    
+    suggestion_text = "✦ AI рекомендує також замовити:\n"
+    products_to_add = []
+    for item in items_to_order[:3]: # Show top 3
+        suggestion_text += f"• {item['name']} ({item['to_order']} {item['unit']})\n"
+        products_to_add.append({
+            "product_id": item['product_id'],
+            "quantity": item['to_order'],
+            "name": item['name']
+        })
+    
+    return {
+        "analysis": suggestion_text,
+        "products": products_to_add
+    }
