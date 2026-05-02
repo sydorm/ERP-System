@@ -17,33 +17,6 @@
             </div>
           </div>
 
-          <!-- Center: Stages (Simplified for Purchase) -->
-          <div class="hidden lg:flex items-center gap-0">
-            <template v-for="(s, idx) in stages" :key="s.key">
-              <div class="flex items-center gap-2.5 px-4 py-2 transition-all">
-                <div 
-                  class="w-2 h-2 rounded-full transition-all duration-500"
-                  :class="[
-                    form.status === s.key ? 'bg-[#6C63FF] stage-glow' : '',
-                    isStagePast(s.key) && form.status !== s.key ? 'bg-emerald-500' : 'bg-gray-200'
-                  ]"
-                ></div>
-                <span 
-                  class="text-[10px] font-black tracking-widest uppercase transition-colors"
-                  :class="[
-                    form.status === s.key ? 'text-[#6C63FF]' : 'text-gray-400',
-                    isStagePast(s.key) && form.status !== s.key ? 'text-emerald-600' : ''
-                  ]"
-                >
-                  {{ s.label }}
-                </span>
-              </div>
-              <div v-if="idx < stages.length - 1" 
-                   class="w-4 h-[1px]"
-                   :class="isStagePast(stages[idx+1].key) ? 'bg-emerald-500' : 'bg-gray-100'"></div>
-            </template>
-          </div>
-
           <!-- Right: Actions -->
           <div class="flex items-center gap-4">
             <!-- Readiness Pill Badge -->
@@ -451,12 +424,6 @@ const templates = ref([])
 const aiSuggestion = ref('')
 const aiSuggestionProducts = ref([])
 
-const stages = [
-  { key: 'draft', label: 'НОВЕ' },
-  { key: 'confirmed', label: 'ПІДТВЕРДЖЕНО' },
-  { key: 'done', label: 'ВИКОНАНО' }
-]
-
 // ===== COMPUTED =====
 const readinessProgress = computed(() => {
   const items = [
@@ -468,12 +435,6 @@ const readinessProgress = computed(() => {
   const doneCount = items.filter(i => i.done).length
   return Math.round((doneCount / items.length) * 100)
 })
-
-const isStagePast = (stageKey) => {
-  const idx = stages.findIndex(s => s.key === stageKey)
-  const currentIdx = stages.findIndex(s => s.key === form.status)
-  return idx <= currentIdx
-}
 const subtotal = computed(() => form.lines.reduce((acc, line) => acc + (line.total || 0), 0))
 const totalAmount = computed(() => subtotal.value)
 const totalQty = computed(() => form.lines.reduce((sum, l) => sum + (l.quantity || 0), 0))
