@@ -138,6 +138,12 @@
             </button>
           </el-tooltip>
 
+          <el-tooltip :content="isDark ? 'Світла тема' : 'Темна тема'" placement="bottom">
+            <button class="topbar-icon-btn theme-toggle" type="button" @click="toggleTheme()">
+              <el-icon><component :is="isDark ? 'Sunny' : 'Moon'" /></el-icon>
+            </button>
+          </el-tooltip>
+
           <!-- Notifications Popover -->
           <el-popover
             placement="bottom-end"

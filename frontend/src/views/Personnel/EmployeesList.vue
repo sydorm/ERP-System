@@ -60,9 +60,6 @@
             </template>
           </el-dropdown>
           
-          <el-button @click="toggleTheme()" class="btn-theme-modern" circle>
-            <el-icon><component :is="isDark ? 'Sunny' : 'Moon'" /></el-icon>
-          </el-button>
 
           <el-button @click="handleCreate" class="btn-primary-compact">
             <el-icon class="mr-2"><Plus /></el-icon>
@@ -510,19 +507,6 @@ onMounted(() => {
   box-shadow: 0 0 0 1px #E2E8F0 inset !important;
 }
 
-.btn-theme-modern {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
-  color: #64748B;
-  transition: all 0.2s;
-}
-:deep(.dark) .btn-theme-modern {
-  border-color: #434968;
-  color: #F59E0B;
-  background: #363B54;
-}
 
 .action-group-modern {
   display: flex;
