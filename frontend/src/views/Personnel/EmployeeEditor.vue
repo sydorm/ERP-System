@@ -12,7 +12,7 @@
           </div>
           <div class="user-details-layout">
             <div class="user-info-group">
-              <h2 class="user-display-name">{{ form.full_name || 'Новий співробітник.' }}</h2>
+              <h2 class="user-display-name">{{ form.full_name || 'Новий співробітник' }}</h2>
               <div class="user-meta-info">
                 <span class="meta-badge"><el-icon><User /></el-icon> {{ form.position || 'Посада не вказана' }}</span>
                 <span class="meta-dot"></span>
