@@ -1108,9 +1108,16 @@ async def get_product_attributes(
         ~Attribute.categories.any()
     ).all()
     
+    # 3. Attributes specifically linked to this product
+    product_attrs = db.query(Attribute).join(ProductAttribute).filter(
+        ProductAttribute.product_id == product_id,
+        Attribute.company_id == current_user.company_id,
+        Attribute.is_archived == False
+    ).all()
+    
     # Merge and format
-    # Using a dict to avoid duplicates if any
-    all_attrs_map = {a.id: a for a in (category_attrs + global_attrs)}
+    # Using a dict to avoid duplicates
+    all_attrs_map = {a.id: a for a in (category_attrs + global_attrs + product_attrs)}
     
     results = []
     for attr in all_attrs_map.values():

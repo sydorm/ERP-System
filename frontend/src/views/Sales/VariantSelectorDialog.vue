@@ -264,10 +264,10 @@ const fetchAttributes = async () => {
     }
     attributeLoading.value = true
     try {
-        const res = await api.get(`/api/v1/attributes/category/${props.product.category}`)
-        allCategoryAttributes.value = (res.data || []).map(ca => ({
-            ...ca.attribute,
-            is_required: ca.is_required
+        const res = await api.get(`/api/v1/products/${props.product.id}/attributes`)
+        allCategoryAttributes.value = (res.data || []).map(attr => ({
+            ...attr,
+            generates_variant: true // Assume true for product-linked attributes
         }))
         // Initialize IMMEDIATELY after loading
         initializeSelector()
