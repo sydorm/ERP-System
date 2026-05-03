@@ -92,28 +92,45 @@ async def get_warehouses_stock(
     out = []
     for r in results:
         vid = str(r.variant_id) if r.variant_id else None
-        label = variant_labels.get(vid, "") if vid else ""
         
         # Enhanced characteristic fields for Task 2
         char_name = ""
         char_value = ""
-        v_label = v.sku
         
-        char_parts = []
-        for vv in v.values:
-            attr_name = vv.attribute.name if vv.attribute else ""
-            val_text = vv.text_value or ""
-            if vv.option:
-                val_text = vv.option.value
+        item = {
+            "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
+            "product_id": str(r.product_id) if r.product_id else None,
+            "product_name": r.product_name,
+            "variant_label": variant_labels.get(vid, ""),
+            "quantity": float(r.quantity or 0),
+            "cost": 0.0,
+            "min_stock": float(r.min_stock or 0),
+            "category": r.category
+        }
+
+        if vid and vid in vv_by_variant:
+            from app.models.variant import VariantValue
+            char_parts = []
+            first_name = ""
+            first_value = ""
             
-            if val_text:
-                char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
-                if not char_value:
-                    char_name = attr_name
-                    char_value = val_text
-        
-        if char_parts:
-            v_label = ", ".join(char_parts)
+            for vv in vv_by_variant[vid]:
+                attr_name = vv.attribute.name if vv.attribute else "Характеристика"
+                val_text = vv.option.value if vv.option else vv.text_value
+                
+                if val_text:
+                    char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
+                    if not first_value:
+                        first_name = attr_name
+                        first_value = val_text
+            
+            item["characteristic"] = ", ".join(char_parts) if char_parts else variant_skus.get(vid, "")
+            item["characteristic_name"] = first_name
+            item["characteristic_value"] = first_value
+        else:
+            item["characteristic"] = ""
+            item["characteristic_name"] = ""
+            item["characteristic_value"] = ""
 
         cost_price = 0.0
         

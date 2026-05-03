@@ -82,7 +82,10 @@ async def create_purchase_receipt(
             
             incoming_fp = get_fp(vals)
             
-            existing = db.query(ProductVariant).filter(
+            from sqlalchemy.orm import joinedload
+            existing = db.query(ProductVariant).options(
+                joinedload(ProductVariant.values)
+            ).filter(
                 ProductVariant.product_id == line_data.product_id,
                 ProductVariant.is_active == True
             ).all()

@@ -627,10 +627,8 @@ async def get_product_stock(
             first_value = ""
             
             for vv in v.values:
-                attr_name = vv.attribute.name if vv.attribute else ""
-                val_text = vv.text_value or ""
-                if vv.option:
-                    val_text = vv.option.value
+                attr_name = vv.attribute.name if vv.attribute else "Характеристика"
+                val_text = vv.option.value if vv.option else vv.text_value
                 
                 if val_text:
                     char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
