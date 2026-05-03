@@ -32,8 +32,9 @@ async def get_warehouses_stock(
 
     results = db.query(
         AccumulationRegister.warehouse_id,
-        AccumulationRegister.product_id,
         AccumulationRegister.variant_id,
+        Warehouse.name.label("warehouse"),
+        Product.id.label("product_id"),
         Product.name.label("product_name"),
         Product.cost,
         Product.min_stock,
@@ -41,14 +42,18 @@ async def get_warehouses_stock(
         func.sum(AccumulationRegister.quantity).label("quantity"),
         func.max(func.cast(AccumulationRegister.extra_data, String)).label("extra_data_str"),
     ).join(
+        Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
+    ).join(
         Product, Product.id == AccumulationRegister.product_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
         AccumulationRegister.register_type == RegisterType.STOCK,
     ).group_by(
         AccumulationRegister.warehouse_id,
+        Warehouse.name,
         AccumulationRegister.product_id,
         AccumulationRegister.variant_id,
+        Product.id,
         Product.name,
         Product.cost,
         Product.min_stock,
@@ -96,10 +101,12 @@ async def get_warehouses_stock(
         vid = str(r.variant_id) if r.variant_id else None
         
         # Enhanced characteristic fields for Task 2
-        char_name = ""
-        char_value = ""
+        char_parts = []
+        first_name = ""
+        first_value = ""
         
         item = {
+            "warehouse": r.warehouse,
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
@@ -112,10 +119,6 @@ async def get_warehouses_stock(
 
         if vid and vid in vv_by_variant:
             from app.models.variant import VariantValue
-            char_parts = []
-            first_name = ""
-            first_value = ""
-            
             for vv in vv_by_variant[vid]:
                 attr_name = vv.attribute.name if vv.attribute else "Характеристика"
                 val_text = vv.option.value if vv.option else vv.text_value
