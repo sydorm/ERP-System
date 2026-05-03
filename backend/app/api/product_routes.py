@@ -19,6 +19,7 @@ from app.db.session import get_db
 from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType
 from app.models.counterparty import Counterparty
 from app.models.variant import ProductVariant, VariantValue
+from app.models.purchase_order import PurchaseOrderLine
 from app.models.attribute import Attribute, CategoryAttribute
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductAttributeLight
 from app.api.dependencies import get_current_active_user
@@ -1035,9 +1036,11 @@ async def update_product(
         
         for vid, vobj in existing_vars.items():
             if vid not in updated_ids:
-                # Check if safe to delete
+                # Check if safe to delete (not used in orders, stock or purchases)
                 is_used = db.query(sa.text("EXISTS(SELECT 1 FROM order_lines WHERE variant_id = :vid)")).params(vid=vobj.id).scalar() or \
-                          db.query(sa.text("EXISTS(SELECT 1 FROM accumulation_registers WHERE variant_id = :vid)")).params(vid=vobj.id).scalar()
+                          db.query(sa.text("EXISTS(SELECT 1 FROM accumulation_registers WHERE variant_id = :vid)")).params(vid=vobj.id).scalar() or \
+                          db.query(PurchaseOrderLine).filter(PurchaseOrderLine.variant_id == vobj.id).first() is not None
+                
                 if not is_used:
                     db.delete(vobj)
                 else:
