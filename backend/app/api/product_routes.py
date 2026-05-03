@@ -610,43 +610,36 @@ async def get_product_stock(
     variant_ids = [r.variant_id for r in results if r.variant_id]
     if variant_ids:
         from app.models.variant import ProductVariant, VariantValue
-        variants = db.query(ProductVariant).filter(ProductVariant.id.in_(variant_ids)).all()
-        all_vv = db.query(VariantValue).filter(VariantValue.variant_id.in_(variant_ids)).all()
-        vv_by_variant: dict = {}
-        for vv in all_vv:
-            vv_by_variant.setdefault(str(vv.variant_id), []).append(vv)
+        from sqlalchemy.orm import joinedload
+        
+        # Using joinedload to ensure we get attributes and options
+        variants = db.query(ProductVariant).options(
+            joinedload(ProductVariant.values).joinedload(VariantValue.attribute),
+            joinedload(ProductVariant.values).joinedload(VariantValue.option)
+        ).filter(ProductVariant.id.in_(variant_ids)).all()
+        
         for v in variants:
             vid = str(v.id)
             variant_skus[vid] = v.sku
-            text_parts = []
             
-            # Enhanced characteristic fields
-            char_name = ""
-            char_value = ""
-            vvs = vv_by_variant.get(vid, [])
-            if vvs:
-                from app.models.attribute import Attribute
-                vv = vvs[0] # First characteristic
-                char_value = vv.text_value or ""
-                if vv.option_id:
-                     from app.models.attribute import AttributeOption
-                     opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
-                     if opt: char_value = opt.value
-                
-                attr = db.query(Attribute).filter(Attribute.id == vv.attribute_id).first()
-                if attr: char_name = attr.name
-                
-                for vv in vvs:
-                    if vv.text_value:
-                        text_parts.append(vv.text_value)
-                    elif vv.option_id:
-                        from app.models.attribute import AttributeOption
-                        opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
-                        if opt:
-                            text_parts.append(opt.value)
+            char_parts = []
+            first_name = ""
+            first_value = ""
             
-            variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
-            variant_char_info[vid] = {"name": char_name, "value": char_value}
+            for vv in v.values:
+                attr_name = vv.attribute.name if vv.attribute else ""
+                val_text = vv.text_value or ""
+                if vv.option:
+                    val_text = vv.option.value
+                
+                if val_text:
+                    char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
+                    if not first_value:
+                        first_name = attr_name
+                        first_value = val_text
+            
+            variant_labels[vid] = ", ".join(char_parts) if char_parts else v.sku
+            variant_char_info[vid] = {"name": first_name, "value": first_value}
 
     return [
         {

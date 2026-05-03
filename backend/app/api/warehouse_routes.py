@@ -56,31 +56,38 @@ async def get_warehouses_stock(
     variant_skus: dict = {}
     variant_labels: dict = {}
     v_active: dict = {}
+    vv_by_variant: dict = {}
     variant_ids = [r.variant_id for r in results if r.variant_id]
     
     if variant_ids:
         from app.models.variant import ProductVariant, VariantValue
-        variants = db.query(ProductVariant).filter(ProductVariant.id.in_(variant_ids)).all()
-        all_vv = db.query(VariantValue).filter(VariantValue.variant_id.in_(variant_ids)).all()
-        vv_by_variant: dict = {}
+        from sqlalchemy.orm import joinedload
         
-        for vv in all_vv:
-            vv_by_variant.setdefault(str(vv.variant_id), []).append(vv)
-            
+        variants = db.query(ProductVariant).options(
+            joinedload(ProductVariant.values).joinedload(VariantValue.attribute),
+            joinedload(ProductVariant.values).joinedload(VariantValue.option)
+        ).filter(ProductVariant.id.in_(variant_ids)).all()
+        
         for v in variants:
             vid = str(v.id)
             variant_skus[vid] = v.sku
-            text_parts = []
-            for vv in vv_by_variant.get(vid, []):
-                if vv.text_value:
-                    text_parts.append(vv.text_value)
-                elif vv.option_id:
-                    from app.models.attribute import AttributeOption
-                    opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
-                    if opt:
-                        text_parts.append(opt.value)
-            variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
             v_active[vid] = v.is_active
+            
+            # This loop will be used inside the results loop, 
+            # but we can pre-calculate labels here for simplicity
+            char_parts = []
+            for vv in v.values:
+                attr_name = vv.attribute.name if vv.attribute else ""
+                val_text = vv.text_value or ""
+                if vv.option:
+                    val_text = vv.option.value
+                
+                if val_text:
+                    char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
+            
+            variant_labels[vid] = ", ".join(char_parts) if char_parts else v.sku
+            # Store values for Task 2 fields
+            vv_by_variant[vid] = v.values
 
     out = []
     for r in results:
@@ -90,19 +97,23 @@ async def get_warehouses_stock(
         # Enhanced characteristic fields for Task 2
         char_name = ""
         char_value = ""
-        if vid:
-            from app.models.attribute import Attribute
-            vvs = vv_by_variant.get(vid, [])
-            if vvs:
-                vv = vvs[0] # Take first characteristic for simplicity in stock list
-                char_value = vv.text_value or ""
-                if vv.option_id:
-                     from app.models.attribute import AttributeOption
-                     opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
-                     if opt: char_value = opt.value
-                
-                attr = db.query(Attribute).filter(Attribute.id == vv.attribute_id).first()
-                if attr: char_name = attr.name
+        v_label = v.sku
+        
+        char_parts = []
+        for vv in v.values:
+            attr_name = vv.attribute.name if vv.attribute else ""
+            val_text = vv.text_value or ""
+            if vv.option:
+                val_text = vv.option.value
+            
+            if val_text:
+                char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
+                if not char_value:
+                    char_name = attr_name
+                    char_value = val_text
+        
+        if char_parts:
+            v_label = ", ".join(char_parts)
 
         cost_price = 0.0
         
