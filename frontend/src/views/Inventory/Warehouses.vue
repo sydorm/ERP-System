@@ -142,7 +142,10 @@
                 </el-table-column>
                 <el-table-column label="Характеристика" min-width="120">
                   <template #default="scope">
-                    <span v-if="scope.row.characteristic_value">{{ scope.row.characteristic_value }}</span>
+                    <span v-if="scope.row.characteristic_name && scope.row.characteristic_value">
+                      {{ scope.row.characteristic_name }}: {{ scope.row.characteristic_value }}
+                    </span>
+                    <span v-else-if="scope.row.characteristic_value">{{ scope.row.characteristic_value }}</span>
                     <span v-else-if="scope.row.variant_name">{{ scope.row.variant_name }}</span>
                     <span v-else-if="scope.row.variant_label">{{ scope.row.variant_label }}</span>
                     <span class="empty-text" v-else>—</span>

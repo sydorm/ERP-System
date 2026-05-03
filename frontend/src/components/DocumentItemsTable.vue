@@ -376,6 +376,9 @@ const getVariantLabelByLine = (line) => {
   if (line._virtual_label) return line._virtual_label
   
   // 2. Try characteristic name from API if exists (standardizing)
+  if (line.characteristic_name && line.characteristic_value) {
+      return `${line.characteristic_name}: ${line.characteristic_value}`
+  }
   if (line.characteristic_name) return line.characteristic_name
   if (line.variant_name) return line.variant_name
   if (line.characteristic?.name) return line.characteristic.name
