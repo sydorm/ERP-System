@@ -27,9 +27,8 @@ jobs:
             # Оновлюємо код з GitHub
             git pull origin main
             
-            # Перезапускаємо контейнери (якщо використовуєте docker-compose)
-            # docker-compose down
-            # docker-compose up -d --build
+            # Перезапускаємо контейнери
+            docker compose restart backend
             
             # АБО якщо запускаєте без докера, наприклад Systemd:
             # sudo systemctl restart your-backend-service

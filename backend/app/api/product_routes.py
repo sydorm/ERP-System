@@ -593,6 +593,7 @@ async def get_product_stock(
         Warehouse.name.label("warehouse"),
         AccumulationRegister.variant_id,
         func.sum(AccumulationRegister.quantity).label("quantity"),
+        func.max(func.cast(AccumulationRegister.extra_data, String)).label("extra_data_str"),
     ).join(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).filter(
@@ -639,21 +640,49 @@ async def get_product_stock(
             variant_labels[vid] = ", ".join(char_parts) if char_parts else v.sku
             variant_char_info[vid] = {"name": first_name, "value": first_value}
 
-    return [
-        {
+    stock_items = []
+    for r in results:
+        vid = str(r.variant_id) if r.variant_id else None
+        
+        char_name = variant_char_info.get(vid, {}).get("name", "") if vid else ""
+        char_value = variant_char_info.get(vid, {}).get("value", "") if vid else ""
+        label = variant_labels.get(vid) if vid else None
+
+        # Fallback to extra_data if no label/char info found from variant
+        if (not label or label == variant_skus.get(vid)) and r.extra_data_str:
+            try:
+                import json
+                extra = json.loads(r.extra_data_str)
+                attr_vals = extra.get("attribute_values", [])
+                if isinstance(attr_vals, list):
+                    fallback_parts = []
+                    for av in attr_vals:
+                        name = av.get("name") or av.get("attribute_name") or "№"
+                        val = av.get("value") or av.get("text_value") or av.get("option_value")
+                        if val:
+                            fallback_parts.append(f"{name}: {val}" if name else str(val))
+                            if not char_value:
+                                char_name = name
+                                char_value = val
+                    if fallback_parts:
+                        label = ", ".join(fallback_parts)
+            except:
+                pass
+
+        stock_items.append({
             "warehouse": r.warehouse,
-            "variant_id": str(r.variant_id) if r.variant_id else None,
-            "variant_sku": variant_skus.get(str(r.variant_id)) if r.variant_id else None,
-            "variant_label": variant_labels.get(str(r.variant_id)) if r.variant_id else None,
-            "characteristic_name": variant_char_info.get(str(r.variant_id), {}).get("name") if r.variant_id else "",
-            "characteristic_value": variant_char_info.get(str(r.variant_id), {}).get("value") if r.variant_id else "",
+            "variant_id": vid,
+            "variant_sku": variant_skus.get(vid) if vid else None,
+            "variant_label": label,
+            "characteristic_name": char_name,
+            "characteristic_value": char_value,
             "quantity": float(r.quantity),
             "reserved": 0,
             "available": float(r.quantity),
             "minLevel": 5,
-        }
-        for r in results
-    ]
+        })
+
+    return stock_items
 
 @router.post("/products/{product_id}/variants/find-or-create")
 async def find_or_create_variant(

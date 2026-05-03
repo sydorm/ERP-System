@@ -38,6 +38,7 @@ async def get_warehouses_stock(
         Product.min_stock,
         Product.category,
         func.sum(AccumulationRegister.quantity).label("quantity"),
+        func.max(func.cast(AccumulationRegister.extra_data, String)).label("extra_data_str"),
     ).join(
         Product, Product.id == AccumulationRegister.product_id
     ).filter(
@@ -124,13 +125,28 @@ async def get_warehouses_stock(
                         first_name = attr_name
                         first_value = val_text
             
-            item["characteristic"] = ", ".join(char_parts) if char_parts else variant_skus.get(vid, "")
-            item["characteristic_name"] = first_name
-            item["characteristic_value"] = first_value
-        else:
-            item["characteristic"] = ""
-            item["characteristic_name"] = ""
-            item["characteristic_value"] = ""
+        # Fallback to extra_data if no variant values found
+        if not char_parts and r.extra_data_str:
+            try:
+                import json
+                extra = json.loads(r.extra_data_str)
+                attr_vals = extra.get("attribute_values", [])
+                if isinstance(attr_vals, list):
+                    for av in attr_vals:
+                        name = av.get("name") or av.get("attribute_name") or "№"
+                        val = av.get("value") or av.get("text_value") or av.get("option_value")
+                        if val:
+                            char_parts.append(f"{name}: {val}" if name else str(val))
+                            if not first_value:
+                                first_name = name
+                                first_value = val
+            except:
+                pass
+
+        item["characteristic"] = ", ".join(char_parts) if char_parts else variant_skus.get(vid, "")
+        item["characteristic_name"] = first_name
+        item["characteristic_value"] = first_value
+        item["variant_label"] = item["characteristic"] or item["product_name"]
 
         cost_price = 0.0
         

@@ -17,6 +17,13 @@ from sqlalchemy import func
 
 router = APIRouter()
 
+@router.get("/purchase-orders/last")
+async def get_last_orders(limit: int = 5, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    """
+    Stub for getting last purchase orders. Returns empty list as requested.
+    """
+    return []
+
 @router.get("/purchase-orders/procurement-alerts")
 async def get_procurement_alerts(
     db: Session = Depends(get_db),
