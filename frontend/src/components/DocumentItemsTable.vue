@@ -375,7 +375,12 @@ const getVariantLabelByLine = (line) => {
   // 1. Try cached label
   if (line._virtual_label) return line._virtual_label
   
-  // 2. Try stored values (JSON)
+  // 2. Try characteristic name from API if exists (standardizing)
+  if (line.characteristic_name) return line.characteristic_name
+  if (line.variant_name) return line.variant_name
+  if (line.characteristic?.name) return line.characteristic.name
+
+  // 3. Try stored values (JSON)
   if (line.values && line.values.length > 0) {
     const label = line.values.map(v => v.option?.value || v.text_value).filter(Boolean).join(', ')
     if (label) return label

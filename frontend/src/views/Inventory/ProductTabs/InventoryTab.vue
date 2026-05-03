@@ -133,7 +133,7 @@ const groupedStock = computed(() => {
       entry.children.push({
         rowKey: `${row.warehouse}__${row.variant_id}`,
         warehouse: row.warehouse,
-        label: row.variant_label || row.variant_sku || row.variant_id,
+        label: row.characteristic_value || row.variant_name || row.variant_label || row.variant_sku || row.variant_id,
         quantity: parseFloat(row.quantity) || 0,
         reserved: parseFloat(row.reserved) || 0,
         available: parseFloat(row.available) || 0,
