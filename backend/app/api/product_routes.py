@@ -606,6 +606,7 @@ async def get_product_stock(
 
     variant_skus: dict = {}
     variant_labels: dict = {}
+    variant_char_info: dict = {}
     variant_ids = [r.variant_id for r in results if r.variant_id]
     if variant_ids:
         from app.models.variant import ProductVariant, VariantValue
@@ -618,21 +619,43 @@ async def get_product_stock(
             vid = str(v.id)
             variant_skus[vid] = v.sku
             text_parts = []
-            for vv in vv_by_variant.get(vid, []):
-                if vv.text_value:
-                    text_parts.append(vv.text_value)
-                elif vv.option_id:
-                    from app.models.attribute import AttributeOption
-                    opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
-                    if opt:
-                        text_parts.append(opt.value)
+            
+            # Enhanced characteristic fields
+            char_name = ""
+            char_value = ""
+            vvs = vv_by_variant.get(vid, [])
+            if vvs:
+                from app.models.attribute import Attribute
+                vv = vvs[0] # First characteristic
+                char_value = vv.text_value or ""
+                if vv.option_id:
+                     from app.models.attribute import AttributeOption
+                     opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
+                     if opt: char_value = opt.value
+                
+                attr = db.query(Attribute).filter(Attribute.id == vv.attribute_id).first()
+                if attr: char_name = attr.name
+                
+                for vv in vvs:
+                    if vv.text_value:
+                        text_parts.append(vv.text_value)
+                    elif vv.option_id:
+                        from app.models.attribute import AttributeOption
+                        opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
+                        if opt:
+                            text_parts.append(opt.value)
+            
             variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
+            variant_char_info[vid] = {"name": char_name, "value": char_value}
+
     return [
         {
             "warehouse": r.warehouse,
             "variant_id": str(r.variant_id) if r.variant_id else None,
             "variant_sku": variant_skus.get(str(r.variant_id)) if r.variant_id else None,
             "variant_label": variant_labels.get(str(r.variant_id)) if r.variant_id else None,
+            "characteristic_name": variant_char_info.get(str(r.variant_id), {}).get("name") if r.variant_id else "",
+            "characteristic_value": variant_char_info.get(str(r.variant_id), {}).get("value") if r.variant_id else "",
             "quantity": float(r.quantity),
             "reserved": 0,
             "available": float(r.quantity),
