@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile
 from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+import sqlalchemy as sa
 
 from app.db.session import get_db
 from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType

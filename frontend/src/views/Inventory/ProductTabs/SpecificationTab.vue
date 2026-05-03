@@ -456,9 +456,9 @@
                                 <span class="text-xs text-orange-700">%</span>
                             </div>
                             <el-radio-group v-model="getDimConfig(activeCalcItem, dim.key).unit" size="small" class="unit-toggle">
-                                <el-radio-button label="мм" />
-                                <el-radio-button label="см" />
-                                <el-radio-button label="м" />
+                                <el-radio-button value="мм">мм</el-radio-button>
+                                <el-radio-button value="см">см</el-radio-button>
+                                <el-radio-button value="м">м</el-radio-button>
                             </el-radio-group>
                             <el-button type="primary" size="small" @click="addPoint(activeCalcItem, dim.key)" :icon="Plus" circle />
                         </div>

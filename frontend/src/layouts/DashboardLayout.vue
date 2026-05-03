@@ -165,7 +165,7 @@
                   <h3>Сповіщення</h3>
                   <p>CRM, задачі та контрольні події</p>
                 </div>
-                <el-link type="primary" :underline="false" @click="notificationStore.readAll()">Прочитати все</el-link>
+                <el-link type="primary" underline="never" @click="notificationStore.readAll()">Прочитати все</el-link>
               </div>
 
               <div v-if="notificationStats.total > 0" class="notification-summary">

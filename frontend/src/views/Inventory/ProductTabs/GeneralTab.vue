@@ -122,8 +122,8 @@
                 <span class="param-block-label">Довжина (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('length').source" size="small" class="modern-radios">
-                    <el-radio-button label="fixed">Фіксовано</el-radio-button>
-                    <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                    <el-radio-button value="fixed">Фіксовано</el-radio-button>
+                    <el-radio-button value="attribute">З хар-ки</el-radio-button>
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('length').source === 'fixed'" 
@@ -150,8 +150,8 @@
                 <span class="param-block-label">Ширина (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('width').source" size="small" class="modern-radios">
-                    <el-radio-button label="fixed">Фіксовано</el-radio-button>
-                    <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                    <el-radio-button value="fixed">Фіксовано</el-radio-button>
+                    <el-radio-button value="attribute">З хар-ки</el-radio-button>
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('width').source === 'fixed'" 
@@ -178,8 +178,8 @@
                 <span class="param-block-label">Висота (мм)</span>
                 <div class="param-block-controls">
                   <el-radio-group v-model="getVariantConfig('height').source" size="small" class="modern-radios">
-                    <el-radio-button label="fixed">Фіксовано</el-radio-button>
-                    <el-radio-button label="attribute">З хар-ки</el-radio-button>
+                    <el-radio-button value="fixed">Фіксовано</el-radio-button>
+                    <el-radio-button value="attribute">З хар-ки</el-radio-button>
                   </el-radio-group>
                   <el-input-number 
                     v-if="getVariantConfig('height').source === 'fixed'" 
@@ -206,9 +206,9 @@
                 <span class="param-block-label pt-2">Вага (кг)</span>
                 <div class="param-block-controls flex-col align-items-start gap-3">
                   <el-radio-group v-model="getVariantConfig('weight').source" size="small" class="modern-radios">
-                    <el-radio-button label="fixed">Фіксовано</el-radio-button>
-                    <el-radio-button label="calc">Розрахунок</el-radio-button>
-                    <el-radio-button label="manual">Вручну</el-radio-button>
+                    <el-radio-button value="fixed">Фіксовано</el-radio-button>
+                    <el-radio-button value="calc">Розрахунок</el-radio-button>
+                    <el-radio-button value="manual">Вручну</el-radio-button>
                   </el-radio-group>
                   
                   <el-input-number 
