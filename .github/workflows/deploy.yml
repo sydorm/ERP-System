@@ -22,10 +22,11 @@ jobs:
           passphrase: ${{ secrets.VULTR_SSH_PASSPHRASE }} # Необов'язково, якщо ключ без пароля
           script: |
             # Переходимо в папку проекту
-            cd /path/to/your/project/R1
+            cd /var/www/ERP-System
             
-            # Оновлюємо код з GitHub
-            git pull origin main
+            # Оновлюємо код з GitHub (форсовано, щоб уникнути конфліктів)
+            git fetch origin main
+            git reset --hard origin/main
             
             # Перезапускаємо контейнери
             docker compose restart backend
