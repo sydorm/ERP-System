@@ -3,7 +3,7 @@ from .base import Base, BaseModel
 from .company import Company, CompanyType
 from .user import User, UserLoginLog
 from .warehouse import Warehouse
-from .product import Product
+from .product import Product, ProductAttribute
 from .dictionary import DictionaryItem
 from .counterparty import Counterparty, CounterpartyBankAccount, CounterpartyContact, CounterpartyMaterial, CounterpartyDocument
 from .order import Order, OrderLine, OrderStatus
@@ -98,5 +98,6 @@ __all__ = [
     "UserLoginLog",
     "PrintTemplate",
     "ProductCostHistory",
+    "ProductAttribute",
 ]
 
