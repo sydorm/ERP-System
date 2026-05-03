@@ -16,7 +16,7 @@ from sqlalchemy import or_
 import sqlalchemy as sa
 
 from app.db.session import get_db
-from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType
+from app.models import Product, User, ProductSpecification, SpecificationItem, RegisterType, ProductAttribute
 from app.models.counterparty import Counterparty
 from app.models.variant import ProductVariant, VariantValue
 from app.models.purchase_order import PurchaseOrderLine
@@ -1100,7 +1100,6 @@ async def update_product(
             db.add(ProductPriceMarkup(**m_in.dict(), rule_id=db_rule.id))
 
     if product_in.product_attributes is not None:
-        from app.models.product import ProductAttribute
         db.query(ProductAttribute).filter(ProductAttribute.product_id == product.id).delete()
         for attr_in in product_in.product_attributes:
             db.add(ProductAttribute(**attr_in.dict(), product_id=product.id))
