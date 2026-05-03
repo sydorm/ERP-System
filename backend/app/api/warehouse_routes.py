@@ -55,6 +55,7 @@ async def get_warehouses_stock(
 
     variant_skus: dict = {}
     variant_labels: dict = {}
+    v_active: dict = {}
     variant_ids = [r.variant_id for r in results if r.variant_id]
     
     if variant_ids:
@@ -79,12 +80,30 @@ async def get_warehouses_stock(
                     if opt:
                         text_parts.append(opt.value)
             variant_labels[vid] = ", ".join(text_parts) if text_parts else v.sku
+            v_active[vid] = v.is_active
 
     out = []
     for r in results:
         vid = str(r.variant_id) if r.variant_id else None
         label = variant_labels.get(vid, "") if vid else ""
         
+        # Enhanced characteristic fields for Task 2
+        char_name = ""
+        char_value = ""
+        if vid:
+            from app.models.attribute import Attribute
+            vvs = vv_by_variant.get(vid, [])
+            if vvs:
+                vv = vvs[0] # Take first characteristic for simplicity in stock list
+                char_value = vv.text_value or ""
+                if vv.option_id:
+                     from app.models.attribute import AttributeOption
+                     opt = db.query(AttributeOption).filter(AttributeOption.id == vv.option_id).first()
+                     if opt: char_value = opt.value
+                
+                attr = db.query(Attribute).filter(Attribute.id == vv.attribute_id).first()
+                if attr: char_name = attr.name
+
         cost_price = 0.0
         
         # 1. Try finding actual purchase price from latest receipt
@@ -114,11 +133,21 @@ async def get_warehouses_stock(
             if cost_price == 0.0:
                 cost_price = float(r.cost or 0)
 
+        # Task 3: Filter inactive duplicates or zero stock
+        if vid and not v_active.get(vid, True):
+             if float(r.quantity or 0) <= 0:
+                 continue
+             # If there's an active variant for same product, this might be the duplicate
+             # For now, just skip inactive variants as per Task 3 request
+             continue
+
         out.append({
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
             "variant_label": label,
+            "characteristic_name": char_name,
+            "characteristic_value": char_value,
             "quantity": float(r.quantity or 0),
             "cost": cost_price,
             "min_stock": float(r.min_stock or 0),

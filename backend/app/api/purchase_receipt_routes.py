@@ -61,7 +61,6 @@ async def create_purchase_receipt(
         ).update({"status": PurchaseOrderStatus.DONE})
     
     # 2. Add Lines
-    # 2. Add Lines
     from app.models.variant import ProductVariant, VariantValue
     from app.models.product import Product
     
@@ -210,6 +209,30 @@ async def get_purchase_receipt(
     ).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
+    return receipt
+
+@router.put("/purchase-receipts/{id}", response_model=PurchaseReceiptResponse)
+async def update_purchase_receipt(
+    id: UUID,
+    receipt_data: PurchaseReceiptUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    receipt = db.query(PurchaseReceipt).filter(
+        PurchaseReceipt.id == id,
+        PurchaseReceipt.company_id == current_user.company_id
+    ).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    # Simple update for now
+    update_data = receipt_data.dict(exclude_unset=True, exclude={"lines"})
+    for key, value in update_data.items():
+        setattr(receipt, key, value)
+    
+    # Simple update - does not recalculate posting for now
+    db.commit()
+    db.refresh(receipt)
     return receipt
 
 @router.delete("/purchase-receipts/{id}", status_code=status.HTTP_204_NO_CONTENT)
