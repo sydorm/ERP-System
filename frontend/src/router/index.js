@@ -114,6 +114,12 @@ const router = createRouter({
                     component: () => import('@/views/Inventory/Warehouses.vue'),
                     meta: { title: 'Склади' }
                 },
+                {
+                    path: '/inventory/stock',
+                    name: 'stock-balance',
+                    component: () => import('@/views/Inventory/StockBalance.vue'),
+                    meta: { title: 'Залишки' }
+                },
 
                 // Sales routes
                 {

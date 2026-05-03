@@ -1,8 +1,8 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import String
-from app.db.session import get_db
+from sqlalchemy import String, Text
+import sqlalchemy as sa
 from app.models import Warehouse, User
 from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate, WarehouseResponse
 from app.api.dependencies import get_current_active_user
@@ -40,7 +40,7 @@ async def get_warehouses_stock(
         Product.min_stock,
         Product.category,
         func.sum(AccumulationRegister.quantity).label("quantity"),
-        func.max(func.cast(AccumulationRegister.extra_data, String)).label("extra_data_str"),
+        func.max(func.cast(AccumulationRegister.extra_data, sa.Text)).label("extra_data_str"),
     ).join(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).join(

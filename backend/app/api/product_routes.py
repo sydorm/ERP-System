@@ -594,7 +594,7 @@ async def get_product_stock(
         Warehouse.name.label("warehouse"),
         AccumulationRegister.variant_id,
         func.sum(AccumulationRegister.quantity).label("quantity"),
-        func.max(func.cast(AccumulationRegister.extra_data, sa.String)).label("extra_data_str"),
+        func.max(func.cast(AccumulationRegister.extra_data, sa.Text)).label("extra_data_str"),
     ).join(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).filter(
