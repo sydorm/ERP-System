@@ -205,9 +205,20 @@ async def create_variant(
     db.flush()
     
     for val in variant_in.values:
-        db_val = VariantValue(**val.dict(), variant_id=db_var.id)
-        db.add(db_val)
+        val_dict = val.dict()
+        # Ensure UUIDs are correct
+        attr_id = val_dict.get('attribute_id')
+        opt_id = val_dict.get('option_id')
         
+        db_val = VariantValue(
+            variant_id=db_var.id,
+            attribute_id=UUID(str(attr_id)) if attr_id else None,
+            option_id=UUID(str(opt_id)) if opt_id else None,
+            text_value=val_dict.get('text_value')
+        )
+        if db_val.attribute_id:
+            db.add(db_val)
+    
     db.commit()
     db.refresh(db_var)
     return db_var
