@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import String
 from app.db.session import get_db
 from app.models import Warehouse, User
 from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate, WarehouseResponse
@@ -135,11 +136,11 @@ async def get_warehouses_stock(
                     for av in attr_vals:
                         name = av.get("name") or av.get("attribute_name") or "№"
                         val = av.get("value") or av.get("text_value") or av.get("option_value")
-                        if val:
+                        if val is not None:
                             char_parts.append(f"{name}: {val}" if name else str(val))
                             if not first_value:
                                 first_name = name
-                                first_value = val
+                                first_value = str(val)
             except:
                 pass
 

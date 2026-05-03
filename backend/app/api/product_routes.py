@@ -593,7 +593,7 @@ async def get_product_stock(
         Warehouse.name.label("warehouse"),
         AccumulationRegister.variant_id,
         func.sum(AccumulationRegister.quantity).label("quantity"),
-        func.max(func.cast(AccumulationRegister.extra_data, String)).label("extra_data_str"),
+        func.max(func.cast(AccumulationRegister.extra_data, sa.String)).label("extra_data_str"),
     ).join(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).filter(
@@ -659,11 +659,11 @@ async def get_product_stock(
                     for av in attr_vals:
                         name = av.get("name") or av.get("attribute_name") or "№"
                         val = av.get("value") or av.get("text_value") or av.get("option_value")
-                        if val:
+                        if val is not None:
                             fallback_parts.append(f"{name}: {val}" if name else str(val))
                             if not char_value:
                                 char_name = name
-                                char_value = val
+                                char_value = str(val)
                     if fallback_parts:
                         label = ", ".join(fallback_parts)
             except:
