@@ -370,6 +370,7 @@ const getAvailableOptions = (attrId) => {
   return attr?.options || []
 }
 
+const allAttributesSelected = computed(() => {
   // Only require selection of variant-generating attributes for the "currentVariant" logic
   // If no variant-generating attributes exist, we still check extraAttributes for the selection flow
   const targetAttrs = variantAttributes.value.length > 0 ? variantAttributes.value : extraAttributes.value
@@ -384,6 +385,7 @@ const getAvailableOptions = (attrId) => {
     return !!selections.value[a.id]
   })
 })
+
 
 
 const currentVariant = computed(() => {
