@@ -1149,12 +1149,17 @@ async def get_product_attributes(
     all_attrs_map = {a.id: a for a in (category_attrs + global_attrs + product_attrs)}
     
     results = []
+    # Get specific overrides from ProductAttribute if they exist
+    product_overrides = {pa.attribute_id: pa.generates_sku for pa in db.query(ProductAttribute).filter(ProductAttribute.product_id == product_id).all()}
+
     for attr in all_attrs_map.values():
         results.append({
             "id": attr.id,
             "name": attr.name,
             "type": attr.type.value if hasattr(attr.type, 'value') else str(attr.type),
-            "options": [{"id": o.id, "value": o.value} for o in attr.options]
+            "options": [{"id": o.id, "value": o.value} for o in attr.options],
+            "generates_variant": product_overrides.get(attr.id, attr.generates_variant),
+            "allow_manual_input": attr.allow_manual_input
         })
         
     return results

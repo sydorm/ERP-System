@@ -267,7 +267,7 @@ const fetchAttributes = async () => {
         const res = await api.get(`/api/v1/products/${props.product.id}/attributes`)
         allCategoryAttributes.value = (res.data || []).map(attr => ({
             ...attr,
-            generates_variant: true // Assume true for product-linked attributes
+            generates_variant: attr.generates_variant !== false // Respect backend flag
         }))
         // Initialize IMMEDIATELY after loading
         initializeSelector()
