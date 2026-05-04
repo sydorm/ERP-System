@@ -194,7 +194,7 @@
       <div class="selection-feedback">
         <transition name="el-fade-in-linear">
           <!-- Removed price card as requested by user -->
-          <div v-if="allAttributesSelected && !currentVariant" class="not-found-card">
+          <div v-if="allAttributesSelected && !currentVariant && variantAttributes.length > 0" class="not-found-card">
             <el-alert 
               title="Нова комбінація" 
               description="Ця комбінація характеристик ще не створена як окремий артикул, але ви можете її обрати."
@@ -203,6 +203,7 @@
               :closable="false" 
             />
           </div>
+
         </transition>
       </div>
     </div>
@@ -267,8 +268,9 @@ const fetchAttributes = async () => {
         const res = await api.get(`/api/v1/products/${props.product.id}/attributes`)
         allCategoryAttributes.value = (res.data || []).map(attr => ({
             ...attr,
-            generates_variant: attr.generates_variant !== false // Respect backend flag
+            generates_variant: attr.generates_variant === true || attr.generates_variant === 'true' // Explicitly check for true
         }))
+
         // Initialize IMMEDIATELY after loading
         initializeSelector()
     } catch (e) {
@@ -353,24 +355,27 @@ const initializeSelector = () => {
 
 const variantAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => a.generates_variant !== false)
+    return attrs.filter(a => a.generates_variant === true)
 })
+
 
 const extraAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => a.generates_variant === false)
+    return attrs.filter(a => a.generates_variant !== true)
 })
+
 
 const getAvailableOptions = (attrId) => {
   const attr = allCategoryAttributes.value.find(a => a.id === attrId)
   return attr?.options || []
 }
 
-const allAttributesSelected = computed(() => {
-  const attrs = variantAttributes.value.length > 0 ? variantAttributes.value : extraAttributes.value
-  if (attrs.length === 0) return false
+  // Only require selection of variant-generating attributes for the "currentVariant" logic
+  // If no variant-generating attributes exist, we still check extraAttributes for the selection flow
+  const targetAttrs = variantAttributes.value.length > 0 ? variantAttributes.value : extraAttributes.value
+  if (targetAttrs.length === 0) return false
   
-  return attrs.every(a => {
+  return targetAttrs.every(a => {
     if (a.type === 'DIMENSIONS') {
       const d = dimSelections.value[a.id]
       const s = selections.value[a.id]
@@ -379,6 +384,7 @@ const allAttributesSelected = computed(() => {
     return !!selections.value[a.id]
   })
 })
+
 
 const currentVariant = computed(() => {
   if (!allAttributesSelected.value) return null

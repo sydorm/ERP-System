@@ -1,129 +1,145 @@
 <template>
   <div class="attributes-manager h-full flex flex-col bg-white">
     <!-- Toolbar -->
-    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-shrink-0">
+    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-white to-slate-50/50 flex-shrink-0">
       <div>
-        <h2 class="text-lg font-bold text-slate-800">Характеристики товарів</h2>
-        <p class="text-xs text-slate-500 mt-1">Керування властивостями (колір, розмір, матеріал) та їх значеннями</p>
+        <div class="flex items-center gap-3 mb-1">
+          <h2 class="text-xl font-black text-slate-800 tracking-tight">Характеристики товарів</h2>
+          <div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+        </div>
+        <p class="text-sm text-slate-500 font-medium">Керування властивостями (колір, розмір, матеріал) та їх значеннями</p>
       </div>
-      <div class="flex gap-3">
+      <div class="flex gap-4">
         <el-input 
           v-model="searchQuery" 
-          placeholder="Пошук..." 
+          placeholder="Пошук за назвою..." 
           prefix-icon="Search"
           clearable
-          class="w-64"
+          class="w-72 premium-input"
         />
-        <el-button color="#4f46e5" :icon="Plus" @click="openAddAttrModal">
+        <el-button type="primary" class="premium-button-indigo" :icon="Plus" @click="openAddAttrModal">
           Створити характеристику
         </el-button>
       </div>
     </div>
 
+
     <!-- Data Table -->
     <div class="flex-1 overflow-auto p-5" v-loading="loading">
-      <el-table :data="filteredAttributes" style="width: 100%" class="custom-table" row-key="id" @expand-change="handleExpand">
+      <el-table :data="filteredAttributes" style="width: 100%" class="custom-table high-density" row-key="id" @expand-change="handleExpand">
         <el-table-column type="expand">
           <template #default="{ row }">
-            <div class="p-4 bg-slate-50/50 border-t border-b border-slate-100 pl-[60px]">
+            <div class="p-6 bg-slate-50/80 border-t border-b border-slate-100 pl-[60px] shadow-inner">
               <div v-if="row.type === 'SELECT' || row.type === 'COLOR' || row.type === 'DIMENSIONS'">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-sm font-semibold text-slate-700">Значення ({{ row.options?.length || 0 }})</h4>
-                  <el-button size="small" type="primary" plain @click="openAddOptionModal(row)">
-                    + Додати значення
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <el-icon class="text-indigo-500"><Operation /></el-icon>
+                    Доступні значення <span class="opacity-40">({{ row.options?.length || 0 }})</span>
+                  </h4>
+                  <el-button size="small" type="primary" class="premium-button-indigo-soft" @click="openAddOptionModal(row)">
+                    + Додати нове значення
                   </el-button>
                 </div>
                 
-                <div v-if="row.options && row.options.length > 0" class="flex flex-wrap gap-2">
+                <div v-if="row.options && row.options.length > 0" class="flex flex-wrap gap-2.5">
                   <div 
                     v-for="opt in row.options" 
                     :key="opt.id"
-                    class="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-sm text-slate-700 flex items-center gap-2 shadow-sm"
+                    class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 flex items-center gap-3 shadow-sm hover:border-indigo-300 transition-all group"
                   >
                     <div v-if="row.type === 'COLOR' && opt.color_code" 
-                         class="w-3.5 h-3.5 rounded-full border border-slate-200" 
+                         class="w-4 h-4 rounded-lg border border-slate-200 shadow-sm" 
                          :style="{ backgroundColor: opt.color_code }"></div>
                     <span>{{ opt.value }}</span>
-                    <el-icon class="ml-1 cursor-pointer text-slate-300 hover:text-red-500 transition-colors" @click.stop="handleDeleteOption(opt, row)">
+                    <el-icon class="ml-1 cursor-pointer text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100" @click.stop="handleDeleteOption(opt, row)">
                       <Close />
                     </el-icon>
                   </div>
                 </div>
-                <div v-else class="text-sm text-slate-400 italic">
-                  Ще немає доданих значень. Натисніть "Додати значення", щоб створити перший варіант.
+                <div v-else class="text-sm text-slate-400 font-medium py-4 text-center bg-white/50 rounded-2xl border border-dashed border-slate-200">
+                  Ще немає доданих значень.
                 </div>
               </div>
-              <div v-else class="text-sm text-slate-500 py-2">
-                Цей тип характеристики ({{ getTypeName(row.type) }}) не потребує наперед заданих значень полів. Значення вписуються вручну в картці товару.
+              <div v-else class="text-sm text-slate-500 py-3 font-medium flex items-center gap-2">
+                <el-icon class="text-slate-300"><InfoFilled /></el-icon>
+                Тип "{{ getTypeName(row.type) }}" не потребує попередніх значень.
               </div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column prop="name" label="Назва" min-width="200">
+        <el-table-column prop="name" label="Характеристика" min-width="220">
           <template #default="{ row }">
-            <div class="flex items-center gap-2">
-              <el-icon v-if="row.icon" class="text-slate-400 text-lg"><component :is="row.icon" /></el-icon>
-              <span class="font-medium text-slate-800">{{ row.name }}</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                <el-icon class="text-lg"><component :is="row.icon || 'Operation'" /></el-icon>
+              </div>
+              <div>
+                <span class="font-black text-slate-900 block">{{ row.name }}</span>
+                <span v-if="row.description" class="text-[10px] text-slate-400 font-medium truncate max-w-[180px]">{{ row.description }}</span>
+              </div>
             </div>
           </template>
         </el-table-column>
         
-        <el-table-column prop="type" label="Тип" width="130">
+        <el-table-column prop="type" label="Тип даних" width="140">
           <template #default="{ row }">
-            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="getTypeClass(row.type)">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider" :class="getTypeClass(row.type)">
               {{ getTypeName(row.type) }}
             </span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="generates_variant" label="Генерує варіант" width="150" align="center">
+        <el-table-column prop="generates_variant" label="Генерація SKU" width="140" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.generates_variant ? 'success' : 'info'" size="small">
-              {{ row.generates_variant ? '✅ Так' : '❌ Ні' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="Категорії" min-width="180">
-          <template #default="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <el-tag v-if="!row.category_codes || row.category_codes.length === 0" size="small" type="info">Всі</el-tag>
-              <el-tag v-else v-for="code in row.category_codes.slice(0, 3)" :key="code" size="small" class="mb-1">
-                {{ getCategoryName(code) }}
-              </el-tag>
-              <el-tooltip v-if="row.category_codes && row.category_codes.length > 3" :content="getCategoryNames(row.category_codes)" placement="top">
-                <el-tag size="small" type="info" class="mb-1">+{{ row.category_codes.length - 3 }}</el-tag>
-              </el-tooltip>
+            <div class="flex justify-center">
+              <div v-if="row.generates_variant" class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black flex items-center gap-1.5 border border-emerald-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                АКТИВНО
+              </div>
+              <div v-else class="px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-[10px] font-black border border-slate-100">
+                ВИМКНЕНО
+              </div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column prop="description" label="Опис" min-width="150">
+        <el-table-column label="Використання" min-width="200">
           <template #default="{ row }">
-            <span class="text-xs text-slate-500 truncate block max-w-xs" :title="row.description || ''">{{ row.description || '—' }}</span>
+            <div class="flex flex-wrap gap-1.5">
+              <span v-if="!row.category_codes || row.category_codes.length === 0" class="text-[10px] font-bold text-slate-400 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-100">ВСІ КАТЕГОРІЇ</span>
+              <template v-else>
+                <span v-for="code in row.category_codes.slice(0, 2)" :key="code" class="text-[10px] font-bold text-indigo-600 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100">
+                  {{ getCategoryName(code).toUpperCase() }}
+                </span>
+                <el-tooltip v-if="row.category_codes.length > 2" :content="getCategoryNames(row.category_codes)" placement="top">
+                  <span class="text-[10px] font-bold text-slate-400 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-100">+{{ row.category_codes.length - 2 }}</span>
+                </el-tooltip>
+              </template>
+            </div>
           </template>
         </el-table-column>
 
-        <el-table-column fixed="right" width="80" align="center">
+        <el-table-column fixed="right" width="60" align="center">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
-              <el-button text circle>
+              <el-button text circle class="hover:bg-slate-50">
                 <el-icon class="text-slate-400 rotate-90"><MoreFilled /></el-icon>
               </el-button>
               <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="edit">Редагувати</el-dropdown-item>
+                <el-dropdown-menu class="premium-dropdown">
+                  <el-dropdown-item command="edit"><el-icon><EditPen /></el-icon> Редагувати</el-dropdown-item>
                   <el-dropdown-item v-if="row.type === 'SELECT' || row.type === 'COLOR' || row.type === 'DIMENSIONS'" command="add_option">
-                     Додати значення
+                     <el-icon><Plus /></el-icon> Значення
                   </el-dropdown-item>
-                  <el-dropdown-item command="delete" divided class="text-red-500">Видалити</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided class="text-red-500"><el-icon><Delete /></el-icon> Видалити</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
+
     </div>
 
     <!-- Modal: Add/Edit Attribute -->
@@ -242,7 +258,8 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Search, MoreFilled, Menu, Collection, Operation, Close } from '@element-plus/icons-vue'
+import { Plus, Search, MoreFilled, Menu, Collection, Operation, Close, InfoFilled, EditPen, Delete } from '@element-plus/icons-vue'
+
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 

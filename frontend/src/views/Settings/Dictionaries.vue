@@ -1,58 +1,63 @@
 <template>
   <div class="dictionaries-container p-6 bg-slate-50 min-h-screen">
     <!-- Header -->
-    <div class="mb-6 flex justify-between items-end">
+    <div class="mb-8 flex justify-between items-center">
       <div>
-        <h1 class="text-3xl font-bold text-slate-800 mb-2">Довідники</h1>
-        <p class="text-slate-500">Системні налаштування та класифікатори</p>
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Довідники</h1>
+        <div class="flex items-center gap-2">
+           <span class="w-8 h-1 bg-indigo-500 rounded-full"></span>
+           <p class="text-slate-500 font-medium">Керування системними налаштуваннями та бізнес-класифікаторами</p>
+        </div>
       </div>
     </div>
 
+
     <!-- Horizontal Tabs (Main Sections) -->
-    <div class="mb-6 border-b border-slate-200">
-      <div class="flex space-x-8">
+    <div class="mb-8 bg-white/50 backdrop-blur-md p-1 rounded-2xl border border-slate-200 inline-flex shadow-sm">
+      <div class="flex">
         <button 
           v-for="section in sections" 
           :key="section.id"
           @click="activeSection = section.id"
-          class="pb-4 px-2 text-sm font-semibold transition-colors duration-200 relative"
-          :class="activeSection === section.id ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'"
+          class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden"
+          :class="activeSection === section.id 
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+            : 'text-slate-500 hover:text-slate-800 hover:bg-white'"
         >
           {{ section.name }}
-          <div 
-            v-if="activeSection === section.id" 
-            class="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"
-          ></div>
         </button>
       </div>
     </div>
 
-    <div class="flex gap-6 h-[calc(100vh-200px)]">
+
+    <div class="flex gap-8 items-stretch h-[calc(100vh-280px)]">
+
       <!-- Left Sidebar (Sub-categories) -->
-      <div class="w-64 flex-shrink-0">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <div class="w-72 flex-shrink-0 flex flex-col">
+        <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden flex flex-col h-full">
+          <div class="p-5 border-b border-slate-100 bg-slate-50/80">
+            <h3 class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em]">
               {{ currentSectionName }}
             </h3>
           </div>
-          <div class="p-2 space-y-1">
+          <div class="p-3 space-y-1 overflow-y-auto flex-1 custom-scrollbar">
             <template v-if="activeSection === 'numbering'">
               <button
                 v-for="seq in sequences"
                 :key="seq.id"
                 @click="handleSequenceSelect(seq)"
-                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-between group"
                 :class="activeSequence === seq.id 
-                  ? 'bg-indigo-50 text-indigo-700' 
-                  : 'text-slate-600 hover:bg-slate-50'"
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                  : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'"
               >
                 <div class="flex flex-col">
                   <span>{{ docTypeLabels[seq.document_type] || seq.document_type }}</span>
-                  <span class="text-[10px] text-slate-400 font-mono">
+                  <span class="text-[10px] font-mono opacity-60">
                     {{ seq.prefix }}{{ String(seq.next_number).padStart(seq.padding, '0') }}
                   </span>
                 </div>
+                <el-icon v-if="activeSequence === seq.id" class="text-white"><ArrowRightBold /></el-icon>
               </button>
             </template>
             <template v-else>
@@ -60,24 +65,29 @@
                 v-for="dict in currentSectionDictionaries"
                 :key="dict.code"
                 @click="handleDictionarySelect(dict.code)"
-                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-between group"
                 :class="activeDictionary === dict.code 
-                  ? 'bg-indigo-50 text-indigo-700' 
-                  : 'text-slate-600 hover:bg-slate-50'"
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                  : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'"
               >
                 <span>{{ dict.name }}</span>
-                <span v-if="counts[dict.code] !== undefined" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                <span 
+                  v-if="counts[dict.code] !== undefined" 
+                  class="text-[10px] px-2 py-0.5 rounded-full font-black transition-colors"
+                  :class="activeDictionary === dict.code ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-500'"
+                >
                   {{ counts[dict.code] }}
                 </span>
               </button>
             </template>
           </div>
-
         </div>
       </div>
 
+
       <!-- Main Content Area -->
-      <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+      <div class="flex-1 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 flex flex-col overflow-hidden">
+
         
         <!-- CUSTOM COMPONENT FOR ATTRIBUTES -->
         <ProductAttributesManager v-if="activeDictionary === 'PRODUCT_ATTRIBUTES'" />
@@ -136,24 +146,28 @@
         <!-- STANDARD DICTIONARY UI -->
         <template v-else>
           <!-- Toolbar -->
-          <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+          <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-white to-slate-50/50">
             <div>
-              <h2 class="text-lg font-bold text-slate-800">{{ currentDictionary?.name }}</h2>
-              <p class="text-xs text-slate-500 mt-1">{{ currentDictionary?.description }}</p>
+              <div class="flex items-center gap-3 mb-1">
+                <h2 class="text-xl font-black text-slate-800">{{ currentDictionary?.name }}</h2>
+                <div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+              </div>
+              <p class="text-sm text-slate-500 font-medium">{{ currentDictionary?.description }}</p>
             </div>
-          <div class="flex gap-3">
+          <div class="flex gap-4">
             <el-input 
               v-model="searchQuery" 
-              placeholder="Пошук..." 
+              placeholder="Пошук за назвою або кодом..." 
               prefix-icon="Search"
               clearable
-              class="w-64"
+              class="w-80 premium-input"
             />
-            <el-button type="primary" color="#4f46e5" :icon="Plus" @click="openAddModal">
-              Додати
+            <el-button type="primary" class="premium-button-indigo" :icon="Plus" @click="openAddModal">
+              Створити запис
             </el-button>
           </div>
         </div>
+
 
         <!-- Data Table -->
         <div class="flex-1 overflow-auto p-5" v-loading="loading">
@@ -299,7 +313,8 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Plus, Search, MoreFilled, WarningFilled, Document } from '@element-plus/icons-vue'
+import { Plus, Search, MoreFilled, WarningFilled, Document, ArrowRightBold } from '@element-plus/icons-vue'
+
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import api from '@/api'
