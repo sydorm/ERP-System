@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import String, Text
+from app.db.session import get_db
 import sqlalchemy as sa
 from app.models import Warehouse, User
 from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate, WarehouseResponse
