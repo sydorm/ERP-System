@@ -1,3 +1,5 @@
+<template>
+  <div class="erp-page-container">
     <!-- ===== HEADER SECTION (BLOCK 1) ===== -->
     <div class="erp-header-section">
       <div class="erp-header-top">
