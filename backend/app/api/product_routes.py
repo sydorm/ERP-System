@@ -586,102 +586,74 @@ async def get_product_stock(
 ):
     """
     Get stock levels for a product across all warehouses, broken down by variant.
+    Includes human-readable variant display names.
     """
-    from app.models import AccumulationRegister, Warehouse
-    from sqlalchemy import func
+    from app.models import AccumulationRegister, Warehouse, RegisterType
+    from app.models.variant import ProductVariant, VariantValue
+    from app.models.attribute import Attribute, AttributeOption
+    from sqlalchemy import func, case
 
-    results = db.query(
-        Warehouse.name.label("warehouse"),
-        AccumulationRegister.variant_id,
-        func.sum(AccumulationRegister.quantity).label("quantity"),
-        func.max(func.cast(AccumulationRegister.extra_data, sa.Text)).label("extra_data_str"),
+    # Subquery to aggregate characteristic names for each variant
+    # e.g., "Color: Blue, Size: XL"
+    variant_label_sub = db.query(
+        VariantValue.variant_id,
+        func.string_agg(
+            case(
+                (AttributeOption.id != None, Attribute.name + ": " + AttributeOption.value),
+                else_=Attribute.name + ": " + VariantValue.text_value
+            ),
+            ", "
+        ).label("variant_display_name")
     ).join(
-        Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
+        Attribute, VariantValue.attribute_id == Attribute.id
+    ).outerjoin(
+        AttributeOption, VariantValue.option_id == AttributeOption.id
+    ).group_by(
+        VariantValue.variant_id
+    ).subquery()
+
+    # Main query: aggregate stock quantities from AccumulationRegister
+    results = db.query(
+        AccumulationRegister.warehouse_id,
+        Warehouse.name.label("warehouse_name"),
+        AccumulationRegister.variant_id,
+        variant_label_sub.c.variant_display_name,
+        func.sum(case(
+            (AccumulationRegister.register_type == RegisterType.STOCK, AccumulationRegister.quantity),
+            else_=0
+        )).label("quantity")
+    ).join(
+        Warehouse, AccumulationRegister.warehouse_id == Warehouse.id
+    ).outerjoin(
+        variant_label_sub, AccumulationRegister.variant_id == variant_label_sub.c.variant_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
-        AccumulationRegister.product_id == product_id,
-        AccumulationRegister.register_type == RegisterType.STOCK,
+        AccumulationRegister.product_id == product_id
     ).group_by(
+        AccumulationRegister.warehouse_id,
         Warehouse.name,
         AccumulationRegister.variant_id,
+        variant_label_sub.c.variant_display_name
     ).all()
-
-    variant_skus: dict = {}
-    variant_labels: dict = {}
-    variant_char_info: dict = {}
-    variant_ids = [r.variant_id for r in results if r.variant_id]
-    if variant_ids:
-        from app.models.variant import ProductVariant, VariantValue
-        from sqlalchemy.orm import joinedload
-        
-        # Using joinedload to ensure we get attributes and options
-        variants = db.query(ProductVariant).options(
-            joinedload(ProductVariant.values).joinedload(VariantValue.attribute),
-            joinedload(ProductVariant.values).joinedload(VariantValue.option)
-        ).filter(ProductVariant.id.in_(variant_ids)).all()
-        
-        for v in variants:
-            vid = str(v.id)
-            variant_skus[vid] = v.sku
-            
-            char_parts = []
-            first_name = ""
-            first_value = ""
-            
-            for vv in v.values:
-                attr_name = vv.attribute.name if vv.attribute else "Характеристика"
-                val_text = vv.option.value if vv.option else vv.text_value
-                
-                if val_text:
-                    char_parts.append(f"{attr_name}: {val_text}" if attr_name else val_text)
-                    if not first_value:
-                        first_name = attr_name
-                        first_value = val_text
-            
-            variant_labels[vid] = ", ".join(char_parts) if char_parts else v.sku
-            variant_char_info[vid] = {"name": first_name, "value": first_value}
 
     stock_items = []
     for r in results:
-        vid = str(r.variant_id) if r.variant_id else None
-        
-        char_name = variant_char_info.get(vid, {}).get("name", "") if vid else ""
-        char_value = variant_char_info.get(vid, {}).get("value", "") if vid else ""
-        label = variant_labels.get(vid) if vid else None
-
-        # Fallback to extra_data if no label/char info found from variant
-        if (not label or label == variant_skus.get(vid)) and r.extra_data_str:
-            try:
-                import json
-                extra = json.loads(r.extra_data_str)
-                attr_vals = extra.get("attribute_values", [])
-                if isinstance(attr_vals, list):
-                    fallback_parts = []
-                    for av in attr_vals:
-                        name = av.get("name") or av.get("attribute_name") or "№"
-                        val = av.get("value") or av.get("text_value") or av.get("option_value")
-                        if val is not None:
-                            fallback_parts.append(f"{name}: {val}" if name else str(val))
-                            if not char_value:
-                                char_name = name
-                                char_value = str(val)
-                    if fallback_parts:
-                        label = ", ".join(fallback_parts)
-            except:
-                pass
-
+        qty = float(r.quantity)
+        # Reserves are not yet fully implemented in AccumulationRegister types, using 0 for now
+        reserve = 0.0 
         stock_items.append({
-            "warehouse": r.warehouse,
-            "variant_id": vid,
-            "variant_sku": variant_skus.get(vid) if vid else None,
-            "variant_label": label,
-            "characteristic_name": char_name,
-            "characteristic_value": char_value,
-            "quantity": float(r.quantity),
-            "reserved": 0,
-            "available": float(r.quantity),
+            "warehouse_id": r.warehouse_id,
+            "warehouse_name": r.warehouse_name,
+            "variant_id": r.variant_id,
+            "variant_display_name": r.variant_display_name,
+            "quantity": qty,
+            "reserve": reserve,
+            "available": qty - reserve,
             "minLevel": 5,
         })
+
+    return stock_items
+
 
     return stock_items
 

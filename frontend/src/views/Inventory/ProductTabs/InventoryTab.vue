@@ -35,7 +35,7 @@
         <template #default="scope">
           <div class="warehouse-cell" v-if="!scope.row.isVariant">
             <el-icon class="mr-2"><OfficeBuilding /></el-icon>
-            <span>{{ scope.row.warehouse }}</span>
+            <span>{{ scope.row.warehouse_name }}</span>
           </div>
           <div class="variant-cell" v-else>
             <span class="variant-label">{{ scope.row.label }}</span>
@@ -51,10 +51,10 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="reserved" label="Резерв" width="160" align="right">
+      <el-table-column prop="reserve" label="Резерв" width="160" align="right">
         <template #default="scope">
           <span class="qty-reserved text-amber-500">
-            {{ formatQty(scope.row.reserved) }}
+            {{ formatQty(scope.row.reserve) }}
           </span>
         </template>
       </el-table-column>
@@ -112,32 +112,31 @@ const groupedStock = computed(() => {
   const map = new Map()
 
   for (const row of props.stockLevels) {
-    if (!map.has(row.warehouse)) {
-      map.set(row.warehouse, {
-        rowKey: row.warehouse,
-        warehouse: row.warehouse,
+    const whName = row.warehouse_name || row.warehouse || 'Невідомий склад'
+    if (!map.has(whName)) {
+      map.set(whName, {
+        rowKey: whName,
+        warehouse_name: whName,
         quantity: 0,
-        reserved: 0,
+        reserve: 0,
         available: 0,
         minLevel: 5,
         isVariant: false,
         children: [],
       })
     }
-    const entry = map.get(row.warehouse)
+    const entry = map.get(whName)
     entry.quantity += parseFloat(row.quantity) || 0
-    entry.reserved += parseFloat(row.reserved) || 0
+    entry.reserve += parseFloat(row.reserve) || 0
     entry.available += parseFloat(row.available) || 0
 
     if (row.variant_id) {
       entry.children.push({
-        rowKey: `${row.warehouse}__${row.variant_id}`,
-        warehouse: row.warehouse,
-        label: (row.characteristic_name && row.characteristic_value) 
-          ? `${row.characteristic_name}: ${row.characteristic_value}`
-          : (row.characteristic_value || row.variant_name || row.variant_label || row.variant_sku || row.variant_id),
+        rowKey: `${whName}__${row.variant_id}`,
+        warehouse_name: whName,
+        label: row.variant_display_name || row.variant_label || row.variant_sku || row.variant_id,
         quantity: parseFloat(row.quantity) || 0,
-        reserved: parseFloat(row.reserved) || 0,
+        reserve: parseFloat(row.reserve) || 0,
         available: parseFloat(row.available) || 0,
         minLevel: null,
         isVariant: true,

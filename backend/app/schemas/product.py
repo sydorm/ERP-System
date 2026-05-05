@@ -132,3 +132,13 @@ class ProductAttributeLight(BaseModel):
 
     class Config:
         from_attributes = True
+
+class StockByWarehouse(BaseModel):
+    warehouse_id: UUID
+    warehouse_name: str
+    variant_id: Optional[UUID] = None
+    variant_display_name: Optional[str] = None
+    quantity: float
+    reserve: float
+    available: float
+    minLevel: int = 5
