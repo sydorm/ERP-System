@@ -169,23 +169,46 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Генерує варіант SKU" prop="generates_variant">
-          <el-switch v-model="attrForm.generates_variant" active-text="Так" inactive-text="Ні" />
-          <div class="text-xs text-slate-500 mt-1">
-            Якщо ввімкнено, ця характеристика буде використовуватись для автоматичної генерації комбінацій (варіантів) товару.
+        <div class="grid grid-cols-2 gap-6 mt-4">
+          <!-- Documents Section -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <el-icon><Document /></el-icon> Поведінка в документах
+            </h4>
+            <div class="space-y-2">
+              <el-checkbox v-model="attrForm.show_in_purchase_receipt" label="Показувати в прибутковій накладній" class="w-full !mr-0" />
+              <el-checkbox v-model="attrForm.show_in_purchase_order" label="Показувати в замовленні пост." class="w-full !mr-0" />
+              <el-checkbox v-model="attrForm.show_in_sales_order" label="Показувати в замовленні покупця" class="w-full !mr-0" />
+              <el-checkbox v-model="attrForm.required" label="Обов'язкове для заповнення" class="w-full !mr-0" />
+            </div>
           </div>
-        </el-form-item>
 
-        <div v-if="attrForm.type === 'SELECT' || attrForm.type === 'DIMENSIONS'" class="bg-indigo-50/50 p-4 rounded-lg mb-4 border border-indigo-100">
+          <!-- Stock/Inventory Section -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <el-icon><Box /></el-icon> Складський облік
+            </h4>
+            <div class="space-y-2">
+              <el-checkbox v-model="attrForm.track_stock_separately" label="Вести залишки в розрізі цієї хар." class="w-full !mr-0" />
+              <el-checkbox v-model="attrForm.block_if_empty" label="Блокувати проведення якщо пусто" class="w-full !mr-0" />
+            </div>
+
+            <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider mt-4 mb-3 flex items-center gap-2">
+              <el-icon><PriceTag /></el-icon> Номенклатура
+            </h4>
+            <div class="space-y-2">
+              <el-checkbox v-model="attrForm.generates_variant" label="Впливає на генерацію SKU" class="w-full !mr-0" />
+            </div>
+          </div>
+        </div>
+
+        <div v-if="attrForm.type === 'SELECT' || attrForm.type === 'DIMENSIONS'" class="bg-indigo-50/50 p-4 rounded-lg mt-4 mb-4 border border-indigo-100">
           <h4 class="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
             <el-icon><Operation /></el-icon> Налаштування конфігуратора (BOM)
           </h4>
           
           <el-form-item label="Дозволити ручне введення" prop="allow_manual_input" class="mb-3">
             <el-switch v-model="attrForm.allow_manual_input" active-text="Так" inactive-text="Ні" />
-            <div class="text-xs text-slate-500 mt-1">
-              Якщо ввімкнено, у замовленні можна буде вписати власний розмір (напр. "95"), замість вибору зі списку.
-            </div>
           </el-form-item>
 
           <el-form-item label="Впливає на габарит (BOM)" prop="mapped_dimension" class="mb-0">
@@ -195,16 +218,10 @@
               <el-option label="Ширина (W)" value="width_mm" />
               <el-option label="Висота (H)" value="height_mm" />
             </el-select>
-            <div class="text-xs text-slate-500 mt-1">
-              Значення цієї характеристики автоматично підставиться у Розумний Калькулятор замість базового габариту товару.
-            </div>
           </el-form-item>
 
           <el-form-item v-if="attrForm.type === 'DIMENSIONS'" label="Формат варіанту" prop="dimension_format" class="mt-3 mb-0">
             <el-input v-model="attrForm.dimension_format" placeholder="{width}×{height}" />
-            <div class="text-xs text-slate-500 mt-1">
-              Як буде виглядати назва характеристики (напр. {width}×{height} або {width}x{height})
-            </div>
           </el-form-item>
         </div>
 
@@ -292,7 +309,13 @@ const attrForm = reactive({
   allow_manual_input: false,
   mapped_dimension: '',
   dimension_format: '{width}×{height}',
-  generates_variant: true
+  generates_variant: true,
+  show_in_purchase_receipt: true,
+  show_in_purchase_order: true,
+  show_in_sales_order: true,
+  required: false,
+  track_stock_separately: true,
+  block_if_empty: false
 })
 
 const optForm = reactive({
@@ -371,6 +394,12 @@ const openAddAttrModal = () => {
   attrForm.allow_manual_input = false
   attrForm.mapped_dimension = null
   attrForm.generates_variant = true
+  attrForm.show_in_purchase_receipt = true
+  attrForm.show_in_purchase_order = true
+  attrForm.show_in_sales_order = true
+  attrForm.required = false
+  attrForm.track_stock_separately = true
+  attrForm.block_if_empty = false
   attrModalVisible.value = true
 }
 
@@ -509,6 +538,12 @@ const handleCommand = (cmd, row) => {
     if (!attrForm.category_codes) attrForm.category_codes = []
     if (attrForm.allow_manual_input === undefined) attrForm.allow_manual_input = false
     if (attrForm.generates_variant === undefined) attrForm.generates_variant = true
+    if (attrForm.show_in_purchase_receipt === undefined) attrForm.show_in_purchase_receipt = true
+    if (attrForm.show_in_purchase_order === undefined) attrForm.show_in_purchase_order = true
+    if (attrForm.show_in_sales_order === undefined) attrForm.show_in_sales_order = true
+    if (attrForm.required === undefined) attrForm.required = false
+    if (attrForm.track_stock_separately === undefined) attrForm.track_stock_separately = true
+    if (attrForm.block_if_empty === undefined) attrForm.block_if_empty = false
     attrModalVisible.value = true
   } else if (cmd === 'delete') {
     ElMessageBox.confirm('Ви впевнені, що хочете видалити характеристику і всі її значення?', 'Видалити', { type: 'warning' })

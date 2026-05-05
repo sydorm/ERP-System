@@ -11,6 +11,14 @@ class ProductAttributeBase(BaseModel):
     option_id: Optional[UUID] = None
     text_value: Optional[str] = None
     generates_sku: bool = True
+    
+    show_in_purchase_receipt: bool = True
+    show_in_purchase_order: bool = True
+    show_in_sales_order: bool = True
+    required: bool = False
+    track_stock_separately: bool = True
+    block_if_empty: bool = False
+    affects_sku: bool = True
 
 
 class ProductAttributeCreate(ProductAttributeBase):

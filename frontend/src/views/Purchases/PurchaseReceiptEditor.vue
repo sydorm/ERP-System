@@ -273,6 +273,30 @@ const hasAnyCharacteristics = computed(() => {
   })
 })
 
+const statusLabel = computed(() => {
+  const s = form.status || 'draft'
+  if (s === 'posted') return 'Проведено'
+  return 'Чернетка'
+})
+
+const statusBadgeClass = computed(() => {
+  const s = form.status || 'draft'
+  return s === 'posted' ? 'status-done' : 'status-draft'
+})
+
+const paymentStatusLabel = computed(() => {
+  // Simplified logic for now
+  return 'Не оплачено'
+})
+
+const paymentStatusClass = computed(() => {
+  return 'ps-badge--red'
+})
+
+const selectedSupplierObj = computed(() => {
+  return suppliers.value.find(s => s.id === form.supplier_id)
+})
+
 // ===== ACTIONS =====
 const goBack = () => router.push('/purchases/receipts')
 const handlePrint = () => ElMessage.info('Друк накладної (в розробці)')

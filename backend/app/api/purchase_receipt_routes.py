@@ -62,11 +62,34 @@ async def create_purchase_receipt(
     
     # 2. Add Lines
     from app.models.variant import ProductVariant, VariantValue
-    from app.models.product import Product
+    from app.models.product import Product, ProductAttribute
+    from app.models.attribute import Attribute
     
+    def validate_line_attributes(product_id, vals):
+        # Fetch configuration for this product's attributes
+        configs = db.query(ProductAttribute).filter(ProductAttribute.product_id == product_id).all()
+        for cfg in configs:
+            if cfg.required or cfg.block_if_empty:
+                attr_id = str(cfg.attribute_id)
+                found = False
+                for v in (vals or []):
+                    if str(v.get("attribute_id")) == attr_id:
+                        if v.get("option_id") or v.get("text_value") or v.get("bool_value"):
+                            found = True
+                            break
+                if not found:
+                    attr_name = db.query(Attribute.name).filter(Attribute.id == cfg.attribute_id).scalar() or "Характеристика"
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Характеристика '{attr_name}' є обов'язковою для цього товару."
+                    )
+
     resolved_variants = {}
     
     for line_data in receipt_data.lines:
+        # Validate attributes first
+        validate_line_attributes(line_data.product_id, line_data.attribute_values)
+        
         resolved_variant_id = line_data.variant_id
         
         if not resolved_variant_id and line_data.attribute_values:

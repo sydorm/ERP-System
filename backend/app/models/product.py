@@ -20,6 +20,15 @@ class ProductAttribute(BaseModel):
     text_value = Column(String(500), nullable=True)
     generates_sku = Column(Boolean, default=True, nullable=False)
     
+    # New configuration fields
+    show_in_purchase_receipt = Column(Boolean, default=True, nullable=False)
+    show_in_purchase_order   = Column(Boolean, default=True, nullable=False)
+    show_in_sales_order      = Column(Boolean, default=True, nullable=False)
+    required                 = Column(Boolean, default=False, nullable=False)
+    track_stock_separately   = Column(Boolean, default=True, nullable=False)
+    block_if_empty           = Column(Boolean, default=False, nullable=False)
+    affects_sku              = Column(Boolean, default=True, nullable=False)
+    
     # Relationships
     product = relationship("Product", back_populates="product_attributes")
     attribute = relationship("Attribute")

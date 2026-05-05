@@ -25,6 +25,14 @@ class Attribute(BaseModel):
     is_archived = Column(Boolean, default=False, nullable=False)
     generates_variant = Column(Boolean, default=True, nullable=False)
     
+    # New configuration fields (Default behavior)
+    show_in_purchase_receipt = Column(Boolean, default=True, nullable=False)
+    show_in_purchase_order   = Column(Boolean, default=True, nullable=False)
+    show_in_sales_order      = Column(Boolean, default=True, nullable=False)
+    required                 = Column(Boolean, default=False, nullable=False)
+    track_stock_separately   = Column(Boolean, default=True, nullable=False)
+    block_if_empty           = Column(Boolean, default=False, nullable=False)
+    
     # Configure-To-Order Settings
     allow_manual_input = Column(Boolean, default=False, nullable=False)
     mapped_dimension = Column(String(50), nullable=True) # "length_mm", "width_mm", "height_mm"

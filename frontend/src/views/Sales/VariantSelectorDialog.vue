@@ -355,13 +355,14 @@ const initializeSelector = () => {
 
 const variantAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => a.generates_variant === true)
+    // Use affects_sku to determine if it belongs in the primary SKU-generating section
+    return attrs.filter(a => a.affects_sku === true || a.generates_variant === true)
 })
-
 
 const extraAttributes = computed(() => {
     const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
-    return attrs.filter(a => a.generates_variant !== true)
+    // Show only those marked for sales order visibility that DON'T affect SKU
+    return attrs.filter(a => (a.affects_sku === false && a.generates_variant !== true) && a.show_in_sales_order !== false)
 })
 
 
@@ -371,12 +372,13 @@ const getAvailableOptions = (attrId) => {
 }
 
 const allAttributesSelected = computed(() => {
-  // Only require selection of variant-generating attributes for the "currentVariant" logic
-  // If no variant-generating attributes exist, we still check extraAttributes for the selection flow
-  const targetAttrs = variantAttributes.value.length > 0 ? variantAttributes.value : extraAttributes.value
-  if (targetAttrs.length === 0) return false
+  const attrs = allCategoryAttributes.value.length ? allCategoryAttributes.value : []
+  // Only require selection of attributes marked as 'required'
+  const requiredAttrs = attrs.filter(a => a.required === true || a.is_required === true || a.generates_variant === true)
   
-  return targetAttrs.every(a => {
+  if (requiredAttrs.length === 0) return true // Nothing required? Then we're good
+  
+  return requiredAttrs.every(a => {
     if (a.type === 'DIMENSIONS') {
       const d = dimSelections.value[a.id]
       const s = selections.value[a.id]

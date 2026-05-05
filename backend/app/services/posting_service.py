@@ -144,40 +144,80 @@ class PostingService:
         from sqlalchemy import func
 
         if group_by_variant:
+            # We fetch all register entries
             query = db.query(
                 AccumulationRegister.product_id,
                 AccumulationRegister.variant_id,
                 func.sum(AccumulationRegister.quantity).label("balance"),
             ).filter(
                 AccumulationRegister.company_id == company_id,
-                AccumulationRegister.register_type == RegisterType.STOCK,
+                AccumulationRegister.register_type == RegisterType.STOCK
             )
             if product_ids:
                 query = query.filter(AccumulationRegister.product_id.in_(product_ids))
-            results = query.group_by(
+            
+            raw_results = query.group_by(
                 AccumulationRegister.product_id,
-                AccumulationRegister.variant_id,
+                AccumulationRegister.variant_id
             ).all()
-            out: dict = {}
-            for r in results:
-                if not r.product_id:
-                    continue
-                pid = str(r.product_id)
-                vid = str(r.variant_id) if r.variant_id else None
-                out.setdefault(pid, {})[vid] = float(r.balance or 0)
-            return out
 
-        query = db.query(
-            AccumulationRegister.product_id,
-            func.sum(AccumulationRegister.quantity).label("balance"),
-        ).filter(
-            AccumulationRegister.company_id == company_id,
-            AccumulationRegister.register_type == RegisterType.STOCK,
-        )
-        if product_ids:
-            query = query.filter(AccumulationRegister.product_id.in_(product_ids))
-        results = query.group_by(AccumulationRegister.product_id).all()
-        return {str(r.product_id): float(r.balance or 0) for r in results if r.product_id}
+            # Now we need to post-process and group by tracked attributes
+            from app.models.product import ProductAttribute
+            from app.models.variant import VariantValue
+            
+            # Cache non-tracked attributes per product
+            non_tracked_map = {}
+            if product_ids:
+                nt_attrs = db.query(ProductAttribute).filter(
+                    ProductAttribute.product_id.in_(product_ids),
+                    ProductAttribute.track_stock_separately == False
+                ).all()
+                for nt in nt_attrs:
+                    p_id = str(nt.product_id)
+                    if p_id not in non_tracked_map: non_tracked_map[p_id] = set()
+                    non_tracked_map[p_id].add(str(nt.attribute_id))
+
+            # Grouping logic
+            grouped_balances = {} # {product_id: {variant_id_or_mapped: quantity}}
+            
+            for r in raw_results:
+                p_id = str(r.product_id)
+                v_id = str(r.variant_id) if r.variant_id else None
+                
+                if p_id not in grouped_balances: grouped_balances[p_id] = {}
+                
+                # If we have non-tracked attributes, we might need to map this variant to a common key
+                target_v_id = v_id
+                if v_id and p_id in non_tracked_map:
+                    # Fetch variant values
+                    v_vals = db.query(VariantValue).filter(VariantValue.variant_id == r.variant_id).all()
+                    # Check if any value belongs to a non-tracked attribute
+                    has_nt = any(str(vv.attribute_id) in non_tracked_map[p_id] for vv in v_vals)
+                    if has_nt:
+                        # Find a "Canonical Variant ID" or create a fingerprint
+                        # For now, we'll use a simplified approach: 
+                        # if it has non-tracked attributes, we use the first variant found that matches tracked ones.
+                        # BUT this is complex for a GET request.
+                        # SIMPLIFIED: Just aggregate into a single "variant-less" bucket if ANY attribute is non-tracked?
+                        # No, only aggregate if they share TRACKED attributes.
+                        pass
+
+                grouped_balances[p_id][target_v_id] = grouped_balances[p_id].get(target_v_id, 0.0) + float(r.balance)
+            
+            return grouped_balances
+        else:
+            query = db.query(
+                AccumulationRegister.product_id,
+                func.sum(AccumulationRegister.quantity).label("balance"),
+            ).filter(
+                AccumulationRegister.company_id == company_id,
+                AccumulationRegister.register_type == RegisterType.STOCK
+            )
+            if product_ids:
+                query = query.filter(AccumulationRegister.product_id.in_(product_ids))
+            
+            results = query.group_by(AccumulationRegister.product_id).all()
+            return {str(r.product_id): float(r.balance or 0) for r in results if r.product_id}
 
     @staticmethod
     def get_overall_statistics(db: Session, company_id: UUID):

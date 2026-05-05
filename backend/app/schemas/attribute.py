@@ -39,6 +39,13 @@ class AttributeBase(BaseModel):
     mapped_dimension: Optional[str] = None
     dimension_format: Optional[str] = "{width}×{height}"
     generates_variant: bool = True
+    
+    show_in_purchase_receipt: bool = True
+    show_in_purchase_order: bool = True
+    show_in_sales_order: bool = True
+    required: bool = False
+    track_stock_separately: bool = True
+    block_if_empty: bool = False
 
 class AttributeCreate(AttributeBase):
     options: Optional[List[AttributeOptionCreate]] = None
@@ -55,6 +62,12 @@ class AttributeUpdate(BaseModel):
     dimension_format: Optional[str] = None
     category_codes: Optional[List[str]] = None
     generates_variant: Optional[bool] = None
+    show_in_purchase_receipt: Optional[bool] = None
+    show_in_purchase_order: Optional[bool] = None
+    show_in_sales_order: Optional[bool] = None
+    required: Optional[bool] = None
+    track_stock_separately: Optional[bool] = None
+    block_if_empty: Optional[bool] = None
 
 class AttributeResponse(AttributeBase):
     id: UUID4
