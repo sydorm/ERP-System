@@ -42,9 +42,9 @@ async def get_warehouses_stock(
         Product.category,
         func.sum(AccumulationRegister.quantity).label("quantity"),
         func.max(func.cast(AccumulationRegister.extra_data, sa.Text)).label("extra_data_str"),
-    ).join(
+    ).outerjoin(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
-    ).join(
+    ).outerjoin(
         Product, Product.id == AccumulationRegister.product_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
@@ -107,7 +107,7 @@ async def get_warehouses_stock(
         first_value = ""
         
         item = {
-            "warehouse": r.warehouse,
+            "warehouse": r.warehouse or "Невідомий склад",
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
@@ -157,13 +157,19 @@ async def get_warehouses_stock(
         
         # 1. Try finding actual purchase price from latest receipt
         from app.models.purchase_receipt import PurchaseReceipt, PurchaseReceiptLine
-        latest_receipt = db.query(PurchaseReceiptLine.price).join(
+        latest_receipt_query = db.query(PurchaseReceiptLine.price).join(
             PurchaseReceipt, PurchaseReceipt.id == PurchaseReceiptLine.receipt_id
         ).filter(
             PurchaseReceiptLine.product_id == r.product_id,
-            PurchaseReceiptLine.variant_id == r.variant_id,
             PurchaseReceipt.status == "posted"
-        ).order_by(
+        )
+        
+        if r.variant_id:
+            latest_receipt_query = latest_receipt_query.filter(PurchaseReceiptLine.variant_id == r.variant_id)
+        else:
+            latest_receipt_query = latest_receipt_query.filter(PurchaseReceiptLine.variant_id.is_(None))
+            
+        latest_receipt = latest_receipt_query.order_by(
             PurchaseReceipt.receipt_date.desc(),
             PurchaseReceiptLine.created_at.desc()
         ).first()
@@ -182,7 +188,7 @@ async def get_warehouses_stock(
             if cost_price == 0.0:
                 cost_price = float(r.cost or 0)
 
-        # Task 3: Filter inactive duplicates or zero stock
+        # Task 3: Filter inactive variants
         if vid and not v_active.get(vid, True):
              if float(r.quantity or 0) <= 0:
                  continue
@@ -194,9 +200,9 @@ async def get_warehouses_stock(
             "warehouse_id": str(r.warehouse_id) if r.warehouse_id else None,
             "product_id": str(r.product_id) if r.product_id else None,
             "product_name": r.product_name,
-            "variant_label": label,
-            "characteristic_name": char_name,
-            "characteristic_value": char_value,
+            "variant_label": item["variant_label"],
+            "characteristic_name": item["characteristic_name"],
+            "characteristic_value": item["characteristic_value"],
             "quantity": float(r.quantity or 0),
             "cost": cost_price,
             "min_stock": float(r.min_stock or 0),
@@ -236,9 +242,9 @@ async def get_inventory_movements(
         AccumulationRegister.document_id,
         Product.name.label("product_name"),
         Warehouse.name.label("warehouse_name")
-    ).join(
+    ).outerjoin(
         Product, Product.id == AccumulationRegister.product_id
-    ).join(
+    ).outerjoin(
         Warehouse, Warehouse.id == AccumulationRegister.warehouse_id
     ).filter(
         AccumulationRegister.company_id == current_user.company_id,
@@ -255,7 +261,7 @@ async def get_inventory_movements(
             "document_type": r.document_type,
             "document_id": str(r.document_id) if r.document_id else None,
             "product_name": r.product_name,
-            "warehouse_name": r.warehouse_name
+            "warehouse_name": r.warehouse_name or "Невідомий склад"
         }
         for r in results
     ]
