@@ -1,16 +1,24 @@
 <template>
   <div class="document-items-table">
-    <div class="tab-toolbar" v-if="!readOnly">
-      <el-button size="small" class="erp-btn" @click="$emit('add-line')">Додати</el-button>
-      <el-button size="small" class="erp-btn" @click="triggerExcelImport">
-        <el-icon><Upload /></el-icon>&nbsp;↑ Імпорт
-      </el-button>
-      <input type="file" ref="excelInput" style="display:none" accept=".xlsx,.csv" @change="handleExcelFile" />
-      <div class="tab-toolbar-right" v-if="showWarehouse">
-        <span class="erp-label">Склад:</span>
-        <el-select v-model="localWarehouseId" size="small" class="warehouse-select" @change="$emit('update:warehouseId', $event)">
-          <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
-        </el-select>
+    <div class="items-toolbar" v-if="!readOnly">
+      <div class="toolbar-left">
+        <el-button size="small" type="primary" class="erp-btn-add" @click="$emit('add-line')" :icon="Plus">
+          Додати рядок
+        </el-button>
+        <el-button size="small" class="erp-btn-import" @click="triggerExcelImport" :icon="Upload">
+          Імпорт (.csv)
+        </el-button>
+        <input type="file" ref="excelInput" style="display:none" accept=".xlsx,.csv" @change="handleExcelFile" />
+      </div>
+      
+      <div class="toolbar-right" v-if="showWarehouse">
+        <div class="warehouse-badge">
+          <el-icon><Location /></el-icon>
+          <span class="badge-label">Склад:</span>
+          <el-select v-model="localWarehouseId" size="small" class="warehouse-select-minimal" @change="$emit('update:warehouseId', $event)">
+            <el-option v-for="w in warehouses" :key="w.id" :label="w.name" :value="w.id" />
+          </el-select>
+        </div>
       </div>
     </div>
 
@@ -499,33 +507,69 @@ const getPriceDiffIcon = (line) => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #fff;
 }
 
-.tab-toolbar {
+.items-toolbar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #f6f7f9;
-  border-bottom: 1px solid #e4e7ed;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #F1F5F9;
   flex-shrink: 0;
 }
 
-.tab-toolbar-right {
-  margin-left: auto;
+.toolbar-left {
+  display: flex;
+  gap: 10px;
+}
+
+.erp-btn-add {
+  background: #3182CE !important;
+  border-color: #3182CE !important;
+  font-weight: 600;
+}
+
+.erp-btn-import {
+  background: #fff !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #4A5568 !important;
+}
+
+.toolbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
-.erp-label {
+.warehouse-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8FAFC;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
   font-size: 13px;
-  color: #374151;
-  font-weight: 500;
 }
 
-.warehouse-select {
-  width: 200px;
+.badge-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.warehouse-select-minimal :deep(.el-input__wrapper) {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 150px;
+}
+
+.warehouse-select-minimal :deep(.el-input__inner) {
+  color: #3182CE;
+  font-weight: 700;
 }
 
 .erp-table-wrapper {
@@ -538,15 +582,17 @@ const getPriceDiffIcon = (line) => {
 }
 
 .erp-dense-table :deep(th.el-table__cell) {
-  background-color: #f5f7fa !important;
-  color: #606266;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 0 !important;
+  background-color: #F8FAFC !important;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 0 !important;
 }
 
 .erp-dense-table :deep(td.el-table__cell) {
-  padding: 0 !important;
+  padding: 8px 0 !important;
 }
 
 .erp-cell-input :deep(.el-input__wrapper), 
@@ -554,105 +600,58 @@ const getPriceDiffIcon = (line) => {
   box-shadow: none !important;
   border: 1px solid transparent !important;
   background-color: transparent !important;
-  padding: 0 8px !important;
-  height: 32px !important;
 }
 
 .erp-cell-input :deep(.el-input__wrapper:focus-within), 
 .erp-cell-input :deep(.el-input__wrapper:hover) {
-  border-color: #dcdfe6 !important;
-  background-color: #fff !important;
+  background-color: #F8FAFC !important;
+  border-color: #CBD5E0 !important;
 }
 
 .erp-cell-trigger {
-  padding: 0 8px;
+  padding: 0 12px;
   height: 32px;
   line-height: 32px;
   cursor: pointer;
   font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #4A5568;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
 .erp-cell-trigger:hover:not(.disabled) {
-  background-color: #fff;
-  border-color: #dcdfe6;
+  background-color: #F8FAFC;
+  color: #3182CE;
 }
 
 .erp-cell-trigger.disabled {
-  cursor: not-allowed;
-  color: #c0c4cc;
-}
-
-.selection-text {
-  color: #303133;
-}
-
-.selection-text.virtual {
-  color: #6366f1;
-  font-style: italic;
-}
-
-.placeholder {
-  color: #909399;
-}
-
-.placeholder.disabled {
-  font-size: 11px;
-}
-
-.supplier-line-meta {
-  margin: -2px 8px 5px;
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.2;
-}
-
-.supplier-order-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin: 0 8px 7px;
-  padding: 3px 8px;
-  border: 1px solid #BFDBFE;
-  border-radius: 999px;
-  background: #EFF6FF;
-  color: #1D4ED8;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.supplier-order-link:hover {
-  background: #DBEAFE;
-}
-
-.row-menu-btn {
-  padding: 0 !important;
-  height: 24px !important;
+  color: #CBD5E0;
 }
 
 .num :deep(.el-input__inner) {
   text-align: right !important;
   font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
 }
 
-.stock-warning {
-  font-size: 11px; color: #b45309; background: #fffbeb; padding: 2px 8px;
-  border-radius: 4px; margin: 2px 8px 4px; border: 1px solid #fef3c7;
-}
-
-.not-found-warning {
-  font-size: 11px; color: #dc2626; background: #fef2f2; padding: 2px 8px;
-  border-radius: 4px; margin: 2px 8px 4px; border: 1px solid #fee2e2;
+.sum-input :deep(.el-input__inner) {
+  color: #2B6CB0;
 }
 
 .price-comparison {
-  font-size: 10px; color: #94a3b8; margin-top: 2px; text-align: right;
-  padding-right: 8px;
+  font-size: 10px; color: #94a3b8; margin-top: 2px; text-align: right; padding-right: 8px;
 }
 .text-green { color: #10b981 !important; font-weight: 600; }
 .text-red { color: #ef4444 !important; font-weight: 600; }
+
+.supplier-line-meta {
+  margin: 4px 12px; color: #718096; font-size: 11px;
+}
+
+.supplier-order-link {
+  display: inline-flex; align-items: center; gap: 4px; margin: 4px 12px;
+  padding: 4px 10px; border-radius: 4px; background: #EBF8FF; color: #2B6CB0;
+  font-size: 11px; font-weight: 600; cursor: pointer; border: none;
+}
+.supplier-order-link:hover { background: #BEE3F8; }
 </style>
