@@ -488,17 +488,20 @@ onMounted(fetchData)
 }
 
 .erp-content-scrollable {
-  flex: 1; overflow-y: auto; padding: 24px;
+  flex: 1; overflow: hidden; padding: 20px;
+  display: flex; flex-direction: column;
 }
 
 .erp-document-card {
   background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  max-width: 1366px; margin: 0 auto; display: flex; flex-direction: column;
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  overflow: hidden; min-width: 900px;
 }
 
 .erp-requisites-grid {
   display: grid; grid-template-columns: 120px 160px 180px 1fr; gap: 20px;
   padding: 24px; border-bottom: 1px solid #F7FAFC;
+  flex-shrink: 0;
 }
 
 .requisite-item {
@@ -512,23 +515,25 @@ onMounted(fetchData)
 .client-info-banner {
   margin: 0 24px 16px 24px; padding: 10px 16px; background: #EBF8FF;
   border-radius: 8px; display: flex; gap: 24px; font-size: 13px; color: #2B6CB0;
+  flex-shrink: 0;
 }
 
 .order-body {
-  display: flex; flex: 1; padding: 0 24px 24px 24px; gap: 24px;
+  display: flex; flex: 1; padding: 0 24px 24px 24px; gap: 24px; overflow: hidden;
 }
 
 .order-main {
-  flex: 1; display: flex; flex-direction: column; min-width: 0;
+  flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden;
 }
 
 .erp-table-container {
   border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; flex: 1;
-  min-height: 300px;
+  display: flex; flex-direction: column;
 }
 
 .comment-section {
-  margin-top: 24px; display: flex; flex-direction: column; gap: 8px;
+  margin-top: 16px; display: flex; flex-direction: column; gap: 8px;
+  flex-shrink: 0;
 }
 
 .comment-label {
@@ -537,6 +542,7 @@ onMounted(fetchData)
 
 .order-sidebar {
   width: 300px; display: flex; flex-direction: column; gap: 16px; flex-shrink: 0;
+  overflow-y: auto; padding-right: 4px;
 }
 
 .sidebar-card {
@@ -590,12 +596,14 @@ onMounted(fetchData)
 .qa-btn:hover { background: #F7FAFC !important; border-color: #3182CE !important; color: #3182CE !important; }
 
 /* Tabs adjustments */
+.order-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .order-tabs :deep(.el-tabs__nav-wrap::after) { height: 1px; background-color: #E2E8F0; }
 .order-tabs :deep(.el-tabs__item) { font-weight: 600; color: #718096; font-size: 14px; height: 40px; }
 .order-tabs :deep(.el-tabs__item.is-active) { color: #3182CE; }
-.order-tabs :deep(.el-tabs__content) { overflow: visible; }
+.order-tabs :deep(.el-tabs__content) { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.order-tabs :deep(.el-tab-pane) { height: 100%; display: flex; flex-direction: column; }
 
-.tab-content-card { padding: 24px 0; display: flex; flex-direction: column; gap: 20px; }
+.tab-content-card { padding: 24px 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 .fields-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .field-block { display: flex; flex-direction: column; gap: 6px; }
 .field-label { font-size: 12px; color: #718096; font-weight: 600; text-transform: uppercase; }
